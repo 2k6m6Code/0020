@@ -101,8 +101,6 @@ function init()
 	{
 		window.top.location.href = window.location.href;
 	}
-
-	getVersion();
 }
 
 function rep_err(txt)
@@ -163,15 +161,6 @@ function ver_errhandler()
 	version = "Submitting [Obtain Version Information] request failed";
 }
 
-function getVersion()
-{ 
-	var str = '{"opr":"version"}';
-	asyncReq("POST", "", str, cb_version, ver_errhandler );
-}
-
-
-
-
 //在TT下，按一次Enter键会响应两次
 function onKeydownOper(e)
 {
@@ -211,26 +200,15 @@ function getQueryString()
 	}
 }
 
-function cb_login(txt)
+function fno(txt)
 {
-	//if( rep_err(txt) )
-	//{
-	//	var msg = rep_err_msg(txt);
-	//	updateTips(msg);
-	//}
-	//else
-	//{
+	if( (queryReqHandler.readyState == 4) && (queryReqHandler.status == 200) ){
+	var msg=queryReqHandler.responseText;
 	var repeat = new Array;
-	repeat = txt.split(/,/);
+	repeat = msg.split(/,/);
 	if (repeat[1] == '1')
 	{
-		alert("Welcome " + repeat[0] + " !!");
-		//var qs = getQueryString();
-		
-		//var url=location.href;
-		//document.cookie="locale=en_US";
-		//qs = (qs == '') ? '' : '?' + qs;
-		//window.location.href = url;
+		alert("Welcome" + repeat[0] + "!!");
 		window.open('','_self','');
 		window.close();
 	}
@@ -239,7 +217,8 @@ function cb_login(txt)
 	    alert("Your IP(" + repeat[0] + ") or Password have a problem!!");
 	    return;
 	}
-	//}
+	updateTips('')
+}
 }
 
 function encodeString(s){
@@ -269,38 +248,27 @@ function encodeString(s){
 
 function onDo()
 {
-	try{
-		var pu = document.getElementById("user");
-		var pp = document.getElementById("password");
+		var pu = document.getElementById("user").value;
+		var pp = document.getElementById("password").value;
 		var tt = document.getElementById("type");
-		
+		/*
 		var str = ' {"opr":"login", "data":{"user": ';
 		str += encodeString(pu.value);
 		str += ' , "pwd": ';
 		str += encodeString(pp.value);
 		str += '}} ';
-		updateTips('Logging in, please wait...')
 		asyncReq("POST", "index.cgi", str, cb_login );
-	
-
-	}
-	catch(e){
-		alert("The ActiveX does not run normally. \n-Please check if it is downloaded or the version is correct\n-Please check the Internet Options and set security level to medium or lower\n-Please refresh the page after setting");
-	}
-}
-
-
-function onVer()
-{
-	winObj=window.open("","winObj","left=300,top=200,width=320,height=340;");
-	var objcontent="<html><head><meta http-equiv=Content-Type content=text/html; charset=UTF-8><title>Version Information</title>";
-	objcontent+="</head>";
-	objcontent+="<body class='body3'><form><table><tr><td class=errorinfo>";	
-	objcontent+='Q-Balancer Information:\n';
-	objcontent+="</td></tr></table></form></body></html>";
-	winObj.document.open();
-	winObj.document.write(objcontent);	
-	winObj.document.close();
+		*/
+		var i=(new Date()).getTime();	
+		if (window.XMLHttpRequest) { queryReqHandler=new XMLHttpRequest(); }
+		if (window.ActiveXObject) { queryReqHandler = new ActiveXObject("Microsoft.XMLHTTP"); }
+		        
+		updateTips('Logging in, please wait...')
+		queryReqHandler.onreadystatechange = fno;
+		queryReqHandler.open("GET","index.cgi?username="+pu+"&password="+pp+"&i="+i,true);
+		queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+		var str='';
+		queryReqHandler.send(str);
 }
 
 
@@ -312,7 +280,7 @@ function releaseObject(o)
     o = null;
 }
 
-	
+/*	
 function asyncReq(method, uri, postdata, cb, errhandler)
 {
 	var o = getConnectionObject() || null;
@@ -353,7 +321,7 @@ function asyncReq(method, uri, postdata, cb, errhandler)
 
     return o;
 }
-
+*/
 function getConnectionObject(){
 		var o;
 		 
