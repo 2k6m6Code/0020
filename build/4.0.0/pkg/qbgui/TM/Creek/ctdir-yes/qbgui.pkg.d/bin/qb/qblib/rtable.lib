@@ -57,7 +57,7 @@ sub showRtable
 
         # Collect Table Info.
         my $byPacket=($table->{equalize} ) ? ( 'Yes' ):( 'No' );
-        my $aggregate=( $table->{aggregate} || $table->{mode}=~m/^FRTT$|^BSWLT$|^FAST$/  ) ? ( 'Yes' ):( 'No' );
+        my $aggregate=( $table->{aggregate} || $table->{mode}=~m/^FRTT$|^BSWLT$|^DSWLT$|^USWLT$|^FAST$/  ) ? ( 'Yes' ):( 'No' );
         my $balancemode=($table->{mode}) ? ($table->{mode}) : ('WRR');
         if ($table->{mode1} eq 'TB' && $table->{mode} eq 'WLC')
         {
@@ -129,17 +129,27 @@ sub showRtable
     if ( $balanceMode eq "BTK" && $target->{equalize}  ) { $balanceMode="BTK_EQUALIZE"; }
     #20110411
     if ( $balanceMode eq "BBL" && $target->{equalize}  ) { $balanceMode="WRR_LATENCY";  }
+    if ( $balanceMode eq "BBLP" && $target->{equalize}  ) { $balanceMode="WRR_LCY_PKT";  }
     if ( $target->{mode1} eq "TB" && $target->{mode} eq "WLC"){$balanceMode="TB";}
     
     print qq (<table width="100%">);
     print qq (<tr><td width="60%" align="left">);
     print qq (<font class="subtitle">$qblang[179]</font><br>); 
-    print qq (<select name="mode" id="mode" class="qbopt" size='6' style="width:280" onChange="switchSomeOption()">);
+    print qq (<select name="mode" id="mode" class="qbopt" size='6' style="width:400;height:150" onChange="switchSomeOption()">);
     #foreach my $mode ( sort keys %gMODEHASH_v2 )
+    #foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
+    #foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
+    print qq (<option value="">------For All Links------</option>);
     foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
     {   
         my $status=($balanceMode eq $mode ) ? ( 'selected' ):( '' );
         print qq (<option value="$mode" $status>$gMODEHASH_v2{$mode}</option>);
+    }
+    print qq (<option value="">------For TMV/MTV Only------</option>);
+    foreach my $mode ( sort { $gMODEHASH_v3{$a} cmp $gMODEHASH_v3{$b} } keys %gMODEHASH_v3 )
+    {
+        my $status=($balanceMode eq $mode ) ? ( 'selected' ):( '' );
+        print qq (<option value="$mode" $status>$gMODEHASH_v3{$mode}</option>);
     }
     print qq (</select><br>);
     print qq (<span class="body">Proxy:</span><input type="text" class="qbtext" name="redirect" value="$target->{redirect}" maxlength="15" style="width:240"  onBlur="if(!isValidIP(this.value)) this.value='';">);
@@ -156,7 +166,7 @@ sub showRtable
     print qq (<table width="100%">);
     $backup_table=$target->{backup_table};
     print qq (<tr>);
-    print qq (<td class="body" align="left">$qblang[174] </td>);
+    print qq (<td class="body" align="right">$qblang[174] </td>);
     print qq (<td class="body" align="left">);
     print qq (<select class="qbopt" name="backup_table" style="width:80">);
 
@@ -277,6 +287,59 @@ sub showRtable
     print qq (<td><table width="10" border="0"></table></td>);
     print qq (</tr></table>);
     print qq (<td><table width="1" border="0"></table></td>);
+    print qq (<td>);
+
+########################-------------New HC for Algorithms-------------######################## Brian
+#    if ( $target->{tolerance_latency} eq '' ) { $target->{tolerance_latency} = '400' }
+#    if ( $target->{latency_diff} eq '' ) { $target->{latency_diff} = '50' }
+
+    my $display_newhc = ($balanceMode eq "WRR") ? 'block' : 'none';
+    print qq (<td align="left">);
+    print qq (<fieldset class="fieldsetb" id="bblp_field" style="width:360px;display:$display_newhc">);
+    print qq (<legend class="subtitle">Eliminate Link From Pool</legend>);
+    print qq (<input type="hidden" name="level" value="1">);
+    print qq (<hr size="1">);
+    print qq (<table width="100%">);
+
+###----------When latency tolerance-------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body" align="left">);
+    #my $latency_tolerance_check=( $target->{enable_latency_tolerance}==1 ) ? ('checked') : ('');
+    my $status=( $target->{enable_latency_tolerance} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" $status id="enable_latency_tolerance" name="enable_latency_tolerance">);
+    print qq (when latency &#62</td>);
+
+    print qq (<td><input type="text" class="qbtext" maxlength="4" name="latency_tolerance" style="width:40" value="$target->{latency_tolerance}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">ms for</td>);
+    print qq (<td><input type="text" class="qbtext" name="latency_tolerance_keeptime" style="width:40" value="$target->{latency_tolerance_keeptime}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">secs</td>);
+    print qq (</tr>);
+###-----------When latency difference-----------------------------------------------------------------------
+    print qq (<tr id="latency_difference">);
+    print qq (<td class="body" align="left">);
+    my $status=( $target->{enable_latency_difference} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" $status id="enable_latency_difference" name="enable_latency_difference">);
+    print qq (latency difference &#62</td>);
+
+    print qq (<td><input type="text" class="qbtext" maxlength="4" name="latency_difference" style="width:40" value="$target->{latency_difference}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">ms for</td>);
+    print qq (<td><input type="text" class="qbtext" name="latency_difference_keeptime" style="width:40" value="$target->{latency_difference_keeptime}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">secs</td>);
+    print qq (</tr>);
+###-----------When packet loss rate-------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body" align="left">);
+    my $status=( $target->{enable_pktloss_rate} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" $status id="enable_pktloss_rate" name="enable_pktloss_rate">);
+    print qq (packet loss rate &#62</td>);
+    
+    print qq (<td><input type="text" class="qbtext" maxlength="3" id="pktloss_rate" name="pktloss_rate" style="width:40" value="$target->{pktloss_rate}" onChange="CheckPktlossRate()"></td>);
+    print qq (<td class="body" align="left">%&nbsp;&nbsp;for</td>);
+    print qq (<td><input type="text" class="qbtext" name="pktloss_rate_keeptime" style="width:40" value="$target->{pktloss_rate_keeptime}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">secs</td>);
+    print qq (</tr>);
+
+    print qq (</table>);
     print qq (<td>);
 
 #------------------------------------------------------------------------------------------------------------
@@ -468,10 +531,15 @@ sub rtable_script
         var measure_time = document.getElementById('measure_time');
         var btk_field = document.getElementById('btk_field');
         var bbl_field = document.getElementById('bbl_field');
+        var bblp_field = document.getElementById('bblp_field');
+        var latency_difference = document.getElementById('latency_difference');
         
-        myform.wltegress.value=( mode=="WLT_EQUALIZE" )  ? 1 : 0;
-    
-        myform.equalize.value=( mode=="WLT_EQUALIZE" || mode=="BTK_EQUALIZE" || mode=="WRR_EQUALIZE" || mode=="WRR_LATENCY") ? 1 : 0;
+        myform.wltegress.value=( mode=="WLT_EQUALIZE" || mode=="USWLT" )  ? 1 : 0;
+        if (mode == 'BSWLT')
+        {
+            myform.wltegress.value = 2; //Brian 20140128 DSWLT=0,USWLT=1,BSWLT=2.
+        }   
+        myform.equalize.value=( mode=="WLT_EQUALIZE" || mode=="BTK_EQUALIZE" || mode=="WRR_EQUALIZE" || mode=="WRR_LATENCY" || mode=="WRR_LCY_PKT") ? 1 : 0;
         
         myform.aggregate.value=( mode=="WRR_AGGREGATE" ) ? 1 : 0;
         if (mode == 'WRR_LATENCY')
@@ -479,12 +547,26 @@ sub rtable_script
             tolerance.disabled = false;    
             latency_diff.disabled = false;
             bbl_field.style.display = 'block';
+            bblp_field.style.display = 'none';
+        }
+        else if (mode == 'WRR_LCY_PKT')
+        {
+            bbl_field.style.display = 'none';
+            bblp_field.style.display = 'block';
+            latency_difference.style.display = '';
+        }
+        else if (mode == 'USWLT' || mode == 'DSWLT' || mode == 'BSWLT')
+        {
+            bbl_field.style.display = 'none';
+            bblp_field.style.display = 'block';
+            latency_difference.style.display = 'none';
         }
         else
         {
             tolerance.disabled = true;    
             latency_diff.disabled = true;
             bbl_field.style.display = 'none';
+            bblp_field.style.display = 'none';
         }
         
         if (mode == 'BTK_EQUALIZE') 
@@ -521,6 +603,30 @@ sub rtable_script
         myform.ADD.disabled=false;
         myform.focused_rtable.disabled=false;
         myform.action.disabled=false;
+    }
+
+    function CheckPktlossRate()
+    {
+        var pktloss_rate = document.getElementById('pktloss_rate').value;
+        if (isNaN(pktloss_rate))
+        { 
+          myform.pktloss_rate.value="";
+          alert('Please enter the number between 1~99 !!!');
+          return; 
+        }
+        if ( pktloss_rate >99 )
+        { 
+          myform.pktloss_rate.value="";
+          alert('Max packet loss rate is 99 % !!!'); 
+        }
+    }
+        
+    function CheckNumber(check)
+    {
+        if (isNaN(check))
+        { 
+          alert('Please enter the number !!!');
+        }
     }
     
     function selectRtable(table)
@@ -1258,6 +1364,16 @@ sub maintainRtable
         $temp->{latency_diff}          =   $action{latency_diff};
         $temp->{warning}        =   $warning;
 
+        $temp->{enable_latency_tolerance}    =   $action{enable_latency_tolerance};
+        $temp->{enable_latency_difference}   =   $action{enable_latency_difference};
+        $temp->{enable_pktloss_rate}         =   $action{enable_pktloss_rate};
+        $temp->{latency_tolerance}           =   $action{latency_tolerance};
+        $temp->{latency_difference}          =   $action{latency_difference};
+        $temp->{pktloss_rate}                =   $action{pktloss_rate};
+        $temp->{latency_tolerance_keeptime}  =   $action{latency_tolerance_keeptime};
+        $temp->{latency_difference_keeptime} =   $action{latency_difference_keeptime};
+        $temp->{pktloss_rate_keeptime}       =   $action{pktloss_rate_keeptime};
+
         my $enable_path_count=0;
         my $dsip_count=0;
         my $allpath=$temp->{path};
@@ -1281,6 +1397,7 @@ sub maintainRtable
         $action{mode}=~s/WLT_EQUALIZE/WLT/g;
         #20110411
         $action{mode}=~s/WRR_LATENCY/BBL/g;
+        $action{mode}=~s/WRR_LCY_PKT/BBLP/g;
         $temp->{mode}=($action{mode}) ? ($action{mode}) : ('WRR');
         $temp->{mode1}=''; 
         if ($action{mode} eq 'TB')

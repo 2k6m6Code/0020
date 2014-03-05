@@ -207,20 +207,26 @@ if ( -r $gUPGINFO )
             );
 
 %gMODEHASH_v2=(
-            'WRR'                =>'Weighted Round Robin IP Persistant', 
-            'WRR_AGGREGATE'      =>'Weighted Round Robin By Connection', 
-            'WRR_EQUALIZE'       =>'Weighted Round Robin By Packet (For MPV/TMV Only)', 
-            'WRR_LATENCY'        =>'Bonding By Latency (For MPV/TMV Only)',
-            'WRR_LCY_PKT'        =>'Bonding By Latency and Packet Loss(For MPV/TMV Only)',
-            #'BTK_EQUALIZE'       =>'Bandwidth Measure WRR By Packet (For MPV/TMV Only)', 
+            'WRR'                =>'Weighted Round Robin IP Persistant',
+            'WRR_AGGREGATE'      =>'Weighted Round Robin By Connection',
+#            'WRR_EQUALIZE'       =>'Weighted Round Robin By Packet (For MPV/TMV Only)',
+            #'WRR_LATENCY'        =>'Bonding By Latency (For MPV/TMV Only)',
+#            'WRR_LCY_PKT'        =>'Bonding By Latency and Packet Loss(For MPV/TMV Only)',
+            #'BTK_EQUALIZE'       =>'Bandwidth Measure WRR By Packet (For MPV/TMV Only)',
             'BSWLT'              =>'Bidirectional Sensitive Weight Leasted Traffic',
             'DSWLT'              =>'Downlink Sensitive Weighted Least Traffic',
             'USWLT'              =>'Uplink Sensitive Weighted Least Traffic',
             'FRTT'               =>'ISP Response Time',
-            'WLT_EQUALIZE'       =>'Weighted Least Traffic By Packet (For MPV/TMV Only)', 
+            #'WLT_EQUALIZE'       =>'Weighted Least Traffic By Packet (For MPV/TMV Only)',
             #'FAST'               =>'Fastest Way By Destination',
-            'REDIRECT'           =>'Redirect To Transparent Proxy',
-            'TB'		 =>'TCP Bonding (For MPV/TMV Only)'	 
+            'REDIRECT'           =>'Redirect To Transparent Proxy'
+#            'TB'                 =>'TCP Bonding (For MPV/TMV Only)'
+);
+
+%gMODEHASH_v3=(
+            'WRR_EQUALIZE'       =>'Weighted Round Robin By Packet',
+            'WRR_LCY_PKT'        =>'Bonding By Latency and Packet Loss',
+            'TB'                 =>'TCP Bonding'
 );
 
 %gL7PROTOCOLHASH=(

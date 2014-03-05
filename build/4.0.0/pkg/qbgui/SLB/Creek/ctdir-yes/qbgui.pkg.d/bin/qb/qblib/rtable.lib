@@ -135,12 +135,21 @@ sub showRtable
     print qq (<table width="100%">);
     print qq (<tr><td width="60%" align="left">);
     print qq (<font class="subtitle">$qblang[179]</font><br>); 
-    print qq (<select name="mode" id="mode" class="qbopt" size='6' style="width:280" onChange="switchSomeOption()">);
+    print qq (<select name="mode" id="mode" class="qbopt" size='6' style="width:400;height:150" onChange="switchSomeOption()">);
     #foreach my $mode ( sort keys %gMODEHASH_v2 )
+    #foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
+    #foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
+    print qq (<option value="">------For All Links------</option>);
     foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
     {   
         my $status=($balanceMode eq $mode ) ? ( 'selected' ):( '' );
         print qq (<option value="$mode" $status>$gMODEHASH_v2{$mode}</option>);
+    }
+    print qq (<option value="">------For TMV/MTV Only------</option>);
+    foreach my $mode ( sort { $gMODEHASH_v3{$a} cmp $gMODEHASH_v3{$b} } keys %gMODEHASH_v3 )
+    {
+        my $status=($balanceMode eq $mode ) ? ( 'selected' ):( '' );
+        print qq (<option value="$mode" $status>$gMODEHASH_v3{$mode}</option>);
     }
     print qq (</select><br>);
     print qq (<span class="body">Proxy:</span><input type="text" class="qbtext" name="redirect" value="$target->{redirect}" maxlength="15" style="width:240"  onBlur="if(!isValidIP(this.value)) this.value='';">);
@@ -157,7 +166,7 @@ sub showRtable
     print qq (<table width="100%">);
     $backup_table=$target->{backup_table};
     print qq (<tr>);
-    print qq (<td class="body" align="left">$qblang[174] </td>);
+    print qq (<td class="body" align="right">$qblang[174] </td>);
     print qq (<td class="body" align="left">);
     print qq (<select class="qbopt" name="backup_table" style="width:80">);
 
@@ -301,7 +310,7 @@ sub showRtable
     print qq (when latency &#62</td>);
 
     print qq (<td><input type="text" class="qbtext" maxlength="4" name="latency_tolerance" style="width:40" value="$target->{latency_tolerance}" onChange="CheckNumber(this.value)"></td>);
-    print qq (<td class="body" align="left">ms keep in</td>);
+    print qq (<td class="body" align="left">ms for</td>);
     print qq (<td><input type="text" class="qbtext" name="latency_tolerance_keeptime" style="width:40" value="$target->{latency_tolerance_keeptime}" onChange="CheckNumber(this.value)"></td>);
     print qq (<td class="body" align="left">secs</td>);
     print qq (</tr>);
@@ -313,7 +322,7 @@ sub showRtable
     print qq (latency difference &#62</td>);
 
     print qq (<td><input type="text" class="qbtext" maxlength="4" name="latency_difference" style="width:40" value="$target->{latency_difference}" onChange="CheckNumber(this.value)"></td>);
-    print qq (<td class="body" align="left">ms keep in</td>);
+    print qq (<td class="body" align="left">ms for</td>);
     print qq (<td><input type="text" class="qbtext" name="latency_difference_keeptime" style="width:40" value="$target->{latency_difference_keeptime}" onChange="CheckNumber(this.value)"></td>);
     print qq (<td class="body" align="left">secs</td>);
     print qq (</tr>);
@@ -325,7 +334,7 @@ sub showRtable
     print qq (packet loss rate &#62</td>);
     
     print qq (<td><input type="text" class="qbtext" maxlength="3" id="pktloss_rate" name="pktloss_rate" style="width:40" value="$target->{pktloss_rate}" onChange="CheckPktlossRate()"></td>);
-    print qq (<td class="body" align="left">% keep in</td>);
+    print qq (<td class="body" align="left">%&nbsp;&nbsp;for</td>);
     print qq (<td><input type="text" class="qbtext" name="pktloss_rate_keeptime" style="width:40" value="$target->{pktloss_rate_keeptime}" onChange="CheckNumber(this.value)"></td>);
     print qq (<td class="body" align="left">secs</td>);
     print qq (</tr>);
