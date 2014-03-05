@@ -18,35 +18,39 @@ print "Content-type:text/html\n\n";
 #假如認證失敗，就直接結束
 if ( $gLOGINRESULT ) 
 {
-print << "QB_HOME";
-    <html>
-    <head>
-        <title>Q-Balancer Configuration Center</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script type="text/javascript" src="qb.js"></script>
-        <script language="javascript">
-              window.onunload =function() 
-              { 
-                  var clearcookie=getcookie('clearcookie');
-                  if ( clearcookie=='false' ) { return; }
-                  qbLogout(); 
-              } 
-              //automatically logout
-        </script>
-    </head>
-    <frameset rows="*" cols="140,*" frameborder="AUTO" border="0" framespacing="0"> 
-      <frame name="menuFrame" scrolling="YES" noresize src="menu.cgi" frameborder="NO">
-      <frameset rows="50,*" frameborder="NO" border="0" framespacing="0" cols="*"> 
-        <frame name="configFrame" src="config.cgi" scrolling="NO">
-        <frameset rows="*" cols="*" frameborder="NO"> 
-          <frame name="mainFrame" src="dashboard.php" frameborder="NO" noresize scrolling="AUTO">
-        </frameset>
-      </frameset>
-    <frame src="right.htm" scrolling="NO">
-    </frameset>
-    </noframes> 
-    </html>
-QB_HOME
+#print << "QB_HOME";
+print qq(<html>);
+print qq(<head>);
+print qq(<title>Q-Balancer Configuration Center</title>);
+print qq(<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">);
+print qq(<script type="text/javascript" src="qb.js"></script>);
+print qq(<script language="javascript">);
+print qq(window.onunload =function(){);
+print qq(var clearcookie=getcookie('clearcookie'););
+print qq(if ( clearcookie=='false' ) { return; });
+print qq(qbLogout(); });
+print qq(</script>);
+print qq(</head>);
+print qq(<frameset rows="*" cols="140,*" frameborder="AUTO" border="0" framespacing="0">);
+print qq(<frame name="menuFrame" scrolling="YES" noresize src="menu.cgi" frameborder="NO">);
+print qq(<frameset rows="50,*" frameborder="NO" border="0" framespacing="0" cols="*"> );
+print qq(<frame name="configFrame" src="config.cgi" scrolling="NO">);
+print qq(<frameset rows="*" cols="*" frameborder="NO">);
+
+
+if ($action1 > 8)
+{
+    print qq(<frame name="mainFrame" src="dashboard.php" frameborder="NO" noresize scrolling="AUTO">);
+}else
+{
+    print qq(<frame name="mainFrame" src="dashboard.cgi" frameborder="NO" noresize scrolling="AUTO">);
+}
+print qq(</frameset>);
+print qq(</frameset>);
+print qq(<frame src="right.htm" scrolling="NO">);
+print qq(</frameset>);
+print qq(</noframes>);
+print qq(</html>);
 }
 else 
 {

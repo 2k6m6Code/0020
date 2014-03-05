@@ -8,11 +8,14 @@
 <meta http-equiv="Expires" content="0" />
 <!-- Fireworks 4.0  Dreamweaver 4.0 target.  Created Fri May 24 15:26:05 GMT+0800 (¢Dx¢D_?D¡PCRE?!) 2003-->
 <link rel="stylesheet" href="gui.css" type="text/css">
+<script type="text/javascript" src="jquery-1.8.1.min.js"></script>
 <script language="javascript">
 
     function checkin() { window.document.loginform.submit();}
 
-    function logincheck() { if(event.keyCode==13) window.document.loginform.submit();}
+    function logincheck() { 
+        if(event.keyCode==13) window.document.loginform.submit();
+    }
 
     function reportVersion(uiver, enginever, model, qbver, type, qbsn, qblibimg, qbfs)
     {
@@ -55,7 +58,7 @@
 	setCookie("locale","en_US");
 </script>
 </head>
-<body bgcolor="#336699" leftmargin="0" topmargin="0" link="#CCCCCC" vlink="#999999">
+<body bgcolor="#336699" leftmargin="0" topmargin="0" link="#CCCCCC" vlink="#999999" onkeypress="onKeydownOper(event)">
 <form name="loginform" method="post" action="index.cgi"> 
 <table border="0" cellpadding="0" cellspacing="0" width="760" align="center">
   <!-- fwtable fwsrc="newhome.png" fwbase="Home.gif" fwstyle="Dreamweaver" fwdocid = "742308039" fwnested="0" -->
@@ -89,6 +92,7 @@
         <tr bgcolor="#FFFFFF"> 
           <td class="qb"><div id="LLname" style="width:100%;height:19px;color:#4A77A5;font-size: 14px; padding: 5px; font-weight: lighter;">User Name:</div></td>
           <td><input autocomplete="off" type="text" name="username" maxlength="18" style="width:115"></td>
+          <input type="hidden" name="action" id="action" value=''>
         </tr>
         <tr> 
           <td height="2"></td>
@@ -100,7 +104,7 @@
         </tr>
         <tr> 
           <td align="right" colspan="2" > 
-            <input type="submit" name="Submit" value="Log In" class="qb" style="width:100%">
+            <input type="button" name="Submit" id="login" value="Log In" class="qb" style="width:100%">
           </td>
         </tr>
         <tr> 
@@ -122,5 +126,34 @@
 </table>
 </form>
 <iframe name="changeimage" src="prelogin.cgi" style="display:none"></iframe>
+<script type="text/javascript" src="jquery-1.8.1.min.js"></script>
+<script language="javascript">
+var KeyDownTime = 0;
+$("#login").click(function(){
+    var userAgent = window.navigator.userAgent.toLowerCase();
+    $.browser.version = (userAgent.match( /.(?:rv|it|ra|ie)[\/: ]([\d.]+)/ ) || [0, '0'])[1];
+    var version = $.browser.version;
+    $("#action").val(version);
+    window.document.loginform.submit()
+});
+function onKeydownOper(e)
+{
+    var kn ;
+    if(window.event)
+        kn = e.keyCode;
+    else if( e.which )
+        kn = e.which;
+    
+    if (kn == 13)
+    {
+        KeyDownTime ++;
+        if (KeyDownTime > 1)return;
+        KeyDownTime = 0;
+        $("#login").click();
+    }
+
+
+}
+</script>
 </body>
 </html>
