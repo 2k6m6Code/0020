@@ -1,0 +1,718 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showISPList
+{
+    my (%action)=@_;
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    my $minfo=XMLread($gINITPATH."module_3g.xml");
+    my $module_3gList=$minfo->{module_3g};
+    
+    #my @titleHeadList=('Enable', 'ISP ID', '3G Information', 'Interface', 'Name', 'Gateway', 'System IP', 'Healthcheck IP','Subnet', 'Down/Up', 'Status', 'Version', 'Additional Subnet', 'Additional Subnet2', 'NIC_Speed', 'Poxy IP', 'Poxy Name', 'Poxy Port' ,'Edit');
+    my @titleHeadList=($qblang[25], $qblang[26], $qblang[24], 'ISP ID', $qblang[27], $qblang[28], $qblang[29], $qblang[30], $qblang[31], $qblang[32],$qblang[33], $qblang[34], $qblang[35], $qblang[36], $qblang[37], 'NIC_Speed', $qblang[38], $qblang[39],$qblang[40] );
+    
+    #==============================================================
+    # Print Title first
+    #===============================================================
+    
+    #my %titleWidth=( 'Enable'=>100, 'ISPID'=>80, 'State'=>80, 'Interface'=>150, 'Name'=>80, 'Gateway'=>120, 'SystemIP'=>120, 'HealthcheckIP'=>150, 'Subnet'=>120,'DOWN_UP'=>100, 'nic_speed'=>50, 'PoxyIP'=>50, 'PoxyName'=>30, 'PoxyPort'=>30, 'Status'=>30);
+    my %titleWidth=( 'version'=>'auto', 'EDIT'=>'50px', 'Enable'=>'auto', 'ISPID'=>'auto', 'ThreeG'=>'auto', 'Interface'=>'auto', 'Name'=>'auto', 'Gateway'=>'auto', 'SystemIP'=>'auto', 'HealthcheckIP'=>'auto', 'Subnet'=>'auto','DOWN_UP'=>'auto', 'Status'=>'auto', 'Add_IP1'=>'auto', 'Add_IP2'=>'auto', 'nic_speed'=>'auto', 'PoxyIP'=>'auto', 'PoxyName'=>'auto', 'PoxyPort'=>'auto' );
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">$qblang[62]);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+    
+    print qq (<div class="divframe" style="width=950; " >);
+    #print qq (<table class="sortable" bgcolor="#332211" width="100%" border="0"><tr>);
+    print qq (<table class="sortable" width="100%" border="0"><tr bgcolor="#332211">);
+    print qq (<td align="center" width="50">);
+    print qq (<a href="javascript:delISP()"><image src="image/del.gif" title="Delete Checked ISP(s)" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('selectisp', this.checked)">);
+    print qq (</td>);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}" style="white-space: nowrap;">$title</td>); }
+    #===============================================================
+    # Print ISP Info 
+    #===============================================================
+    
+    my $lineCount=1;
+    foreach my $isp ( @$isplist )
+    {
+        
+        if ( $isp->{iid} eq 'system' ) { next; }
+        if ( $isp->{isptype} eq "tunnel" || $isp->{isptype} eq "ipsec" || $isp->{isptype} eq "dtunnel" ) { next; }
+            #my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+            my $originalColor=my $bgcolor=($lineCount%2) ? ( '#334455' ) : ( '#556677' );
+            my $status;
+            print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+    
+     #*************************************************************************************
+     # delete checkbox
+     #*************************************************************************************
+        print qq (<td align="center" width="50" height="25">);
+        print qq (<input type="checkbox" id="selectisp" name="selectisp" value="$isp->{iid}"></td>);
+     
+     #***************************************************************************************
+     # Edit  
+     #***************************************************************************************   
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<a href="editbasic.cgi?isp=$isp->{iid}";selectedColor(natList.rows[$lineCount])" >);
+        print qq (<image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+       
+     #***************************************************************************************
+     # ISP ID  
+     #***************************************************************************************   
+        if ( $isp->{isptype} eq "normal" )
+        {
+            my $onoff;
+            if ( $isp->{enabled} eq '' | $isp->{enabled} eq '1' ) { $onoff = $lanBasic{off}; }
+            elsif ( $isp->{enabled} eq '0' ) { $onoff = $lanBasic{on}; }
+            print qq (<td align="left" width="$titleWidth{Enable}" height="25">);
+            #if ( $isp->{enabled} eq '0' ){ print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})">$onoff </td>); }
+            #else { print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="disabledisp($isp->{iid})">$onoff </td>); }
+            
+            if ( $isp->{enabled} eq '0' ){ print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})"></td>); }
+            else { print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} CHECKED onclick="disabledisp($isp->{iid})"></td>); }
+          
+	     #***************************************************************************************
+	     # Status
+	     #***************************************************************************************   
+
+	     print qq (<td align="center" width="$titleWidth{Status}" height="25">);
+	     #my $show_status = ( $isp->{alive} eq '1' ) ? "alive.png" : "dead.png"; 
+	     my $show_status = "alive.png"; 
+	     print qq (<span id="$isp->{systemip}"><img src="image/$show_status" width="14" height="14" border="0"/></span></td>);
+        
+            print qq (<td align="center" width="$titleWidth{ISPID}" height="25">ISP$isp->{iid}</td>);
+        }
+        elsif ( $isp->{isptype} eq "wimax" )
+        {
+            my $onoff;
+            if ( $isp->{enabled} eq '' || $isp->{enabled} eq '1' ) { $onoff = $lanBasic{off}; }
+            elsif ( $isp->{enabled} eq '0' ) { $onoff = $lanBasic{on}; }
+            print qq (<td align="left" width="$titleWidth{Enable}" height="25">);
+            if ( $isp->{enabled} eq '0' ){ print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})"></td>); }
+            else { print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} CHECKED onclick="disabledisp($isp->{iid})"></td>); }
+            
+	     #***************************************************************************************
+	     # Status
+	     #***************************************************************************************   
+
+	     print qq (<td align="center" width="$titleWidth{Status}" height="25">);
+	     #my $show_status = ( $isp->{alive} eq '1' ) ? "alive.png" : "dead.png"; 
+	     my $show_status = "alive.png"; 
+	     print qq (<span id=$isp->{systemip}><img src="image/$show_status" width="14" height="14" border="0"/></span></td>);
+        
+            print qq (<td align="center" width="$titleWidth{ISPID}" height="25" >Wimax$isp->{iid}</td>);
+        
+        }
+        elsif ( $isp->{isptype} eq "pppoe" && !$isp->{flag_3g})
+        {
+            my $onoff;
+            if ( $isp->{enabled} eq '' | $isp->{enabled} eq '1' ) { $onoff = $lanBasic{off}; }
+            elsif ( $isp->{enabled} eq '0' ) { $onoff = $lanBasic{on}; }
+            print qq (<td align="left" width="$titleWidth{Enable}" height="25">);
+            #if ( $isp->{enabled} eq '0' ){ print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})">$onoff</td>); }
+            #else { print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="disabledisp($isp->{iid})">$onoff</td>); }
+            if ( $isp->{enabled} eq '0' ){ print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})"></td>); }
+            else { print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} CHECKED onclick="disabledisp($isp->{iid})"></td>); }
+            
+	     #***************************************************************************************
+	     # Status
+	     #***************************************************************************************   
+
+	     print qq (<td align="center" width="$titleWidth{Status}" height="25">);
+	     #my $show_status = ( $isp->{alive} eq '1' ) ? "alive.png" : "dead.png"; 
+	     my $show_status = "alive.png"; 
+	     print qq (<span id=$isp->{systemip}><img src="image/$show_status" width="14" height="14" border="0"/></span></td>);
+        
+            print qq (<td align="center" width="$titleWidth{ISPID}" height="25" >PPPoE$isp->{iid}</td>);
+        }
+        elsif ( $isp->{isptype} eq "pppoe" && $isp->{flag_3g})
+        {
+            my $onoff;
+            if ( $isp->{enabled} eq '' | $isp->{enabled} eq '1' ) { $onoff = $lanBasic{off}; }
+            elsif ( $isp->{enabled} eq '0' ) { $onoff = $lanBasic{on}; }
+            print qq (<td align="left" width="$titleWidth{Enable}" height="25">);
+            #if ( $isp->{enabled} eq '0' ){ print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})">$onoff </td>); }
+            #else { print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="disabledisp($isp->{iid})">$onoff </td>); }
+        
+            if ( $isp->{enabled} eq '0' ){ print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})"></td>); }
+            else { print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} CHECKED onclick="disabledisp($isp->{iid})"></td>); }
+	     #***************************************************************************************
+	     # Status
+	     #***************************************************************************************   
+
+	     print qq (<td align="center" width="$titleWidth{Status}" height="25">);
+	     #my $show_status = ( $isp->{alive} eq '1' ) ? "alive.png" : "dead.png"; 
+	     my $show_status = "alive.png"; 
+	     print qq (<span id=$isp->{systemip}><img src="image/$show_status" width="14" height="14" border="0"/></span></td>);
+        
+            print qq (<td align="center" width="$titleWidth{ISPID}" height="25" >);
+            print qq (USB3G$isp->{iid}</td>);
+        }
+        elsif ( $isp->{isptype} eq "dhcp" )
+        {
+            my $onoff;
+            if ( $isp->{enabled} eq '' | $isp->{enabled} eq '1' ) { $onoff = $lanBasic{off}; }
+            elsif ( $isp->{enabled} eq '0' ) { $onoff = $lanBasic{on}; }
+            print qq (<td align="left" width="$titleWidth{Enable}" height="25">);
+            #if ( $isp->{enabled} eq '0' ){ print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})">$onoff </td>); }
+            #else { print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="disabledisp($isp->{iid})">$onoff </td>); }
+            
+            if ( $isp->{enabled} eq '0' ){ print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})"></td>); }
+            else { print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} CHECKED onclick="disabledisp($isp->{iid})"></td>); }
+	     #***************************************************************************************
+	     # Status
+	     #***************************************************************************************   
+
+	     print qq (<td align="center" width="$titleWidth{Status}" height="25">);
+	     #my $show_status = ( $isp->{alive} eq '1' ) ? "alive.png" : "dead.png"; 
+	     my $show_status = "alive.png"; 
+	     print qq (<span id=$isp->{systemip}><img src="image/$show_status" width="14" height="14" border="0"/></span></td>);
+        
+            print qq (<td align="center" width="$titleWidth{ISPID}" height="25" >DHCP$isp->{iid}</td>);
+        } 
+        elsif ( $isp->{isptype} eq "pptp" )
+        {
+            my $onoff;
+            if ( $isp->{enabled} eq '' | $isp->{enabled} eq '1' ) { $onoff = $lanBasic{off}; }
+            elsif ( $isp->{enabled} eq '0' ) { $onoff = $lanBasic{on}; }
+            print qq (<td align="left" width="$titleWidth{Enable}" height="25">);
+            #if ( $isp->{enabled} eq '0' ){ print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})">$onoff </td>); }
+            #else { print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="disabledisp($isp->{iid})">$onoff </td>); }
+            
+            if ( $isp->{enabled} eq '0' ){ print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})"></td>); }
+            else { print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} CHECKED onclick="disabledisp($isp->{iid})"></td>); }
+	     #***************************************************************************************
+	     # Status
+	     #***************************************************************************************   
+
+	     print qq (<td align="center" width="$titleWidth{Status}" height="25">);
+	     #my $show_status = ( $isp->{alive} eq '1' ) ? "alive.png" : "dead.png"; 
+	     my $show_status = "alive.png"; 
+	     print qq (<span id=$isp->{systemip}><img src="image/$show_status" width="14" height="14" border="0"/></span></td>);
+        
+            print qq (<td align="center" width="$titleWidth{ISPID}" height="25" >PPTP$isp->{iid}</td>);
+        }
+        elsif ( $isp->{isptype} eq "l2tp" )
+        {
+            my $onoff;
+            if ( $isp->{enabled} eq '' | $isp->{enabled} eq '1' ) { $onoff = $lanBasic{off}; }
+            elsif ( $isp->{enabled} eq '0' ) { $onoff = $lanBasic{on}; }
+            print qq (<td align="left" width="$titleWidth{Enable}" height="25">);
+            #if ( $isp->{enabled} eq '0' ){ print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})">$onoff </td>); }
+            #else { print qq (<input type="radio" name="enabled" value=$isp->{iid} onclick="disabledisp($isp->{iid})">$onoff </td>); }
+	    
+            if ( $isp->{enabled} eq '0' ){ print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})"></td>); }
+            else { print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} CHECKED onclick="disabledisp($isp->{iid})"></td>); }
+	     #***************************************************************************************
+	     # Status
+	     #***************************************************************************************   
+
+	     print qq (<td align="center" width="$titleWidth{Status}" height="25">);
+	     #my $show_status = ( $isp->{alive} eq '1' ) ? "alive.png" : "dead.png"; 
+	     my $show_status = "alive.png"; 
+	     print qq (<span id=$isp->{systemip}><img src="image/$show_status" width="14" height="14" border="0"/></span></td>);
+        
+            print qq (<td align="center" width="$titleWidth{ISPID}" height="25" >L2TP$isp->{iid}</td>);
+        }
+        my $linenum=$isp->{nic}; $linenum=~s/eth//;
+        my $PORT=( $linenum ne '-1' ) ? ( 'PORT '.++$linenum ) : ( 'None' );
+        if ( $isp->{isptype} eq "wimax" || $isp->{isptype} eq "pppoe" || $isp->{isptype} eq "pptp" || $isp->{isptype} eq "l2tp" )
+        {
+            $linenum=$isp->{nic}; $linenum=~s/eth//;
+            $PORT=( $linenum ne '-1' ) ? ( 'PORT '.$linenum ) : ( 'None' );
+        }
+     #***************************************************************************************
+     # State Interface Name Gateway SystemIP HealthcheckIP Subnet Down/Up
+     #***************************************************************************************   
+        if ( $isp->{isptype} eq "pppoe" && $isp->{flag_3g})
+        {
+        print qq (<td align="center" width="$titleWidth{ThreeG}" height="25" >);
+            print qq (<a href="../3gone.cgi?interface=$isp->{pppoeportdev}">);
+            print qq (View</td>);
+        }
+        else
+        {
+        print qq (<td align="center" width="$titleWidth{ThreeG}" height="25" >N/A</td>);
+        }
+        print qq (<td align="center" width="$titleWidth{Interface}" height="25" >$PORT</td>);
+        print qq (<td align="center" width="$titleWidth{Name}" height="25" >$isp->{ispname}</td>);
+        print qq (<td align="center" width="$titleWidth{Gateway}" height="25" >$isp->{gateway}</td>);
+        print qq (<td align="center" width="$titleWidth{SystemIP}" height="25" >$isp->{systemip}</td>);
+        print qq (<td align="center" width="$titleWidth{HealthcheckIP}" height="25" >$isp->{target}</td>);
+        print qq (<td align="center" width="$titleWidth{Subnet}" height="25" >$isp->{subnet}</td>);
+        print qq (<td align="center" width="$titleWidth{DOWN_UP}" height="25" >$isp->{download}/$isp->{upload}</td>);
+        
+       
+     #**************************************************************************************
+     # Version
+     #**************************************************************************************   
+        my $IPver = ($isp->{version})?("IPv6"):("IPv4");
+        print qq (<td align="center" width="$titleWidth{version}" height="25">$IPver</td>);
+     #***************************************************************************************
+     # Additional IP 
+     #***************************************************************************************   
+        if ( $isp->{alias_subnet1} )
+        {
+            #my @ip=split(/\// ,$isp->{alias_subnet1});
+            
+            print qq ( <td align="center" width="$titleWidth{Add_IP1}" height="25"> );
+            print qq ( $isp->{alias_subnet1} );
+            print qq ( </td> );
+            
+            #print qq ( <td align="center" width="$titleWidth{Add_1}" height="25"> );
+            #my $show_status = runCommand( command=>'/usr/local/apache/qb/setuid/alive.sh' ,params=>$ip[0] );
+    	    #print qq ( <span id=$ip[0] ><img src="image/$show_status" width="14" height="14" border="0"/></span> );
+            #print qq ( </td> );
+        }
+        else 
+        { 
+            print qq ( <td align="center" width="$titleWidth{Add_IP1}" height="25"> );
+            print qq ( none );
+            print qq ( </td> );
+            
+            #print qq ( <td align="center" width="$titleWidth{Add_1}" height="25"> );
+            #print qq ( none );
+            #print qq ( </td> );
+        }
+        
+     #***************************************************************************************
+     # Additional IP2
+     #***************************************************************************************   
+        if ( $isp->{alias_subnet2} )
+        {
+            #my @ip=split(/\// ,$isp->{alias_subnet2});
+            
+            print qq (<td align="center" width="$titleWidth{Add_IP2}" height="25">);
+            print qq ( $isp->{alias_subnet2} );
+            print qq ( </td> );
+            
+            
+            #print qq (<td align="center" width="$titleWidth{Add_2}" height="25">);
+            #my $show_status = runCommand(command=>'/usr/local/apache/qb/setuid/alive.sh' ,params=>$ip[0]);
+            #print qq (<span id=$ip[0] ><img src="image/$show_status" width="14" height="14" border="0"/></span>);
+            #print qq ( </td> );
+        }
+        else 
+        { 
+            print qq ( <td align="center" width="$titleWidth{Add_IP2}" height="25"> );
+            print qq ( none );
+            print qq ( </td> );
+            
+            #print qq ( <td align="center" width="$titleWidth{Add_2}" height="25"> );
+            #print qq ( none );
+            #print qq ( </td> );
+        }
+
+     #***************************************************************************************
+     # 
+     #***************************************************************************************   
+        my $show_nic_speed;
+        if ( $isp->{nic_speed} eq '1000F'){ $show_nic_speed = '1000Mbps-Full Duplex'; }
+        elsif ( $isp->{nic_speed} eq '100F'){ $show_nic_speed = '100Mbps-Full Duplex'; }
+        elsif ( $isp->{nic_speed} eq '100H'){ $show_nic_speed = '100Mbps-Half Duplex'; }
+        elsif ( $isp->{nic_speed} eq '10F'){ $show_nic_speed = '10Mbps-Full Duplex'; }
+        elsif ( $isp->{nic_speed} eq '10H'){ $show_nic_speed = '10Mbps-Half Duplex'; }
+        elsif ( $isp->{nic_speed} eq ''){ $show_nic_speed = 'none'; }
+        elsif ( $isp->{nic_speed} eq 'Auto'){ $show_nic_speed = $isp->{nic_speed}; }
+        print qq (<td align="center" width="$titleWidth{nic_speed}" height="25" >$show_nic_speed</td>);
+        
+        my $show_poxyip = ( $isp->{poxyip} ) ? ( $isp->{poxyip} ) : 'none';
+        print qq (<td align="center" width="$titleWidth{PoxyIP}" height="25" >$show_poxyip</td>);
+        my $show_poxyname = ( $isp->{poxyname} ) ? ( $isp->{poxyname} ) : 'none';
+        print qq (<td align="center" width="$titleWidth{PoxyName}" height="25" >$show_poxyname</td>);
+        my $show_poxyport = ( $isp->{poxyport} ) ? ( $isp->{poxyport} ) : 'none';
+        print qq (<td align="center" width="$titleWidth{PoxyPort}" height="25" >$show_poxyport</td>);
+       
+       
+       #print qq (<td align="center" width="$titleWidth{Edit}" height="25" >);
+
+        $lineCount++;
+    }
+    print qq (</table></div>);
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    #print qq (<input class="qb" type="button" width="100" value="Create" onclick="NewTMV();">);
+    print qq (<input type="button" class="qb" name="NEW" value="$qblang[80]" title="Create a New ISP Entry" onClick="newISP();">);
+    print qq(<input type="hidden" name="isp" value="">);
+}
+#showISPList
+
+#=============================================================================================
+
+sub basicScript_1
+{
+    print << "BASIC_SCRIPT_1";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="qbjs/sorttable.js"></script>
+   <script type="text/javascript" src="qbjs/jquery.js"></script>
+   <script language="javascript">
+
+    var myform;
+    var queryReqHandler;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function ajax()
+    {
+        
+        i=(new Date()).getTime();
+        if (window.XMLHttpRequest)
+        {
+        queryReqHandler=new XMLHttpRequest(); 
+        }
+        if (window.ActiveXObject)
+        {
+	queryReqHandler = new ActiveXObject("Microsoft.XMLHTTP");
+	}
+  	\$.get( "wanstatus.cgi", {a:i}, function
+  	    (msg){
+  	    	    if ( msg != '' )
+  	    	    {
+			var len=msg.length;
+			msg=msg.slice(0,len-1);
+			msg=msg.split(",");
+			for (var n=0; n<(msg.length); n+=2)
+			{
+       		    	    document.getElementById(msg[n]).innerHTML="<img src='image/"+msg[n+1]+"' width='14' height='14' border='0' />";
+			}
+			setTimeout( "ajax()",20000 );
+  	    	    }
+  		 }
+  	)
+    }
+
+    ajax();
+
+
+    function NewTMV() { window.top.mainFrame.location.href="newtmv.cgi"; }
+    
+    function delISP()
+    {
+        if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )
+        {
+            myform.action.value='DELISP';
+            myform.submit();
+            for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+        }
+    }
+    function enabledisp(ispid)
+    {
+      //qbConfirm(null,ispid);
+        myform.action.value='ON';
+        myform.isp.value=ispid;
+        myform.submit();
+        for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+    function disabledisp(ispid)
+    {
+      //qbConfirm(null,ispid);
+        myform.action.value='OFF';
+        myform.isp.value=ispid;
+        myform.submit();
+        for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+    function setISPid(ispid)
+    {
+        //if ( ispid==myform.isp.value ) return;
+        //myform.isp.value=ispid;
+        //myform.submit();
+        //qbConfirm( null ,ispid );
+        window.top.mainFrame.location.href="editbasic.cgi?isp="+ispid;
+            for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+    function newISP()
+    {
+        var type=qbCreateISP(null, 'Which type of ISP to create ?');
+
+        switch (type)
+        {
+            case 1:
+                //myform.isptype.value="normal";
+                window.top.mainFrame.location.href="editbasic.cgi?action=NEWISPp?isptype=normal";
+                break;
+            case 2:
+            	//
+            	// 
+            	//  YES Huddle 4G Wimax
+            	//
+            	//
+            	//window.top.mainFrame.location.href="editbasic.cgi?action=NEWISPp?isptype=wimax";
+            	detectWimax();
+                break;
+            case 3:
+                myform.isptype.value="iwan"; 
+            case 4:
+                return;
+            case 5:
+		//
+		// 2005-0707 Hammer
+		//     New site-to-site "Base-Tunnel" (XRIO, Jesse).
+		//     "Base-Tunnel" is really "tunnel" but MTU = 1420.
+		//
+                myform.basetunnel.value="1"; 
+                myform.isptype.value="tunnel"; 
+                break;
+            case 6:
+                // 2005-0921 Brian
+                // PPPoE
+                //myform.isptype.value="pppoe";
+                window.top.mainFrame.location.href="editbasic.cgi?action=NEWISPp?isptype=pppoe";
+                break;
+            case 7:
+                // 2006-0207 Brian
+                // DHCP
+                //myform.isptype.value="dhcp";
+                window.top.mainFrame.location.href="editbasic.cgi?action=NEWISPp?isptype=dhcp";
+                break;
+            case 8:
+                // 2008-0801 Brian
+                // PPTP
+                //myform.isptype.value="pptp";
+                window.top.mainFrame.location.href="editbasic.cgi?action=NEWISPp?isptype=pptp";
+                break;
+            case 9:
+                //myform.isptype.value="ipsec";
+                window.top.mainFrame.location.href="editbasic.cgi?action=NEWISPp?isptype=ipsec";
+                break;
+            case 10:
+                //myform.isptype.value="pppoe";
+                //myform.flag_3g.value="1";
+                window.top.mainFrame.location.href="editbasic.cgi?action=NEWISPp?isptype=pppoe?flag_3g=1";
+                break;
+            case 11:
+                // 20110209 Brian L2TP
+                //myform.isptype.value="l2tp";
+                window.top.mainFrame.location.href="editbasic.cgi?action=NEWISPp?isptype=l2tp";
+                break;
+            case 12:
+                // 20110209 Brian DMV
+                myform.isptype.value="dtunnel";
+                break;
+        }
+    }
+    
+    function detectWimax()
+    {
+    	var i=(new Date()).getTime();
+    	var a=0;
+    	if (window.XMLHttpRequest)
+    	{
+    	    queryReqHandler=new XMLHttpRequest();
+    	}
+    	else if (window.ActiveXObject)
+    	{
+    	    queryReqHandler=new ActiveXObject("Microsoft.XMLHTTP");
+    	}
+    	
+    	queryReqHandler.onreadystatechange = fno2;
+    	queryReqHandler.open("GET","detectWimax.cgi?time="+i,true);
+    	queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+    	var str='';
+    	queryReqHandler.send(str);
+    	
+    }
+    function fno2()
+    {
+        if( (queryReqHandler.readyState == 4) && (queryReqHandler.status == 200) )
+        {
+                var msg=queryReqHandler.responseText;
+                if ( msg != 0) {qbConfirm(null, "Not found device !"); return;}
+            	window.top.mainFrame.location.href="editbasic.cgi?action=NEWISP?isptype=wimax";
+        }
+    }
+    
+
+                          
+    </script>
+
+BASIC_SCRIPT_1
+}
+#basicScript_1
+
+sub maintainShowbasic
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+
+    my $ispref=XMLread('/usr/local/apache/qbconf/basic.xml');
+    my $active_ispref=XMLread('/usr/local/apache/active/basic.xml');
+    my $isplist=$ispref->{isp};
+    my $active_isplist=$active_ispref->{isp};
+    my $target;
+    my $active_target;
+    my @available_iplist;
+
+    #--- move the pointer $target to the isp we want to deal with ...
+    foreach my $item ( @$isplist ) {  if ( $item->{iid} eq $action{iid} ) { $target=$item; last; } }
+    foreach my $active_item ( @$active_isplist ) { if ( $active_item->{iid} eq $action{iid} ) { $active_target=$active_item; last; } }
+    #----- set undefined fields of %action to EMPTY --------------------
+    
+    foreach my $item (keys %action ) {
+
+	#
+        # 2005-0707 Hammer
+        #    Don't do this to the field "basetunnel".
+        #    "basetunnel" is not defined in basic.xml,
+	#    but it's used in $action.
+	#
+
+        if ( $item eq "basetunnel" ) { next; }
+	if ( !defined($action{$item}) ) { $action{$item} =''; }
+    }
+
+    #
+    # enabled and disable function
+    # 
+    # interface : eth ,ppp ,usb
+    #
+    if ( $action{action} eq "ON" )
+    {
+
+        $target->{alive}='1';
+        $target->{enabled}='1';
+        $active_target->{alive}='1';
+        $active_target->{enabled}='1';
+        
+	if ($target->{nic} =~m/eth/ )
+	{
+            runCommand(command=>'cp', params=>'/usr/local/apache/qbconf/fwmark.xml /usr/local/apache/qbconf/t_fwmark.xml');
+            runCommand(command=>'chmod', params=>'777 /usr/local/apache/qbconf/t_fwmark.xml');
+	    my $fwmark=XMLread($gPATH."t_fwmark.xml");
+	    my $qb_fwmark_array=$fwmark->{qb}->[0]->{mark};
+	    my $from_fwmark_array=$fwmark->{from}->[0]->{mark};
+	    my $sys_fwmark_array=$fwmark->{sys}->[0]->{mark};
+	    my $ISPIID='ISP'.$target->{iid};
+	    my @VALUE_ARRAY;
+	    
+	    foreach my $mark (@$qb_fwmark_array)
+	    {
+	        if ( $mark->{service} eq $ISPIID )
+	        {
+		    my $value=$mark->{value};
+		    $value=lc($value);
+		    push( @VALUE_ARRAY, $value);
+	        }
+	    }
+	    foreach my $mark (@$from_fwmark_array)
+	    {
+	        if ( $mark->{hookpoint} eq "PREROUTING" )
+	        {
+		    my $value=lc($mark->{value});
+		    push( @VALUE_ARRAY, $value );
+	        }
+	    }
+	    foreach my $mark (@$sys_fwmark_array)
+	    {
+	        if ( $mark->{hookpoint} eq "OUTPUT" )
+	        {
+		    my $value=lc($mark->{value});
+		    push( @VALUE_ARRAY, $value );
+	        }
+	    }
+	    foreach my $tmp ( @VALUE_ARRAY )
+	    {
+            runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-A eth '.$target->{nic}.' '.$target->{systemip}.' '.$tmp.' '.$target->{gateway});
+	    }
+            runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-D dropip '.$target->{nic}.' '.$target->{systemip}.' '.$tmp.' '.$target->{gateway});
+            runCommand(command=>'sleep', params=>'1');
+            runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-D dropip '.$target->{nic}.' '.$target->{systemip}.' '.$tmp.' '.$target->{gateway});
+            runCommand(command=>'sleep', params=>'1');
+            runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-D dropip '.$target->{nic}.' '.$target->{systemip}.' '.$tmp.' '.$target->{gateway});
+            runCommand(command=>'rm', params=>'/usr/local/apache/qbconf/t_fwmark.xml');
+	}
+	
+	elsif ( $target->{nic} =~m/usb/ || $target->{nic} =~m/ppp/ || $target->{pppoeportdev} =~m/ttyUSB/ || $target->{nic} =~m/SIM/)
+	{
+            runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-D ppp '.$target->{nic});
+            runCommand(command=>'sleep', params=>'1');
+            runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-D ppp '.$target->{nic});
+            runCommand(command=>'sleep', params=>'1');
+            runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-D ppp '.$target->{nic});
+	}
+	else
+	{
+        }
+    }
+    elsif ( $action{action} eq "OFF" ) 
+    {
+
+        $target->{alive}='0';
+        $target->{enabled}='0';
+        $active_target->{alive}='0';
+        $active_target->{enabled}='0';
+	    
+	if ($target->{nic} =~m/eth/ )
+	{
+            runCommand(command=>'cp', params=>'/usr/local/apache/qbconf/fwmark.xml /usr/local/apache/qbconf/t_fwmark.xml');
+            runCommand(command=>'chmod', params=>'777 /usr/local/apache/qbconf/t_fwmark.xml');
+	    my $fwmark=XMLread($gPATH."t_fwmark.xml");
+	    my $qb_fwmark_array=$fwmark->{qb}->[0]->{mark};
+	    my $from_fwmark_array=$fwmark->{from}->[0]->{mark};
+	    my $sys_fwmark_array=$fwmark->{sys}->[0]->{mark};
+	    my $ISPIID='ISP'.$target->{iid};
+	    my @VALUE_ARRAY;
+	    
+	    foreach my $mark (@$qb_fwmark_array)
+	    {
+	        if ( $mark->{service} eq $ISPIID )
+	        {
+		    my $value=$mark->{value};
+		    $value=lc($value);
+		    push( @VALUE_ARRAY, $value);
+	        }
+	    }
+	    foreach my $mark (@$from_fwmark_array)
+	    {
+	        if ( $mark->{hookpoint} eq "PREROUTING" )
+	        {
+		    my $value=lc($mark->{value});
+		    push( @VALUE_ARRAY, $value );
+	        }
+	    }
+	    foreach my $mark (@$sys_fwmark_array)
+	    {
+	        if ( $mark->{hookpoint} eq "OUTPUT" )
+	        {
+		    my $value=lc($mark->{value});
+		    push( @VALUE_ARRAY, $value );
+	        }
+	    }
+	    foreach my $tmp ( @VALUE_ARRAY )
+	    {
+	        #print qq ($tmp );
+                runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-D eth '.$target->{nic}.' '.$target->{systemip}.' '.$tmp.' '.$target->{gateway});
+	    }
+                runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-I dropip '.$target->{nic}.' '.$target->{systemip}.' '.$tmp.' '.$target->{gateway});
+    
+            runCommand(command=>'rm', params=>'/usr/local/apache/qbconf/t_fwmark.xml');
+	}
+
+	elsif ( $target->{nic} =~m/usb/ || $target->{nic} =~m/ppp/ || $target->{pppoeportdev} =~m/ttyUSB/ || $target->{nic} =~m/SIM/)
+	{
+            runCommand(command=>'/usr/local/apache/qb/setuid/iptablescommand.sh', params=>'-I ppp '.$target->{nic});
+	}
+	else
+	{
+	}
+	  
+    }
+    XMLwrite($active_ispref, $gACTIVEPATH."basic.xml");
+    XMLwrite($ispref, $gPATH."basic.xml");
+}
+
+#maintainShowbasic
+
+#
+1

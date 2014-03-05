@@ -1,0 +1,323 @@
+###############################################################################################
+#                                           Wireless Management Console
+###############################################################################################
+sub showWirelessinit 
+{
+    my (%action)=@_;
+    my $wirelessinit=XMLread($gPATH.'wireless.xml');
+    
+    # Initializing Variables
+
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[117] ); #</td></tr>);
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    print qq (<tr bgcolor="112233"><td colspan="3" class="body" >$qblang[118]:</td></tr>);
+            
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[119]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $wirelessinit->{enablewirelesslan} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="enablewirelesslan"  $status >);
+    print qq (</td>);
+    print qq (</tr>);
+
+    #print qq (<tr><td>WireStatus</td><td>$status</td></tr>);
+    #print qq (<tr><td>Enable Wireless</td><td><input name="enablewirelesslan" class="qbtext" style="width:130" value="$wirelessinit->{ssid}" title="SSID"></td></tr>);
+    
+    print qq (<tr><td class="body"  valign="top" align="left">$qblang[120]</td><td><input name="ssid" class="qbtext" style="width:130" value="$wirelessinit->{ssid}" title="SSID"></td></tr>);
+        
+    print qq (<tr><td class="body"  valign="top" align="left">$qblang[121]</td><td><select name="hidessid" class="qbopt" style="width:130">);
+    foreach my $ssidmode (Disabled,Enabled)
+    {
+        my $status=($wirelessinit->{hidessid} eq $ssidmode) ? ('selected'): ('');
+        print qq (<option value="$ssidmode" $status>$ssidmode</option>);
+    }
+
+    my %hswirelessmode= ( "0"=>"802.11 B/G", "1"=>"802.11 B", "4"=>"802.11 G", "6"=>"802.11 N", "7"=>"802.11 G/N", "9"=>"802.11 B/G/N");
+    print qq (<tr><td class="body"  valign="top" align="left">$qblang[122]</td><td><select name="wirelessmode" class="qbopt" style="width:130">);
+    foreach my $wirelessmode (sort keys %hswirelessmode)
+    {
+        my $status=($wirelessinit->{wirelessmode} eq $wirelessmode) ? ('selected'): ('');
+        print qq (<option value="$wirelessmode" $status>$hswirelessmode{$wirelessmode}</option>);
+    }
+
+    print qq (<tr><td class="body"  valign="top" align="left">$qblang[123]</td><td><select name="channelmode" class="qbopt" style="width:130">);
+    foreach my $channelmode (Auto,1..14)
+    {
+        my $status=($wirelessinit->{channelmode} eq $channelmode) ? ('selected'): ('');
+        print qq (<option value="$channelmode" $status>$channelmode</option>);
+    }
+    
+#    if ( $action{channelmode} ne 'Auto' )
+#    {
+      my $channelno=runCommand(command=>'/sbin/iwconfig ', params=>qq(ra0 \|grep Channel=\|awk \'\{print \$2\}\'\|sed -e \"s\/Channel=//\") );
+      #print qq (<tr><td>Operation Channel</td><td>$action{channelmode}</td></tr>);
+      print qq (<tr><td class="body"  valign="top" align="left">$qblang[124]</td><td class="body">$channelno</td></tr>);
+#    }
+    
+    ## for Wireless Security setting...
+    print qq (<tr bgcolor="112233"><td colspan="3" class="body">$qblang[125]:</td></tr>);
+    if ( !$action{encryptmode} ) { $action{encryptmode}=$wirelessinit->{encryptmode}; }    
+    my %hsencryptmode= ( "NONE"=>"No Encryption", "WEP"=>"Wired Equivalent Privacy", "TKIP"=>"Temporal Key Integrity Protocol", "AES"=>"Advanced Encryption Standard");
+    print qq (<tr><td class="body"  valign="top" align="left">$qblang[126]</td><td><select name="encryptmode" class="qbopt" onChange="goSubmit()" style="width:130">);
+    foreach my $encryptmode (keys %hsencryptmode)
+    {
+        my $status=($action{encryptmode} eq $encryptmode) ? ('selected'): ('');
+        print qq (<option title="$hsencryptmode{$encryptmode}" value=$encryptmode $status>$encryptmode</option>);
+    }
+    if ( $action{encryptmode} eq 'WEP' )
+    {
+        if ( !$action{authmode} )
+        { 
+         if ( $wirelessinit->{authmode} ){$action{authmode}=$wirelessinit->{authmode}; }
+         else {$action{authmode}="SHARED"; }
+        } 
+        my %hsauthmode= ( "OPEN"=>"Open System", "SHARED"=>"Shared Key", "WEPAUTO"=>"Auto(depend on client)");
+        print qq (<tr><td class="body"  valign="top" align="left" >$qblang[127]</td><td><select name="authmode" class="qbopt" onChange="goSubmit()" style="width:130">);
+        foreach my $authmode (sort keys %hsauthmode)
+        {
+            my $status=($action{authmode} eq $authmode) ? ('selected'): ('');
+            print qq (<option value="$authmode" $status title=$authmode >$hsauthmode{$authmode}</option>);
+        }
+        
+        if ( $action{authmode} ne 'OPEN' )
+        {
+         print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+         print qq (<tr bgcolor="112233"><td colspan="3" class="body" >$qblang[110]:</td></tr>);
+         print qq (<tr><td colspan="2" class="body">$qblang[128]</td></tr>);
+         print qq (<tr><td colspan="2" class="body">$qblang[129]</td></tr>);
+#         print qq (<tr><td colspan="2">You can enter:</td></tr>);
+         print qq (<tr bgcolor="112233"><td colspan="3" class="body" >$qblang[130]:</td></tr>);
+         print qq (<tr><td colspan="2" class="body">(1) $qblang[131] </td></tr>);
+         print qq (<tr><td colspan="2" class="body">(2) $qblang[132] </td></tr>);
+         print qq (<tr><td class="body" align="left"><br>);
+=cut
+         print qq (<tr><td class="body" align="left">Key Type:<br>);
+         print qq (<td class="body" align="left">);
+         my $status=( $action{key_ascii} eq "1" ) ? ('checked') : ('');
+         print qq (<input type="radio" name="key_ascii" value="1" $status>ASCII);
+         my $status=( $action{key_ascii} eq "0" ) ? ('checked') : ('');
+         print qq (<input type="radio" name="key_ascii" value="0" $status>Hexadecimal);
+         print qq (</td></tr>);
+=cut
+         print qq (<tr>);
+         print qq (<td class="body"  valign="top" align="left">);
+         if ( !$action{wep_key_num} ) { $action{wep_key_num}=$wirelessinit->{wep_key_num}; }    
+         my $status=( $action{wep_key_num} eq "1" ) ? ('checked') : ('');
+         print qq (<input type="radio" name="wep_key_num" value="1" $status>$qblang[133] 1 :);
+         print qq (</td>);
+         print qq (<td class="body"  valign="top" align="left">);
+         print qq (<INPUT type="text" maxlength="26" class="qbtext" name="wepkey1" value="$wirelessinit->{wepkey1}" onChange="CheckStr(this.value)">);
+         print qq (</td>);
+         print qq (</tr>); 
+
+         print qq (<tr>);
+         print qq (<td class="body"  valign="top" align="left">);
+         my $status=( $action{wep_key_num} eq "2" ) ? ('checked') : ('');
+         print qq (<input type="radio" name="wep_key_num" value="2" $status>$qblang[133] 2 :);
+         print qq (</td>);
+         print qq (<td class="body"  valign="top" align="left">);
+         print qq (<INPUT type="text" maxlength="26" class="qbtext" name="wepkey2" value="$wirelessinit->{wepkey2}" onChange="CheckStr(this.value)">);
+         print qq (</td>);
+         print qq (</tr>); 
+
+         print qq (<tr>); 
+         print qq (<td class="body"  valign="top" align="left">);
+         my $status=( $action{wep_key_num} eq "3" ) ? ('checked') : ('');
+         print qq (<input type="radio" name="wep_key_num" value="3" $status>$qblang[133] 3 :);
+         print qq (</td>);
+         print qq (<td class="body"  valign="top" align="left">);
+         print qq (<INPUT type="text" maxlength="26" class="qbtext" name="wepkey3" value="$wirelessinit->{wepkey3}" onChange="CheckStr(this.value)">);
+         print qq (</td>);
+         print qq (</tr>); 
+
+         print qq (<tr>); 
+         print qq (<td class="body"  valign="top" align="left">);
+         my $status=( $action{wep_key_num} eq "4" ) ? ('checked') : ('');
+         print qq (<input type="radio" name="wep_key_num" value="4" $status>$qblang[133] 4 :);
+         print qq (</td>);
+         print qq (<td class="body"  valign="top" align="left">);
+         print qq (<INPUT type="text" maxlength="26" class="qbtext" name="wepkey4" value="$wirelessinit->{wepkey4}" onChange="CheckStr(this.value)">);
+         print qq (</td>);
+         print qq (</tr>); 
+        }
+    }
+    elsif ( $action{encryptmode} eq 'TKIP' || $action{encryptmode} eq 'AES' )
+    {
+        if ( !$action{authmode} ) { $action{authmode}=$wirelessinit->{authmode}; }    
+        #my %hsauthmode= ( "WPA"=>"WPA", "WPA2"=>"WPA2", "WPA1WPA2"=>"WPA1/WPA2", "WPAPSK"=>"WPAPSK", "WPA2PSK"=>"WPA2PSK", "WPAPSKWPA2PSK"=>"WPAPSK/WPA2PSK");
+        my %hsauthmode= ( "WPAPSK"=>"WPAPSK", "WPA2PSK"=>"WPA2PSK", "WPAPSKWPA2PSK"=>"WPAPSK/WPA2PSK");
+        print qq (<tr><td class="body">$qblang[127]</td><td><select name="authmode" class="qbopt" style="width:130">);
+        foreach my $authmode (sort keys %hsauthmode)
+        {
+            my $status=($action{authmode} eq $authmode) ? ('selected'): ('');
+            print qq (<option value="$authmode" $status title=$authmode >$hsauthmode{$authmode}</option>);
+        }
+        
+         print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+         print qq (<tr bgcolor="112233"><td colspan="3" class="body" >$qblang[104]:</td></tr>);
+#         print qq (<tr><td colspan="3"><hr size="1">Notes:</td></tr>);
+         print qq (<tr><td colspan="2" class="body">$qblang[134]</td></tr>);
+         print qq (<tr><td colspan="2" class="body">$qblang[135]</td></tr>);
+#         print qq (<tr><td colspan="2">You can enter:</td></tr>);
+         print qq (<tr bgcolor="112233"><td colspan="3" class="body" >$qblang[130]:</td></tr>);
+         print qq (<tr><td colspan="2" class="body">(1) $qblang[136] </td></tr>);
+         print qq (<tr><td colspan="2" class="body">(2) $qblang[137] ("0-9","a-f","A-F").</td></tr>);
+         print qq (<tr><td class="body" align="left"><br>);
+=cut
+         print qq (<tr><td class="body" align="left">Key Type:<br>);
+         print qq (<td class="body" align="left">);
+         my $status=( $action{wpa_key_ascii} eq "1" ) ? ('checked') : ('');
+         print qq (<input type="radio" name="wpa_key_ascii" value="1" $status>ASCII);
+         my $status=( $action{wpa_key_ascii} eq "0" ) ? ('checked') : ('');
+         print qq (<input type="radio" name="wap_key_ascii" value="0" $status>Hexadecimal);
+         print qq (</td></tr>);
+=cut
+         print qq (<tr>);
+         print qq (<td class="body"  valign="top" align="left">);
+         print qq ($qblang[138] :);
+         print qq (</td>);
+         print qq (<td class="body"  valign="top" align="left">);
+         print qq (<INPUT type="text" maxlength="63" class="qbtext" name="wpakey" value="$wirelessinit->{wpakey}" onChange="CheckKeyStr(this.value)">);
+         print qq (</td>);
+         print qq (</tr>); 
+
+    }
+    elsif ( $action{encryptmode} eq 'NONE' )
+    {
+        if ( !$action{authmode} ) { $action{authmode}=$wirelessinit->{authmode}; }    
+        my %hsauthmode= ( "OPEN"=>"Open System");
+        print qq (<tr><td class="body">$qblang[127]</td><td><select name="authmode" class="qbopt" onChange="goSubmit()" style="width:130">);
+        foreach my $authmode (sort keys %hsauthmode)
+        {
+            my $status=($action{authmode} eq $authmode) ? ('selected'): ('');
+            print qq (<option value="$authmode" $status title=$authmode >$hsauthmode{$authmode}</option>);
+        }
+    }
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+            
+    #************************************ Command Button  ********************************************
+    print qq (<tr>);
+    print qq (<td colspan="2" align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[139]" title="Apply All Parameters now !" onClick="goSubmit('SAVE')" style="width:120">);
+    print qq (</td></tr>);
+    print qq (</table>);
+
+}
+#showConsole
+
+#======================================================================================================================
+sub wirelessinitScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+                                                            
+    function CheckKeyStr(str)
+    {
+	if (!str) alert("Empty String!!!");
+	if (str.length <= '7' || str.length >= '65')
+	{
+           alert("Length Error!!!");
+	   return false;
+	}
+	else if (str.length == '64')
+	{
+         for (var i=0;i < str.length;i++)
+         {
+ 	   if (str.charAt(i) <= '9' && str.charAt(i) >= '0') continue;
+ 	   if (str.charAt(i) <= 'F' && str.charAt(i) >= 'A') continue;
+           if (str.charAt(i) <= 'f' && str.charAt(i) >= 'a') continue;
+           alert("String Format Error !!!");
+	   return false;
+         }
+        }
+    }
+
+    function CheckStr(str)
+    {
+	if (!str) alert("Empty String!!!");
+	if (str.length == '5' || str.length == '13')
+	{
+	   return true;
+	}
+	else if (str.length == '10' || str.length == '26')
+	{
+         for (var i=0;i < str.length;i++)
+         {
+ 	   if (str.charAt(i) <= '9' && str.charAt(i) >= '0') continue;
+ 	   if (str.charAt(i) <= 'F' && str.charAt(i) >= 'A') continue;
+           if (str.charAt(i) <= 'f' && str.charAt(i) >= 'a') continue;
+           alert("String Format Error !!!");
+	   return false;
+         }
+	}
+	else{alert("Length Error!!!");return false;}
+    }
+                                                                                                                                    
+    </script>
+SCRIPT
+}
+#wirelessinitScript
+
+
+#======================================================================================================================
+#maintainWirelessinit( %action )
+sub maintainWirelessinit 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $wirelessinit=XMLread($gPATH.'wireless.xml');
+    my $IS_EVERYTHING_OK=1;
+
+    if ( $action{action}=~m/^SAVE$/ ) 
+    {
+        $wirelessinit->{enablewirelesslan}=$action{enablewirelesslan};
+        $wirelessinit->{ssid}=$action{ssid};
+        $wirelessinit->{hidessid}=$action{hidessid};
+        $wirelessinit->{wirelessmode}=$action{wirelessmode};
+        $wirelessinit->{channelmode}=$action{channelmode};
+        $wirelessinit->{encryptmode}=$action{encryptmode};
+        $wirelessinit->{authmode}=$action{authmode};
+        $wirelessinit->{key_ascii}=$action{key_ascii};
+        $wirelessinit->{wepkey1}=$action{wepkey1};
+        $wirelessinit->{wepkey2}=$action{wepkey2};
+        $wirelessinit->{wepkey3}=$action{wepkey3};
+        $wirelessinit->{wepkey4}=$action{wepkey4};
+        $wirelessinit->{wep_key_num}=$action{wep_key_num};
+        $wirelessinit->{wpakey}=$action{wpakey};
+        $wirelessinit->{wpa_key_ascii}=$action{wpa_key_ascii};
+        
+        LogUserAction( action=>'APPLYWIRELESSLAN', enablewirelesslan=>$action{enablewirelesslan}, ssid=>$action{ssid}, hidessid=>$action{hidessid}, wirelessmode=>$action{wirelessmode}, channelmode=>$action{channelmode}, encryptmode=>$action{encryptmode}, authmode=>$action{authmode} );
+    }
+    
+    #-------updating wirelessinit.xml------------------------ 
+    if ( $IS_EVERYTHING_OK eq '1' )
+    {
+        XMLwrite($wirelessinit, $gPATH."wireless.xml");
+    }
+
+    #@dep
+    runCommand(command=>'/usr/local/apache/qb/setuid/do_qbwirelessinit.pl', params=>'');
+
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    qbSync();
+}
+#maintainPptpinit
+#
+1

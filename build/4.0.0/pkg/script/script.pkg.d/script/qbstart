@@ -1,0 +1,38 @@
+#!/bin/bash
+
+CONFPATH=/mnt/qb/conf
+SETPATH=/mnt/qb/conf/set
+XMLPATH=/usr/local/apache/qbconf
+ACTIVEPATH=/usr/local/apache/active
+INITPATH=/usr/local/apache/config
+HACONFPATH=/mnt/qb/conf/ha
+QBREG_FILE=/opt/qb/conf/registry
+AFS_BOOT_FLAG_FILE=$HACONFPATH/AFSBOOT
+
+conf_dir=boot && HA_ON=$(awk "/ENABLEHA/ {print \$2}"  $QBREG_FILE) &&  [ $HA_ON = '1' ] && [ -f $AFS_BOOT_FLAG_FILE ] && conf_dir=$(cat $HACONFPATH/slave)
+
+if [ -f $SETPATH/$conf_dir/basic.xml ]; then
+    echo "$conf_dir tested OK ..."
+else
+    echo "$conf_dir not found ..."
+    conf_dir=boot
+fi
+
+# Load initial config form DOM to WORKING DIR 
+rm -rf ${INITPATH}
+mkdir ${INITPATH}
+cp $CONFPATH/*.xml ${INITPATH}
+chmod -R 777 ${INITPATH}
+
+# Load proper config set form DOM to QB UI Working DIR 
+rm -rf ${XMLPATH} 
+mkdir ${XMLPATH}
+cp $SETPATH/$conf_dir/* ${XMLPATH}
+chmod -R 777 ${XMLPATH}
+
+# Load proper config set form DOM to  QB Server Working DIR
+rm -rf ${ACTIVEPATH} 
+mkdir ${ACTIVEPATH}
+cp $SETPATH/$conf_dir/* ${ACTIVEPATH}
+chmod -R 777 ${ACTIVEPATH}
+

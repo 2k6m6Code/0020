@@ -1,0 +1,3 @@
+   1.To prevent user forget to type "Remote Gateway" & "Healthcheck IP" for ipsec tunnel.
+     It may cause QB stop the internet access.
+   The modification include :newipsec.lib

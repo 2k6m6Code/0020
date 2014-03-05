@@ -1,0 +1,1430 @@
+#!/bin/bash
+#
+# SYSINIT VERSION 2.2.0.0006 
+#
+#set -x
+PATH=$PATH:/opt/qb/sbin:/opt/qb/bin
+
+export PATH
+
+QB_HOME_DIR=/opt/qb
+QBREG_FILE=$QB_HOME_DIR/registry
+EZIO_PRINT="/opt/qb/qbwdt/ezio -c 1 -t "
+EZIO_PRINT_DEFAULT="/opt/qb/qbwdt/ezio"
+NF_MODULE_DIR=/lib/modules/2.6.22/kernel/net/netfilter
+NF_MODULE_V4_DIR=/lib/modules/2.6.22/kernel/net/ipv4/netfilter
+PERL_MODULE_DIR=/usr/lib/perl5/5.8.8
+QB_BIN_DIR=$QB_HOME_DIR/bin
+QB_APP_DIR=$QB_HOME_DIR/apps
+QB_MODULE_DIR=$QB_HOME_DIR/modules
+QB_SCRIPT_DIR=$QB_HOME_DIR/bin/script
+OVERVIEWCONFIG="/usr/local/apache/qbconf/overview.xml"
+# for Q-balancer command line interface
+QB_CLI_SYM_LINK=/etc/clipasswd
+QB_CLI_PASSWORD_FILE=/mnt/conf/password.cli
+SYSLOGCFG="/usr/local/apache/config/syslog.xml"
+QBTYPE=$(awk "/^TYPE/ {print \$2}"  $QBREG_FILE)
+
+
+#..........................................................
+# 20100211 Brian
+# * To check boot config is alive.
+#..........................................................
+if [ ! -d /mnt/qb/conf/set/boot ]
+then
+    cp -a /mnt/qb/conf/set/default /mnt/qb/conf/set/boot
+    echo $(date) "Lost the boot config,and use default config to recover it." >>/mnt/log/runway.log
+fi
+
+#..........................................................
+# 2012-0315 Brian
+# bring up the interfaces for qbserver to get the last one
+#..........................................................
+usbcount=0
+AllNICs=`/sbin/ip addr|grep -e eth[0-9]*:|awk -F ":" '{print $2}'`
+for nic in $AllNICs
+do 
+   ifconfig $nic up
+done
+
+#..........................................................
+# 2012-1228
+# Wimax interface up
+#..........................................................
+AllNICs=`/sbin/ip addr|grep -e usb[0-9]*:|awk -F ":" '{print $2}'`
+usbcount=0
+for nic in $AllNICs
+do 
+   ifconfig $nic up
+   usbcount=`expr $usbcount + 1`
+done
+echo $usbcount>/tmp/wimaxcount
+
+#..........................................................
+# 2007-0518 Brian
+# * Create Vlan Device.
+#..........................................................
+VLANCONFIG=/mnt/qb/conf/set/boot/vlan.xml
+count=3
+while test $count -gt 0
+do
+  eth=`awk NR==$count $VLANCONFIG|sed -e "s/  <vlan.*portnum=\"//"|sed -e "s/\".*//"|sed -e "s/<\/opt>//"`
+  vid=`awk NR==$count $VLANCONFIG|sed -e "s/  <vlan.*vid=\"//"|sed -e "s/\".*//"|sed -e "s/<\/opt>//"`
+  mac_addr=`awk NR==$count $VLANCONFIG|sed -e "s/  <vlan.*mac_addr=\"//"|sed -e "s/\".*//"|sed -e "s/<\/opt>//"`
+  vlannic=`awk NR==$count $VLANCONFIG|sed -e "s/  <vlan.*vlannic=\"//"|sed -e "s/\".*//"|sed -e "s/<\/opt>//"`
+  enablevlan=`awk NR==$count $VLANCONFIG|sed -e "s/  <vlan.*enablevlan=\"//"|sed -e "s/\".*//"|sed -e "s/<\/opt>//"`
+  if [ "$eth" = "" ];then
+     count=0
+  elif [ "$eth" != "" ] && [ "$enablevlan" = "1" ];then
+     /sbin/vconfig add $eth $vid
+     if [ "$mac_addr" != "" ];then
+     /sbin/ifconfig $vlannic hw ether $mac_addr
+     fi
+     /sbin/ifconfig $vlannic up
+     let count=$count+1
+  else
+     let count=$count+1
+  fi
+done
+
+#-------------------------------------------------------------------------
+# 2009-0723 Brian
+# * To change admin's password of SSH the same as UI.
+#-------------------------------------------------------------------------
+#ln -s /opt/qb/bin/script/chpasswd /usr/sbin/chpasswd #use busybox since V3.5.0-0092
+UIPWD=`cat /mnt/qb/conf/login.xml|grep \"root\"|sed -e "s/  <user.*password=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+echo "admin:$UIPWD" | /usr/sbin/chpasswd
+
+#-------------------------------------------------------------------------
+# 2005-0916 Brian
+# * To get new passwd file.
+#-------------------------------------------------------------------------
+
+PASSWD="/mnt/syspw"
+ETCPW="/etc/passwd"
+if [ -f $PASSWD ]; then
+   cp -af $PASSWD $ETCPW
+fi
+
+#-------------------------------------------------------------------------
+# 2005-1013 Brian
+# * To create a backdoor for XRIO.
+#-------------------------------------------------------------------------
+#
+#PASSWORD_PATH="/etc/passwd"
+#grep qbmanager /etc/passwd
+#if [[ $? = '1' ]] 
+#then
+#    cat >> $PASSWORD_PATH <<!
+#qbmanager:3xDntUOLYihbY:500:500::/home/admin:/bin/bash
+#!
+#fi
+#-------------------------------------------------------------------------
+# 2006-1102 Brian
+# * To change root password.
+#-------------------------------------------------------------------------
+ORGPASSWD="root\:\$1\$zXLR\.koT\$nfUC589DituJ4V4ZlCoqA1\:13829\:0\:99999\:7\:\:\:"
+NEWPASSWD="root\:\$1\$SMDbxVQX\$JQ2bwPUN9wT0WKz4dR\.0R0\:14361\:0\:99999\:7\:\:\:"
+
+sed -i -e '{
+          s/'$ORGPASSWD'/'$NEWPASSWD'/g
+}' /etc/shadow
+#if [ "$?" != "1" ];then
+#   cp -af $TMPPASSWD $PASSWORD_PATH
+#fi
+#rm -f $TMPPASSWD
+
+#/opt/qb/bin/script/modules.ipt start ( not used yet )
+
+# setting up some box sensitive kernel params
+/opt/qb/bin/script/qbsysctl.sh >/dev/null
+
+# ---- iptables, tc, named ----------
+# we put these utility in the rootfs in qb26 , since this is stable now
+# this qbapps.pkg is removed now , if need upgrade , still , can use this machanism
+
+if [ -f /mnt/qbapps.pkg ];
+then
+	tar zxfC /mnt/qbapps.pkg $QB_HOME_DIR 
+#	tar zxfC $QB_APP_DIR/libipt126.pkg	/usr/local/lib/
+#	ln -s $QB_APP_DIR/ntpdate 		/usr/sbin/ntpdate
+
+        #20100222 Brian to replace new syslog daemons
+         #rm -f /sbin/*logd
+         #ln -s $QB_APP_DIR/syslogd               /sbin/syslogd
+         #ln -s $QB_APP_DIR/klogd               /sbin/klogd
+        #20100325 Brian to fix dns resolve bug
+         #rm -f /sbin/wget
+         #ln -s $QB_APP_DIR/wget               /sbin/wget
+
+        #20110412 Brian to measure link speed by latency
+         #ln -s $QB_APP_DIR/bwping               /sbin/bwping
+         ln -s $QB_APP_DIR/latency.tst          /sbin/latency.tst
+
+        #20100630 Brian to fix traceroute can't work properly
+         #rm -f /usr/bin/traceroute  #busybox original
+         #ln -s $QB_APP_DIR/traceroute         /usr/bin/traceroute
+
+        #20111019 Brian guess original head for detectusb is better than busybox
+         #rm -f /usr/bin/head  #busybox original
+         #ln -s $QB_APP_DIR/head         /usr/bin/head
+
+        #20110629 To limit the CPU usage of analyser
+         #ln -s $QB_APP_DIR/cpulimit         /sbin/cpulimit
+         #ln -s $QB_APP_DIR/comm             /usr/bin/comm
+         ln -s $QB_APP_DIR/cpulimit_daemon.sh             /sbin/
+
+        #2009117 Brian to replace a new wget tool for measure tunnel speed function
+#        rm -f /sbin/wget
+#        ln -s $QB_APP_DIR/wget               /sbin/wget
+
+        #20090727 Brian For the tcpdump of qbcli
+ #       ln -s $QB_APP_DIR/tcpdump               /opt/qb/sbin/tcpdump
+ #       rm -f /usr/sbin/tcpdump
+ #       ln -s $QB_APP_DIR/tcpdump               /usr/sbin/tcpdump
+
+        #20090820 Brian New ip tool for 151 tunnel
+#        rm -f /sbin/ip
+#        ln -s $QB_APP_DIR/ip                    /sbin/ip
+
+        #20090903 Brian To support file can be attached in the mail
+#        ln -s $QB_APP_DIR/mutt                  /usr/bin/mutt
+#        mv $QB_APP_DIR/libncursesw.so*          /usr/lib/
+
+#	ln -s $QB_APP_DIR/iptables-save 	/usr/local/sbin/iptables-save
+#	ln -s $QB_APP_DIR/iptables-restore 	/usr/local/sbin/iptables-restore
+#	ln -s $QB_APP_DIR/tc 			/usr/local/sbin/tc
+#	ln -s $QB_APP_DIR/named 		/usr/sbin/named
+fi
+
+#sync
+
+# ---- QBalancer package --------
+tar zxfC /mnt/modules.pkg 	$QB_HOME_DIR
+tar zxfC /mnt/qbbin.pkg 	$QB_HOME_DIR
+tar zxfC /mnt/qbgui.pkg 	$QB_HOME_DIR
+tar zxfC /mnt/qbcli.pkg 	$QB_HOME_DIR
+#john qb26  we remove qbbrg pkg with related tool putting into the fs
+#tar zxfC /mnt/qbbrg.pkg        $QB_HOME_DIR
+if [ ! -f /usr/local/sbin/tc ]; then
+ln -s /sbin/tc /usr/local/sbin/tc
+fi
+sync
+#..........................................................
+#20130306
+#* SHANE 4TO6 
+#..........................................................
+#4TO6="/mnt/4to6.pkg"
+#if [ -f $4TO6 ]; then
+#   tar zxfC $4TO6 /tmp/
+#   mv /tmp/4to6/naptd /tmp/4to6/naptd-confmaker /usr/sbin/
+#   mv /tmp/4to6/totd /usr/local/sbin/
+#   mkdir -p /usr/lib/naptd
+#   cp /tmp/plugins /usr/lib/naptd/
+#   chmod 777 /usr/sbin/naptd /usr/sbin/naptd-confmaker /usr/local/sbin/totd
+#fi
+#..........................................................
+# 2007-0605 Brian
+# * layer 7 kernel modules.
+#..........................................................
+LAYER7="/mnt/layer7.pkg"
+if [ -f $LAYER7 ]; then
+   tar zxfC $LAYER7 /tmp/
+   #mv /tmp/layer7/libipt_layer7.so /lib/iptables/
+   #mv /tmp/layer7/ipt_layer7.ko $NF_MODULE_DIR 
+   mv /tmp/layer7/l7-protocols /etc/
+   rm -rf /tmp/layer7/
+fi
+#..........................................................
+# 2006-0529 Brian
+# * ddns software and config file.
+#..........................................................
+DDNSSET="/mnt/ddns.pkg"
+if [ -f $DDNSSET ]; then
+   tar zxfC $DDNSSET /usr/sbin/
+   mkdir /etc/ddclient/
+   mv /usr/sbin/ddclient.conf /etc/ddclient/
+   mv /usr/sbin/ddclient_sh /etc/ddclient/
+   #mv /usr/sbin/ddclient.conf.noip /etc/ddclient/
+fi
+#..........................................................
+# 2006-0123 Brian
+# * To exe. pppoe config file.
+#..........................................................
+PPPOESET="/mnt/pppoe.pkg"
+PPPOEXML="/opt/qb/bin/script/pppxml.pkg"
+if [ -f $PPPOESET ]; then
+   #if [ ! -d /mnt/pppoe ];then
+   #mkdir /mnt/pppoe
+   #fi
+   mkdir /tmp/ppplog  #Brian 20081002 ip-up need this directory
+   insmod /lib/modules/2.6.22/kernel/drivers/char/n_hdlc.ko
+   tar zxfC $PPPOESET /tmp/
+   #tar zxfC $PPPOEXML /mnt/qb/conf/set/default/
+   #/mnt/pppoe/pppboot 2>/tmp/pppbootlog
+
+   #To unpack pppoe's program
+   /bin/tar zxfC /tmp/pppoe/pppsbin.pkg /usr/sbin
+   /bin/tar zxfC /tmp/pppoe/pppetc.pkg /etc/
+   #/bin/cp -af /mnt/pppoe/pppoe  /etc/rc.d/init.d
+
+   HA_ONOFF=$(awk "/ENABLEHA/ {print \$2}"  $QBREG_FILE)
+   ENABLEWIRELESS=$(awk "/ENABLEWIRELESS/ {print \$2}"  $QBREG_FILE)
+ 
+   if [ "$HA_ONOFF" = "0" ]; then
+       if [ "$ENABLEWIRELESS" = "1" ]; then
+         /usr/sbin/pppboot &
+       else
+        /usr/sbin/pppboot
+       fi
+   fi
+fi
+
+#echo "sysinit is called "
+#$QB_BIN_DIR/flashled &
+
+# copy external perl modules into $PERL_MODULE_DIR
+#cp -f $QB_MODULE_DIR/checker.pm $PERL_MODULE_DIR
+#cp -f $QB_MODULE_DIR/checker.so $PERL_MODULE_DIR
+#chmod 755 $PERL_MODULE_DIR/checker.pm
+#chmod 755 $PERL_MODULE_DIR/checker.so
+
+#..........................................................
+# 2008-0820 Brian
+# * Upgrade some version before 3.0.0-0015 can't work,because Qtestkey() can't open newqbkey file
+#..........................................................
+NEWQBKEY="/mnt/conf/newqbkey"
+if [ ! -f $NEWQBKEY ]; then
+touch $NEWQBKEY
+fi
+
+
+#..........................................................
+# 2008-1001 Brian
+# * To exe. pptp server config file.
+#..........................................................
+PPTPSERPKG="/mnt/pptpser.pkg"
+#Enable PPTP Client
+ENABLEPPTPSERVER=$(awk "/ENABLEPPTPSERVER/ {print \$2}"  $QBREG_FILE)
+if [ "$ENABLEPPTPSERVER" = "1" ]
+then
+   tar zxfC $PPTPSERPKG /tmp/
+   mv /tmp/pptpser/pptpd.conf /etc/
+   mv /tmp/pptpser/options.pptpd /etc/ppp/
+   mv /tmp/pptpser/pptpd.ini /etc/init.d/pptpd
+   mv /tmp/pptpser/* /usr/local/sbin/
+   rmdir /tmp/pptpser
+   ACTIVEBASICXML=/usr/local/apache/active/pptpinit.xml
+   if [ -f $ACTIVEBASICXML ];then 
+    enablepptpd=`sed -e "s/<opt.*enableppd=\"//" $ACTIVEBASICXML|sed -e "s/\".*//"`
+    if [ $enablepptpd ] && [ -f /usr/local/sbin/pptpd ]
+    then
+       /usr/local/apache/qb/setuid/do_qbpptpinit.pl
+       /usr/local/apache/qb/setuid/do_qbpptpusr.pl
+       /usr/local/apache/qb/setuid/do_qbpppusr.pl
+       service pptpd start
+    fi
+   fi
+fi
+
+
+$QB_SCRIPT_DIR/qbstart
+
+# ---- syslogd daemon ----------
+# 1. check if /etc/syslog.conf is the same as /mnt/conf/syslog.con
+#    if it is not, we guess /etc/syslog.conf is not a symbolic link to /mnt/conf/syslog.con
+#    we have to make sure content in the two files are totally the same
+#    so we copy /mnt/conf/syslog.con to /etc/syslog.conf
+
+diff /etc/syslog.conf /mnt/conf/syslog.con
+diffresult=$?
+if [[ $diffresult != '0' ]]
+then
+    ln -s -f /mnt/conf/syslog.con  /etc/syslog.conf
+fi
+
+# 2005-0608 Hammer
+#	This version of syslogd will replace the QB title with the engine name
+#	in the syslog messages.
+#cp -af /opt/qb/bin/script/syslogd /opt/qb/sbin
+
+# ---- syslogd daemon ----------
+#/etc/rc.d/init.d/syslog start
+/sbin/service syslog start
+#---- qbcli password symbolick link ----------------
+# 3. check if the symbolic link from /etc/clipasswd  to /mnt/conf/password.cli
+if [ ! -f $QB_CLI_PASSWORD_FILE ]
+then
+    echo 123 > $QB_CLI_PASSWORD_FILE
+    chmod 744 $QB_CLI_PASSWORD_FILE
+fi
+
+ln -s $QB_CLI_PASSWORD_FILE  $QB_CLI_SYM_LINK 
+
+# ---- bridge ----------
+#/opt/qb/qbbrg/rc.init_brg
+
+#-------------------------------------------------------------------------
+#  setup ipsec
+#-------------------------------------------------------------------------
+#20091019 Luke setup ipsec
+
+QBIPSECPKG="/mnt/ipsec.pkg"
+IPSEC_MODULES_DIR="$QB_MODULE_DIR/ipsec_modules"
+tdir="/tmp/ipsec"
+if [ -f $QBIPSECPKG ]; then
+  tar zxfC $QBIPSECPKG /tmp/
+  #------ipsec utility----------------
+  mv $tdir/racoon /etc/
+  mv $tdir/sbin/setkey /sbin/
+  mv $tdir/usr/sbin/* /usr/sbin/
+  mkdir /var/racoon
+  #------ipsec modules-----------------
+  #mv $tdir/ipsec_modules $QB_MODULE_DIR
+  insmod /lib/modules/2.6.22/kernel/net/key/af_key.ko
+#  insmod /lib/modules/2.6.22/kernel/arch/x86/crypto/aes-i586.ko
+#  insmod /lib/modules/2.6.22/kernel/crypto/des_generic.ko
+  insmod /lib/modules/2.6.22/kernel/crypto/blowfish.ko
+  insmod /lib/modules/2.6.22/kernel/crypto/crypto_null.ko
+#  insmod /lib/modules/2.6.22/kernel/crypto/deflate.ko
+  insmod /lib/modules/2.6.22/kernel/crypto/serpent.ko
+#  insmod /lib/modules/2.6.22/kernel/crypto/sha256_generic.ko
+#  insmod /lib/modules/2.6.22/kernel/crypto/twofish_generic.ko
+  insmod /lib/modules/2.6.22/kernel/net/ipv4/ah4.ko
+  insmod /lib/modules/2.6.22/kernel/net/ipv4/esp4.ko
+  insmod /lib/modules/2.6.22/kernel/net/ipv4/ipcomp.ko
+  #L2TP IPsec 20100415 luke
+  mv $tdir/xl2tpd /etc/
+  mv $tdir/options.xl2tpd /etc/ppp/
+  mkdir /var/run/xl2tpd/
+  rm -rf $tdir
+fi
+
+
+#-------------------------------------------------------------------------
+#  setup ssl
+#-------------------------------------------------------------------------
+#20100120 Luke setup sslvpn
+QBSSLPKG="/mnt/sslvpn.pkg"
+if [ -f $QBSSLPKG ]; then
+  tar zxfC $QBSSLPKG /tmp/
+  mv /tmp/sslvpn/ssl /etc/
+  mv /tmp/sslvpn/openvpn /usr/sbin/
+  mv /tmp/sslvpn/route /sbin/
+  #mv /tmp/sslvpn/zip /sbin/
+  #mv /tmp/sslvpn/sslportal /usr/local/apache/
+  insmod /lib/modules/2.6.22/kernel/drivers/net/tun.ko
+  rm -rf /tmp/sslvpn
+fi
+
+#-------------------------------------------------------------------------
+#  ssl client
+#-------------------------------------------------------------------------
+#20111017 Brian to separate the client
+QBSSLCLIENT="/mnt/sslportal.pkg"
+ENABLESSLCLT=$(awk  "/ENABLESSLVPNCLT/ { print \$2 }" $QBREG_FILE)
+if [ -f $QBSSLCLIENT ] && [ "$ENABLESSLCLT" = "1" ] ;then
+  tar zxfC $QBSSLCLIENT /usr/local/apache/
+
+#modify httpd.conf
+CHK5000=`cat /mnt/conf/httpd.con|grep "Listen 5000"|sed -e "s/\n//"`
+ if [ "$CHK5000" = "" ];then
+    cat >> /mnt/conf/httpd.con <<!
+Listen 5000
+<VirtualHost 172.31.3.1:5000>
+ ServerAdmin root@localhost
+ DocumentRoot /usr/local/apache/sslportal/
+ ServerName QBalancer
+ ScriptAlias /cgi-bin/ "/usr/local/apache/cgi-bin/"
+</VirtualHost>
+!
+sync
+ fi
+
+fi
+
+#==========================================
+#Insert Netfilter Kernel Modules
+
+#insmod  $NF_MODULE_DIR/x_tables.ko
+#insmod  $NF_MODULE_DIR/ip_tables.ko
+insmod  $NF_MODULE_DIR/xt_connmark.ko
+insmod  $NF_MODULE_DIR/xt_CONNMARK.ko
+insmod  $NF_MODULE_DIR/xt_state.ko
+insmod  $NF_MODULE_DIR/xt_mark.ko
+insmod  $NF_MODULE_DIR/xt_MARK.ko
+insmod  $NF_MODULE_DIR/xt_CLASSIFY.ko
+insmod  $NF_MODULE_DIR/xt_connbytes.ko
+insmod  $NF_MODULE_V4_DIR/nf_nat.ko
+insmod  $NF_MODULE_V4_DIR/iptable_nat.ko
+insmod  $NF_MODULE_V4_DIR/iptable_mangle.ko
+
+insmod  $NF_MODULE_DIR/nf_conntrack_proto_gre.ko
+insmod  $NF_MODULE_V4_DIR/nf_nat_proto_gre.ko
+insmod  $NF_MODULE_DIR/nf_conntrack_ftp.ko
+insmod  $NF_MODULE_V4_DIR/nf_nat_ftp.ko
+insmod  $NF_MODULE_DIR/xt_layer7.ko
+#insmod  $NF_MODULE_DIR/xt_connlimit.ko
+insmod $QB_MODULE_DIR/xt_connlimit.ko
+
+insmod  /lib/modules/2.6.22/kernel/lib/ts_bm.ko #20090522 Brian for content load balance
+
+#
+# PPTP & H.323 Module
+#
+# 2005-0401 Hammer
+#    Changed from default-disable to default-enable. (Hammer)
+# 2005-0415 Hammer
+#    Changed from default-enable to default-disable. (Hammer)
+# 2005-0705 Hammer
+#    The LOADPPTP in registry determines the boot-ability of pptp module
+#    by default. LOADPPTP is enabled for 1615, but disabled for other models.
+#
+LOADPPTP=$(awk "/^LOADPPTP/ {print \$2}"  $QBREG_FILE)
+if [ "x$LOADPPTP" = "x1" ]; then
+        insmod   $NF_MODULE_DIR/nf_conntrack_pptp.ko
+        insmod   $NF_MODULE_V4_DIR/nf_nat_pptp.ko
+fi
+
+echo "QB's kernel modules !!!"
+
+insmod  $QB_MODULE_DIR/qbkf_timeout.ko
+insmod  $QB_MODULE_DIR/qbkflow.ko #depending on qbkf_timeout.ko
+#insmod  $QB_MODULE_DIR/qbarp.ko
+insmod  $QB_MODULE_DIR/xt_BALANCE.ko
+
+insmod  $QB_MODULE_DIR/xt_ingw.ko # depending on qbkflow.o
+insmod  $QB_MODULE_DIR/xt_icmpid.ko
+insmod  $QB_MODULE_DIR/xt_gw.ko
+
+#insmod  $QB_MODULE_DIR/ipt_psd.ko #No use
+#insmod  $QB_MODULE_DIR/ipt_fuzzy.ko #No use
+insmod  $QB_MODULE_DIR/ipt_account.ko
+#Gary 2013_0607 weburl.ko
+#insmod  $QB_MODULE_DIR/ipt_weburl.ko
+
+# for ctdirmark 041231
+CTDIR_ON=0 && CTDIR_ON=$(awk "/ENABLECTDIR/ {print \$2}"  $QBREG_FILE)
+if [ $CTDIR_ON = '1' ]
+then
+    insmod -f $QB_MODULE_DIR/xt_CTDIRMARK.ko
+    insmod -f $QB_MODULE_DIR/xt_ctdirmark.ko
+fi
+
+# !! CAUTION !! : qbfastwy.o MUST be installed AFTER the installation of qbkflow.o
+#
+# 2005-0401 Hammer
+#           Do not insert module 'qbfastwy.o' by default. Request from Jesse.
+#           This is for XRIO Evaluation.
+#
+LOADQBFASTWY=$(awk "/LOADQBFASTWY/ {print \$2}"  $QBREG_FILE)
+if [ ! "x$LOADQBFASTWY" = "x0" ] && [ -f $QB_MODULE_DIR/qbfastway.ko ]; then
+        insmod -f $QB_MODULE_DIR/qbfastway.ko #depending on qbkflow.ko
+fi
+
+#..........................................................
+# 2010-0423 Luke
+# insmod modules for http content filter
+#..........................................................
+insmod $NF_MODULE_V4_DIR/ipt_iprange.ko
+insmod $NF_MODULE_DIR/xt_string.ko
+
+#2010 Luke scheduel
+insmod $NF_MODULE_DIR/xt_time.ko
+
+# john qb26 , change shared library path
+mv $QB_MODULE_DIR/*.so       /lib/xtables/
+
+cp $QB_SCRIPT_DIR/dns /etc/init.d
+chmod 777 /etc/init.d/dns
+
+if [ "$QBTYPE" = "TM" ]; then
+modprobe imq numdevs=128 #bigger than 128(imq0~127) can't work.
+else
+modprobe imq numdevs=64
+fi
+
+hostname qb.gateway
+
+#======================================================================
+# disabling short state of bypass card
+# set bypass state to normal state 
+# bring up last few network interfaces for qbserver to get the last one
+#/opt/qb/qbbrg/set_bpcard 0
+#ifconfig eth6 up
+#ifconfig eth7 up
+#ifconfig eth8 up
+#ifconfig eth9 up
+#ifconfig eth10 up
+
+#-------------------------------------------------------------------------
+# 2006-1127 Brian
+# New watchdog's Driver for AMD LX800's QB.
+#-------------------------------------------------------------------------
+#2006/12/15 Brian insmod whatchdog's driver
+# ---- watchdog daemon ----------
+MODEL=$(awk "/MODEL/ {print \$2}"  $QBREG_FILE|head -n 1)
+PLATFORM=$(awk "/^PLATFORM/ {print \$2}"  $QBREG_FILE)
+ENABLEWDT=$(awk  "/WATCHDOG/ { print \$2 }" $QBREG_FILE)
+if [ "$PLATFORM" != "VIA" ] && [ "$ENABLEWDT" = "1" ] ;then
+case "$MODEL" in
+        1510)
+            #nohup $QB_BIN_DIR/watchdog &
+            $QB_BIN_DIR/watchdog
+           ;;
+        420)
+            $QB_BIN_DIR/watchdog
+            if [ "$?" = "1" ];then
+            /opt/qb/qbwdt/watchdog_na100 &
+            fi
+           ;;
+        220)
+            $QB_BIN_DIR/watchdog
+            if [ "$?" = "1" ];then
+            /opt/qb/qbwdt/watchdog_na100 &
+            fi
+           ;;
+        2620)
+            $QB_BIN_DIR/watchdog &
+            #if [ "$?" = "1" ];then
+            #rm -f $QB_BIN_DIR/watchdog
+            #ln -s /opt/qb/qbwdt/watchdog_na710 $QB_BIN_DIR/watchdog
+            #ln -s /opt/qb/qbwdt/lib8a710.so.0 /usr/lib/
+            #$QB_BIN_DIR/watchdog &
+            #fi
+           ;;
+           *)
+            #nice --20 $QB_BIN_DIR/watchdog &
+            $QB_BIN_DIR/watchdog &
+            #nice $QB_BIN_DIR/watchdog &
+           ;;
+esac
+fi
+#--------- interface of some add-on modules
+MODULELIST="crond snmpd ntpd dhcpd"
+for module in $(echo $MODULELIST)
+do
+if [ -f /mnt/${module}.pkg ];
+then
+    tar zxfC /mnt/${module}.pkg /opt
+    sync
+
+    if [ -f /opt/${module}/rc.${module} ]
+    then
+        /opt/${module}/rc.${module}
+    fi
+fi
+done
+
+#20081029 DHCP relay
+ln -s /opt/dhcpd/dhcp-helper /usr/sbin/
+
+# ------- QBXML INTERFACE --------
+if [ -f /mnt/qbxml.pkg ];
+then
+	tar zxfC /mnt/qbxml.pkg /tmp
+	/bin/cp -a /usr/local/apache/active/* /tmp/xmltemplate/2.2.0.0000/
+	/bin/cp -a /usr/local/apache/config/login.xml /tmp/xmltemplate/
+	sync
+fi
+
+
+# ------- enable the writing privilege of Apache http upload
+chmod 777 /var/tmp
+chmod 777 /tmp
+
+
+#-------------------------------------------------------------------------------------------------------------------------------
+# AFS INTERFACE 
+#-------------------------------------------------------------------------------------------------------------------------------
+diff /opt/qb/bin/script/sprog  /mnt/conf/afsconf/sprog
+diffresult=$?
+if [[ $diffresult != '0' ]]
+then
+    cp -f /opt/qb/bin/script/sprog  /mnt/conf/afsconf/sprog
+fi
+
+EZIO_ON=0 && EZIO_ON=$(awk "/EZIOTYPE/ {print \$2}"  $QBREG_FILE) 
+
+HA_ON=0 && [ -f /mnt/afs.pkg ] && HA_ON=$(awk "/ENABLEHA/ {print \$2}"  $QBREG_FILE) &&  [ $HA_ON = '1' ] && tar zxfC /mnt/afs.pkg /usr && /usr/afs/rc.afs 
+
+[ $EZIO_ON = '1' ] && [ $HA_ON = '0' ] && ($EZIO_PRINT "No HA:<stand alone>"; sleep 10; $EZIO_PRINT_DEFAULT)&
+
+
+#-----------------------------------------------------------------------
+#20130222 SHANE Change MAC address
+#----------------------------------------------------------------------
+if [ -e /mnt/mac.sh ]
+then
+/bin/sh /mnt/mac.sh
+fi
+
+
+#-------------------------------------------------------------------------------------------------------------------------------
+#  start qbrunway -> then start qbserv ( must be launched after afsd )
+#-------------------------------------------------------------------------------------------------------------------------------
+/bin/chmod 777 /opt/qb/bin/script/bridge.pl
+/usr/bin/perl /opt/qb/bin/script/bridge.pl
+$QB_BIN_DIR/qbrunway &
+
+#-------------------------------------------------------------------------
+# 2005-0525 Hammer
+#        * To fix the security weak of qbgui.
+#	 * apache was supposed to be initially started in rc3.d/S12apache,
+#	   which is run before this sysinit program.
+#	 * Since new modules (mod_*.so) is newly introduced in httpd.conf,
+#	   the S12apache is destined to fail because lack of module files.
+#	   i.e. apache is hereafter required to be (re)started here
+#	   in sysinit.
+#-------------------------------------------------------------------------
+#cp -af /opt/qb/bin/script/apache/mod*.so /usr/local/apache/libexec
+
+CONF_FILE=/mnt/conf/httpd.con
+TMP_CONF_FILE=/mnt/httpd.con
+EACCESS_CONF_FILE=/opt/qb/bin/script/apache/httpd.conf-eaccess
+
+# Remove all the old explicit EAccess-related directives form httpd.conf.
+#cat $CONF_FILE | sed -e "/EAccess/d" \
+#	| sed -e "/eaccess_module/d" \
+#	| sed -e "/mod_eaccess/d" > $TMP_CONF_FILE
+#mv -f $TMP_CONF_FILE $CONF_FILE
+
+# Add the include-EAccess directive if not there.
+#IS_EACCESS_INCLUDED=`grep "httpd\.conf-eaccess" $CONF_FILE`
+#if [ -z "$IS_EACCESS_ENABLED" ]; then
+#	echo "include \"$EACCESS_CONF_FILE\"" >> $CONF_FILE
+#fi
+
+#Support PHP
+rm -f /usr/lib/php
+#rm -f /usr/bin/php
+#rm -f /var/lib/php
+#rm -f /usr/lib/libaspell.so.15
+#rm -f /usr/lib/libpspell.so.15
+#rm -f /usr/lib/libgmp.so.3
+#rm -f /usr/lib/libcurl.so.3
+#rm -f /usr/lib/libidn.so.11
+#rm -f /usr/local/apache/modules/libphp5.so
+ln -s /mnt/extra/usr/lib/php /usr/lib/php
+#ln -s /mnt/extra/usr/bin/php /usr/bin/php
+#ln -s /mnt/extra/var/lib/php /var/lib/php #20080920 Brian Need to be writeable
+#ln -s /mnt/extra/usr/lib/php/libaspell.so.15 /usr/lib/libaspell.so.15
+#ln -s /mnt/extra/usr/lib/php/libpspell.so.15 /usr/lib/libpspell.so.15
+#ln -s /mnt/extra/usr/lib/php/libgmp.so.3 /usr/lib/libgmp.so.3
+#ln -s /mnt/extra/usr/lib/php/libcurl.so.3 /usr/lib/libcurl.so.3
+#ln -s /mnt/extra/usr/lib/php/libidn.so.11 /usr/lib/libidn.so.11
+#ln -s /mnt/extra/usr/local/apache/modules/libphp5.so  /usr/local/apache/modules/libphp5.so
+rm -f /usr/local/apache/conf.d/php.conf
+ln -s /mnt/extra/usr/local/apache/conf.d/php.conf  /usr/local/apache/conf.d/php.conf
+ln -s -f /mnt/conf/httpd.con /usr/local/apache/conf/httpd.conf
+#ln -s -f /opt/qb/bin/script/mod_perl.so /etc/httpd/modules/mod_perl.so
+ln -s /opt/qb/bin/script/rsync /usr/bin/rsync
+/sbin/service httpd restart
+
+# ---- httpd daemon ----------
+# 2. check if /usr/local/apache/conf/httpd.conf is the same as /mnt/conf/httpd.con
+#    if it is not, we guess /usr/local/apache/conf/httpd.conf is not a symbolic link to /mnt/conf/syslog.con
+#    we have to make sure content in the two files are totally the same
+#    so we copy /mnt/conf/httpd.con  to  /usr/local/apache/conf/httpd.conf
+#
+# diff /usr/local/apache/conf/httpd.conf /mnt/conf/httpd.con
+# diffresult=$?
+#
+# if [[ $diffresult != '0' ]]
+# then
+#     ln -s -f /mnt/conf/httpd.con  /usr/local/apache/conf/httpd.conf
+#     /usr/local/apache/bin/apachectl restart
+# fi
+#
+
+#-------------------------------------------------------------------------
+# 2005-0519 Hammer
+#        * To replace the /usr/lib/sendmail (link) with a hacked shell prog,
+#	   which will automatically replace string 'QBALANCER' with
+#	   the real engine name defined in 'registry'.
+#-------------------------------------------------------------------------
+rm -f /usr/lib/sendmail
+cp -af /opt/qb/bin/script/sendmail /usr/lib
+
+#-------------------------------------------------------------------------
+# 2005-0628 Hammer
+#        * (for XRIO evaluation)
+#	   Some hacking is embeded in "ip tunnel add ...".
+# 2005-0701 Hammer
+#        * (for XRIO evaluation)
+#	   Some hacking is embeded in "ifconfig mpv0 mtu 1500".
+#-------------------------------------------------------------------------
+PLATFORM=$(awk "/^PLATFORM/ {print \$2}"  $QBREG_FILE)
+case "$PLATFORM" in
+ 	*-XRIO-eval)
+ 	    mv -f /usr/local/sbin/ip /usr/local/sbin/ip.org
+ 	    cp -af /opt/qb/bin/script/ip /usr/local/sbin
+
+ 	    mv -f /sbin/ifconfig /sbin/ifconfig.org
+ 	    cp -af /opt/qb/bin/script/ifconfig /sbin
+ 	    ;;
+ 	*)
+ 	    ;;
+esac
+
+#-------------------------------------------------------------------------
+# 2005-0401 Hammer
+#        * Newly define a extended sysinit file ($EXTINIT_FILE),
+#          which is to be executed at the end of the default sysinit.
+#        * THIS FEATHRE IS RESERVED FOR QB-SUPPORT STAFF ONLY.
+#        * THIS WORK OF THIS FILE IS SITE-SPECIFIC.
+#-------------------------------------------------------------------------
+
+EXTINIT_FILE="/mnt/qb/conf/extinit"
+if [ -f $EXTINIT_FILE ]; then
+    chmod a+x $EXTINIT_FILE
+    . $EXTINIT_FILE
+
+else
+    cat > $EXTINIT_FILE <<!
+#!/bin/sh
+#
+# * THIS FILE IS RESERVED FOR QB-SUPPORT STAFF ONLY.
+# * DO NOT MODIFY THIS FILE UNLESS AUTHORIZED.
+# * THIS WORK OF THIS FILE IS SITE-SPECIFIC.
+#
+
+PATH=$PATH:/opt/qb/bin/script; export PATH
+
+#
+# ethtool ...
+#
+!
+
+fi
+
+#-------------------------------------------------------------------------
+# 2005-0908 Brian
+# * To exe. ethtool's config file.
+#-------------------------------------------------------------------------
+
+ETHSET="/mnt/qb/conf/ethset"
+if [ -f $ETHSET ]; then
+    chmod a+x $ETHSET
+    . $ETHSET
+fi
+
+#-------------------------------------------------------------------------
+# 2006-0920 Brian
+# Used for measure tunnel bandwidth.
+#-------------------------------------------------------------------------
+#/bin/ln -s -f /mnt/linux /usr/local/apache/qb/clean/testfile
+/opt/qb/bin/script/linkfile &
+#-------------------------------------------------------------------------
+#  if ha is turned on , we have to switch into runlevel 4
+#-------------------------------------------------------------------------
+#20090224 Brian Move to the last line.
+#MODELTYPE=$(awk "/MODEL/ {print \$2}"  $QBREG_FILE)  # 050204...nancy
+#MANUFACTURER=$(awk "/MANUFACTURER/ {print \$2}"  $QBREG_FILE) #Brian 20080312
+#if [ $MODELTYPE = 'BL10800' ] ;then
+#    [ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+#else
+#    echo "/opt/qb/bin/watchdog &" > /etc/rc.d/rc4.d/S17WDT
+#    chmod +x /etc/rc.d/rc4.d/S17WDT
+#    rm -rf /etc/rc4.d/S19local    #Brian 20080317 It will cause HA sometimes can't not work 
+#    if [ $MANUFACTURER = 'ARINFOTEK' ]; then #Brian 20080312
+#    [ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+#    fi
+#    [ $EZIO_ON = '1' ] && [ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+#fi
+#sync
+
+#..........................................................
+# 2008-1202 Brian
+# * Setup export log to ftp server.
+#..........................................................
+SYSLOGCFG="/usr/local/apache/config/syslog.xml"
+ftpserver=`sed -e "s/<opt.*ftpserver=\"//" $SYSLOGCFG|sed -e "s/\".*//"`
+ftpusername=`sed -e "s/<opt.*ftpusername=\"//" $SYSLOGCFG|sed -e "s/\".*//"`
+ftppassword=`sed -e "s/<opt.*ftppassword=\"//" $SYSLOGCFG|sed -e "s/\".*//"`
+ftpserverip=`sed -e "s/<opt.*ftpserverip=\"//" $SYSLOGCFG|sed -e "s/\".*//"`
+ftpfrequency=`sed -e "s/<opt.*ftpfrequency=\"//" $SYSLOGCFG|sed -e "s/\".*//"`
+ftpdir=`sed -e "s/<opt.*ftpdir=\"//" $SYSLOGCFG|sed -e "s/\".*//"`
+SYSLOGDEV=`grep syslogdev $SYSLOGCFG|sed -e "s/<opt.*syslogdev=\"//"|sed -e "s/\".*//"`
+
+if [ "$ftpserver" = "1" ]
+then
+    cat >> /etc/crontab <<!
+0 0 */$ftpfrequency * *  root       /opt/qb/bin/script/syslogftp $ftpserverip $ftpusername $ftppassword $ftpdir
+!
+    /usr/local/apache/qb/setuid/do_qbsyslog.pl
+    rm -f /mnt/tclog/*
+    mount /dev/$SYSLOGDEV /mnt/tclog
+else
+    cat >> /etc/crontab <<!
+#0 0 */$ftpfrequency * *  root       /opt/qb/bin/script/syslogftp $ftpserverip $ftpusername $ftppassword $ftpdir
+!
+fi
+
+#..........................................................
+# 2012-0321 Brian
+# * QBserv is dead with unknown reason,so need to kill the process in a period of time.
+#..........................................................
+    cat >> /etc/crontab <<!
+*/5  * * * *  root      /opt/qb/bin/script/keeplog
+30   1 * * 0  root      /usr/bin/killall -9 qbserv
+!
+
+#..........................................................
+# 2006-0207 Brian
+# * To exe. dhcp client config file.
+#..........................................................
+DHCPSET="/mnt/dhcpcd.pkg"
+if [ -f $DHCPSET ]; then
+   tar zxfC $DHCPSET /tmp/
+   mv /tmp/dhcpcd/* /sbin/
+   mkdir /etc/dhcpc/
+   mv /sbin/dhcpcd.exe /etc/dhcpc/dhcpcd.exe
+   mv /sbin/dhcpcd.exe1 /etc/dhcpc/dhcpcd.exe1
+   rmdir /tmp/dhcpcd
+   sleep 15
+   #Brian 20111228 move to postqb_general
+   #/sbin/dhcpboot 2>/tmp/dhcpbootlog &
+   #/sbin/dhcpboot &
+fi
+#echo 5 > /proc/qbalancer/qbdebug
+#echo 4 > /proc/sys/kernel/printk
+/sbin/sysctl -w kernel.printk="4 4 1 7" #Brian 20080327 Orginal value="6 4 1 7" To ease CPU usage
+chmod 444 /proc/net/ip_conntrack   #For System status/Concurrent Sessions
+/opt/qb/bin/script/upgradexml
+ln -s /opt/qb/bin/script/ispup /usr/sbin/ispup
+ln -s /opt/qb/bin/script/ispdown /usr/sbin/ispdown
+#/usr/sbin/httpd -k restart
+/sbin/service httpd restart
+
+
+#Enable Analyser
+ENABLEANALYSER=$(awk "/ENABLEANALYSER/ {print \$2}"  $QBREG_FILE)
+MODELNAME=$(awk  "/HARDWARE/ { print \$2 }" $QBREG_FILE)
+CHKUSB=`ls /dev/sd*`
+if [ $ENABLEANALYSER = '1' ]
+#if [ $ENABLEANALYSER = '1' ]
+then
+    #tar zxfC /mnt/analyweb.pkg /usr/local/apache/qb/
+    #ln -s /mnt/tclog/analyser/var/analyser_web /usr/local/apache/qb/analyser_web
+    #DEVICENAME=`ls /mnt/conf/*.dev 2>/dev/null|sed -e "s/.dev//"`
+    #FSTYPE=`ls /mnt/conf/*.tpe 2>/dev/null|sed -e "s/.tpe//"`
+    #MOUNTDEV=`grep analydev $OVERVIEWCONFIG|sed -e "s/<opt.*analydev=\"//"|sed -e "s/\".*//"`
+    #MOUNTTPE=`grep analytpe $OVERVIEWCONFIG|sed -e "s/<opt.*analytpe=\"//"|sed -e "s/\".*//"`
+    #DEVICENAME=${DEVICENAME#/mnt/conf/}
+    #FSTYPE=${FSTYPE#/mnt/conf/}
+    #ln -s /usr/local/apache/qb/analyser_web/.pgpass /root
+    
+    if [ ${#CHKUSB} -lt "17" ];then
+        FORMATCMD="/opt/qb/bin/script/format"
+    fi
+
+    INFO=`fdisk -l|grep Disk|awk '{print $2 $3 $4}'`
+    for((i=0;i<${#INFO};i++));do
+        if [[ ${INFO:$i:1} == ',' ]]; then
+            z=($i - $y);
+            tmp2=${INFO:$y:$z};
+            tmp1=${tmp2/MB/};
+            tmp=${tmp1/,/};
+                for((x=0;x<${#tmp};x++))do
+                    if [[ ${tmp:$x:1} == ':' ]];then
+                    if [ ${tmp:$x+1:${#tmp}} -gt "600" ];then
+                        mount ${tmp:0:$x}1 /mnt/tclog
+                        mkdir /mnt/tclog/log
+                        ln -s /mnt/tclog/log /mnt/
+                        mount ${tmp:0:$x}2 /mnt/log
+                    fi
+                    fi
+                done
+                y=$i+1
+        fi
+    done
+
+    #if [ "$DEVICENAME" != "" ] && [ "$FSTYPE" != "" ]; then
+    chmod a+x $FORMATCMD
+    #$FORMATCMD $DEVICENAME $FSTYPE
+    $FORMATCMD
+    #rm -f /mnt/conf/*.dev /mnt/conf/*.tpe
+    #fi
+
+    /sbin/service syslog stop
+    #rm -f /mnt/tclog/*
+
+    #20110704 Brian For PHP eAccelerator
+    #ln -s /usr/local/apache/qb/analyser_web/modules_php/eaccelerator.ini /etc/php.d/
+    #mkdir /tmp/eaccelerator
+    #chmod 777 /tmp/eaccelerator
+
+    #if [ -f /mnt/fsck.tmp ] && [ "$MOUNTDEV" != "" ]; then
+    if [ -f /mnt/fsck.tmp ]; then
+    mount /dev/sda1 /mnt/tclog
+    echo "Checking USB HDD ...." >>/mnt/tclog/bootlog
+    /sbin/fsck -a /dev/$MOUNTDEV 2>>/mnt/tclog/bootlog
+    /sbin/service syslog start
+    else
+    #mount -t $MOUNTTPE $MOUNTDEV /mnt/tclog
+    mount /dev/sda1 /mnt/tclog
+    /sbin/service syslog start
+    fi
+
+    if [ -d /mnt/tclog/analyser/etc/httpd ];
+    then
+     #ln -s /mnt/tclog/analyser/usr/share/phpPgAdmin /usr/local/apache/qb/phpPgAdmin
+     #rm -f /usr/local/apache/qb/english.xml
+     #rm -f /usr/local/apache/qb/english_only.xml
+     #rm -f /usr/local/apache/qb/chinese.xml
+#     cat >> /etc/crontab <<!
+#*/2 * * * *  root       /usr/bin/php /usr/local/apache/qb/analyser_web/decode2.php > /dev/null 2>&2
+#*/120 * * * *  root       /usr/bin/php /usr/local/apache/qb/analyser_web/diskclear.php > /dev/null 2>&2
+#*/120 * * * *  root       /usr/bin/php /usr/local/apache/qb/analyser_web/sqlclear.php > /dev/null 2>&2
+#!
+     #issg=`grep -c SG /opt/qb/registry`
+     #if [ $issg = '1' ]; then
+     # ln -s /usr/local/apache/qb/analyser_web/english_sg.xml /usr/local/apache/qb/english.xml
+     # ln -s /usr/local/apache/qb/analyser_web/english_only_sg.xml /usr/local/apache/qb/english_only.xml
+     #else
+     # ln -s /usr/local/apache/qb/analyser_web/english.xml /usr/local/apache/qb/english.xml
+     # ln -s /usr/local/apache/qb/analyser_web/english_only.xml /usr/local/apache/qb/english_only.xml
+     #fi
+     ln -s /usr/local/apache/qb/analyser_web/chinese.xml /usr/local/apache/qb/chinese.xml
+     # Brian 20100909 Need to change the attribute or the postgresql can't be started. 
+     chmod 777 /var/tmp
+     chmod 777 /tmp
+
+     #Check memory size
+     Physical_Mem=$(cat /proc/meminfo |grep MemTotal|head -n 1|awk '{print $2}')
+
+     if [ $Physical_Mem -ge 2000000 ];then   #2G RAM
+       /sbin/sysctl -w kernel.shmmax=234881024 #192M+32M
+     elif [ $Physical_Mem -ge 1000000 ];then #1G RAM
+       /sbin/sysctl -w kernel.shmmax=134217728 #96M+32M
+     elif [ $Physical_Mem -ge 500000 ];then   #512M RAM
+       /sbin/sysctl -w kernel.shmmax=83886080 #48M+32M
+     elif [ $Physical_Mem -ge 220000 ];then   #256M RAM
+       /sbin/sysctl -w kernel.shmmax=58720256 #24M+32M
+     fi
+
+     /sbin/service postgresql start
+
+     #20110629 To limit the CPU usage of analyser
+     #/sbin/cpulimit -e postmaster -l 25 &
+     #/sbin/cpulimit -e php -l 25 &
+     /sbin/cpulimit_daemon.sh &
+     /opt/qb/bin/script/setupsql &
+    fi
+
+    cat >> /etc/crontab <<!
+30   2 * * *  root      sync|echo 3 > /proc/sys/vm/drop_caches
+31   2 * * *  root      sync|echo 0 > /proc/sys/vm/drop_caches
+5    0 * * *  root      /opt/qb/bin/script/trialnotice
+59  23 * * *  root      /opt/qb/bin/script/test.sh
+59  23 * * *  root      /opt/qb/bin/script/mail.sh hck
+59  23 * * *  root      /usr/local/apache/qb/loss_restart.sh
+*/1  * * * *  root      /usr/local/apache/qb/setuid/every_one.sh
+*/30  * * * *  root      /usr/local/apache/qb/every_thirty_minute.pl
+0    0 * * *  root      /opt/qb/bin/script/enable_squid.sh
+0    0 * * *  root      sync|rm -rf /mnt/log/*_User.log|sync
+
+!
+
+#20090820 Brian To modify the frequency of qbmon.sh
+#sed -i -e '{
+#          s/\/20/\/10/g
+#          }' /etc/crontab
+
+#    if [ -f /usr/local/apache/qb/setuid/do_qbsyslog.pl ];then
+#     /usr/local/apache/qb/setuid/do_qbsyslog.pl
+#    fi
+    #/sbin/service syslog restart
+	# Gary mark edit_crontab.php for test crontab disappear
+#    #/usr/bin/php /usr/local/apache/qb/analyser_web/edit_crontab.php
+    /sbin/service crond start
+    /sbin/service httpd restart
+
+#touch /mnt/fsck.tmp
+sync;sync
+fi
+#..........................................................
+# 2011-0211 Luke
+# BerkeleyDB 
+#..........................................................
+DBPKG="/mnt/db.pkg"
+if [ -f $DBPKG ]; then
+    tar zxfC $DBPKG /usr/local/
+fi
+#..........................................................
+# 2011-0211 Luke
+# squidGuard
+#..........................................................
+SQUIDGUARD="/mnt/squid.pkg"
+if [ -f $SQUIDGUARD ]; then
+    #pkgsize=`du /mnt/squid.pkg|awk '{print $1}'`
+    #if [ $pkgsize -ge 40000 ];then
+    #    tar zxfC $SQUIDGUARD /usr/local/
+    #else
+    #    tar jxfC $SQUIDGUARD /usr/local/
+    #fi
+
+    tar zxfC $SQUIDGUARD /usr/local/
+    #ln -s /usr/local/BerkeleyDB/lib/libdb-4.7.so /usr/lib/libdb-4.7.so
+    #mv /usr/local/squidGuard/squidGuard /usr/local/bin/
+    #mv /usr/local/libcap.so.2 /lib/
+    mv /usr/local/squid/libcap.so.2 /lib/
+fi
+#..........................................................
+# 2008-0416 Brian
+# * To start squid proxy server.
+#..........................................................
+
+#SQUIDPXY="/mnt/squid.pkg"
+#if [ -f $SQUIDPXY ]; then
+#   /opt/qb/bin/script/enable_squid.sh &
+#fi
+#..........................................................
+# 2008-0717 Brian
+# Auto refresh router's arp table when using arp proxy mode.
+#..........................................................
+
+if [ -f /usr/local/apache/qb/setuid/do_qbarp.pl ]; then
+/usr/bin/perl /usr/local/apache/qb/setuid/do_qbarp.pl &
+fi
+
+#..........................................................
+# 2008-0722 Brian
+# * To exe. pptp client config file.
+#..........................................................
+PPTPCLTPKG="/mnt/pptpclt.pkg"
+#PPPOEXML="/opt/qb/bin/script/pppxml.pkg"
+#Enable PPTP Client
+ENABLEPPTPCLIENT=$(awk "/ENABLEPPTPCLIENT/ {print \$2}"  $QBREG_FILE)
+if [ $ENABLEPPTPCLIENT = '1' ]
+then
+   mkdir /var/run/pptp
+   mkdir /var/run/ppp
+   chmod 750 /var/run/pptp
+   tar zxfC $PPTPCLTPKG /tmp/
+   #mv /tmp/pptpclt/kill /usr/bin/
+   mv /tmp/pptpclt/* /usr/sbin/
+   mv /usr/sbin/options.pptp /etc/ppp/
+   rmdir /tmp/pptpclt
+fi
+
+MNTBASICXML=/mnt/qb/conf/set/boot/basic.xml
+PPTPIID=`grep isptype=\"pptp\" $MNTBASICXML|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+for ispid in $PPTPIID
+do
+  encrypt_mppe=`grep iid=\"$ispid\" $MNTBASICXML|sed -e "s/  <isp.*encrypt_mppe=\"//"|sed -e "s/\".*//"`
+  compression=`grep iid=\"$ispid\" $MNTBASICXML|sed -e "s/  <isp.*compression=\"//"|sed -e "s/\".*//"`
+  pppispid=`grep iid=\"$ispid\" $MNTBASICXML|sed -e "s/  <isp.*pppispid=\"//"|sed -e "s/\".*//"`
+  pptproutegw=`grep iid=\"$pppispid\" $MNTBASICXML|sed -e "s/  <isp.*gateway=\"//"|sed -e "s/\".*//"`
+  pptpserver=`grep iid=\"$ispid\" $MNTBASICXML|sed -e "s/  <isp.*pptpserver=\"//"|sed -e "s/\".*//"`
+  stateless=`grep iid=\"$ispid\" $MNTBASICXML|sed -e "s/  <isp.*stateless=\"//"|sed -e "s/\".*//"`
+  case "$pptpserver" in *[a-zA-Z]*) pptpserver=`/opt/qb/bin/script/ns $pptpserver`;; esac
+  ispname=`grep iid=\"$ispid\" $MNTBASICXML|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+  pptpname=`grep iid=\"$ispid\" $MNTBASICXML|sed -e "s/  <isp.*pppoename=\"//"|sed -e "s/\".*//"|sed -e "s/\&amp;/\&/g"|sed -e "s/\&lt;/\</g"|sed -e "s/\&gt;/\>/g"`
+  pptppasswd=`grep iid=\"$ispid\" $MNTBASICXML|sed -e "s/  <isp.*pppoepasswd=\"//"|sed -e "s/\".*//"|sed -e "s/\&amp;/\&/g"|sed -e "s/\&lt;/\</g"|sed -e "s/\&gt;/\>/g"`
+  if [ "$pptpserver" != "" ];then
+   if [ "$encrypt_mppe" = "1" ] && [ "$compression" = "1" ];then
+      if [ "$stateless" = "1" ];then
+      /usr/sbin/pptpsetup --create $ispname --ispid $ispid --server $pptpserver --username $pptpname --password $pptppasswd  --stateless
+      else
+      /usr/sbin/pptpsetup --create $ispname --ispid $ispid --server $pptpserver --username $pptpname --password $pptppasswd --encrypt --compress
+      fi
+   elif [ "$encrypt_mppe" = "0" ] && [ "$compression" = "1" ];then
+      /usr/sbin/pptpsetup --create $ispname --ispid $ispid --server $pptpserver --username $pptpname --password $pptppasswd --compress
+   elif [ "$encrypt_mppe" = "1" ] && [ "$compression" = "0" ];then
+      if [ "$stateless" = "1" ];then
+      /usr/sbin/pptpsetup --create $ispname --ispid $ispid --server $pptpserver --username $pptpname --password $pptppasswd --stateless
+      else
+      /usr/sbin/pptpsetup --create $ispname --ispid $ispid --server $pptpserver --username $pptpname --password $pptppasswd --encrypt
+      fi
+   elif [ "$encrypt_mppe" = "0" ] && [ "$compression" = "0" ];then
+      /usr/sbin/pptpsetup --create $ispname --ispid $ispid --server $pptpserver --username $pptpname --password $pptppasswd
+   fi
+      /sbin/ip route add $pptpserver via $pptproutegw table 254
+      #/usr/sbin/pon $ispname &
+      #sleep 15 #wait the pptp connection
+  fi
+done
+
+if [ "$PPTPIID" != "" ];then
+  /usr/sbin/pptpreconnect &
+fi
+
+#..........................................................
+# 2011-0302 Brian
+# * To exe. L2TP client.
+#..........................................................
+L2TPSET="/mnt/xl2tp.pkg"
+if [ -f $L2TPPSET ]; then
+   tar zxfC $L2TPSET /opt/qb/
+   mkdir /etc/xl2tpd
+   mkdir /var/run/xl2tpd
+   ln -s /opt/qb/xl2tp/xl2tpd /usr/sbin/
+   ln -s /opt/qb/xl2tp/xl2tpd.conf.client /etc/xl2tpd/xl2tpd.conf
+   ln -s /opt/qb/xl2tp/options.xl2tpd.client /etc/ppp/
+   ln -s /opt/qb/xl2tp/xl2tpd.rc /etc/rc.d/init.d/xl2tpd
+   /opt/qb/xl2tp/l2tpconnect &
+fi
+
+#..........................................................
+# 2008-1001 Brian
+# * To exe. pptp server config file.
+#..........................................................
+#PPTPSERPKG="/mnt/pptpser.pkg"
+#Enable PPTP Client
+#ENABLEPPTPSERVER=$(awk "/ENABLEPPTPSERVER/ {print \$2}"  $QBREG_FILE)
+#if [ $ENABLEPPTPSERVER = '1' ]
+#then
+#   tar zxfC $PPTPSERPKG /tmp/
+#   mv /tmp/pptpser/pptpd.conf /etc/
+#   mv /tmp/pptpser/options.pptpd /etc/ppp/
+#   mv /tmp/pptpser/pptpd.ini /etc/init.d/pptpd
+#   mv /tmp/pptpser/* /usr/local/sbin/
+#   rmdir /tmp/pptpser
+#   ACTIVEBASICXML=/usr/local/apache/active/pptpinit.xml
+#   enablepptpd=`sed -e "s/<opt.*enableppd=\"//" $ACTIVEBASICXML|sed -e "s/\".*//"`
+#   if [ $enablepptpd ] && [ -f /usr/local/sbin/pptpd ]
+#   then
+#      /usr/local/apache/qb/setuid/do_qbpptpinit.pl
+#      /usr/local/apache/qb/setuid/do_qbpptpusr.pl
+#      /usr/local/apache/qb/setuid/do_qbpppusr.pl
+#      service pptpd start
+#   fi
+#fi
+
+if [ "$MODELNAME" = "5520" ]
+then
+killall -9 xmlezio
+/opt/qb/qbwdt/xmlezio  /opt/qb/qbwdt/xmlezio.xml &
+fi
+# ------- enable the writing privilege of Apache http upload
+chmod 777 /var/tmp
+chmod 777 /tmp
+mkdir /tmp/tmpupg
+#20090223 Brian limit 20MB ram disk size for upgrade
+/sbin/mke2fs /dev/ram1 22000
+mount /dev/ram1 /tmp/tmpupg
+chmod 777 /tmp/tmpupg
+
+enablecms=`grep "ENABLECMS 1" /opt/qb/conf/registry`
+if [ "$enablecms" != "" ]; then
+    
+    for upgnum in 1 2 3 4 5 
+    do
+        ramnum=$(($upgnum+1))
+        mkdir /tmp/upg$upgnum
+        /sbin/mke2fs /dev/ram$ramnum 10000
+        mount /dev/ram$ramnum /tmp/upg$upgnum
+        chmod 777 /tmp/upg$upgnum
+    done
+    
+    #mkdir /tmp/Library
+    #/sbin/mke2fs /dev/ram5 20000
+    #mount /dev/ram5 /tmp/Library
+    #chmod 777 /tmp/Library
+
+    #mkdir /tmp/Filesystem
+    #/sbin/mke2fs /dev/ram6 10000
+    #mount /dev/ram6 /tmp/Filesystem
+    #chmod 777 /tmp/Filesystem
+
+    #for select UPG number
+    echo "None" >/tmp/number
+    chmod 777 /tmp/number
+
+    #for upg management
+fi
+
+#for CMS ssh will not keep alive
+echo -e "\tTCPKeepAlive no" >>/etc/ssh/ssh_config
+service sshd restart
+sshd_alert=$?
+if [ $sshd_alert == "0" ];then
+    echo "SSHD ERROR" >> /mnt/log/SSHD.log
+fi
+if [ -f /usr/local/apache/qb/setuid/do_qbsyslog.pl ];then
+/usr/local/apache/qb/setuid/do_qbsyslog.pl
+/sbin/service syslog restart
+fi
+echo $(date) "Boot QB done...">>/mnt/log/bootlog
+
+#20090727 Brian For the tcpdump of qbcli
+#ln -s /usr/sbin/tcpdump /opt/qb/sbin/tcpdump
+
+#20090717 Brian To collect IDE Device info.
+orgdev=`df -h|grep hd|grep -v tclog|awk '{print $1}'|sed -e "s/\/dev\///"|sed -e "s/1//"`
+otherdev=`cat /proc/partitions|grep hd|grep -v $orgdev|awk '{print $4}'|head -n 1`
+if [ "$orgdev" != "" ] && [ "$otherdev" != "" ];then
+otherdev_partation=`cat /proc/partitions|grep hd|grep -v $orgdev|awk '{print $4}'|grep hd[a-zA-Z][0-9]`
+otherdevsize=`cat /proc/partitions|grep $otherdev_partation|awk '{print $3}'`
+otherdevinfo=`cat /proc/ide/$otherdev/model`
+echo "Dev:$otherdev_partation Size:$otherdevsize Name:$otherdevinfo" >/tmp/idedev
+fi 
+#------------------------------------------------------
+#
+#------------------------------------------------------
+PROXY3="/mnt/3proxy.pkg"
+if [ -f $PROXY3 ]; then
+    tar zxfC /mnt/3proxy.pkg /tmp/
+    mv /tmp/3proxy/usr/local/bin/* /usr/local/bin/
+    mv /tmp/3proxy/usr/local/etc   /usr/local/
+    rm -rf /tmp/3proxy
+fi
+
+
+#..........................................................
+# 2012-1228
+# add Wimax udev rule
+#..........................................................
+/bin/ln -s /opt/qb/hsdpa/53-usb_wimax_huddle.rules /etc/udev/rules.d/53-usb_wimax_huddle.rules
+
+#..........................................................
+# 2013-0304
+# For CMS
+#..........................................................
+/bin/ln -s /opt/qb/hsdpa/php.ini /etc/php.ini
+
+#..........................................................
+# 2013-0125
+# add Luka file "Log_file" "ispnet"
+#..........................................................
+if [ ! -d /mnt/log/Log_file ]
+then
+/bin/mkdir /mnt/log/Log_file
+/bin/mkdir /mnt/log/ispnet
+fi
+/bin/chmod 755 /mnt/log/Log_file
+/bin/chmod 755 /mnt/log/ispnet
+
+if [ ! -d /usr/local/apache/qbconf/l7-object ]
+then
+/bin/mkdir /usr/local/apache/qbconf/l7-object
+/bin/cp /etc/l7-protocols/extra/*.pat /usr/local/apache/qbconf/l7-object
+/bin/cp /etc/l7-protocols/protocols/*.pat /usr/local/apache/qbconf/l7-object
+fi
+/bin/chmod 777 /usr/local/apache/qbconf/l7-object
+
+/bin/cp /opt/qb/naptd /usr/sbin/
+/bin/cp /opt/qb/naptd-install /usr/sbin/
+/bin/cp /opt/qb/totd /usr/local/sbin/
+
+
+#if [ "$QBTYPE" = "TM" ]; then
+#Gary insmod weburl webstr
+ insmod /lib/modules/2.6.22/kernel/net/netfilter/xt_webstr.ko
+ insmod /lib/modules/2.6.22/kernel/net/netfilter/ipt_weburl.ko
+ /sbin/ip route add local 127.0.0.1 dev lo proto kernel scope host src 127.0.0.1 table 255
+ /sbin/ip route add local 127.0.0.0/8 dev lo proto kernel scope host src 127.0.0.1 table 255
+ insmod /opt/qb/modules/ipt_NETFLOW.ko destination=127.0.0.1:54311
+ #insmod /opt/qb/modules/ipt_weburl.ko
+#fi
+
+/usr/bin/perl /usr/local/apache/qb/qblib/option.pl action=Timer action1=open
+
+#..........................................................
+# 2013-1101
+# Gary reduce fqdn timeout
+#..........................................................
+cp -af /opt/qb/bin/script/libxtables.so.5.0.0 /lib
+
+#..........................................................
+# 2013-1119
+# JianYu radius client
+#..........................................................
+RADIUS="/mnt/radius.pkg"
+if [ -f $RADIUS ]; then
+    tar zxfC $RADIUS /tmp/
+    mv /tmp/radius/raddb /usr/local/etc/
+    mv /tmp/radius/freeradius /usr/local/share/
+    mv /tmp/radius/libfreeradius-radius-020202.so /usr/local/lib/
+    mv /tmp/radius/radtest /usr/local/bin/
+    mv /tmp/radius/radclient /usr/local/bin/
+    rm -rf /tmp/radius
+fi
+
+#
+# 2013-1202
+# Gary save nfcapd data
+#
+mkdir /mnt/tclog/nfcapd
+
+#
+# 2013-1204
+# Jianyu ln xml to auth
+#
+ln /usr/local/apache/qbconf/overview.xml /usr/local/apache/qb/auth/
+
+
+#
+# 2013 1205 
+# Gary add linux at schedule command
+#
+mkdir /var/spool/cron/atspool /var/spool/cron/atjobs
+chown root:root /var/spool/cron/atspool /var/spool/cron/atjobs
+chmod 1770 /var/spool/cron/atspool /var/spool/cron/atjobs
+touch /var/spool/cron/atjobs/.SEQ
+chmod 600 /var/spool/cron/atjobs/.SEQ
+chown root:root /var/spool/cron/atjobs/.SEQ
+cp -a /opt/qb/bin/script/atd /usr/sbin
+cp -a /opt/qb/bin/script/atrun /usr/sbin
+cp -a /opt/qb/bin/script/at /usr/bin
+/usr/sbin/atd &
+
+#add auth log dir
+mkdir /mnt/tclog/auth
+
+#####################################################
+#
+#   Note.
+#   The HA function must to be last todo
+#
+#-------------------------------------------------------------------------
+#  if ha is turned on , we have to switch into runlevel 4
+#-------------------------------------------------------------------------
+#20090224 Brian Move to the last line.
+MODELTYPE=$(awk "/MODEL/ {print \$2}"  $QBREG_FILE|head -n 1)  # 050204...nancy
+MANUFACTURER=$(awk "/MANUFACTURER/ {print \$2}"  $QBREG_FILE) #Brian 20080312
+HARDWARE=$(awk "/HARDWARE/ {print \$2}"  $QBREG_FILE) #Brian 20111102
+if [ $MODELTYPE = 'BL10800' ] ;then
+    [ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+else
+case "$MODELTYPE" in
+        420)
+            echo "/opt/qb/bin/watchdog" >/etc/rc.d/rc4.d/S17WDT
+            echo "if [ \"\$?\" = \"1\" ];then" >>/etc/rc.d/rc4.d/S17WDT
+            echo "/opt/qb/qbwdt/watchdog_na100 &" >>/etc/rc.d/rc4.d/S17WDT
+            echo "fi" >>/etc/rc.d/rc4.d/S17WDT
+           ;;
+        220)
+            echo "/opt/qb/bin/watchdog" >/etc/rc.d/rc4.d/S17WDT
+            echo "if [ \"\$?\" = \"1\" ];then" >>/etc/rc.d/rc4.d/S17WDT
+            echo "/opt/qb/qbwdt/watchdog_na100 &" >>/etc/rc.d/rc4.d/S17WDT
+            echo "fi" >>/etc/rc.d/rc4.d/S17WDT
+           ;;
+        *)
+            echo "/opt/qb/bin/watchdog &" >/etc/rc.d/rc4.d/S17WDT
+           ;;
+esac
+    chmod +x /etc/rc.d/rc4.d/S17WDT
+    rm -rf /etc/rc4.d/S19local    #Brian 20080317 It will cause HA sometimes can't not work 
+    #if [ $MANUFACTURER = 'ARINFOTEK' ] || [ $HARDWARE = 'NA-100' ]; then #Brian 20080312
+    #[ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+    #fi
+    #[ $EZIO_ON = '1' ] && [ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+    #20131113 Brian NA-320R doesn't have EZIO and need to siwtch to level 4
+    if [ $HARDWARE = 'NA320R' ] || [ $MANUFACTURER = 'ARINFOTEK' ] || [ $HARDWARE = 'NA-100' ]; then
+    [ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+    else
+    [ $EZIO_ON = '1' ] && [ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+    fi
+fi
+sync
+chmod 777 /tmp/
+
+#####################################################
+#
+#   Note.
+#   The HA function must to be last todo
+#
+#####################################################

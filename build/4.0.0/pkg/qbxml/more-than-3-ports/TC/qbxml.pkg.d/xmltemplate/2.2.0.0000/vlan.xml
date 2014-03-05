@@ -1,0 +1,3 @@
+<opt file="vlan">
+  <vlan enablevlan="system" portnum="system" vid="system" vlannic="system" />
+</opt>

@@ -1,0 +1,22 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Static Routes Setting</title>
+</head>
+<body>
+
+<h2>Static Routes Setting</h2>
+<p>We configure subnets connecting to Q-Balancer.</p>
+<p>
+<b>Configuration Parameters Explained:</b>
+<table>
+<tr><td width=100>Enable :</td><td>Enable this internal subnet.</td></tr> 
+<tr><td rowspan=2 valign=top class="light">Related ISP :	</td><td class="light"><li> the IP address of the subnet is assigned by an ISP, some times the ISP will give you a discontinued segment of ip address.</td></tr>
+<tr><td class="light"><li>If we direct use the ip address assigned by an ISP as a gateway in the LAN , we must choose the ISP the ip address is related to.</td></tr>
+<tr><td>Subnet :</td><td>This internal subnet Network Number and its netmask specified using "/". </td></tr>
+<tr><td class="light">Interface :</td><td class="light">Select LAN Port</td></tr>
+<tr><td valign=top>InterFace IP :</td><td>Set the IP address Q-Balancer uses to hook to the subnet. This is the default gateway for the hosts in the subnet. For example, in the following figure there are two subnets:192.168.1.0/24 and 10.10.10/24. Interface IP address is the default gateway of hosts in both these subnets. </td></tr>
+<tr><td class="light">Gateway :</td><td class="light">The "Gateway" referred to here is an internal gateway to other networks. For example, in the figure below, to reach 10.10.40.0/24, it requires routing on part of the core switch, which is the "gateway". On most occasions a firewall or L3 switches serves the purpose.</td></tr> 
+</table>
+</p>
+</body></html>

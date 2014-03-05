@@ -1,0 +1,20 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Server mapping</title>
+</head>
+<body>
+
+<h2>Server mapping</h2>
+<p>
+Server mapping is about redirecting requests made to Q-Balancer to another host. It is a kind of Destination NAT, or DNAT. The following figure shows a simple topology illustrating this concept.</p><p>    
+	This is a simple topology. There is only one server behind Q-Balancer providing both HTTP and DNS service. The job of the Q-Balancer box is to redirect two IP addresses for the two ISP.</p> 
+<table>
+<tr><td valign=top width=100>ISP ID :	</td><td>Differentiate different ISPs</td></tr>
+<tr><td valign=top class="light">ISP Name :	</td><td class="light">Name of the ISP related to this mapping.</td></tr> 
+<tr><td valign=top>Virtual IP :	</td><td>Select external IP to receive services. Only IP Addresses registered in Link IP Binding are available for selection.</td></tr> 
+<tr><td valign=top class="light">Service :	</td><td class="light">Services Group that needs to be mapped.</td></tr> 
+<tr><td valign=top>Real Servers :	</td><td>The internal IP addresses to redirect services to. If the Q-Balancer checkbox is checked, it means to redirect to the Q-Balancer itself.</td></tr> 
+<tr><td valign=top class="light">Real service	</td><td class="light">Other than IP1:portaIP2 mapping, there can also be IP1:port1aIP2:port2 mapping. In a Multi Path VPN environment, this feature allows a single external IP address on this Q-Balancer box be used to manage many other Q-Balancer boxes responsible for other private networks behind it.</td></tr> 
+</table>
+</body></html>

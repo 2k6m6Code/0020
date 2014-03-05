@@ -1,0 +1,28 @@
+#!/bin/sh
+# Dean Consult. Amos Lin
+# 1995/1
+#
+RTN=0
+AFSDIR=/usr/afs
+HOST=X
+
+if [ -r $AFSDIR/A ] ;then
+	if [ -r $AFSDIR/B ] ;then
+		exit 1                 ## Is A and B --> ERROR
+	fi
+	HOST=A
+elif [ -r $AFSDIR/B ] ;then
+	HOST=B
+else
+	exit 2				## Not A and B --> ERROR
+fi
+
+exec 4<$AFSDIR/AFSFILES
+while read FILE <&4 ;do
+	if [ ! -r $AFSDIR/$FILE ] ;then
+		exit 3			## missing some AFS FILE
+	fi
+done
+
+# OK
+exit 0

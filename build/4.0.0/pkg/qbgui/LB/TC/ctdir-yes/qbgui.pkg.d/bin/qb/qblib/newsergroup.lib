@@ -1,0 +1,342 @@
+#=============================================================================================
+sub showNewSerGroup
+{
+    my (%action)=@_;
+    my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};  
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Service Group);
+
+    print qq (<hr size=1>);
+    print qq (<table>);
+    print qq (<tr><td class="body" align="center" valign="center" style="height: 250px; width: 250px">);
+    print qq (Available Service);
+    print qq (<br>);
+    print qq (<select class="qbsopt" name="avaser" id="avaser" size="10" multiple style="width:200; height:200">);
+    @$servicelist=sort { $a->{title} cmp $b->{title} } @$servicelist;
+    foreach my $ser ( @$servicelist )
+    {
+        #if ( $ser->{type} ne 'layer7' && $ser->{type} ne 'qb' )
+        if ( $ser->{type} eq 'user' || $ser->{type} eq 'known' )
+        {
+            print qq (<option value=$ser->{title} >$ser->{title}</optin>);
+            #print qq (<option value=$ser->{title}:d >$ser->{title}(RQST)</optin>);
+            #print qq (<option value=$ser->{title}:s >$ser->{title}(RPLY)</optin>);
+        }
+        #print qq (<option>$ser->{title}</optin>);
+    }
+    print qq (</select>);
+	#print qq (<input class="qb" type="button" align="center" style="width:80" value="Not found?" onclick="serobject();">);
+    print qq (</td><td class="body" align="center" valign="center" style="height: 250px; width: 80px">);
+    print qq (<input class="qb" type="button" style="width:80" value="Add" onclick="addser();">);
+    #print qq (<input class="qb" type="button" style="width:60" value="Add" onclick="add_options(avaser, sltser)">);
+    print qq (<br>);
+    print qq (<input class="qb" type="button" style="width:80" value="Remove" onclick="delser();">);
+    print qq (</td>);
+    print qq (<td class="body" align="center" valign="center" style="height: 250px; width: 250px">);
+    print qq (Select Service);
+    print qq (<br>);
+    print qq (<select class="qbsopt" name="sltser" id="sltser" size="10" multiple style="width:200; height:200">);
+    my @sltlist=split(/,/, $action{serlist});
+    foreach my $service ( @sltlist )
+    {
+        #my $showser=$service;
+        #$showser=~s/\:d/(RQST)/g;
+        #$showser=~s/\:s/(RPLY)/g;
+        #print qq (<option value=$service >$showser</optin>);
+        print qq (<option value=$service >$service</optin>);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">);
+    print qq (<hr size=1>);
+    print qq (<table>);
+
+    
+    #-------------------------------------------------------------------------------------------
+    #  sergroup: Name and Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input class="qbtext" name="sergroup_show" id="sergroup_show" style="WIDTH: 120px" value="$action{sergroup}" >);
+    print qq (<input type="hidden" class="qbtext" name="sergroup" id="sergroup" value="$action{sergroup}" >);
+    print qq (</td></tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Description :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    #print qq (<input class="qbtext" name="description" style="WIDTH: 120px; HEIGHT: 60px" value="$edit->{description}" >);
+    print qq (<textarea class="qbtext" name="description" id="description" style="width:200;height:80" >$action{description}</textarea>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+    #-----------------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<hr size=1>);
+    print qq (</tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 580px">);
+    print qq (<input class="qb" type="button" value="Save" onclick="SaveSerGroup();">);
+	print qq (<input class="qb" type="button" value="Cancel" onclick="window.close();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+}
+#showsergroup
+
+
+#=============================================================================================
+
+sub scriptNewSerGroup
+{
+    print << "scriptNewsergroup";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; checkState(); }
+    //function cgi_dep_onload() { myform=window.document.forms[0]; }
+    
+    function addser()
+    {
+        var avaser = document.getElementById('avaser');
+        var sltser = document.getElementById('sltser');
+        
+        for (var i = 0; i < avaser.options.length; i++)
+        {
+            var exist = 0;
+              
+            if ( avaser.options[i].selected == true )
+            {
+                var select_ser = avaser.options[i].text; 
+                for (var j = 0; j < sltser.options.length; j++)
+                {
+                    if (avaser.options[i].text == sltser.options[j].text)
+                        exist = 1;
+                }
+                var count=sltser.options.length;
+                if (!exist)
+                {
+                    var newser = new Option (avaser.options[i].text, avaser.options[i].value);
+                    sltser.options.add(newser);
+                }
+            }
+                
+        }
+        
+    }
+	
+	function serobject()
+	{
+		window.top.mainFrame.location.href="service.cgi";
+	}
+	
+    function SaveSerGroup()
+    {
+        var sergroup_show = document.getElementById('sergroup_show').value;
+	var description=document.getElementById('description').value;
+        var sltser = document.getElementById('sltser');
+        var sltserlist = '';
+        //if ( !IsLetter(sergroup_show.charAt('0')) )
+        //{
+        //    alert('Service Group Name must be English or nember');
+        //    return;
+        //}
+	if (sltser.options.length == 0)
+        {
+            alert('Must Select Service');
+            return;
+        }
+	
+        var head = sergroup_show.charCodeAt('0');
+        if ( (head < 65 || head > 90) && (head < 97 || head >122) )
+        {
+            alert('Service Group Name must be English');
+            return;
+        }
+	
+	if ( sergroup_show == '' )
+        {
+            alert('Service Group Name must be English or nember');
+            return;
+        }
+
+        for (i = 0; i < sergroup_show.length; i++)
+        {
+            var ch = sergroup_show.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+                alert('Service Group Name must be English');
+                return;
+            }
+        }
+
+	for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Service Group Description must be English ");
+               return;
+            }
+        }
+        
+        for (var i = 0; i < sltser.options.length; i++)
+        {
+            sltserlist += sltser.options[i].value + ',';
+        }
+        var listlen = sltserlist.length;
+        
+        myform.action.value = 'SAVE';
+        myform.sergroup.value = sergroup_show;
+        myform.serlist.value = sltserlist.substring(0, listlen - 1);
+        myform.submit();
+    }
+    function delser()
+    {
+        var sltser = document.getElementById('sltser');
+        
+        for (var i = sltser.options.length - 1; i >= 0; i--)
+        {
+            if ( sltser.options[i].selected == true )
+            {
+                sltser.options.remove(i);
+            }
+                
+        }
+    
+    }
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var sergroup=document.getElementById('sergroup');
+        var sergroup_show=document.getElementById('sergroup_show');
+        
+        if ( sergroup.value != '' )
+            sergroup_show.disabled = true; 
+        
+        if ( action != '' )
+		{
+			window.opener.location.replace('service.cgi');
+			window.close();
+		}
+            //window.top.mainFrame.location.href="sergroup.cgi";
+        
+    }
+    </script>
+    
+scriptNewsergroup
+}
+#sergroupScript
+
+sub maintainSerGroup
+{
+    my (%action)=@_;
+    
+    my $sergref=XMLread($gPATH.'sergroup.xml');
+    my $serglist=$sergref->{sergroup};
+    my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};
+    my $exist=0;
+    
+    #$action{sergroup}=~s/^\s*|\s*$//g;
+    $action{sergroup}=~s/\s//g;
+    
+    if ( !$action{action} ) { return; }
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        foreach my $service ( @$servicelist )
+        {
+            if ( $service->{title} eq $action{sergroup} && $service->{type} ne 'sergroup' )
+            {
+                $gMSGPROMPT.=qq(The name has been used !!!\\n);
+                return;
+            }
+        }
+        foreach my $serg ( @$serglist )
+        {
+            if ( $serg->{sergroup} eq $action{sergroup} )
+            {
+                $exist=1;
+                delete($action{action});
+                $serg=\%action;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            delete($action{action});
+            push( @$serglist, \%action); 
+            #runCommand(command=>'echo', params=>$action{sltser}.' '.'>>/tmp/ser');
+        }
+        @$serglist=sort { $a->{sergroup} cmp $b->{sergroup} } @$serglist;
+        #20111129 Brian DELSERVICE will delete all policies which associated with the service name.
+        #maintainService( action=>'DELSERVICE', group=>'sergroup', service=>$action{sergroup});
+        maintainService( action=>'DELSERVICE', service=>$action{sergroup});
+
+        maintainService( action=>'NEWSERVICE', group=>'sergroup', newservice=>$action{sergroup});
+        my @serlist=split(/,/, $action{serlist});
+        runCommand(command=>'echo', params=>$action{serlist}.' '.'>>/tmp/serlist');
+		
+        foreach my $ser ( @serlist )
+        {
+            foreach my $item ( @$servicelist )     
+            {
+               if( $ser eq $item->{title} )
+                {
+                    my $portlist=$item->{port};
+                    foreach my $port ( @$portlist ) 
+                    {
+                        runCommand(command=>'echo', params=>$port->{protocol}.' '.$port->{value}.'>>/tmp/ser');
+                        if ( $port->{protocol} eq 'system' ) { 
+						
+						}else{
+                        maintainService( action=>'ADDPORT', service=>$action{sergroup}, protocol=>$port->{protocol}, portvalue=>$port->{value});
+						}
+					}
+                }
+            }
+        }
+        
+        LogUserAction( action=>'SAVESERGROUP', sergroup=>$action{sergroup}, serlist=>$action{serlist} );
+    }
+    elsif ( $action{action}=~m/^DELETSG$/ )
+    {
+        my $delet=$action{sergroupname};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        
+        my @temparray;
+        foreach my $item ( @$serglist )
+        {
+            if ( grep(/^$item->{sergroup}$/, @$delet) ) { LogUserAction( action=>'DELSERGROUP', sergroup=>$item->{sergroup} ); next; }
+            push(@temparray, $item);
+            
+        }
+        $sergref->{sergroup}=\@temparray;
+        foreach my $item ( @$delet ) 
+        {
+            maintainService( action=>'DELSERVICE', group=>'1', service=>$item);
+        }
+        
+        LogUserAction( action=>'DELSERGROUP', sergroup=>$action{sergroup} );
+    }
+    
+    #@$serglist=sort byName @$serglist;
+    XMLwrite($sergref, $gPATH."sergroup.xml");
+}
+#
+1

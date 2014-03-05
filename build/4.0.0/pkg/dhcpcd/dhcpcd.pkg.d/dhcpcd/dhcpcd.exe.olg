@@ -1,0 +1,122 @@
+#!/bin/sh
+
+#set -x
+
+#  /etc/dhcpc/dhcpcd.exe script is executed by dhcpcd daemon
+#  any time it configures or shuts down interface.
+#  The following parameters are passed to dhcpcd.exe script:
+#  $1 = HostInfoFilePath, e.g  "/etc/dhcpc/dhcpcd-eth0.info"
+#  $2 = "up" if interface has been configured with the same
+#       IP address as before reboot;
+#  $2 = "down" if interface has been shut down;
+#  $2 = "new" if interface has been configured with new IP address;
+#  $3 (optional) = "-d" debug flag passed if dhcpcd daemon has been
+#       invoked with "-d" flag
+#
+#  Sanity checks
+
+ BASICXML="/usr/local/apache/qbconf/basic.xml"
+ IPADDRXML="/usr/local/apache/qbconf/ipaddr.xml"
+ IPBANKXML="/usr/local/apache/qbconf/ipbank.xml"
+ PROUTEXML="/usr/local/apache/qbconf/proute.xml"
+ RTABLEXML="/usr/local/apache/qbconf/rtable.xml"
+ LVSXML="/usr/local/apache/qbconf/lvs.xml"
+ DNSXML="/usr/local/apache/qbconf/dns.xml"
+ TEMPXML="/tmp/temp.xml"
+ ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+ ACTIVEIPADDRXML="/usr/local/apache/active/ipaddr.xml"
+ ACTIVEIPBANKXML="/usr/local/apache/active/ipbank.xml"
+ ACTIVEPROUTEXML="/usr/local/apache/active/proute.xml"
+ ACTIVERTABLEXML="/usr/local/apache/active/rtable.xml"
+ ACTIVELVSXML="/usr/local/apache/active/lvs.xml"
+ ACTIVEDNSXML="/usr/local/apache/active/dns.xml"
+
+if [ $# -lt 2 ]; then
+  logger -s -p local0.err -t dhcpcd.exe "wrong usage"
+  exit 1
+fi
+
+hostinfo="$1"
+state="$2"
+debug="$3"
+
+if [ "$hostinfo" = "" ] && [ "$state" = "down" ];then
+echo "Fail to get ip from dhcp server"
+exit 1
+fi
+
+# Reading HostInfo file for configuration parameters
+. ${hostinfo}
+
+case ${INTERFACE} in
+  eth*) ;;
+     *) logger -s -p local0.err -t dhcpcd.exe "wrong interface name \"${INTERFACE}\""
+	exit 1
+	;;
+esac
+
+case ${state} in
+ up) logger -s -p local0.info -t dhcpcd.exe "interface ${INTERFACE} has been configured with old IP=${IPADDR} GW=${GATEWAY}"
+# ====  Put your code for the case interface has been brought up with old IP address here
+/sbin/arping -I ${INTERFACE} ${GATEWAY} -c 10 &
+/sbin/arping -I ${INTERFACE} ${DHCPSID} -c 10 &
+#echo 101 >/tmp/fifo.qbserv
+
+# ====  End
+     ;;
+ new) logger -s -p local0.info -t dhcpcd.exe "interface ${INTERFACE} has been configured with new IP=${IPADDR} GW=${GATEWAY}"
+# ====  Put your code for the case interface has been brought up with new IP address here
+dhcp_eth=${INTERFACE}
+OLDINFO="/etc/dhcpc/dhcpcd-$dhcp_eth.info.old"
+dhcp_newip=${IPADDR}
+dhcp_oriip=`grep isptype=\"dhcp\" $BASICXML|grep $dhcp_eth|sed -e "s/  <isp.*systemip=\"//"|sed -e "s/\".*//"`
+dhcp_newgw=${GATEWAY}
+if [ "$dhcp_newgw" = "" ];then
+  exit 0
+fi
+dhcp_origw=`grep isptype=\"dhcp\" $BASICXML|grep $dhcp_eth|sed -e "s/  <isp.*gateway=\"//"|sed -e "s/\".*//"`
+dhcp_orisubnet="$dhcp_oriip\/32"
+dhcp_newsubnet="$dhcp_newip\/32"
+                    
+       if [ "$dhcp_newip" != "" ];then
+
+          #Refresh all xml files
+           sed -i -e '{
+           s/'\"$dhcp_oriip\"'/'\"$dhcp_newip\"'/g
+           s/'\"$dhcp_origw\"'/'\"$dhcp_newgw\"'/g
+           s/'\"$dhcp_orisubnet\"'/'\"$dhcp_newsubnet\"'/g
+           s/'\>$dhcp_oriip\<'/'\>$dhcp_newip\<'/g
+           }' /usr/local/apache/active/*.xml /etc/ddclient/ddclient_sh
+           update="$?"
+           sync  #prevent write data error
+           if [ "$update" = "0" ];then
+            cp -af /usr/local/apache/active/* /usr/local/apache/qbconf/
+            #insert_update
+           else
+            cp -af /usr/local/apache/qbconf/* /usr/local/apache/active/
+           fi
+       fi
+
+# ====  End
+     ;;
+ down) logger -s -p local0.info -t dhcpcd.exe "interface ${INTERFACE} has been brought down"
+# ====  Put your code for the case interface has been shut down here
+
+#dhcp_eth=${INTERFACE}
+#OLDINFO="/etc/dhcpc/dhcpcd-$dhcp_eth.info.old"
+#dhcp_newip=${IPADDR}
+#dhcp_oriip=`grep IPADDR= $OLDINFO|sed -e "s/IPADDR=//"`
+#dhcp_oriip=`grep isptype=\"dhcp.*\" $BASICXML|grep $dhcp_eth|sed -e "s/  <isp.*systemip=\"//"|sed -e "s/\".*//"`
+#dhcp_newgw=${GATEWAY}
+#dhcp_origw=`grep GATEWAY= $OLDINFO|sed -e "s/GATEWAY=//"`
+#dhcp_origw=`grep isptype=\"dhcp.*\" $BASICXML|grep $dhcp_eth|sed -e "s/  <isp.*gateway=\"//"|sed -e "s/\".*//"`
+#dhcp_iid=`grep isptype=\"dhcp.*\" $BASICXML|grep $dhcp_eth|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"`
+#ifconfig $dhcp_eth $dhcp_newip netmask 255.255.255.0
+#ip route add default via $dhcp_newgw table 101
+#ifconfig $dhcp_eth $dhcp_oriip netmask 255.255.255.0
+#ip route add default via $dhcp_origw table 101
+
+# ====  End
+     ;;
+esac
+exit 0

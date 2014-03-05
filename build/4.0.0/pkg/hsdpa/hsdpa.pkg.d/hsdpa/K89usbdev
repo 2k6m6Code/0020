@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Brian 20100318 Bring down all usb devices 
+
+echo "Try to suspend USB devices..."
+Allusbport=`ls /sys/bus/usb/devices/|sed 's/\n//g'`
+for usbPort in $Allusbport
+do
+echo -n 3 >/sys/bus/usb/devices/$usbPort/power/state
+echo "$usbPort:"
+cat /sys/bus/usb/devices/$usbPort/power/state
+done
+    

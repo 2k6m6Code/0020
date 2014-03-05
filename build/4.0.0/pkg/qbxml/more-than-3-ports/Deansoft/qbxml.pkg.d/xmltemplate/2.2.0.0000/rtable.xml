@@ -1,0 +1,5 @@
+<opt file="rtable" version="2.2">
+  <table table_num="system" backup_table="" />
+  <table dirty="0" equalize="0" base="0" multiple="0" dsipnum="0" table_num="system" bydest="0" bestweight="0" backup_table="" bestroute="0" byaverage="0" numpath="0" dynamic="0" level="1" measure_time="3" />
+  <table dirty="0" equalize="0" base="0" multiple="0" dsipnum="0" table_num="100" bydest="0" bestweight="0" backup_table="" bestroute="0" byaverage="0" numpath="0" dynamic="0" level="1" measure_time="3" />
+</opt>

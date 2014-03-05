@@ -1,0 +1,2 @@
+A:init:-:/opt/qb/bin/script/qbha.sh start:/opt/qb/bin/script/qbha.sh stop
+A:init:-:/usr/afs/qbserver_done_then_start NDEV A:/usr/afs/stopp NDEV A

@@ -1,0 +1,83 @@
+<html>
+<head>
+<title></title>
+<link rel="stylesheet" href="../gui.css" type="text/css">
+<style>
+body{
+	background:#336699;
+	text-align:center;
+}
+</style>
+
+<script for="gmaster" event="onreadystatechange">
+
+	//1.scriptlet test	
+	try{		gmaster.init(gmaster);	}
+	catch(e){	alert("Scriptlet loaded faile ..");return false;	}
+	
+	//3.other code
+	gmaster.setColor("background","#336699");
+	/*demo
+	gmaster.setRadius(100);
+	gmaster.setDataMode("tx");
+	gmaster.setColor(0,255,255,0);
+	gmaster.setColor(1,0,0,255);
+	gmaster.setColor(2,255,255,0);
+	gmaster.setColor(3,0,255,255);
+	*/
+	refresh();
+	auto_refresh();
+</script>
+<script>
+
+var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+var timer;
+var basepath = window.location.href.replace(/[^/]+$/gi,"");
+var cgipath="rate.cgi";
+//  cgipath="inner.htm";
+
+
+function runURLOk(){
+
+	if(xmlhttp.readystate!=4)
+		return false;
+
+	if(xmlhttp.responseText)
+            window.execScript(xmlhttp.responseText.replace(/<.+>|window\.parent\./gi,""));
+}
+
+function runURL(url){
+	try{
+		xmlhttp.onreadystatechange = new Function("");
+		xmlhttp.abort();
+		xmlhttp.onreadystatechange = runURLOk;
+		xmlhttp.open("GET",url,true);
+		xmlhttp.send();
+		
+	}
+	catch(e){return false}
+}
+
+function refresh(){
+	runURL(basepath+cgipath);
+}
+
+function resetVolumn(){
+	runURL(basepath+cgipath+"?action=reset");
+	auto_refresh();
+}
+
+function auto_refresh(){
+	refresh();
+	if(timer)clearInterval(timer);
+	timer = setInterval("refresh()",3000);
+}
+
+</script>
+
+</head>
+<body>
+
+<OBJECT ID="gmaster" TYPE="text/x-scriptlet" data="../qbjs/daslt_piechart.htm" style="border:0 solid black;" width="560" height="390"></OBJECT>
+
+</html>

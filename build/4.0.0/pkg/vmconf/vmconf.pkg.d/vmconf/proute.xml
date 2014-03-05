@@ -1,0 +1,40 @@
+<opt file="proute" lastupdate="" status="lock">
+  <fw>
+    <class destination="" direction="s" fwmark="0x4647535" natmethod="" priority="20000" route_table="100" schedule="" service="maintain" sip="" source="localhost" subnettype="lvs">
+      <time>0:1439</time>
+    </class>
+    <class destination="" direction="s" fwmark="0x464753A" natmethod="" priority="20000" route_table="100" schedule="" service="ping" sip="" source="localhost" subnettype="lvs">
+      <time>0:1439</time>
+    </class>
+    <class destination="" direction="s" fwmark="0x464753F" natmethod="" priority="20000" route_table="100" schedule="" service="ssh" sip="" source="localhost" subnettype="lvs">
+      <time>0:1439</time>
+    </class>
+  </fw>
+  <fwadv>
+  </fwadv>
+  <qb>
+    <class fwmark="0x3E9" natmethod="ls" priority="4500" route_table="101" service="ISP1">
+      <time>0:1439</time>
+    </class>
+    <class priority="5000" route_table="101" source="255.255.255.253/32">
+      <time>0:1439</time>
+    </class>
+  </qb>
+  <sub>
+  </sub>
+  <subadv>
+  </subadv>
+  <sys>
+    <class destination="" fwmark="0x8FF2710" natmethod="ls" priority="1000" route_table="100" service="domain" source="">
+      <time>0:1439</time>
+    </class>
+    <class destination="" fwmark="0x8FF2711" natmethod="ls" priority="1000" route_table="100" service="smtp" source="">
+      <time>0:1439</time>
+    </class>
+    <class destination="" fwmark="0x8FF2712" natmethod="ls" priority="1000" route_table="100" service="ftp" source="">
+      <time>0:1439</time>
+    </class>
+  </sys>
+  <to>
+  </to>
+</opt>

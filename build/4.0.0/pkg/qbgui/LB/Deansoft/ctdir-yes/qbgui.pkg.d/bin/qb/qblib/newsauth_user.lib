@@ -1,0 +1,1348 @@
+#=============================================================================================
+sub showNewSchedule
+{
+    my (%action)=@_;
+    my $schref=XMLread($gPATH.'auth.xml');
+	my $quotaref=XMLread($gPATH.'quota.xml');
+	my $quotalist=$quotaref->{quota};
+    my $schlist=$schref->{user};
+    my $edit;
+	my $status=0;
+   
+    foreach my $sh ( @$schlist )
+    {
+        if ( $sh->{schname} eq $action{schname} ) { $edit=$sh; }
+    }
+   
+    
+    my @titleHeadList=('IP', 'User Name', 'Password', 'Time','Mail', 'Information', 'Quota<br>Notification', 'Bandwidth<br>setting', 'Edit');
+    my %titleWidth=('IP'=>200, 'Name'=>100, 'Password'=>150, 'Time'=>200,'Mail'=>100, 'Information'=>100 , 'Information'=>100 ,'Edit'=>50);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">User Group);
+
+    print qq (<hr size=1>);
+    
+    print qq (<table width="650">);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 250px">);
+    print qq (<input class="qbtext" id="schname_show" name="schname_show" style="WIDTH: 120px" value="$edit->{schname}">);
+    print qq (<input type="hidden" class="qbtext" id="schname" name="schname" value="$action{schname}" >);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Auth :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 250px">);
+    
+    print qq (<select class="qbtext" id="description" name="description" style="WIDTH: 120px" onchange="checktype();">);
+    print qq (<option value="None">None</option>);
+    my $serverlist=$schref->{server};
+    
+    foreach my $server (@$serverlist)
+    {
+        if ($server->{schname} eq 'system'){next;}
+        if ($server->{schname} eq $edit->{description})
+        {
+            my $tmp_name = ($server->{schname} eq 'LD')?('Local Database'):($server->{schname});
+            print qq (<option value="$server->{schname}" selected>$tmp_name</option>);
+        }else
+        {
+            my $tmp_name = ($server->{schname} eq 'LD')?('Local Database'):($server->{schname});
+            print qq (<option value="$server->{schname}" >$tmp_name</option>);
+        }
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (</table>);
+     
+    print qq (<table width="650">);
+    print qq (<tr><td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 100%" onClick="showhide()">);
+    print qq (&raquo; Group Quota Setting:);
+    print qq (</td></table>);
+	
+	print qq (<table id="hidden" style="display:none;" width="650">);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 250px">);
+    print qq (Limit Downlink at :);
+    print qq (<input type="text" class="qbtext" id="dmit" style="WIDTH:45px" maxlength="4" value="$dmit"/>);
+    print qq (<select class="qb" id="dbps" style="WIDTH:60px" value="$dbps">);
+    print qq (<option value="K">KB</option>);
+    print qq (<option value="M" selected>MB</option>);
+    print qq (<option value="G">GB</option>);
+    print qq (<option value="T">TB</option>);
+    print qq (</select></td>);
+	print qq (<td class="body" valign="center" align="left" style="height: 30px; width: 250px;">);
+	print qq (<span id="up_view" style="display:none; width: 250px;">Limit Uplink at :);
+    print qq (<input type="text" class="qbtext" id="umit" style="WIDTH:45px" maxlength="4" value="$dmit"/>);
+    print qq (<select class="qb" id="ubps" style="WIDTH:60px" value="$dbps">);
+    print qq (<option value="K">KB</option>);
+    print qq (<option value="M" selected>MB</option>);
+    print qq (<option value="G">GB</option>);
+    print qq (<option value="T">TB</option>);
+    print qq (</select></span></td>);
+	print qq (<td class="body"  valign="center" align="right" style="height: 30px; width: auto"></td>);
+	print qq (</tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 100">);
+    print qq (Cycle : <select class="qb" id="cycle" style="WIDTH:90px" onChange="cycleChange();">);
+    print qq (<option value="0">non-cyclic</option>);
+    print qq (<option value="1">Daily</option>);
+    print qq (<option value="7">Weekly</option>);
+    print qq (<option value="30">Monthly</option>);
+    print qq (</select></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 100">);
+    print qq (Reset at :);
+    print qq (<select class="qb" id="hr" style="WIDTH:50px;">);
+    foreach my $hr (0..23)
+    {
+        if($hr < 10)
+        {
+            print qq(<option value="0$hr">0$hr</option>);
+        }else
+        {
+            print qq(<option value="$hr">$hr</option>);
+        }
+    }
+    print qq (</select>:<select class="qb" id="sec" style="WIDTH:50px">);
+    foreach my $sec (0..59)
+    {
+        if($sec < 10)
+        {
+            print qq(<option value="0$sec">0$sec</option>);
+        }else
+        {
+            print qq(<option value="$sec">$sec</option>);
+        }
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (<tr>);
+	print qq (<td class="body" id="weekly" style="display:none; width:200px;" colspan="2">);
+    my @week=("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+    foreach my $day ( @week )
+    {
+        print qq (<INPUT type="radio" name="week" id="selectDay" value="$day"/> $day&#32&#32);
+    }
+    print qq (</select></td>);
+    
+    print qq (<td class="body" id="monthly" style="display:none; width: 200px;" colspan="2">);
+    print qq (Day : <select class="qb" id="number" style="WIDTH:50px">);
+    foreach my $month (1..30)
+    {
+        if ($month < 10)
+        {
+            print qq (<option value="$month">0$month</option>);
+        }else
+        {
+       	    print qq (<option value="$month">$month</option>); 
+        }
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    print qq (<tr>);
+	print qq (<td class="body" id="p1" colspan="4" align="center">);
+    print qq (<input type="button" class="qb" id="apply" value="Apply" onclick="applyto()"> To );
+    print qq (<select id="choose" class="qb" onchange="G_change()">);
+    print qq (<option value="group">Group</option>);
+    print qq (<option value="user">Every User</option>);
+    print qq (</select></td>);    
+    print qq (</tr></table>);
+    
+    print qq (<div class="divframe" style="width:650; height:150;display:block;">); 
+    print qq (<table id="scheduleList" style="width:650" border="0"><tr bgcolor="#332211">);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    print qq (<td>);
+    print qq (<a href="javascript:DeleteSchedule()"><image src="../image/del.gif" title="Delete Checked Schdule(s)" border="0"></a>);
+    print qq (<input type="checkbox" id="del" title="select or deselect all items" onClick="setAllCheckBoxValue('subschs', this.checked)">);
+    print qq (</td></tr>);
+    
+    #my $index = 0;
+    my $showlist = $edit->{member};
+    my $ip;
+    foreach my $show ( @$showlist )
+    {
+        print qq (<tr>);
+        if ($show->{ip} eq ''){$ip="* ".$show->{iip};}
+        else{$ip=$show->{ip};}
+        print qq (<td align="center" width="100">$ip</td>);
+        print qq (<td align="center" width="100">$show->{idd}</td>);
+        print qq (<td align="center" width="100">$show->{pwd}</td>);
+        my $time = '';
+        if ($show->{time} ne '')
+        {
+            $time = gmtime($show->{time});
+        }
+        print qq (<td align="center" width="200" class="A-$show->{time}">$time</td>);
+        print qq (<td align="center" width="100">$show->{mail}</td>);
+        print qq (<td align="center" width="100">);
+		my $quota='N/A';
+		my $dmit = '';
+		my $dbps;
+		my $umit;
+		my $ubps;
+		my $tcycle;
+		my $tchose;
+		my $ttime;
+		my $viewqn='N/A';
+		my $viewql='N/A';
+		my $vbs='0';
+		my $vql='0';
+		foreach my $ql ( @$quotalist )
+		{
+			if($show->{idd} eq $ql->{name})
+			{
+				my $down_limit=$ql->{down};
+				my $up_limit=$ql->{up};
+				my @down = split(/:/,$down_limit);
+				my @up = split(/:/,$up_limit);
+				$dmit=$down[0];
+				$umit=$up[0];
+				$dbps=$down[1];
+				$ubps=$up[1];
+				if ($dbps eq '0'){$dbps='--';}
+				if ($dbps eq '1024'){$dbps='K';}
+				if ($dbps eq '1048576'){$dbps='M';}
+				if ($dbps eq '1073741824'){$dbps='G';}
+				if ($dbps eq '1099511627776'){$dbps='T';}
+				if ($ubps eq '0'){$ubps='--';}
+				if ($ubps eq '1024'){$ubps='K';}
+				if ($ubps eq '1048576'){$ubps='M';}
+				if ($ubps eq '1073741824'){$ubps='G';}
+				if ($ubps eq '1099511627776'){$ubps='T';}
+				$down=$dmit.$dbps;
+				$up=$umit.$ubps;
+				$tcycle=$ql->{cycle};
+				$tchose=$ql->{chose};
+				$ttime=$ql->{date};
+				my $cycle ='';
+				my $time ='';
+				my $chose ='';
+				if($tcycle eq '0'){$cycle='non-cyclic';$tchose='';$time='';}
+				if($tcycle eq '1'){$cycle='Daily';$tchose='';$time=$ttime;}
+				if($tcycle eq '7')
+				{
+					if($tchose eq '0'){$tchose='Sun';$time=$ttime;}
+					if($tchose eq '1'){$tchose='Mon';$time=$ttime;}
+					if($tchose eq '2'){$tchose='Tue';$time=$ttime;}
+					if($tchose eq '3'){$tchose='Wed';$time=$ttime;}
+					if($tchose eq '4'){$tchose='Thu';$time=$ttime;}
+					if($tchose eq '5'){$tchose='Fri';$time=$ttime;}
+					if($tchose eq '6'){$tchose='Sat';$time=$ttime;}
+					$cycle='Weekly-';
+				}
+				if($tcycle eq '30'){$cycle='Monthly-';$time=$ttime;}
+				$quota = $down.'/'.$up.'<br>'.$cycle.$tchose.'<br>'.$time;
+				#print qq ($down/$up<br>$cycle$tchose<br>$time);
+				if($ql->{qn} eq '1'){$viewqn = 'admin<br>';}
+				if($ql->{qn} eq '2'){$viewqn = 'user';}
+				if($ql->{qn} eq '3'){$viewqn = 'admin<br>user';}
+				
+				if(($ql->{bs} eq '0'||!$ql->{bs})&&($ql->{ql} eq '0'||!$ql->{ql})){$viewql = 'Down/Up<br>Block';$vbs='0';$vql='0';}
+				if(($ql->{bs} eq '0'||!$ql->{bs})&&$ql->{ql} eq '1'){$viewql = 'Down/Up<br>Limit';$vbs='0';$vql='1';}
+				if($ql->{bs} eq '1'&&($ql->{ql} eq '0'||!$ql->{ql})){$viewql = 'Total<br>Block';$vbs='1';$vql='0';}
+				if($ql->{bs} eq '1'&&$ql->{ql} eq '1'){$viewql = 'Total<br>Limit';$vbs='1';$vql='1';}
+			}
+		}
+		print qq ($quota);
+		print qq (</td>);
+		print qq (<td align="center" width="50">$viewqn</td>);
+		print qq (<td align="center" width="50">$viewql</td>);
+        print qq (<td align="center" width="50">);
+		if($dmit ne '')
+        {print qq (<a onclick="status('$show->{ip},$show->{idd},$show->{pwd},$show->{mail},$dmit,$dbps,$umit,$ubps,$tcycle,$tchose,$ttime,$viewqn,$vbs,$vql')"><img src="../image/edit.gif"></a></td>);}
+		else
+		{print qq (<a onclick="status('$show->{ip},$show->{idd},$show->{pwd},$show->{mail},,M,,M,0,0,00:00')"><img src="../image/edit.gif"></a></td>);}
+        print qq (<td><input type="checkbox" name="subschs" ></td>);
+        print qq (</tr>);
+    }
+    print qq (</table></div>);
+    
+    print qq (<table bgcolor="#667788" width="650">);
+    #-------------------------------------------------------------------------------------------
+    #  Schedule: Days , Start time , Stop Time
+    #-------------------------------------------------------------------------------------------
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (IP/ID Bind :);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="radio" name="restriction" id="en" onclick="change('1')" checked>Enabled);
+    print qq (<input type="radio" name="restriction" id="dis" onclick="change('0')" >Disabled);
+    print qq (</td></tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (IP address:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="text" id="ip" name="alldays" value="" >);
+    print qq (</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="text" id="port" name="alldays" value="$edit->{port}"></td>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Password :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="text" id="pwd" name="alldays" value="$edit->{pwd}" ></td>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (E-mail :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="text" id="mail" name="alldays" value="$edit->{mail}" ></td>);
+    
+    print qq (<td class="body"  valign="center" align="right" style="height: 30px; width: 80px">);
+    print qq (<input class="qb" id="QuotaAdd" type="button" style="width: 40" value="Add" onclick="AddSchedule();">);
+    print qq (</td></tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 200px" colspan=2 onClick="showhide1()">);
+    print qq (&raquo; User Quota Setting:);
+    print qq (</td></tr>);
+	print qq (</table>);
+	
+	print qq (<table id="hidden2" style="display: none;" bgcolor="#667788" width="650">);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 250px" colspan="">);
+	print qq (Limit Downlink at :);
+    print qq (<input type="text" class="qbtext" id="dmit1" style="WIDTH:45px" maxlength="4" value="$dmit" onchange="U_change()"/>);
+    print qq (<select class="qb" id="dbps1" style="WIDTH:60px" value="$dbps" onchange="U_change()">);
+    print qq (<option value="K">KB</option>);
+    print qq (<option value="M" selected>MB</option>);
+    print qq (<option value="G">GB</option>);
+    print qq (<option value="T">TB</option>);
+    print qq (</select></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 250px">);
+	print qq (Limit Uplink at :);
+    print qq (<input type="text" class="qbtext" id="umit1" style="WIDTH:45px" maxlength="4" value="$umit"/>);
+    print qq (<select class="qb" id="ubps1" style="WIDTH:60px" value="$dbps">);
+    print qq (<option value="K">KB</option>);
+    print qq (<option value="M" selected>MB</option>);
+    print qq (<option value="G">GB</option>);
+    print qq (<option value="T">TB</option>);
+    print qq (</select></td>);
+	print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: auto">Quota Notification</td>);
+	print qq (</tr>);
+	
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 100">);
+    print qq ( Cycle : <select class="qb" id="cycle1" style="WIDTH:90px" onChange="cycleChange1();">);
+    print qq (<option value="0">non-cyclic</option>);
+    print qq (<option value="1">Daily</option>);
+    print qq (<option value="7">Weekly</option>);
+    print qq (<option value="30">Monthly</option>);
+    print qq (</select></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 100">);
+	print qq (Reset at :);
+    print qq (<select class="qb" id="hr1" style="WIDTH:50px;">);
+    foreach my $hr (0..23)
+    {
+        if($hr < 10)
+        {
+            print qq(<option value="0$hr">0$hr</option>);
+        }else
+        {
+            print qq(<option value="$hr">$hr</option>);
+        }
+    }
+    print qq (</select>:<select class="qb" id="sec1" style="WIDTH:50px">);
+    foreach my $sec (0..59)
+    {
+        if($sec < 10)
+        {
+            print qq(<option value="0$sec">0$sec</option>);
+        }else
+        {
+            print qq(<option value="$sec">$sec</option>);
+        }
+    }
+    print qq (</select></td>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: auto">);
+	my $n,$n2 = '';
+	if( $status eq 1 || $status eq 3 ){$n = 'checked'}
+	if( $status eq 2 || $status eq 3 ){$n2 = 'checked'}
+	print qq (<input type="checkbox" id="admin" name="admin" value="admin" $n>admin);
+	print qq (<input type="checkbox" id="user" name="user" value="user" $n2>user);
+	print qq (</td>);
+    print qq (</tr>);
+	print qq (<tr>);
+    print qq (<td class="body" valign="center" align="left" style="height: 30px; width: 20px"></td>);
+	print qq (<td class="body" style="width:250px;">Bandwidth setting :&nbsp;);
+	print qq (<select class="qb" id="bs" style="WIDTH:110px" onchange="bs_change()">);
+	if ($bs eq '0')
+	{
+		print qq (<option value="0" Selected>by Up/Down</option>);
+		print qq (<option value="1">by Total</option>);
+	}
+	if ($bs eq '1')
+	{
+		print qq (<option value="0">by Up/Down</option>);
+		print qq (<option value="1" Selected>by Total</option>);
+	}
+	if (!$bs)
+	{
+		print qq (<option value="0">by Up/Down</option>);
+		print qq (<option value="1">by Total</option>);
+	}
+	print qq (</select></td>);
+	print qq (<td class="body" style="width:250px;">When Quota full :&nbsp;);
+	print qq (<select class="qb" id="ql" style="WIDTH:110px" onchange="WQFChange()">);
+	if ($ql eq '0')
+	{
+		print qq (<option value="0" Selected>Block</option>);
+		print qq (<option value="1">Limit speed</option>);
+	}
+	if ($ql eq '1')
+	{
+		print qq (<option value="0">Block</option>);
+		print qq (<option value="1" Selected>Limit speed</option>);
+	}
+	if (!$ql)
+	{
+		print qq (<option value="0">Block</option>);
+		print qq (<option value="1">Limit speed</option>);
+	}
+	print qq (</select></td>);
+	print qq (<td class="body" id="show_limit" valign="center" align="center" style="height: 30px; width: auto; visibility:hidden;">Limit : );########Limit value
+	print qq (<input type="text" class="qbtext" id="lmit1" style="WIDTH:45px" maxlength="4" value="$lmit"/> Packet/s);
+	print qq (</td></tr>);
+	print qq (<tr>);
+	print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+	print qq (<td class="body" id="weekly1" style="display:none; width:200px;" colspan="2">);
+    my $x = 1;
+    my @week=("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+    foreach my $day ( @week )
+    {
+        print qq (<INPUT type="radio" name="week1" id="selectDay1" value="$day"/> $day&#32&#32);
+    }
+    print qq (</select></td>);
+    
+    print qq (<td class="body" id="monthly1" style="display:none; width: 200px;" colspan="2">);
+    print qq (Day : <select class="qb" id="number1" style="WIDTH:50px">);
+    foreach my $month (1..30)
+    {
+        if ($month < 10)
+        {
+            print qq (<option value="$month">0$month</option>);
+        }else
+        {
+       	    print qq (<option value="$month">$month</option>); 
+        }
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+    #print qq (<tr><hr size=1></tr>);
+    #print qq (<table>);
+    #print qq (<tr><td><hr size=1></td></tr>);
+    #print qq (</table>);
+    #-------------------------------------------------------------------------------------------
+    #  Schedule: Name and Description
+    #-------------------------------------------------------------------------------------------
+    #print qq (<table>);
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    #print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    #print qq (Description :);
+    #print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    ##print qq (<textarea class="qbtext" id="description" name="description" style="width:200;height:80" >$edit->{description}</textarea>);
+    #print qq (</td></tr>);
+    
+    #print qq (</table>);
+    #-----------------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 650px">);
+    print qq (<input class="qb" type="button" style="width:50" value="Save" onclick="SaveSchedule();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+}
+#showSchedule
+
+
+#=============================================================================================
+
+sub scriptNewSchedule
+{
+    print << "scriptNewSchedule";
+
+   <script type="text/javascript" src="../grid.js"></script>
+   <script type="text/javascript" src="../qb.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; checkState(); checktype();cycleChange();}
+    
+    function showhide()
+    {
+    	if (document.getElementById("hidden").style.display == 'none')
+    	{
+    	    document.getElementById("hidden").style.display = 'block';
+    	    //document.getElementById("hidden1").style.display = 'block';
+    	    document.getElementById("p1").style.display = 'block';
+    	    cycleChange();
+    	}
+        else
+        {
+            document.getElementById("hidden").style.display = 'none';
+            //document.getElementById("hidden1").style.display = 'none';
+            document.getElementById("p1").style.display = 'none';
+            document.getElementById("cycle").value = '0';
+            cycleChange(); 
+        }
+        
+    }
+    
+    function applyto()
+    {
+		var choose = document.getElementById('choose').value;
+		if(choose == 'group')
+		{
+			var group_name = document.getElementById('schname_show').value;
+			var DATA = '';
+			var dmit = document.getElementById('dmit').value;
+			var umit = document.getElementById('umit').value;
+			var dbps = document.getElementById('dbps').value;
+			var ubps = document.getElementById('ubps').value;
+			
+			var hr = document.getElementById('hr').value;
+			var sec = document.getElementById('sec').value;
+			var time ='';
+			
+			var cycle = document.getElementById('cycle').value;
+			var number = document.getElementById('number').value;
+			var chose = '';
+			
+			if(dbps == 'K'){dbps=1024;}
+			if(dbps == 'M'){dbps=1048576;}
+			if(dbps == 'G'){dbps=1073741824;}
+			if(dbps == 'T'){dbps=1099511627776;}
+				
+			if(ubps == 'K'){ubps=1024;}
+			if(ubps == 'M'){ubps=1048576;}
+			if(ubps == 'G'){ubps=1073741824;}
+			if(ubps == 'T'){ubps=1099511627776;}
+			var down = dmit+':'+dbps;
+			var up   = umit+':'+ubps;
+			
+			if(dmit > 909 && dbps == '1099511627776')
+			{
+				alert('Limit Downlink must <= 909 TB');
+				return;
+			}
+			if(umit > 909 && ubps == '1099511627776')
+			{
+				alert('Limit Uplink must <= 909 TB');
+				return;
+			}
+			
+			time=hr+':'+sec;
+			if(cycle='0'){chose='0';time='00:00';}
+			if(cycle='1'){chose='0';}
+			if(cycle='7')
+			{
+				var radio = document.getElementsByName("week");
+				for (var i = 0; i < radio.length; i++)
+				{
+					if (radio[i].checked == true)
+						chose=radio[i].value; 
+				}
+			}
+			if(cycle='30'){chose=number;}
+			
+			if(dmit!='' && umit!='' && dbps!='0' && ubps!='0' && group_name!='')
+			{
+				DATA = ''+','+'group'+','+''+','+''+','+down+','+up+','+time+','+cycle+','+''+','+''+','+chose+','+'1'+','+group_name+','+''+','+''+','+''+','+''+','+'1'+','+'1';
+				myform.action.value = 'GROUP';
+				myform.group_quota.value = DATA;
+				myform.submit();
+			}
+		}
+		if(choose == 'user')
+		{
+			var subsch = document.getElementById('scheduleList').rows;
+			var total = subsch.length;
+			var quota = '';
+			
+			if(document.getElementById("dmit").value > 909 && document.getElementById("dbps").value == 'T')
+			{
+				alert('Limit Downlink must <= 909 TB');
+				return;
+			}
+			if(document.getElementById("umit").value > 909 && document.getElementById("ubps").value == 'T')
+			{
+				alert('Limit Uplink must <= 909 TB');
+				return;
+			}
+			
+			if (document.getElementById("dmit").value != '' && document.getElementById("dbps").value != '0')
+			{
+				quota += document.getElementById("dmit").value + document.getElementById("dbps").value + '/';
+			}
+			if (document.getElementById("umit").value != '' && document.getElementById("ubps").value != '0')
+			{
+				quota += document.getElementById("umit").value + document.getElementById("ubps").value ;
+			}
+			
+			if (document.getElementById("cycle").value == 0)
+			{
+				chose='0';
+				quota += '<br>non-cyclic'; //non-cyclic
+			}else if (document.getElementById("cycle").value == 1)
+			{
+				chose='0';
+				time=document.getElementById("hr").value + ':' + document.getElementById("sec").value;
+				quota += '<br>Daily<br>'+ document.getElementById("hr").value + ':' + document.getElementById("sec").value; //Daily
+			}else if (document.getElementById("cycle").value == 7)
+			{
+				var radio = document.getElementsByName("week");
+				var radio_data;
+				for (var i = 0; i < radio.length; i++)
+				{
+					if (radio[i].checked == true)
+						radio_data=radio[i].value; 
+				}
+				chose=radio_data;
+				if(chose == null){alert('Must select Day'); return;}
+				quota += '<br>Weekly-' + radio_data  + '<br>'+ document.getElementById("hr").value + ':' + document.getElementById("sec").value;  //Weekly
+			}else if (document.getElementById("cycle").value == 30)
+			{
+				var day = document.getElementById("number");
+				chose=day;
+				quota += '<br>Monthly-' + day.value + '<br>'+ document.getElementById("hr").value + ':' + document.getElementById("sec").value;  //Monthly
+			}
+			
+			if (document.getElementById("dmit").value == '' || document.getElementById("umit").value == '' || document.getElementById("dmit").value == '0' || document.getElementById("umit").value == '0' || document.getElementById("dbps").value == '' || document.getElementById("ubps").value == '')
+			{quota = 'N/A';}
+			
+			for (var i = 1; i < total; i++)
+			{
+				subsch[i].cells[5].innerHTML = quota;
+			}
+		}
+    }
+    
+    function showhide1()
+    {
+    	if (document.getElementById("hidden2").style.display == 'none')
+    	{
+    	    document.getElementById("hidden2").style.display = 'block';
+    	}
+        else
+        {
+            document.getElementById("hidden2").style.display = 'none';
+            document.getElementById("cycle1").value = '0';
+        }
+         cycleChange1();
+    }
+    
+    function cycleChange()
+    {
+        if (document.getElementById("cycle").value == '0' )
+        {
+            document.getElementById("hr").disabled = true;
+            document.getElementById("sec").disabled = true;
+            document.getElementById("weekly").style.display = 'none';
+            document.getElementById("monthly").style.display = 'none';
+        }else
+        {
+            document.getElementById("hr").disabled = false;
+            document.getElementById("sec").disabled = false;
+            
+        }
+        if (document.getElementById("cycle").value == '7' )
+        {
+       	    document.getElementById("weekly").style.display = 'block';
+       	    document.getElementById("monthly").style.display = 'none'; 
+        }else if (document.getElementById("cycle").value == '30' )
+        {
+            document.getElementById("weekly").style.display = 'none';
+            document.getElementById("monthly").style.display = 'block';
+        }else
+        {
+            document.getElementById("weekly").style.display = 'none';
+            document.getElementById("monthly").style.display = 'none';
+        }
+        
+    } 
+    
+    function cycleChange1()
+    {
+        if (document.getElementById("cycle1").value == '0' )
+        {
+            document.getElementById("hr1").disabled = true;
+            document.getElementById("sec1").disabled = true;
+            document.getElementById("weekly1").style.display = 'none';
+            document.getElementById("monthly1").style.display = 'none';
+        }else
+        {
+            document.getElementById("hr1").disabled = false;
+            document.getElementById("sec1").disabled = false;
+            
+        }
+        if (document.getElementById("cycle1").value == '7' )
+        {
+       	    document.getElementById("weekly1").style.display = 'block';
+       	    document.getElementById("monthly1").style.display = 'none'; 
+        }else if (document.getElementById("cycle1").value == '30' )
+        {
+            document.getElementById("weekly1").style.display = 'none';
+            document.getElementById("monthly1").style.display = 'block';
+        }else
+        {
+            document.getElementById("weekly1").style.display = 'none';
+            document.getElementById("monthly1").style.display = 'none';
+        }
+    }
+     
+    function checktype() 
+    {
+        if(document.getElementById("description").value != 'LD')
+        {
+            document.getElementById("pwd").disabled = true; 
+        }else
+        {
+            document.getElementById("pwd").disabled = false;
+        }
+    }
+	
+	function WQFChange()
+	{
+		var choose = document.getElementById('ql').value;
+		var show = document.getElementById('show_limit');
+		if(choose == '1')
+		{
+			show.style.visibility='';
+		}
+		else{show.style.visibility='hidden';}
+	}
+	
+	function G_change()
+    {
+        var choose = document.getElementById('choose').value;
+		var up_view = document.getElementById('up_view');
+		if(choose == 'group')
+		{			
+			up_view.style.display='none';
+		}
+		if(choose == 'user')
+		{
+			up_view.style.display='block';
+		}
+    }
+	
+	function bs_change()
+	{
+		var choose = document.getElementById('bs').value;
+		var dmit1 = document.getElementById('dmit1');
+		var umit1 = document.getElementById('umit1');
+		var dbps1 = document.getElementById('dbps1');
+		var ubps1 = document.getElementById('ubps1');
+		if(choose == '1')
+		{
+			umit1.readOnly=true;
+			umit1.value=dmit1.value;
+			ubps1.value=dbps1.value;
+		}
+		else{umit1.readOnly=false;}
+	}
+	
+	function U_change()
+    {
+        var choose = document.getElementById('bs').value;
+		var dmit1 = document.getElementById('dmit1');
+		var umit1 = document.getElementById('umit1');
+		var dbps1 = document.getElementById('dbps1');
+		var ubps1 = document.getElementById('ubps1');
+		if(choose == '1')
+		{			
+			umit1.value=dmit1.value;
+			ubps1.value=dbps1.value;
+		}
+    }
+    
+    function change(oo)
+    {
+        if (oo == '0')
+        {
+            document.getElementById("ip").disabled = true;
+            document.getElementById("ip").value = '';
+        }else
+        {
+            document.getElementById("ip").disabled = false;
+            document.getElementById("ip").value = '';
+        }
+    }
+    
+    function status(oo)
+    {
+        var tmp_data = new Array;
+        tmp_data = oo.split(/,/);
+        if (tmp_data[0] == '')
+        {
+            document.getElementById("ip").disabled = true;
+            document.getElementById("dis").checked = true;
+        }
+        else
+        {
+            document.getElementById("ip").disabled = false;
+            document.getElementById("en").checked = true;
+        }    
+        document.getElementById("ip").value = tmp_data[0];
+        document.getElementById("port").value = tmp_data[1];
+        document.getElementById("pwd").value = tmp_data[2];
+        document.getElementById("mail").value = tmp_data[3];
+		if(tmp_data[4] != '' || tmp_data[4] != 'N/A')
+		{
+			document.getElementById("dmit1").value = tmp_data[4];
+			document.getElementById("dbps1").value = tmp_data[5];
+			document.getElementById("umit1").value = tmp_data[6];
+			document.getElementById("ubps1").value = tmp_data[7];
+			document.getElementById("cycle1").value = tmp_data[8];
+			var chose = tmp_data[9];
+			var time = tmp_data[10];
+			time_data = time.split(/:/);
+			if(tmp_data[8] == '7')
+			{
+				var radio = document.getElementsByName("week1");
+				for (var i = 0; i < radio.length; i++)
+				{
+					if (radio[i].value == chose)
+					radio[i].checked = true; 
+				}
+			}
+			if(tmp_data[8] == '30')
+			{
+				document.getElementById("number1").value = chose;
+			}
+			//if(tmp_data[8] != 0)
+			//{
+				document.getElementById("hr1").value = time_data[0];
+				document.getElementById("sec1").value = time_data[1];
+			//}
+			var qn='';
+			if(tmp_data[11] != '')
+			{
+				qn=tmp_data[11];
+				qn_data = qn.split(/<br>/);
+				if(qn_data[0] == 'admin'){document.getElementById("admin").checked=true;}
+				if(qn_data[0] == 'user'){document.getElementById("admin").checked=false; document.getElementById("user").checked=true;}
+				if(qn_data[1] == 'user'){document.getElementById("user").checked=true;}
+				if(tmp_data[11] == ''||tmp_data[11]== 'N/A'){document.getElementById("admin").checked=false; document.getElementById("user").checked=false;}
+			}
+			document.getElementById("bs").value=tmp_data[12];
+			document.getElementById("ql").value=tmp_data[13];
+		}
+    }
+		
+    function AddSchedule()
+    {
+		var group_name = document.getElementById('schname_show').value;
+        var subsch = document.getElementById('scheduleList').rows;
+        var total = subsch.length;
+        var ip=document.getElementById('ip').value;
+        var port=document.getElementById('port').value;
+        var pwd=document.getElementById('pwd').value;
+        var mail=document.getElementById('mail').value;
+        var days='';
+        var isOK=1;
+        var quota='';
+		var chose='0';
+		var time='00:00';
+        var color=(total % 2) ? ( "#556677" ) : ( "#334455" );
+        
+		if(document.getElementById("dmit1").value > 909 && document.getElementById("dbps1").value == 'T')
+		{
+			alert('Limit Downlink must <= 909 TB');
+			return;
+		}
+		if(document.getElementById("umit1").value > 909 && document.getElementById("ubps1").value == 'T')
+		{
+			alert('Limit Uplink must <= 909 TB');
+			return;
+		}
+		
+        if (document.getElementById("dmit1").value != '' && document.getElementById("dbps1").value != '0')
+        {
+            quota += document.getElementById("dmit1").value + document.getElementById("dbps1").value + '/';
+        }
+        if (document.getElementById("umit1").value != '' && document.getElementById("ubps1").value != '0')
+        {
+            quota += document.getElementById("umit1").value + document.getElementById("ubps1").value ;
+        }
+        
+        if (document.getElementById("cycle1").value == 0)
+        {
+			chose='0';
+            quota += '<br>non-cyclic'; //non-cyclic
+        }else if (document.getElementById("cycle1").value == 1)
+        {
+			chose='0';
+			time=document.getElementById("hr1").value + ':' + document.getElementById("sec1").value;
+            quota += '<br>Daily<br>'+ document.getElementById("hr1").value + ':' + document.getElementById("sec1").value; //Daily
+        }else if (document.getElementById("cycle1").value == 7)
+        {
+            var radio = document.getElementsByName("week1");
+            var radio_data;
+            for (var i = 0; i < radio.length; i++)
+            {
+                if (radio[i].checked == true)
+               	    radio_data=radio[i].value; 
+            }
+			chose=radio_data;
+			if(chose == null){alert('Must select Day'); return;}
+            quota += '<br>Weekly-' + radio_data  + '<br>'+ document.getElementById("hr1").value + ':' + document.getElementById("sec1").value;  //Weekly
+			time=document.getElementById("hr1").value + ':' + document.getElementById("sec1").value;
+        }else if (document.getElementById("cycle1").value == 30)
+        {
+            var day = document.getElementById("number1");
+			chose=day;
+            quota += '<br>Monthly-' + day.value + '<br>'+ document.getElementById("hr1").value + ':' + document.getElementById("sec1").value;  //Monthly
+			time=document.getElementById("hr1").value + ':' + document.getElementById("sec1").value;
+        }
+		
+		if (document.getElementById("dmit1").value == '' || document.getElementById("umit1").value == '' || document.getElementById("dmit1").value == '0' || document.getElementById("umit1").value == '0' || document.getElementById("dbps1").value == '' || document.getElementById("ubps1").value == '')
+        {quota = 'N/A';}
+		
+		var qn = '';
+		var admin = document.getElementById("admin");
+		var user = document.getElementById("user");
+		if(quota != 'N/A' && (admin.checked==false&&user.checked==false))
+		{
+			qn='N/A';
+		}
+		else if (quota != 'N/A' && (admin.checked==true||user.checked==true))
+		{
+			if(admin.checked==true){qn+=admin.value+'<br>';}
+			if(user.checked==true){qn+=user.value;}
+		}
+		else
+		{
+			qn='N/A';
+		}
+		var view_ql = 'N/A';
+		var bs = document.getElementById("bs").value;
+		var ql = document.getElementById("ql").value;
+		var lmit = document.getElementById("lmit1").value;
+		if(lmit == ''&&ql=='1'){lmit = '10';}
+		if(quota!='N/A'&&(bs=='0'&&ql=='0')){view_ql='Down/Up<br>Block';}
+		if(quota!='N/A'&&(bs=='0'&&ql=='1')){view_ql='Down/Up<br>Limit/'+lmit;}
+		if(quota!='N/A'&&(bs=='1'&&ql=='0')){view_ql='Total<br>Block';}
+		if(quota!='N/A'&&(bs=='1'&&ql=='1')){view_ql='Total<br>Limit/'+lmit;}
+		
+        for (var i = 0; i < total; i++)
+        {
+            //if ( subsch[i].cells[0].innerHTML == ip && subsch[i].cells[1].innerHTML == port )
+			if ( subsch[i].cells[1].innerHTML == port )
+            {
+                 //alert("schedule already exist");
+                 var a= confirm("The name already exist!! \\nAre you continue??");
+                 if (a)
+                 {
+                     isOK = 1;
+                     var aaa = document.getElementsByName('subschs');
+                     aaa[i-1].checked=true;
+                     DeleteSchedule()
+                     total--;
+                 }
+                 else
+                 {
+            	     isOK = 0;
+                     return false;
+                 }
+            }   
+        }
+        if ( pwd == '' || pwd == null)
+            pwd = '--------';
+        if ( isOK == 1) 
+        {
+            var schedule = document.getElementById('scheduleList').insertRow(total);
+            var t_ip = schedule.insertCell(0);
+            var t_port = schedule.insertCell(1);
+            var t_pwd = schedule.insertCell(2);
+            var t_time = schedule.insertCell(3);
+            var t_mail = schedule.insertCell(4);
+            var t_quota = schedule.insertCell(5);
+			var t_qn = schedule.insertCell(6);
+			var t_ql = schedule.insertCell(7);
+            var t_edit = schedule.insertCell(8);
+            var t_checkitem  = schedule.insertCell(9);
+            
+            //insertdays.setAttribute("style", "width:250");
+            t_ip.innerHTML=ip;
+            t_port.innerHTML=port;
+            t_pwd.innerHTML=pwd;
+            t_quota.innerHTML =quota;
+			t_qn.innerHTML =qn;
+			t_ql.innerHTML =view_ql;
+            t_mail.innerHTML=mail;
+            t_time = '' ;
+            var tordit = '<a onclick=\"status(\\'';
+			if(quota != 'N/A'){tordit += ip + ',' + port + ',' + pwd + ',' + mail + ',' + document.getElementById("dmit1").value + ',' + document.getElementById("dbps1").value+ ',' + document.getElementById("umit1").value+ ',' + document.getElementById("ubps1").value+ ',' + document.getElementById("cycle1").value+ ',' + chose+ ',' + time + ',' + qn + ',' + bs + ',' + ql; chose='';time='';}
+            else{tordit += ip + ',' + port + ',' + pwd + ',' + mail + ',' + '' + ',' + 'M' + ',' + '' + ',' + 'M' + ',' + '0' + ',' + '' + ',' + '00:00' + ',' + '';}
+            tordit +=  '\\')\">';
+            tordit +='<img src=\"../image/edit.gif\"></a></td>';
+            var tochecked = '<input type=\"checkbox\" name=\"subschs\" >';
+            t_checkitem.innerHTML = tochecked;
+            t_edit.innerHTML = tordit;
+        }
+    }
+    function DeleteSchedule()
+    {
+        var sch = document.getElementsByName('subschs'); 
+        total = sch.length;
+        
+        
+        for (var i = total ; i > 0; i--)
+        {
+            if ( sch[i-1].checked == true )
+                document.getElementById('scheduleList').deleteRow(i);
+        }
+    }
+    
+
+    function SaveSchedule() 
+    {
+        var subsch = document.getElementById('scheduleList').rows;
+        var total = subsch.length;
+        //var daysarray = new Array();
+        //var timestartarray = new Array();
+        //var timestoparray = new Array();
+        var ip ='';
+        var port = '';
+        var pwd = '';
+        var mail = '';
+        var time = '';
+        var quota='';
+		var qn='';
+		var ql='';
+        
+  	var schname_show=document.getElementById('schname_show');
+        var schname=schname_show.value;
+        var description=document.getElementById('description').value;
+	for (var i = 1; i < total; i++)
+	{
+	    if (subsch[i].cells[1].innerHTML == '' && description != 'None')
+	        continue;
+	    ip += subsch[i].cells[0].innerHTML + ';';
+	    port += subsch[i].cells[1].innerHTML + ';';
+	    pwd += subsch[i].cells[2].innerHTML + ';';
+	    time += subsch[i].cells[3].className + ';';
+	    mail += subsch[i].cells[4].innerHTML + ';';
+	    quota += subsch[i].cells[5].innerHTML + ';';
+		qn += subsch[i].cells[6].innerHTML + ';';
+		ql += subsch[i].cells[7].innerHTML + ';';
+	}
+	if ( schname == '' )
+        {
+            alert('Schedule Name must be English or nember');
+            return;
+        }
+        
+
+	for (i = 0; i < schname.length; i++)
+        {
+            var ch = schname.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Schedule Name must be English or nember");
+               return;
+            }
+        }
+
+	for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Schedule Description must be English ");
+               return;
+            }
+        }
+        
+        if ( schname_show.disabled != true )
+            myform.schname.value = schname_show.value;
+        
+         
+        myform.action.value = 'SAVE';
+        myform.d_ip.value = ip;
+        myform.d_port.value = port;
+        myform.d_pwd.value = pwd;
+        myform.d_mail.value = mail;
+        myform.d_time.value = time;
+        myform.d_quota.value = quota;
+		myform.d_qn.value = qn;
+		myform.d_ql.value = ql;
+		myform.group_name.value = schname;
+        myform.submit();
+    }
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var schname=document.getElementById('schname');
+        var schname_show=document.getElementById('schname_show');
+        
+        if ( schname.value != '' )
+            schname_show.disabled = true; 
+        
+        if ( action != '' )
+		{
+            if(action == 'GROUP'){}
+			else{window.top.mainFrame.location.href="auth_user.cgi";}
+        }
+    }
+	
+	function sleep( seconds ) 
+	{
+		var timer = new Date();
+		var time = timer.getTime();
+		do
+			timer = new Date();
+		while( (timer.getTime() - time) < (seconds * 100) );
+	}
+	
+    </script>
+scriptNewSchedule
+}
+#scheduleScript
+
+sub byName
+{
+    $a->{schname} cmp $b->{schname};
+}
+#byName
+
+sub maintainSchedule
+{
+    my (%action)=@_;
+    
+    my $schref=XMLread($gPATH.'auth.xml');
+    my $schlist=$schref->{user};
+    my $exist=0;
+    my @days;
+    my @timestart;
+    my @timestop;
+    my @subscharrary;
+    my %newschedule;
+
+    $action{schname}=~s/^\s*|\s*$//g;
+    
+    if ( !$action{action} ) { return; }
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        my $index=0;
+		my $i=0;
+        my %newschedule;
+        
+        my @ip = split(/;/, $action{d_ip});
+        my @port = split(/;/, $action{d_port});
+        my @pwd = split(/;/, $action{d_pwd});
+        my @mail = split(/;/, $action{d_mail});
+        my @time = split(/;/, $action{d_time});
+        my @quota = split(/;/, $action{d_quota});
+		my @qn = split(/;/, $action{d_qn});
+		my @ql = split(/;/, $action{d_ql});
+        my @newquota;
+		
+        my $index=0; 
+        my @ary;
+		
+        if ($action{description} eq 'None')
+        {
+           @ary = @ip;   
+        }else
+        {
+           @ary = @port;
+        }
+        foreach my $item ( @ary ) 
+        {
+            
+            my %newschedule;
+			my $quota_ip;
+            my ($ip,$iip) = split(/ /,$ip[$index]);
+            if ($ip eq '*')
+            {
+                $newschedule{iip}=$iip;
+				$quota_ip=$iip;
+            }else
+            {
+                $newschedule{ip}=$ip;
+				$quota_ip=$ip;
+            }
+            $newschedule{idd}=$port[$index];
+            $newschedule{pwd}=$pwd[$index];
+            $newschedule{mail}=$mail[$index];
+            $newschedule{type}=$action{description};
+            $time[$index]=~ s/A-//;
+            $newschedule{time}=$time[$index];
+            push(@subscharray, \%newschedule);
+			
+			if($quota[$index] eq ''){}
+			else
+			{
+				my @quota_list=split(/<br>/,$quota[$index]);
+				my @limit = split(/\//,$quota_list[0]);
+				
+				my $text = ($limit[0]=~m/([\d]+)/);
+				my $dmit = $1;
+				my $text = ($limit[0]=~m/([\D]+)/);
+				my $dbps = $1;
+				
+				my $text = ($limit[1]=~m/([\d]+)/);
+				my $umit = $1;
+				my $text = ($limit[1]=~m/([\D]+)/);
+				my $ubps = $1;
+				if($dbps eq 'K'){$dbps=1024;}
+				if($dbps eq 'M'){$dbps=1048576;}
+				if($dbps eq 'G'){$dbps=1073741824;}
+				if($dbps eq 'T'){$dbps=1099511627776;}
+				
+				if($ubps eq 'K'){$ubps=1024;}
+				if($ubps eq 'M'){$ubps=1048576;}
+				if($ubps eq 'G'){$ubps=1073741824;}
+				if($ubps eq 'T'){$ubps=1099511627776;}
+				my $down = $dmit.':'.$dbps;
+				my $up   = $umit.':'.$ubps;
+				
+				my $cycle = '';
+				my $chose = '';
+				my $time = '';
+				
+				if($quota_list[1] ne 'non-cyclic' || $quota_list[1] ne 'Daily')
+				{
+					my @date = split(/-/,$quota_list[1]);
+					if($date[0] eq 'Weekly')
+					{
+						$cycle='7';
+						if($date[1] eq 'Sun'){$chose='0';}
+						if($date[1] eq 'Mon'){$chose='1';}
+						if($date[1] eq 'Tue'){$chose='2';}
+						if($date[1] eq 'Wed'){$chose='3';}
+						if($date[1] eq 'Thu'){$chose='4';}
+						if($date[1] eq 'Fri'){$chose='5';}
+						if($date[1] eq 'Sat'){$chose='6';}
+						$time=$quota_list[2];
+					}
+					if($date[0] eq 'Monthly'){$cycle='30';$chose=$date[1];$time=$quota_list[2];}
+				}				
+				if($quota_list[1] eq 'non-cyclic'){$cycle='0';$chose='0';$time='00:00';}
+				if($quota_list[1] eq 'Daily'){$cycle='1';$chose='0';$time=$quota_list[2];}
+				my @qn_list=split(/<br>/,$qn[$index]);
+				my $qnn='0';
+				if($qn_list[0] eq 'admin'){$qnn='1';}
+				if($qn_list[0] eq 'user'){$qnn='2';}
+				if($qn_list[1] eq 'user'){$qnn='3';}
+				
+				my @ql_list=split(/<br>/,$ql[$index]);
+				my $bs='0';
+				my $ql='0';
+				my $lmit='10';
+				if($ql_list[0] eq 'Total'){$bs='1';}
+				my @wqf=split(/\//,$ql_list[1]);
+				if($wqf[0] eq 'Limit'){$ql='1';}
+				if($wqf[1] ne ''){$lmit=$wqf[1];}
+				
+				my $DATA = '';
+				
+				$DATA = $quota_ip.','.'ip'.','.''.','.''.','.$down.','.$up.','.$time.','.$cycle.','.''.','.''.','.$chose.','.'1'.','.$port[$index].','.''.','.''.','.$action{schname}.','.$qnn.','.$bs.','.$ql.','.$lmit;
+				if($dmit eq '' || $dmit eq '0' || $umit eq '' || $umit eq '0'){}
+				else{quotawork(quotaaction=>'SAVEQUOTA', DATA=>$DATA);}
+				#else{$gMSGPROMPT.=qq ($DATA\\n);}
+			}
+            $index++;
+        }
+		
+        $newschedule{member}=\@subscharray;
+        
+        $newschedule{schname}=$action{schname};
+        $newschedule{description}=$action{description};
+
+        foreach my $sh ( @$schlist )
+        {
+            if ( $sh->{schname} eq $action{schname} )
+            {
+                $exist=1;
+                #delete($action{action});
+                $sh=\%newschedule;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            #delete($action{action});
+            push( @$schlist, \%newschedule); 
+            @$schlist=sort byName @$schlist;
+        }
+        #@$schlist=sort byName @$schlist;
+        LogUserAction( action=>'SAVESCH', schname=>$action{schname}, days=>$action{days} );
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{schedule};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        
+        my @temparray;
+        foreach my $item ( @$schlist )
+        {
+            if ( grep(/^$item->{schname}$/, @$delet) ) { LogUserAction( action=>'DELSCH', schname=>$item->{schname} ); next; }
+            push(@temparray, $item); 
+            
+        }
+        $schref->{user}=\@temparray;
+        
+    }
+    #@$schlist=sort byName @$schlist;
+    XMLwrite($schref, $gPATH."auth.xml");
+    
+	if ( $action{action}=~m/^GROUP$/ )
+    {
+		my $DATA = $action{group_quota};
+		quotawork(quotaaction=>'SAVEQUOTA', DATA=>$DATA);
+	}
+}
+sub timeSelect()
+{
+    my $time=shift;
+   
+    foreach my $seq ( 0..23 )
+    {
+         my $tm=$seq.":00";
+         my $status = ( $time eq $tm ) ? ( "selected" ) : ( "" );
+         print qq (<option $status value="$tm" >$tm</option>);
+         my $tm=$seq.":30";
+         my $status = ( $time eq $tm ) ? ( "selected" ) : ( "" );
+         print qq (<option $status value="$tm" >$tm</option>);
+    }
+    my $status = ( $time eq "23:59" ) ? ( "selected" ) : ( "" );
+    print qq (<option $status value="23:59" >23:59</option>);
+}
+#timeSelect
+#
+1

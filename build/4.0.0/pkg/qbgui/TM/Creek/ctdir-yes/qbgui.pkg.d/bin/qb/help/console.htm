@@ -1,0 +1,51 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Administration Console</title>
+</head>
+<body>
+
+<h2>Administration Console</h2>
+<p>
+<table>                        
+<tr><td valign=top width=200>Reset ARP cache ...	</td><td>Sent requests asking equipments hooked to Q-Balance to reset MAC addresses associated with Q-Balancer's current IP address.</td></tr>
+<tr><td valign=top class="light">Set Gateway Permanent ...	</td><td class="light">Set MAC addresses of gateways permanently in Q-Balancer's cache.</td></tr> 
+<tr><td valign=top>Maximum User :	</td><td>The maximum number of users logged in at any given time. </td></tr>
+<tr><td valign=top class="light">Edit User Account :	</td><td class="light">Edit Q-Balancer user account. An account can only log on once at any given time.</td></tr> 
+<tr><td valign=top>Domain Name Resolver :	</td><td>Q-Balancer's own DNS setting. To send e-mails out, please specify.</td></tr> 
+<tr><td valign=top class="light">Remote Config. Management :	</td><td class="light">Import or export configs to another site. Please refer to section [Configuration Management]</td></tr>
+<tr><td valign=top>History Export FTP Server :	</td><td>Export policy history to an FTP server.</td></tr> 
+<tr><td valign=top class="light">Set Date :	</td><td class="light">Set system date and time.</td></tr> 
+<tr><td valign=top>Time Zone :	</td><td>Set time zone.</td></tr>   
+<tr><td valign=top class="light">Alarm E-mail :	</td><td class="light">Notification e-mail address for any change in link status.</td></tr> 
+</table>
+</p>
+<p>
+<b>[Configuration Management]</b>
+<ol>
+<li>Save / Load Config in Local</li>
+<p>
+The save / load config. file option is located on the top of the user interface.<br>  
+ 
+
+	Please click [Load], a new pop-up will windows appears. At least three default configuration sets will be shown: active, boot, and default.<br>
+<table> 
+<tr><td width=60>Active	</td><td>Current read-only configuration set in edit. It is rarely used. </td></tr>
+<tr><td class="light">Boot	</td><td class="light">The configuration used after reboot.                            </td></tr>
+<tr><td>Default	</td><td>The factory default configuration. This is read-only.           </td></tr>
+</table>
+These three configuration set cannot be deleted. 
+</p>
+<li>Export / Input Config From Remote</li>
+<p>
+Please select [Remote Config].  
+You will see Remote Config. Tools.<br>
+<table>
+<tr><td>Backup Config.	</td><td>Download config. files via http</td></tr>
+<tr><td class="light">Upload Config.	</td><td class="light">Upload config. files via http</td></tr>
+<tr><td width=180>Upload Upgrade Package	</td><td>Upload firmware via http</td></tr>
+<tr><td class="light">Launch Upgrade Process	</td><td class="light">Launch the firmware update</td></tr>
+</table>
+</p>
+</p>
+</body></html>

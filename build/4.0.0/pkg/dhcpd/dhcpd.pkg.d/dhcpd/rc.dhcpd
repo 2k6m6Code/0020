@@ -1,0 +1,15 @@
+#!/bin/sh
+
+DHCPINSDIR=/opt/dhcpd
+
+DHCPCONF_FILE=/mnt/conf/dhcpd.con
+
+ln -s -f $DHCPCONF_FILE /etc/dhcpd.conf
+
+ln -s  -f $DHCPINSDIR/dhcpd /usr/sbin/dhcpd
+
+mkdir -p /var/lib/dhcp
+
+touch /var/lib/dhcp/dhcpd.leases
+
+/opt/qb/bin/script/rundhcpd.pl 2>/dev/null

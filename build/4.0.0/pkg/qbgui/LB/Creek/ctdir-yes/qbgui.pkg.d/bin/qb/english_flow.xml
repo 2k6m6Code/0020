@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<treemenu>
+	<menu>
+	    <name>Query</name>
+	    <child>
+		<menu>
+			<name>Host Query</name>
+			<title></title>
+			<link>search.cgi?option=query_host</link>
+		</menu>
+	
+		<menu>
+			<name>Realtime Query</name>
+			<title></title>
+			<link>query.php</link>
+		</menu>
+	
+	    </child>
+	</menu>
+	
+	<menu>
+	    <name>Report</name>
+	    <child>
+	    
+		<menu>
+			<name>Daily Graphic</name>
+			<title></title>
+			<link>Daily.php</link>
+		</menu>
+	
+		<menu>	
+			<name>Long Term Graphic</name>
+			<title></title>
+			<link>Long_term.php</link>
+		</menu>
+	   	 
+		<menu>	
+			<name>Service</name>
+			<title></title>
+			<link>search_port.cgi?option=port</link>
+		</menu>	
+		<menu>	
+			<name>Inbound Dst.</name>
+			<title></title>
+			<link>search.cgi?option=in_dst</link>
+		</menu>	
+		
+		<menu>	
+			<name>Inbound Src.</name>
+			<title></title>
+			<link>search.cgi?option=in_src</link>
+		</menu>	
+		
+		<menu>
+			<name>Inbound Unit</name>
+			<title></title>
+			<link>search.cgi?option=in_unit</link>
+		</menu>	
+		
+		<menu>
+			<name>Outbound Src.</name>
+			<title></title>
+			<link>search.cgi?option=out_src</link>
+		</menu>	
+		
+		<menu>
+			<name>Outbound Dst.</name>
+			<title></title>
+			<link>search.cgi?option=out_dst</link>
+		</menu>	
+		
+		<menu>
+			<name>Outbound Unit</name>
+			<title></title>
+			<link>search.cgi?option=out_unit</link>
+		</menu>	
+		
+		<menu>
+			<name>Local Traffic</name>
+			<title></title>
+			<link>search_local.cgi?option=local_unit</link>
+		</menu>	
+		
+		<menu>
+			<name>BiDirection Traffic</name>
+			<title></title>
+			<link>search.cgi?option=bd_tr</link>
+		</menu>	
+		
+		<menu>
+			<name>TopN Per Unit</name>
+			<title></title>
+			<link>search_topN.cgi?option=top_N</link>
+		</menu>	
+		
+		<!--<menu>-->
+			<!--<name>Fake IP</name>-->
+			<!--<title></title>-->
+			<!--<link></link>-->
+		<!--</menu>-->
+		
+		<!--<menu>-->
+			<!--<name>Worm Report</name>-->
+			<!--<title></title>-->
+			<!--<link></link>-->
+		<!--</menu>-->
+		
+		<!--<menu>-->
+			<!--<name>SSH Passwd Guess</name>-->
+			<!--<title></title>-->
+			<!--<link></link>-->
+		<!--</menu>	-->
+		
+		<!--<menu>-->
+			<!--<name>RDP Attack</name>-->
+			<!--<title></title>-->
+			<!--<link></link>-->
+		<!--</menu>-->	
+		
+		<menu>
+			<name>Port Scan</name>
+			<title></title>
+			<link>search_icmp.cgi?option=port_scan</link>
+		</menu>	
+		
+		<!--<menu>-->
+			<!--<name>P2P Report</name>-->
+			<!--<title></title>-->
+			<!--<link></link>-->
+		<!--</menu>-->
+		
+		<menu>
+			<name>SYN Flood</name>
+			<title></title>
+			<link>search_icmp.cgi?option=syn_flood</link>
+		</menu>
+		
+		<menu>
+			<name>ICMP Flood</name>
+			<title></title>
+			<link>search_icmp.cgi?option=icmp</link>
+		</menu>
+
+		<menu>
+			<name>TCP Connection Limit</name>
+			<title></title>
+			<link>search_icmp.cgi?option=t_connect</link>
+		</menu>
+			
+		<menu>
+			<name>UDP Connection Limit</name>
+			<title></title>
+			<link>search_icmp.cgi?option=u_connect</link>
+		</menu>	
+
+		<menu>
+		        <name>Web Filter</name>
+		        <title></title>
+		        <link>search_squid.cgi?title=webfilter</link>
+		</menu>
+		
+                <menu>
+                    <name>Web Cache</name>
+                    <title></title>
+                    <link>search_squid.cgi?title=webcache</link>
+                </menu>
+                
+                <menu>
+                    <name>Authentication</name>
+                    <title></title>
+                    <link>object_link.php?action=viewflow_auth</link>
+                </menu>
+		
+	    </child>
+	</menu>
+	
+</treemenu>
+

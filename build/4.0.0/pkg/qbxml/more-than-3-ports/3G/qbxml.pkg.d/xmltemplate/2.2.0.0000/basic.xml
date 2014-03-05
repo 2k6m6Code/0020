@@ -1,0 +1,3 @@
+<opt state="reserved" lastupdate="" file="basic">
+  <isp password="" upload="" gateway="" remote="" isptype="" local="" nic="" broadcast="" enabled="0" type="fixed" state="NONE" alive="0" ispname="" systemip="" download="" dsip="1" iid="system" username="" subnet="" pppoename="" pppoepasswd="" pppoeportdev="" proxyip="" proxyname="" enableproxy="" enableddns="No" ddnschoice="www.dyndns.org" ddnsname="login" ddnspasswd="password" ddnsdomainname="your.domain.name" remotename=""/>
+</opt>

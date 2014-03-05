@@ -1,0 +1,43 @@
+#!/bin/sh
+#set -x
+
+HOST=$1
+USER=$2
+PASSWD=$3
+DIR=$4
+FILENAME=`hostname`.`date +%s`
+#FILENAME=`date +%s`
+tar zcvf /mnt/tclog/$FILENAME.tgz /mnt/log/* /mnt/tclog/service0.log /mnt/tclog/traffic0.log /var/log/d*.log /mnt/tclog/tc0_*
+cat /dev/null >/mnt/tclog/service0.log
+cat /dev/null >/mnt/tclog/traffic0.log
+/sbin/service syslog restart
+rm -f /mnt/tclog/tc0_*
+sleep 2
+sync;sync
+FILE="$FILENAME.tgz"
+cd /mnt/tclog
+if [ $DIR != '' ]
+then
+ftp -inv $HOST <<END_SCRIPT
+quote USER $USER
+quote PASS $PASSWD
+mkdir $DIR
+cd $DIR
+binary
+put $FILE
+reset
+bye
+END_SCRIPT
+else
+ftp -inv $HOST <<END_SCRIPT
+quote USER $USER
+quote PASS $PASSWD
+binary
+put $FILE
+reset
+bye
+END_SCRIPT
+fi
+rm -f *.tgz
+exit 0
+

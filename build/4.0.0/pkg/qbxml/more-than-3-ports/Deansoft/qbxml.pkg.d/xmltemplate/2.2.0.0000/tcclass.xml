@@ -1,0 +1,68 @@
+<opt file="tcclass.xml">
+  <area area="system" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="eth0" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="eth1" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="eth2" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="eth3" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="eth4" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="eth5" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq0" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq1" bw="system" default="4">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq2" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq3" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq4" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq5" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq6" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq7" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq9" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq10" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq11" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq12" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq13" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq14" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+  <area area="imq15" bw="system" default="system">
+    <class min="system" max="system" idnum="system" priority="system" />
+  </area>
+</opt>

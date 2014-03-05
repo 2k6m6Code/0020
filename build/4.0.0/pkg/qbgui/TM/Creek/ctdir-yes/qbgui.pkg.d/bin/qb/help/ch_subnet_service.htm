@@ -1,0 +1,25 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Subnet/Service</title><!--政策性路由設定 第一步: 子網段/服務-->
+</head>
+<body>
+
+<h2>Subnet/Service</h2><!--政策性路由設定 第一步: 子網段/服務-->
+<p>
+這裡能根據不同網段設定各自的Service，並在下節據此能建立不同的Policy行為，不過在設定Internal Zone的Service/Firewall之前，須先行定義好所需用到的Service Group，以及了解Any Service與 * Service的分別。<br>為了簡化Service的設定，Q-Balancer替所有的Service定義了一種區隔：Any 與 *</p>
+<p>
+<ul>
+<li>所有的Service：0 ~ 65535</li>
+<li>* 代表所選定的Service</li> 
+<li><b>Any</b> 代表未被選擇的Service</li> 
+<li>如果未選擇任何Service，則 <b>Any</b> = 所有Service</li>
+</ul>
+</p>
+<table> 
+<tr valign=top><td>Internal Subnet :	</td><td>設定Internal Subnet，可依據不同的需求針對單一IP(10.10.50.141/32)或是整個內部網段(10.10.50.0/24)來設定</td></tr> 
+<tr valign=top><td width=100 class="light">Request(s) :</td><td class="light">	這裡設定發出要求封包的Service項目</td></tr> 
+<tr valign=top><td>Reply(s) :	</td><td>這裡設定發出回應封包的Service項目</td></tr>
+</table>
+</body></html> 

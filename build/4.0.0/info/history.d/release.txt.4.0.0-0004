@@ -1,0 +1,2 @@
+   1.To fix timezone can't be changed.
+    The modification include :libimage-zoneinfo,timeconfig.sh

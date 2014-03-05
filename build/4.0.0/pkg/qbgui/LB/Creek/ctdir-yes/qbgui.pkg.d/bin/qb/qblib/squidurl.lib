@@ -1,0 +1,272 @@
+###############################################################################################
+#                                           Pptpinit Management Console
+###############################################################################################
+sub showSquidurl 
+{
+    my (%action)=@_;
+    my $squid=XMLread($gPATH.'squidurl.xml');
+    my $trust=$squid->{trust}->[0]->{name};
+    my $forbid=$squid->{forbid}->[0]->{name};
+    my $keyword=$squid->{keyword}->[0]->{name};
+    #my $block=XMLread($gPATH.'squidblk.xml');
+    
+    print qq (<tr><td colspan="8" class="bigtitle">HTTP URL Filtering</td></tr>);
+    
+    #********************************** Trusted Web Sites *******************************************
+
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Trusted Web Sites ]</td></tr>);
+    #********************************** ***************************************************
+    
+    print qq (<tr><td class="body" align="center" valign="center" style="width: 200px; height: 30px">Add Trusted Web Site</td>);
+    print qq (<td class="body" align="center" style="width: 200px"></td>);
+    print qq (<td class="body" align="center" style="width: 200px">Trusted Web Sites</td>);
+    print qq (</tr>);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qbtext" name="trustname" style="WIDTH: 150px" >\n);
+    print qq (<td class="body" align="left" style="width: 200px">(e.g: creek.com.tw)</td>);
+    
+    print qq (<td align="center" ><select class="qbopt" name="trustlist" size="5" multiple style="width:120">);
+    foreach my $domain ( @$trust )
+    {
+        if ( $domain->{trustname} eq 'system' ) { next; }
+        print qq (<option>$domain->{trustname}</optin>);
+    }
+    print qq (</select></td>);
+    print qq (</td></tr>); 
+    
+    print qq (<tr><td align="center" valign="center" style="width: 200px; height: 30px">);
+    print qq (<input class="qb" type="button" value="Add" title="Add Trusted Web Site!" onClick="goSubmit('ADDTRUST')" style="width:30">);
+    print qq (</td>);
+    print qq (<td class="body" align="center" style="width: 200px"></td>);
+    print qq (<td align="center" style="width: 200px">);
+    print qq (<input class="qb" type="button" value="Delete" title="Delete Trusted Web Site!" onClick="goSubmit('DELTRUST')" style="width:60">);
+    print qq (</td></tr>);
+   
+    #********************************** Forbidden Web Site ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Forbidden Web Site ]</td></tr>);
+    
+    
+    print qq (<tr><td class="body" align="center" valign="center" style="width: 200px; height: 30px">Add Forbidden Web Site</td>);
+    print qq (<td class="body" align="center" style="width: 200px"></td>);
+    print qq (<td class="body" align="center" style="width: 200px">Forbidden Web Sites</td>);
+    print qq (</tr>);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qbtext" name="forbidname" style="WIDTH: 150px" >\n);
+    print qq (<td class="body" align="left" style="width: 200px">(e.g: msn.com)</td>);
+    
+    print qq (<td align="center" ><select class="qbopt" name="forbidlist" size="5" multiple style="width:120">);
+    foreach my $domain ( @$forbid )
+    {
+        if ( $domain->{forbidname} eq 'system' ) { next; }
+        print qq (<option>$domain->{forbidname}</optin>);
+    }
+    print qq (</select></td>);
+    print qq (</td></tr>); 
+    
+    print qq (<tr><td align="center" valign="center" style="width: 200px; height: 30px">);
+    print qq (<input class="qb" type="button" value="Add" title="Add Forbidden Web Site!" onClick="goSubmit('ADDFORBID')" style="width:30">);
+    print qq (</td>);
+    print qq (<td class="body" align="center" style="width: 200px"></td>);
+    print qq (<td align="center" style="width: 200px">);
+    print qq (<input class="qb" type="button" value="Delete" title="Delete Forbidden Web Site!" onClick="goSubmit('DELFORBID')" style="width:60">);
+    print qq (</td></tr>);
+
+    #********************************** Keyword Blocking ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Keyword Blocking ]</td></tr>);
+   
+    #print qq (<tr><td class="body" align="center" valign="center" style="width: 200px; height: 30px">);
+    #print qq (<INPUT type="checkbox" name="isenable"  $status >); 
+    print qq (<tr><td class="body" align="center" valign="center" style="width: 200px; height: 30px">Add Keyword</td>);
+    print qq (<td class="body" align="center" style="width: 200px"></td>);
+    print qq (<td class="body" align="center" style="width: 200px">Keyword</td>);
+    print qq (</tr>);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qbtext" name="keywordname" style="WIDTH: 150px" >\n);
+    print qq (<td class="body" align="left" style="width: 200px">(e.g: facebook;plurk)</td>);
+    
+    print qq (<td align="center" ><select class="qbopt" name="keywordlist" size="5" multiple style="width:120">);
+    foreach my $word ( @$keyword )
+    {
+        if ( $word->{keywordname} eq 'system' ) { next; }
+        print qq (<option>$word->{keywordname}</optin>);
+    }
+    print qq (</select></td>);
+    print qq (</td></tr>); 
+    
+    print qq (<tr><td align="center" valign="center" style="width: 200px; height: 30px">);
+    print qq (<input class="qb" type="button" value="Add" title="Add Keyword!" onClick="goSubmit('ADDKEYWORD')" style="width:30">);
+    print qq (</td>);
+    print qq (<td class="body" align="center" style="width: 200px"></td>);
+    print qq (<td align="center" style="width: 200px">);
+    print qq (<input class="qb" type="button" value="Delete" title="Delete Keyword!" onClick="goSubmit('DELKEYWORD')" style="width:60">);
+    print qq (</td></tr>);
+    #print qq (<tr><td></td><td align="center">);
+    #print qq (<input class="qb" type="button" value="Apply" title="Apply All Parameters now !" onClick="goSubmit('APPLY')" style="width:80">);
+    #print qq (</td><tr>);
+    
+}
+#showConsole
+
+
+#======================================================================================================================
+sub squidurlScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+                                                            
+    function checkAndSetidletime()
+    {
+        if ( !isValidPort(myform.idletime.value) ) 
+        { 
+            myform.idletime.value=""; 
+            alert("Time format Error");
+        }
+    }
+    </script>
+SCRIPT
+}
+#squidurlScript
+
+#======================================================================================================================
+#maintainsquidurl( %action )
+sub maintainSquidurl 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $squid=XMLread($gPATH.'squidurl.xml');
+    my $trust=$squid->{trust}->[0]->{name};
+    my $forbid=$squid->{forbid}->[0]->{name};
+    my $keyword=$squid->{keyword}->[0]->{name};
+    my $squidgen=XMLread($gPATH.'squidgen.xml');
+    #my $pxyinit=XMLread($gPATH.'pxyinit.xml');
+    #my $block=XMLread($gPATH.'squidblk.xml');
+    my @temparray;
+    
+    if ( $action{action}=~m/^ADDTRUST$/ )
+    {    
+        my @namelist=split(/;/,$action{trustname});
+        foreach my $domain ( @$trust )
+        {
+            push( @temparray, $domain );
+        }
+        foreach my $name ( @namelist )
+        {
+            my $isfind="0";
+            foreach my $domain ( @temparray )
+            {
+                 if ( $domain->{trustname} eq $name ) { $isfind="1"; }
+            }
+            if ( $isfind eq "0" )
+            {
+                my %newlist=( trustname=>$name );
+                push( @temparray, \%newlist);
+            }
+        }    
+        $squid->{trust}->[0]->{name}=\@temparray;
+        
+        LogUserAction( action=>'ADDTRUST', trustname=>$action{trustname} );
+    }
+    elsif ( $action{action}=~m/^DELTRUST$/ )
+    {
+        foreach my $domain ( @$trust )
+        {
+             if ( $domain->{trustname} eq $action{trustlist} ) { next; }
+             push( @temparray, $domain );
+        }
+        $squid->{trust}->[0]->{name}=\@temparray;
+        LogUserAction( action=>'DELTRUST', trustname=>$action{trustlist} );
+    }
+    elsif ( $action{action}=~m/^ADDFORBID$/ )
+    {    
+        my @namelist=split(/;/,$action{forbidname});
+        foreach my $domain ( @$forbid )
+        {
+            push( @temparray, $domain );
+        }
+        foreach my $name ( @namelist )
+        {
+            my $isfind="0";
+            foreach my $domain ( @temparray )
+            {
+                 if ( $domain->{forbidname} eq $name ) { $isfind="1"; }
+            }
+            if ( $isfind eq "0" )
+            {
+                my %newlist=( forbidname=>$name );
+                push( @temparray, \%newlist);
+            }
+        }    
+        $squid->{forbid}->[0]->{name}=\@temparray;
+        LogUserAction( action=>'ADDFORBID', forbidname=>$action{forbidname} );
+    }
+    elsif ( $action{action}=~m/^DELFORBID$/ )
+    {
+        foreach my $domain ( @$forbid )
+        {
+             if ( $domain->{forbidname} eq $action{forbidlist} ) { next; }
+             push( @temparray, $domain );
+        }
+        $squid->{forbid}->[0]->{name}=\@temparray;
+        LogUserAction( action=>'DELFORBID', forbidname=>$action{forbidlist} );
+    }
+    elsif ( $action{action}=~m/^ADDKEYWORD$/ )
+    {    
+        my @namelist=split(/;/,$action{keywordname});
+        foreach my $domain ( @$keyword )
+        {
+            push( @temparray, $domain );
+        }
+        foreach my $name ( @namelist )
+        {
+            my $isfind="0";
+            foreach my $domain ( @temparray )
+            {
+                 if ( $domain->{keywordname} eq $name ) { $isfind="1"; }
+            }
+            if ( $isfind eq "0" )
+            {
+                my %newlist=( keywordname=>$name );
+                push( @temparray, \%newlist);
+            }
+        }    
+        $squid->{keyword}->[0]->{name}=\@temparray;
+        LogUserAction( action=>'ADDKEYWORD', keywordname=>$action{keywordname} );
+    }
+    elsif ( $action{action}=~m/^DELKEYWORD$/ )
+    {
+        foreach my $domain ( @$keyword )
+        {
+             if ( $domain->{keywordname} eq $action{keywordlist} ) { next; }
+             push( @temparray, $domain );
+        }
+        $squid->{keyword}->[0]->{name}=\@temparray;
+        LogUserAction( action=>'DELKEYWORD', keywordname=>$action{keywordlist} );
+    }
+       
+    XMLwrite($squid, $gPATH."squidurl.xml");
+    runCommand(command=>'/usr/local/apache/qb/setuid/do_qbsquidurl.pl', params=>'');
+
+    if ( $squidgen->{isenable} eq '1' )
+    {
+    	runCommand(command=>'killall', params=>'-9'.' '.'squid');
+    	runCommand(command=>'sleep', params=>'5');
+	#runCommand(command=>'/usr/local/squid/sbin/squid', params=>'');
+	runCommand(command=>'/usr/local/squid/sbin/squid', params=>'-k'.' '.'reconfigure');
+    }
+    
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    qbSync();
+}
+#maintainPptpinit
+#
+1

@@ -1,0 +1,23 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Service Config.</title>
+</head>
+<body>
+
+<h2>Service Config.</h2>
+<p>
+Q-Balancer對於Service的控管與Mapping除了一般的Port Redirect之外，還支援了定義Protocol的能力<br>
+這裡能夠針對單一的Service或是一群Services建立群組，這些群組就是定義給Q-Balancer的Service/Firewall功能的參數<br> 
+</p><p>
+<table> 
+<tr><td>Service :	</td><td>Service Group的名稱</td></tr> 
+<tr><td valign=top class="light">Type :	</td><td class="light">"Known" 表示為系統預設的Service，"User" 表示為自行定義</td></tr>
+<tr></tr>
+<tr><td valign=top>Protocol :	</td><td>定義該ServiceGroup使用的Protocol，除了預設之TCP、UDP、ICMP，還有自行定義Protocol No.的欄位(Defined)，例如常用的VPN Protocol為Protocol 50、Protocol 51</td></tr>
+<tr><td class="light">Port :	</td><td class="light">設定TCP or UDP Protocol使用的Port No</td></tr>
+</table>
+</p>
+</body>
+</html>

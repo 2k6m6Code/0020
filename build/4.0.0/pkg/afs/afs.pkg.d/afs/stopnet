@@ -1,0 +1,28 @@
+#!/bin/sh
+## DeanSoft Co., Ltd.
+## stop network interface
+
+PATH=$PATH:/etc:/usr/bin:/usr/etc
+PM=$1
+SNET=/usr/afs/conf/snet
+IFCONFIG=ifconfig
+
+/usr/afs/deletearp
+
+exec 3< $SNET
+while read LINE <&3 ;do
+	if [ -n "$LINE" ] ;then
+		set $LINE
+		case $1 in
+		\#*) continue
+			;;
+		$PM) 
+#			$IFCONFIG $2 0.0.0.0 down
+			$IFCONFIG $2 down
+			exit $?
+			;;
+		esac
+	fi
+done
+
+exit 1

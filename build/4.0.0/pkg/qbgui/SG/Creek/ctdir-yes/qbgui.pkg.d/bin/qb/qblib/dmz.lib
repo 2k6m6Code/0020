@@ -1,0 +1,1104 @@
+#######################################################################################################################
+#                  De-Military Zone Registration
+#######################################################################################################################
+sub showDMZreg 
+{
+    my (%action)=@_;
+    my $isp=$action{isp};
+    my $dmz=XMLread($gPATH.'dmzreg.xml');
+    my @subnet;
+    my $temp=$dmz->{host};
+    my %ispnamehash=maintainBasic( action=>'GETGOODNORMALISPNAMEHASH' );
+    my $transparentmode=maintainZone( action=>'getTransparentMode' );
+    my @ispIdList=keys %ispnamehash;
+    if ( !$isp ) { $isp=$ispIdList[0]; }
+    my $subnet_hint=maintainBasic( action=>'GETISPSUBNET', iid=>$isp );
+    $subnet_hint=~s/\/\d*//g;
+
+    my $title='';
+
+    if ( $transparentmode eq $action{mode} )
+    {
+        $title=( $transparentmode eq "ARPPROXY" ) ? "Transparent IP to Pass Through " : "Public IP reused to Pass Through ";
+    }
+    else
+    {
+        print qq (<span class="bigtitle">Transparent mode is not set yet !!</span>);
+        return;
+    }
+
+    print qq (<table bgcolor="#336699" cellspacing="0" cellpadding="0" border="0">);
+    print qq (<tr><td class="bigtitle" colspan="2">$title);
+    my $helpname=( $transparentmode ne "ARPPROXY" ) ? "dmzreg_bridge" : "dmzreg_arpproxy"; 
+    print qq (<a href="javascript:qbShowHelp('$helpname')"><image src="image/help.gif" border="0" title="Help"></a>);
+    print qq (</td></tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #=================================================
+    # Print Tags
+    print qq (<tr><td colspan="2">);  
+    print qq (<input type="hidden" name="isp" value="$isp">\n);
+    
+    print qq (<table cellspacing="0" cellpadding="0"><tr>);
+    foreach my $item ( @ispIdList )
+    {
+        my $onoffclass=($isp eq $item) ? ('tagOn') : ('tagOff');
+        print qq( <td class="$onoffclass" style="width:50" onClick="changeDMZ('$item')"><span title="$ispnamehash{$item}">ISP $item</span></td>);
+    }
+    print qq (</tr></table>\n);
+    print qq (</td></tr>);
+
+    print qq (<tr><td colspan="2" width="100%">);
+    #=================================================
+    # Print Title first
+    print qq (<div class="divframe" style="width:500">);
+    print qq (<table bgcolor="#332211" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>);
+    print qq (<td width="50%">Pass Through IP </td>);
+    print qq (<td>);
+    print qq (<a href="javascript:delHostIP()"><image src="image/del.gif" title="Unregister Checked Host IP(s)" border="0"></a>);
+    print qq (<input type="checkbox" name="alltransip" title="select or deselect all transparent IP(s)" onClick="setAllCheckBoxValue('dmzhostlist', this.checked)">);
+    print qq (</td>);
+    print qq (</tr></table>);
+    print qq (</div>);
+    
+    print qq (<div class="divframe" style="height:auto">);
+    print qq (<table id="dmziplist" border="0" width="100%">);
+    my $lineCount=0;
+    foreach my $host ( sort dmz_host_sort_by_ip @$temp ) 
+    {
+        if ( $host->{isp} ne $isp ) { next; }
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$bgcolor"  onclick="selectedColor(this)" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="50%">$host->{ip}</td>);
+        print qq (<td align="right"><input name="dmzhostlist" type="checkbox" value="$host->{ip}"></td>);
+        print qq (</tr>);
+        $lineCount++;    
+    }
+    print qq (</table></div>);
+    print qq (</td></tr>);
+  
+    #********************************************************************************************************
+    print qq (<tr><td>);
+    print qq (<table bgcolor="#667788" width="100%">);
+    print qq (<tr><td class="subtitle">$title:</td></tr>);
+    print qq (<tr><td class="body" align="center">);
+    print qq (<input type="text" class="qbtext" name="newhostip" style="width:300px" onFocus="this.value='$subnet_hint'">);
+    print qq (</td></tr>);
+    print qq (<tr><td align="center" valign="bottom">);
+    print qq (<input type="button"  class="qb" name="ADD" value="Register" onClick="goSubmit('ADDHOST');" style="width:60">);
+    print qq (<input type="button" class="qb" onclick="goBackToTransparentSetting()" value="Back" title="Back To Transparent Setting" style="width:60">);
+    #print qq (<button class="quest" style="width:60" onClick="qbStr2IPListHelp()">?</button><br>);
+    print qq (<button class="quest" style="width:60" onClick="qbStr2IPListHelp()">Help</button><br>);#20080220 Brian To modify "?" button become "Help".
+    print qq (</td></tr>);
+    print qq (</table></td></tr>);
+    print qq (</table>);
+}
+#showDMZreg
+
+#======================================================================================================================
+sub dmzreg_script 
+{
+    print << "DMZREG_SCRIPT";
+ 
+  <script type="text/javascript" src="grid.js"></script>
+  <script language="javascript">
+  
+    var state="$STATE";
+    var myform;
+   
+    function cgi_dep_onload()
+    {
+        myform=window.document.forms[0];
+        state_to_show_command_button(window.document.dmzregform);
+    }
+
+    function changeDMZ(isp)
+    {
+        myform.isp.value=isp;
+        goSubmit();
+    }
+ 
+    function state_to_show_command_button(myform)   
+    {
+        switch(state)
+        { 
+            case '0':
+                for(var i=1;i<myform.elements.length;i++)  myform.elements[i].disabled=true;
+                break;
+            case '1':
+                break;
+        }
+    }
+
+    function delHostIP()
+    {
+        if ( qbConfirm(2, 'Confirm Deletion ?') != 1 )  return;
+        goSubmit('DELETEHOST'); 
+    }
+
+    function goBackToTransparentSetting() { window.top.mainFrame.location.href="zone10.cgi"; }
+
+    </script>
+
+DMZREG_SCRIPT
+
+}
+#dmzreg_script
+
+#======================================================================================================================
+#maintainDMZreg(%action)
+sub maintainDMZreg 
+{ 
+    my (%action)=@_;
+
+    my $dmzref=XMLread($gPATH."dmzreg.xml");
+    #  make $temp initially point to the active subtree 
+    my $temp=$dmzref->{host};
+    my @temp_host_array;
+      
+
+    if ( $action{action}=~m/^GETISPOFDMZIP$/ )
+    {
+        my $isp='';
+        foreach my $host ( @$temp ) { if ( $host->{ip} eq $action{dmzip} ) { $isp=$host->{isp}; } }
+        return $isp;
+    }
+
+
+    if ( !$action{isp} || !$action{action} ) { return; }  
+
+    if ( $action{action}=~m/^GETDMZIPHASH$/ )
+    {
+        my %dmzip;
+        foreach my $host ( @$temp ) 
+        { 
+            if ( $host->{isp} eq $action{isp} ) { $dmzip{$host->{ip}}=1; } 
+        }
+
+        return %dmzip
+    }
+    elsif ( $action{action}=~m/^INITIALIZE$/ ) 
+    {
+        my %host=('isp'=>'system'  ,'ip'=>'system'  ,'mac'=>'system');
+  
+        push ( @temp_host_array, \%host );
+  
+        $dmzref->{host}=\@temp_host_array;
+    }
+    elsif ( $action{isp} && $action{action}=~m/^CLEAR$/ ) 
+    {
+        foreach my $host ( @$temp ) 
+        { 
+            if ( $host->{isp} ne $action{isp} ) { push( @temp_host_array, $host ); } 
+        }
+
+        $dmzref->{host}=\@temp_host_array; 
+    }  
+    elsif( $action{action}=~m/^ADDHOST$/ ) 
+    {  
+        #error checking 
+        #format checking
+        
+        my $version = ($action{newhostip}=~ m/\d{1,3}\./)?(0):(1); 
+        if ($version eq 0){ @newhostips=&str2IpList($action{newhostip});}
+        if ($version eq 1){ @newhostips=&str2IpList_v6($action{newhostip});}
+        
+        my $subnet=maintainBasic(action=>'GETISPSUBNET', iid=>$action{isp} );
+        
+        my $gateway=maintainBasic(action=>'GETISPGATEWAY', iid=>$action{isp} );
+        
+        my @forbiddenip=maintainIPBank(from=>"isp$action{isp}dmz", action=>'read');
+        push ( @forbiddenip, $gateway );
+        
+        my @dmziptoappendtoipbank;
+
+        # 1: 
+        # Append new host ip into dmz
+        foreach my $newip ( @newhostips )
+        {
+        
+            if ($version eq 0)
+            {
+                my $alias_subnet1=maintainBasic(action=>'ALIASSUBNET1', iid=>$action{isp} );
+                my $alias_subnet2=maintainBasic(action=>'ALIASSUBNET2', iid=>$action{isp} );
+            
+                $condition_ip=isSubnetUsableIP($newip, $subnet);
+
+                if ( $condition_ip <= 0 && $alias_subnet1 )
+                {
+
+                    $condition_ip1=isSubnetUsableIP($newip, $alias_subnet1);
+
+                    if ( $condition_ip1 <= 0 && $alias_subnet2 )
+                    {
+
+                        $condition_ip2=isSubnetUsableIP($newip, $alias_subnet2);
+
+                        if ( $condition_ip2 <=0 ){ $gMSGPROMPT.=qq (Warning :IP $newip is not of [ ISP $action{isp} ] !! \\n); next; }
+                        elsif ( $condition_ip2 == 2 ){ $gMSGPROMPT.=qq (Warning :Do not recommend using [ $newip ] !! \\n); }
+                    }
+            	    elsif ( $condition_ip1 <= 0 ){ $gMSGPROMPT.=qq (Warning :IP $newip is not of [ ISP $action{isp} ] !! \\n); next; }
+            	    elsif ( $condition_ip1 == 2 ){ $gMSGPROMPT.=qq (Warning :Do not recommend using [ $newip ] !! \\n); }
+            	}
+            	elsif ( $condition_ip <= 0 ){ $gMSGPROMPT.=qq (Warning :IP $newip is not of [ ISP $action{isp} ] !! \\n); next;}
+                elsif ( $condition_ip == 2 ){ $gMSGPROMPT.=qq (Warning :Do not recommend using [ $newip ] !! \\n); }
+            }
+            if ($version eq 1)
+            {
+                 if ( isSubnetUsableIP_v6($newip, $subnet) <= 0 )
+                 {
+                     $gMSGPROMPT.=qq (Warning :IP $newip is not of [ ISP $action{isp} ] !! \\n);
+                     next;
+                 }
+            }
+            if ( grep(/^$newip$/, @forbiddenip) )
+            {
+                $gMSGPROMPT.=qq (Warning :IP $newip is already registered !! \\n);
+                next; 
+            }
+
+            my %dmzhost=(isp=>$action{isp}, ip=>$newip);
+            push(@$temp, \%dmzhost);    
+
+            push(@dmziptoappendtoipbank, $newip);
+        }
+    
+        # 2:
+        # @dep:maintaining the IP transaction in ipbank.xml  ------------------------------------
+        maintainIPBank(to=>"isp$action{isp}dmz", action=>'append', ipset=>\@dmziptoappendtoipbank );
+    
+        # query this for step 3 and step 4
+        my $dmzstatus=maintainZone(action=>"GETDMZSTATUS", isp=>$action{isp});
+        
+        # 3:
+        # @dep:maintaining ip arpproxy in ipneigh.xml        ------------------------------------
+        if ( $dmzstatus ) 
+        { 
+            my %dmziptoappendtoipneigh;
+            foreach my $newip ( @dmziptoappendtoipbank ) { $dmziptoappendtoipneigh{$newip}=1; }
+            my $nic=maintainBasic( action=>"GETISPNIC", iid=>$action{isp} );
+            maintainIPneigh( action=>"BATADD", nic=>$nic, isp=>$action{isp}, ip=>\%dmziptoappendtoipneigh ); 
+            maintainIPaddress( action=>"BATDEL", ip=>\%dmziptoappendtoipneigh);
+        }
+#gary test add to interrt.xml #########################################
+
+            my $dmznic=maintainZone(action=>"GETDMZNIC", isp=>$action{isp});
+            my $nic=maintainBasic( action=>"GETISPNIC", iid=>$action{isp} );
+            my $subnet=maintainBasic(action=>'GETISPSUBNET', iid=>$action{isp} );
+            maintainInterrt(action=>'ADD', isp=>"dmz$action{isp}", nic=>$dmznic, subnet=>$subnet, gateway=>""); 
+
+#######################################################################
+
+    } 
+    elsif ( $action{action}=~m/^DELETEHOST$/ ) 
+    {
+        my $hostlist=$action{hostlist};
+        my $ispnic=maintainBasic( action=>"GETISPNIC", iid=>$action{isp} );
+        my $dmzstatus=maintainZone(action=>"GETDMZSTATUS", isp=>$action{isp});
+        my @sysandpubip=maintainIPBank(action=>'READSYSTEMANDPUBLICIP', isp=>$action{isp});
+        my %hosttodelfromipneigh;
+        my %hosttoaddtoipaddr;
+        
+        # 1:remove target hosts from $dmzref->{host}
+        foreach my $host ( @$temp ) 
+        {   
+            my $host_to_del=0;
+
+            if ( grep(/^$host->{ip}$/, @$hostlist) ) { $host_to_del=1; }
+
+            if ( $host_to_del ) 
+            { 
+                $hosttodelfromipneigh{$host->{ip}}=1;    
+
+                if ( grep(/^$host->{ip}$/, @sysandpubip) ) { $hosttoaddtoipaddr{$host->{ip}}=1; }
+                
+                next;
+            }
+
+            push( @temp_host_array, $host ); 
+        }
+
+        $dmzref->{host}=\@temp_host_array; 
+        
+        # @dep
+        # 1: delete this ipneigh entry in ipneigh.xml
+        #這部分與 dmz ipneigh (arpproxy) 有關係
+        if ( $dmzstatus ) { maintainIPneigh( action=>"BATDEL", nic=>$ispnic, isp=>$action{isp} , ip=>\%hosttodelfromipneigh ); }
+
+        # @dep
+        # 2: add ip deleted but still used  as system or public to ipaddr
+        #這部分與 ipaddr.xml 有關係
+        if ( $dmzstatus ) { maintainIPaddress( action=>"BATADD", nic=>$ispnic, isp=>$action{isp} , ip=>\%hosttoaddtoipaddr ); }
+
+        # @dep
+        # 3:remove IPs from dmz zone to isp$action{isp} 
+        maintainIPBank(from=>"isp$action{isp}dmz",  action=>'remove', ipset=>$hostlist);
+
+#gary test del from interrt.xml ###################################################        
+        if($dmzref->{host} ne 'system' )
+        { 
+            my $dmznic=maintainZone(action=>"GETDMZNIC", isp=>$action{isp});
+            my $nic=maintainBasic( action=>"GETISPNIC", iid=>$action{isp} );
+            my $subnet=maintainBasic(action=>'GETISPSUBNET', iid=>$action{isp} );
+            maintainInterrt(action=>'DEL', isp=>"dmz$action{isp}", nic=>$dmznic, subnet=>$subnet, gateway=>""); 
+        }
+#################################################################################
+    }
+    # %action=(action=>"SUBNETCHANGED", isp=>"isp_to_check", newsubnet=>'newsubnet', oldsubnet=>'oldsubnet')
+    elsif ( $action{action}=~m/^SUBNETCHANGED$/ ) 
+    {
+        my @newHostArray;
+        my @ipToRemove;
+        my $dmznic=maintainZone(action=>"GETDMZNIC", isp=>$action{isp});
+        my $dmzstatus=maintainZone(action=>"GETDMZSTATUS", isp=>$action{isp});
+        
+        foreach my $host ( @$temp ) 
+        { 
+            if ( $host->{isp} ne $action{isp} ) { push(@newHostArray, $host); next; }
+
+            if (isSubnetUsableIP($host->{ip}, $action{newsubnet} ) == 1 ) { push(@newHostArray, $host); next; }
+            
+            push( @ipToRemove, $host->{ip} );
+        }
+
+        $dmzref->{host}=\@newHostArray; 
+
+        #@dep
+        #1: delete routing entry in interrt.xml ------------------------------------
+
+
+        if ( $dmzstatus ) 
+        { 
+            maintainInterrt(action=>'DEL', nic=>$dmznic, isp=>$action{isp}, subnet=>$action{oldsubnet}, gateway=>""); 
+            maintainInterrt(action=>'ADD', nic=>$dmznic, isp=>$action{isp}, subnet=>$action{newsubnet}, gateway=>""); 
+        }
+
+        # @dep
+        # 2: delete ipneigh entry in ipneigh.xml
+        # 這部分與 dmz ipneigh (arpproxy) 有關係
+        my %ipToRemoveFromIPneigh;
+        foreach my $ip ( @ipToRemove ) { $ipToRemoveFromIPneigh{$ip}=1; }
+        if ( $dmzstatus ) { maintainIPneigh( action=>"BATDEL", ip=>\%ipToRemoveFromIPneigh); }
+        
+        # @dep
+        # 3: remove IPs from dmz zone  
+        maintainIPBank(from=>"isp$action{isp}dmz", action=>'remove', ipset=>\@ipToRemove);
+    }
+    
+    # Updating dmzreg.xml------------------------ 
+    XMLwrite($dmzref, $gPATH."dmzreg.xml");
+
+    
+    #@dep
+    if ( $action{action}=~m/^ADDHOST$|^DELETEHOST$/ ) 
+    { 
+        #@dep
+        maintainProute( action=>'UPDATEQBROUTE' );
+    
+        #@dep
+        maintainVS(action=>"CHECKREALSERVERS"); 
+    }
+
+#gary test###################################
+
+#            my $nic=maintainBasic( action=>"GETISPNIC", iid=>$action{isp} );
+#            my $subnet=maintainBasic(action=>'GETISPSUBNET', iid=>$action{isp} );
+#            maintainInterrt(action=>'DEL', isp=>"dmz$action{isp}", nic=>$nic, subnet=>$subnet, gateway=>""); 
+#            maintainInterrt(action=>'ADD', isp=>"dmz$action{isp}", nic=>$nic, subnet=>$subnet, gateway=>""); 
+
+#############################################
+
+}
+
+#maintainDMZreg
+
+#====================================================================================
+sub showDMZ 
+{
+    ( %action )=@_; 
+    my $ref=XMLread($gPATH."dmznet.xml");
+    my $focuseddmz=$action{focuseddmz};
+    my $allDMZs=$ref->{dmz}->[0]->{subnet}; my @sortedDMZs;
+    my $sortingKEY=$action{sortingkey};
+    my $dmznets=$action{dmznets};
+    my %ispHash=maintainBasic(action=>'GETISPNAMEHASH');
+    my %titleWidth=('ISP ID'=>50, 'ISP Name'=>70, 'DMZ Subnet'=>150, 'Request Services'=>150, 'Reply Services'=>150, 'Status'=>'50', 'Edit'=>50, 'Delete'=>50);
+    my @titleList=('ISP ID', 'ISP Name', 'DMZ Subnet', 'Request Services', 'Reply Services', 'Status', 'Edit');
+    my @titleHeadList=('Request Services', 'Reply Services', 'Status', 'Edit');
+    
+    print qq (<div class="divframe">);
+    print qq (<table width="100%" class="body" bgcolor="#332211"><tr>);
+    print qq (<td align="center" width="$titleWidth{'ISP ID'}"><a href="javascript:sortDMZSubnet('BYISP')" title="Sort by DMZ ISP" border="0">ISP ID</a></td>);
+    print qq (<td align="center" width="$titleWidth{'ISP Name'}">ISP Name</td>);
+    print qq (<td align="center" width="$titleWidth{'DMZ Subnet'}"><a href="javascript:sortDMZSubnet('BYREGION')" title="Sort by Region" border="0">DMZ Subnet</a></td>);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    print qq (<td align="center" width="$titleWidth{Delete}">);
+    print qq (<a href="#"></a><a href="javascript:delSubnet()"><image src="image/del.gif" title="Delete Checked Subnet(s)" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all public items" onClick="setAllCheckBoxValue('dmznets', this.checked)">);
+    print qq (</td>);
+    print qq (</tr></table>);
+    print qq (</div>);
+    
+    if ( !$sortingKEY ) { $sortingKEY='BYREGION'; }
+    if ( $sortingKEY eq 'BYREGION' ) { @sortedDMZs= sort dmz_net_sort_by_region @$allDMZs; }
+    if ( $sortingKEY eq 'BYISP' ) { @sortedDMZs= sort dmz_net_sort_by_isp @$allDMZs; }
+    
+    print qq (<div class="divframe" style="height:190">);
+    print qq (<table id="dmzList" width="100%" cellspacing="0" cellpadding="0" class="body">);
+    my $lineCount=0;
+    foreach my $dmz ( @sortedDMZs ) 
+    {
+        if ( $dmz->{region} eq 'system' ) { next; }
+  
+        my $dmzkey=$dmz->{region};
+
+        #===================================================================      
+        # prepare display color
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        my $originalColor=$bgcolor;
+        if ( $dmzkey eq $focuseddmz) { $bgcolor='#66aadd' };
+        if ( $dmz->{dirty} ) { $originalColor=$bgcolor='#bb6600' }; 
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+        #===================================================================      
+        my $display=$dmz->{isp};
+        print qq (<td align="center" width="$titleWidth{$titleList[0]}">$display</td>);
+
+        #===================================================================      
+        my $display=$ispHash{$dmz->{isp}};
+        print qq (<td align="center" width="$titleWidth{$titleList[1]}">$display</td>);
+        
+        #===================================================================      
+        my $display=$dmz->{region}; 
+        print qq (<td align="center" width="$titleWidth{$titleList[2]}">$display</td>);
+        
+        #===================================================================      
+        my $dservice=$dmz->{dservice}; 
+        print qq (<td align="center" width="$titleWidth{$titleList[3]}">);
+        displayService(@$dservice);
+        print qq (</td>);
+        
+        #===================================================================      
+        my $sservice=$dmz->{sservice}; 
+        print qq (<td align="center" width="$titleWidth{$titleList[4]}">);
+        displayService(@$sservice);
+        print qq (</td>);
+        
+        #===================================================================      
+        my $imgSrc; ( $dmz->{dirty} ) ? ( $imgSrc='/image/alert.gif' ) : ( $imgSrc='/image/ok.gif' );
+        print qq (<td class="body" align="center" width="$titleWidth{Status}"><image src="$imgSrc" border="0"></td>);
+        
+        #===================================================================      
+        print qq (<td class="body" align="center" width="$titleWidth{Edit}">);
+        print qq (<a href="javascript:editThisDMZ('$dmzkey');selectedColor(dmzList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit Nat properties" border="0"></a></td>);
+        
+        #===================================================================      
+        #print checkbox and set its value
+        print qq (<td class="body" align="center" width="$titleWidth{Delete}">);
+        print qq (<input type="checkbox" name="dmznets" value="$dmzkey">);
+        print qq (</td>);
+        
+        print qq (</tr>);
+        
+        if ( $dmzkey eq $action{focuseddmz} ) { print qq (<script>initSelect(dmzList.rows[$lineCount]);</script>); }
+        $lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+}
+#showDMZ
+
+#======================================================================================================================
+sub showDMZScript 
+{
+    print << "SHOWDMZSCRIPT";
+    
+    <script type="text/javascript" src="grid.js"></script>
+  <script language="javascript">
+   
+    var myform;  
+    
+    function cgi_dep_onload()
+    {
+        myform=window.document.forms[0];   
+    }
+    
+    function sortDMZSubnet(key)
+    {
+        myform.sortingkey.value=key;
+        myform.submit();
+    }    
+
+    function editThisDMZ(dmz)
+    {
+        var qstring='';
+        qstring+='editdmz.cgi?';
+        qstring+='focuseddmz' + '=' + dmz;
+        window.top.mainFrame.edit.location.href=qstring;
+    }    
+    
+    function delSubnet() { if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )  goSubmit('DELETESUBNET'); }
+  </script>
+
+SHOWDMZSCRIPT
+}
+#showDMZScript
+
+#============================================================================================
+sub editDMZ
+{
+    ( %action )=@_;
+    my $basic=XMLread($gPATH."basic.xml");
+    my $basic=$basic->{isp};
+    my @goodiidlist=maintainBasic(action=>'GETGOODIIDLIST');
+    my $ref=XMLread($gPATH."dmznet.xml");
+    my $alldmzes=$ref->{dmz}->[0]->{subnet};
+    my @allservices=maintainService( action=>'GETALLSERVICE' );
+    my $focusedDMZ=$action{focuseddmz};
+    if ( $action{action}=~m/^APPENDSUBNET$|^UPDATE$/ ) { $focusedDMZ=$action{dmz_bind_sub}; }
+
+    my $targetdmz;
+    my $targetexist=0;
+    foreach my $dmz ( @$alldmzes)   
+    {
+        if ( $dmz->{region} ne $focusedDMZ ) { next; }
+        $targetdmz=$dmz;
+        $targetexist=1;
+        last;
+    }
+
+    #******************************************************************
+    my $focusedISP=$targetdmz->{isp};
+    my ( $focusedIP, $focusedMask )=split(/\//, $targetdmz->{region} );
+
+    print qq (<div align="center">);
+    print qq (<table cellspacing="3" bgcolor="#336699" width="100%">);
+    print qq (<tr>);
+    print qq (<td>);
+    print qq (<table width="80%">);
+    print qq (<tr><td class="subtitle" align="left">DMZ Subnet: </td></tr>);
+    
+    if ( @goodiidlist >= 1 ) 
+    {  
+        foreach my $isp ( @$basic ) 
+        { 
+            if ( $isp->{iid} eq 'system' || !$isp->{subnet} ) { next; }
+                
+            print qq (<tr>);
+            my ($seedip, $netmask)=split(/\//,$isp->{subnet});
+            my @avail_ip=get_allocated_ip( $isp->{subnet} );
+
+            my $status=( $isp->{iid} eq $focusedISP ) ? ( 'checked' ) : ( '' );
+            print qq (<td class="body" valign="top" align="left">  );
+            print qq (<input type="radio" $status name="isp_radio" value="$isp->{iid}">);
+            print qq ($isp->{ispname}: );
+            print qq (</td>);
+                
+            print qq (<td class="body" valign="top" align="left">  );
+            print qq ([ ISP $isp->{iid} ]);
+            print qq (</td>);
+            
+            print qq (<td class="body" valign="top" align="left">  );
+            print qq (<select class="qbopt" name="$isp->{iid}_seed"  onfocus="change_isp_radio('$isp->{iid}')" style="WIDTH:120px" >);
+            foreach  my $seedip ( @avail_ip ) 
+            { 
+                my $status=( $seedip eq $focusedIP ) ? ( 'selected' ) : ( '' );
+                print qq (<option $status>$seedip</option>); 
+            }
+            print qq (</select>);
+            print qq (  /  <select class="qbopt" name="$isp->{iid}_netmask" onChange="dmz_generate_seed_list('$isp->{iid}')" onFocus="change_isp_radio('$isp->{iid}')">);
+            for ( my $mask_item=32; $mask_item>=$netmask;$mask_item-- ) 
+            { 
+                my $status=( $mask_item eq $focusedMask ) ? ( 'selected' ) : ( '' );
+                print qq (<option $status>$mask_item</option>); 
+            }
+            print qq (</select>);
+            print qq (</td>);  
+            print qq (</tr>);
+        }
+    }
+    
+
+    
+    print qq (<tr>);
+    print qq (<td colspan="3" align="left">);
+    
+    print qq (<table bgcolor="#667788" width="100%">);
+    print qq (<tr><td class="subtitle" colspan="4" align="left">Service: </td></tr>);
+    print qq (<tr>);
+    my $dservices=$targetdmz->{dservice};
+    print qq (<td class="body" align="center">);
+    print qq (Request(s)<br><select class="qbopt" name="dservices" size="5" multiple style="width:100">);
+    foreach my $service ( @$dservices )
+    {    
+        if ( $service eq 'system' ) { next; }
+        print qq (<option>$service</option>);
+    }
+    print qq (</select></td>);
+
+    print qq (<td align="center">);
+    print qq (<input class="qb" type="button" value="<" onClick="add_options(allservices, dservices)" style="width:20"><br>);
+    print qq (<input class="qb" type="button" value=">" onClick="del_options(dservices)" style="width:20">);
+    print qq (</td>);
+    
+    print qq (<td class="body" align="center">);
+    print qq (Option(s)<br><select class="qbopt" multiple size="5" name="allservices" onBlur="mark_select(this)"  onChange="own_select(this)" style="WIDTH:100">);
+    foreach my $service ( @allservices ) {   print qq (<option value="$service">[ ]$service</option>); }
+    print qq (</select></td>);
+    
+    print qq (<td align="center">);
+    print qq (<input class="qb" type="button" value="<" onClick="del_options(sservices)" style="width:20"><br>);
+    print qq (<input class="qb" type="button" value=">" onClick="add_options(allservices, sservices)" style="width:20">);
+    print qq (</td>);
+    
+    my $sservices=$targetdmz->{sservice};
+    print qq (<td class="body" align="center">);
+    print qq (Reply(s)<br><select class="qbopt" name="sservices" size="5" multiple style="width:100">);
+    foreach my $service ( @$sservices )
+    {    
+        if ( $service eq 'system' ) { next; }
+        print qq (<option>$service</option>);
+    }
+    print qq (</select></td>);
+    
+    print qq (</tr>);
+    print qq (<tr><td colspan="4" bgcolor="#667788">&nbsp</td></tr>);
+    print qq (</table>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</td>);
+    
+    print qq (<td class="body"  align="center" valign="bottom">);
+    print qq (<input class="qb" type="button" value="Add"  onClick="newdmz(sservices, dservices)" style="width:80"><br>);
+    print qq (<input class="qb" type="button" value="Save" onClick="update(sservices, dservices)" style="width:80"><br>);
+    print qq (</td>);
+    
+    print qq (</tr>);
+    print qq (</table></div>);
+}
+#editDMZ
+
+
+#======================================================================================================================
+sub editDMZScript 
+{
+    my @goodiidlist=maintainBasic(action=>'GETGOODIIDLIST');
+    print qq (<script language="javascript">);
+    print qq (goodISP = new Array(););
+    foreach my $isp ( @goodiidlist ) { print qq (goodISP.push($isp);); }
+    print qq (</script>);
+
+    print << "EDITDMZSCRIPT";
+    
+  <script language="javascript">
+  
+    var myform=document.forms[0];
+
+    function cgi_dep_onload() 
+    { 
+        dmz_keep_seed_array();
+        for(var i=0;i<goodISP.length;i++) { dmz_generate_seed_list(goodISP[i]); }
+        setTimeout("informShowDMZ()",500);
+    }
+
+    function informShowDMZ()
+    {
+        var action=myform.action.value;
+
+        if ( action=="APPENDSUBNET" || action=="UPDATE")
+        {
+            window.top.mainFrame.show.document.forms[0].focuseddmz.value=myform.focuseddmz.value;
+            window.top.mainFrame.show.document.forms[0].submit();
+        }          
+    }
+    
+    function change_subnet_service_radio(subnet_service)
+    {
+        if(myform.subnet_service_radio.length)
+        {
+            for(var i=0;i<myform.subnet_service_radio.length;i++)
+            {
+                if(myform.subnet_service_radio[i].value==subnet_service)
+                {
+                    myform.subnet_service_radio[i].checked=true;
+                }
+            }
+        }
+        else
+        {
+            myform.subnet_service_radio.checked=true;
+        }
+    }
+    
+    function newdmz(sservices, dservices)
+    {
+        for ( var i=0; i < sservices.options.length; i++ ) { sservices.options[i].selected=true; }
+        for ( var i=0; i < dservices.options.length; i++ ) { dservices.options[i].selected=true; }
+        goSubmit('APPENDSUBNET');
+    }
+    
+    function update(sservices, dservices)
+    {
+        for ( var i=0; i < sservices.options.length; i++ ) { sservices.options[i].selected=true; }
+        for ( var i=0; i < dservices.options.length; i++ ) { dservices.options[i].selected=true; }
+        goSubmit('UPDATE');
+    }
+    
+    function change_isp_radio(isp)
+    {
+        if(myform.isp_radio.length)
+        {
+            for(var i=0;i<myform.isp_radio.length;i++)
+            {
+                if(myform.isp_radio[i].value==isp)
+                {
+                    myform.isp_radio[i].checked=true;
+                }
+            }
+        }
+        else
+        {
+            myform.isp_radio.checked=true;
+        }
+    }
+    
+    var seed_array=new Array();
+    var ipseed=new Array();
+    
+    function dmz_keep_seed_array()
+    {
+        for(var i=0;i<goodISP.length;i++) { seed_array[goodISP[i]]= new Array(); }
+   
+        for(var k=0;k<goodISP.length;k++)
+        {
+            var i=goodISP[k];
+            var elementname=i+'_seed';
+    
+            for(var j=0;j<myform.elements.length;j++)
+            {
+                if(myform.elements[j].name==elementname){ipseed[i]=myform.elements[j];}
+            }
+        }
+        
+        for(var k=0;k<goodISP.length;k++)
+        { 
+            var i=goodISP[k];
+            var ipseedobj=eval(ipseed[i]);
+            if(ipseedobj)
+            {
+                for(var j=0;j<ipseedobj.options.length;j++)
+                {
+                    seed_array[i][j]=ipseedobj.options[j].text; 
+                }
+            }
+        }
+    }
+ 
+
+    function dmz_generate_seed_list(isp)
+    {
+        var target=isp+"_seed";
+        var ipseed,netmask;
+        var seedlist=new Array();
+        var startSeed;
+        
+        for(var i=0;i<myform.elements.length;i++)
+        {
+            if(myform.elements[i].name==isp+"_seed"){ipseed=myform.elements[i];}
+            if(myform.elements[i].name==isp+"_netmask"){netmask=myform.elements[i];}
+        }
+
+        if(!ipseed){return;}
+
+        startSeed=ipseed.options[ipseed.selectedIndex].text;
+        
+        var power=32-(netmask.options[netmask.selectedIndex].text)-1;
+        var partition=2<<power;
+        if (partition==0){partition=1};
+        var seedlist=new Array();
+        var j=0;
+        for(var i=0;i<seed_array[isp].length;i++)
+        {
+            var ip=new Array();
+            ip=seed_array[isp][i].split(".");
+            if(ip[3]%partition==0)
+            {
+                seedlist[j++]=seed_array[isp][i];
+            }
+        } 
+        setOptionText(ipseed,seedlist); 
+
+        for(var i=0;i<ipseed.options.length;i++) { if (ipseed.options[i].text==startSeed) { ipseed.options[i].selected=true; } }
+    }
+    
+  </script>
+
+EDITDMZSCRIPT
+
+}
+#editDMZScript
+
+#======================================================================================================================
+sub maintainDMZ 
+{ 
+    my (%action)=@_;
+    
+    if ( !$action{action} ) { return; }
+    
+    if ( !$action{viewpoint} ) { $action{viewpoint}='dmz'; }
+    
+    my $dmznetref=XMLread($gPATH."dmznet.xml");
+    my $temp=$dmznetref->{dmz}->[0]->{subnet};
+    my @tempsubnet;
+    my @tempsubnetarray;
+    my $subnet_to_append=$action{dmz_bind_sub};  
+    
+    # %action=(action=>"GETDIRTYOFSUBNET", subnet=>"subnet to query" )
+    if( $action{action} eq "GETDIRTYOFSUBNET" ) 
+    {
+        foreach my $subnetitem ( @$temp ) 
+        {
+              if( $subnetitem->{region} ne $action{subnet} ) { next; }
+              return $subnetitem->{dirty}; 
+        }
+    }
+    # %action=(action=>"GETSUBNET2DIRTY")
+    if( $action{action} eq "GETSUBNET2DIRTY" ) 
+    {
+        my %subnet2dirty;
+        foreach my $subnetitem ( @$temp ) 
+        {
+              if( $subnetitem->{region} eq 'system' ) { next; }
+	      $subnet2dirty{$subnetitem->{region}}=$subnetitem->{dirty};
+        }
+
+	return %subnet2dirty;
+    }
+    elsif( $action{action} eq "APPENDSUBNET" ) 
+    { 
+        if ( !( $subnet_to_append=get_subnet($subnet_to_append) ) ) {
+              $gMSGPROMPT.=qq (Warning: Select a subnet first \\n); 
+              return; 
+        }
+      
+        %newsubnet=( dservice=>$action{dservices}, sservice=>$action{sservices}, region=>$subnet_to_append, isp=>$action{isp}, dirty=>0 ); 
+        
+        foreach my $subnetitem ( @$temp ) 
+        {
+    
+            if ( $subnetitem->{dirty} ) { push(@tempsubnetarray, $subnetitem); next;}
+    
+            if( $subnetitem->{region} ne $subnet_to_append ) { push(@tempsubnetarray, $subnetitem); }
+            # If already exists, just do nothing and return
+            else 
+            { 
+                $gMSGPROMPT.=qq (Warning: SUBNET OVERLAPPING\\n);
+                $gMSGPROMPT.=qq (NEW:$subnet_to_append <==> EXIST:$subnetitem->{region}\\n);
+                return; 
+            }   
+        }
+ 
+        push(@tempsubnetarray, \%newsubnet);
+    
+        $dmznetref->{dmz}->[0]->{subnet}=\@tempsubnetarray;
+    }
+    elsif( $action{action} eq "SMARTAPPENDSUBNET" ) 
+    { 
+        if ( !( $subnet_to_append=get_subnet($subnet_to_append) ) ) { return; }
+      
+        %newsubnet=( dservice=>[ 'system' ], sservice=>[ 'system' ], region=>$subnet_to_append, isp=>$action{isp}, dirty=>0 ); 
+        
+        foreach my $subnetitem ( @$temp ) 
+        {
+            if ( $subnetitem->{dirty} ) { push(@tempsubnetarray, $subnetitem); next;}
+    
+            if( $subnetitem->{region} ne $subnet_to_append ) { push(@tempsubnetarray, $subnetitem); }
+            # If already exists, just do nothing and return    
+            else { return; }   
+        }
+ 
+        push(@tempsubnetarray, \%newsubnet);
+    
+        $dmznetref->{dmz}->[0]->{subnet}=\@tempsubnetarray;
+    }
+    elsif( $action{action}=~m/^UPDATE$/ ) 
+    {
+        if( !$action{focuseddmz} ) 
+        { 
+            $gMSGPROMPT.=qq (Warning: Which Subnet to UPDATE\\n);
+            return; 
+        }
+  
+        if ( !( $subnet_to_append=get_subnet($subnet_to_append) ) ) 
+        {
+            $gMSGPROMPT.=qq (Warning: select a DMZ subnet first \\n); 
+            return; 
+        }
+        
+        if ( $action{focuseddmz} ne $subnet_to_append )
+        {
+            foreach my $subnetitem ( @$temp )
+            {
+                if ( $subnetitem->{dirty} ) { next; }
+                if ( $subnetitem->{region} ne $subnet_to_append ) { next; }
+                $gMSGPROMPT.=qq( Warrning: $subnet_to_append has already existed);
+                return;
+            }
+        }
+
+        foreach my $subnetitem ( @$temp ) 
+        {
+            if( $subnetitem->{region} ne $action{focuseddmz} ) { next;}
+            $subnetitem->{isp}=$action{isp};
+            $subnetitem->{region}=$subnet_to_append; 
+            $subnetitem->{sservice}=$action{sservices};
+            $subnetitem->{dservice}=$action{dservices};
+            $subnetitem->{dirty}=0;
+            last;
+        }
+    
+        #@dep: iniroute.xml    
+        if ( $action{focuseddmz} ne $subnet_to_append ) { maintainIniroute( action=>'CHANGESOURCE', viewpoint=>'dmz', source=>$action{focuseddmz}, newsource=>$subnet_to_append, newisp=>$action{isp} ); }
+    }
+    elsif ( $action{action} eq "DELSERVICE" )
+    {
+        my @serviceToDelete=("$action{service}");
+
+        foreach my $subnet ( @$temp )
+        {
+            get_diff_set($subnet->{dservice}, \@serviceToDelete);
+            get_diff_set($subnet->{sservice}, \@serviceToDelete);
+        }
+    }
+    elsif( $action{action} eq "DELETESUBNET" ) 
+    { 
+        my $dmznets=$action{dmznets};
+        
+        if( @$dmznets <= 0 ) 
+        { 
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n);
+            return; 
+        }
+    
+        foreach my $subnetitem ( @$temp ) 
+        {
+            if( grep(/^$subnetitem->{region}$/, @$dmznets) ) { next; } 
+            push(@tempsubnetarray, $subnetitem);    
+        }
+    
+        $dmznetref->{dmz}->[0]->{subnet}=\@tempsubnetarray;
+    }
+    # %action=(action=>"CLEARDMZSUBNETOFISP", isp=>"iid_of_isp_to_clear" )
+    elsif( $action{action} eq "CLEARDMZSUBNETOFISP" ) 
+    {
+        foreach my $subnetitem ( @$temp ) 
+        {
+            if( $subnetitem->{isp} ne $action{isp} ) { push(@tempsubnetarray, $subnetitem); }   
+        }
+    
+        $dmznetref->{dmz}->[0]->{subnet}=\@tempsubnetarray;
+    }
+    # %action=(action=>"MARKDMZSUBNETOFISP", isp=>"iid_of_isp_to_mark" )
+    elsif( $action{action} eq "MARKDMZSUBNETOFISP" ) 
+    {
+        foreach my $subnetitem ( @$temp ) 
+        {
+            if( $subnetitem->{isp} eq $action{isp} ) { $subnetitem->{dirty}=1; }   
+        }
+    }
+    # %action=(action=>"SUBNETCHANGED", isp=>"isp_to_check", newsubnet=>'newsubnet')
+    elsif( $action{action} eq "SUBNETCHANGED" ) 
+    {
+        foreach my $subnet ( @$temp ) 
+        {
+            if ( $subnet->{isp} ne $action{isp} ) { next; }
+            if ( subnet_belong_check($subnet->{region}, $action{newsubnet}) !=1 ){ $subnet->{dirty}=1; }   
+            if ( subnet_belong_check($subnet->{region}, $action{newsubnet}) ==1 ){ $subnet->{dirty}=0; }   
+        }
+    }
+    elsif ( $action{action} eq "REPORT" )
+    {
+        print qq (<fieldset><legend><font class="subtitle">DMZ Configuration</font></legend>);
+        print qq (<div class="reportdiv">);
+        foreach my $subnet ( @$temp )
+        {
+            if ( $subnet->{region} eq 'system' ) { next; }
+            foreach my $key ( keys %$subnet ) { if ( $key=~m/service/ ) { next; } print qq ( [ $key:$subnet->{$key} ] );  } 
+            print qq (<br>);
+
+            my $allservice=$subnet->{dservice};
+            foreach my $service ( @$allservice ) { if ( $service eq "system") { next; } print qq ( [ $service ] ); }
+            print qq (<br>);
+            
+            my $allservice=$subnet->{sservice};
+            foreach my $service ( @$allservice ) { if ( $service eq "system") { next; } print qq ( [ $service ] ); }
+            print qq (<br>);
+            
+            print qq (<hr size="1">);
+        }
+        print qq (</div>);
+        print qq (</fieldset>);
+    }
+
+    #--------updating dmznet.xml------------------------ 
+    XMLwrite($dmznetref, $gPATH."dmznet.xml");
+    
+    #@dep
+    #update fire wall mark value of DMZ and NAT zone
+    maintainFwmark(type=>'dmz');
+}
+#maintainDMZ
+
+#================================================================================================
+sub dmz_host_sort_by_ip 
+{
+    my @afields=split(/\.|\//,$a->{ip});
+    my @bfields=split(/\.|\//,$b->{ip});
+    foreach my $index ( 0..3 )
+    {
+         $avalue=$afields[$index]; 
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+    $avalue <=> $bvalue;
+}
+#dmz_net_sort_by_region
+
+#================================================================================================
+sub dmz_net_sort_by_region 
+{
+    my @afields=split(/\.|\//,$a->{region});
+    my @bfields=split(/\.|\//,$b->{region});
+    foreach my $index ( 0..4 )
+    {
+         $avalue=$afields[$index]; 
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+    $bvalue <=> $avalue;
+}
+#dmz_net_sort_by_region
+
+#================================================================================================
+sub dmz_net_sort_by_isp 
+{
+    my $avalue=int($a->{isp});
+    my $bvalue=int($b->{isp});
+
+    if ( $avalue == $bvalue )
+    {
+        @afields=split(/\.|\//,$a->{region});
+        @bfields=split(/\.|\//,$b->{region});
+        foreach my $index ( 0..4 )
+        {
+            $avalue=$afields[$index]; 
+            $bvalue=$bfields[$index];
+            if ( $avalue ne $bvalue ) { last; }
+        }
+    }
+    $avalue <=> $bvalue;
+}
+#dmz_net_sort_by_isp
+#
+1

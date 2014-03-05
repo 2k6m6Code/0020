@@ -1,0 +1,15 @@
+#! /bin/sh
+
+#unalias cp
+#unalias rm
+
+if [ -d /etc/cron.d ];
+then
+    rm -rf /etc/cron.d/*
+else
+    mkdir /etc/cron.d
+fi
+mv /opt/crond/crontab /etc/crontab
+/etc/rc.d/init.d/crond start
+
+exit 0

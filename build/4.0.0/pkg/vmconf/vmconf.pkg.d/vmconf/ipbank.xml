@@ -1,0 +1,16 @@
+<opt file="ipbank" lastupdate="" status="lock">
+  <ip name="isp1dmz">
+    <opt>system</opt>
+  </ip>
+  <ip name="isp1public">
+    <opt>255.255.255.253</opt>
+    <opt>system</opt>
+  </ip>
+  <ip name="isp1system">
+    <opt>255.255.255.253</opt>
+    <opt>system</opt>
+  </ip>
+  <ip name="system">
+    <opt>system</opt>
+  </ip>
+</opt>

@@ -1,0 +1,5 @@
+<opt status="lock" lastupdate="" file="lvsnet">
+  <lvs>
+    <subnet dirty="1" region="system" />
+  </lvs>
+</opt>

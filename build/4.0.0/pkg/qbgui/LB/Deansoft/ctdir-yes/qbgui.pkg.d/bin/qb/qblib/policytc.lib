@@ -1,0 +1,424 @@
+#########################   About Policy TC  ###################################
+
+#===========================================================================================
+sub showPtcPolicyTitle
+{
+    my (%action)=@_;
+    my $viewpoint=$action{viewpoint};
+    my %titleWidth=(Source=>'110', Service=>'100', Destination=>'110', Pool=>'100', Schedule=>'100', Status=>'40', Edit=>'40');
+    my @titleList=('Schedule', 'Pool', 'Status', 'Edit');
+    
+    print qq (<div class="divframe">);
+    print qq (<table class="body" width="100%" bgcolor="#332211" border="0"> );
+    print qq (<tr>);
+    print qq (<td align="center" width="$titleWidth{'Source'}" ><a href="javascript:sortPolicy('BYSOURCE')" title="Sort by Source" border="0">Source</a></td>);
+    print qq (<td align="center" width="$titleWidth{'Destination'}" >Destination</td>);
+    print qq (<td align="center" width="$titleWidth{'Service'}" ><a href="javascript:sortPolicy('BYSERVICE')" title="Sort by Service" border="0">Service</a></td>);
+    foreach my $title ( @titleList ) { print qq (<td  align="center" width="$titleWidth{$title}"><font color="#ffffff">$title</font></td>); }
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</div>);
+}
+#showPtcPolicyTitle
+
+
+#===========================================================================================
+sub showPtcRules 
+{
+    my (%action)=@_;
+    my $iniroute=XMLread($gPATH."iniroute.xml");
+    my %priority=(1=>'High', 3=>'Medium', 5=>'Low');
+    my %titleWidth=(Source=>'110', Service=>'100', Destination=>'110', Pool=>'100', Schedule=>'100', Status=>'40', Edit=>'40');
+    my @titleList=('Source', 'Service', 'Destination', 'Pool', 'Schedule', 'Status', 'Edit');
+    
+    print qq (<div class="divframe" style="height:200">);
+    print qq (<table id="ruleList"width="100%" class="body">);
+    my $lineCount=0;
+
+    foreach my $viewpoint ('nat', 'lvs', 'dmz' )
+    {
+        my $classes=$iniroute->{$viewpoint}->[0]->{class};
+        my @sortedClasses;
+        my $sortingKEY=$action{sortingkey};
+        
+        if ( !$sortingKEY )                     { $sortingKEY='BYSOURCE';}
+        if ( $sortingKEY eq 'BYSOURCE' )        { @sortedClasses=sort ini_class_sort_by_source @$classes; }
+        elsif ( $sortingKEY eq 'BYSERVICE' )    { @sortedClasses=sort ini_class_sort_by_service @$classes; }
+
+        foreach my $class ( @sortedClasses ) 
+        {
+            #碰到系統保留的那一筆就免了
+            if ( $class->{service} eq 'system' ) { next; }
+            
+            #===================================================================      
+            # prepare key of Policy
+            my $rulekey=$class->{source}.$class->{service}.':'.$class->{direction}.$class->{destination}.':'.$class->{table};
+
+            #===================================================================      
+            # prepare display color
+            my ( $originalColor, $bgcolor ); $originalColor=$bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+            if ( $class->{dirty} ) { $originalColor=$bgcolor='#bb6600' }; 
+
+            print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+            
+            #===================================================================      
+            if ( $viewpoint eq 'dmz' &&  $class->{source} ne 'system' && !maintainBasic(action=>'GETBELONGIID',subnet=>$class->{source})) 
+            {
+                print qq (<td class="body" align="center" bgcolor="#aa3311" width="$titleWidth{Source}">$class->{source} [OBS]</td>);
+            }
+            else
+            {
+                my $display=( $class->{source} eq 'system' ) ? ('*') : ( $class->{source} );
+                $display=~s/localhost/Q-Balancer/g;
+                print qq (<td class="body" align="center" width="$titleWidth{Source}">$display</td>);
+            }
+
+            #===================================================================      
+            my $display=( $class->{destination} eq 'system' ) ? ('Anywhere') : ( $class->{destination} );
+            print qq (<td class="body"  align="center" width="$titleWidth{Destination}">$display</td>);
+
+            my $service=$class->{service};
+            #===================================================================      
+            my $display=( $class->{service} eq 'system' ) ? ('*') : ( $class->{service} );
+            $display.=':'.$class->{direction};
+            $display=~s/^others/ANY/g;$display=~s/:s$/(RPLY)/g; $display=~s/:d$/(RQST)/g;
+            print qq (<td class="body" align="center" width="$titleWidth{Service}" onmousedown="showServiceInfo('$service')" onmouseout="hideServiceInfo()">$display</td>);
+            
+            
+            #===================================================================
+            #   將XML中的schedule處理成 starthr:startmin-endhr:endmin的格式後show出    
+            my @schedule=&timeminsegs2hrminsegs( $class->{time} );
+            print qq (<td class="body" width="$titleWidth{Schedule}" align="center">);
+            if ( @schedule == 0 ) { print qq (None); }
+            else
+            {
+                my $schdata='';
+                if ( @schedule > 1 ) { foreach my $seg ( @schedule ) {  $schdata.=$seg."\n"; } } 
+
+                my $firstseg=$schedule[0];
+                $firstseg.=( @schedule > 1) ? ( ' ...' ) : ('');
+                print qq (<span title="$schdata" style="width:$titleWidth{Schedule}">$firstseg</span>);
+            }
+            print qq (</td>);
+        
+            #===================================================================
+            my $showtable=presentTable($class->{table});
+            print qq(<td class="body" align="center" width="$titleWidth{Pool}" onmousedown="showTableInfo('$class->{table}')" onmouseout="hideTableInfo()">$showtable </td>);
+            
+            #===================================================================      
+            my $imgSrc=( $class->{dirty} ) ? ( '/image/alert.gif' ) : ( '/image/ok.gif' );
+            print qq (<td class="body" align="center" width="$titleWidth{Status}"><image src="$imgSrc" border="0"></td>);
+            
+            
+            #===================================================================      
+            my $key_for_shortcut=$viewpoint.'&'.$class->{isp}.'&'.$class->{source}.'&'. $class->{service}.':'.$class->{direction}.'&'.$class->{advance}.'&'.$class->{destination}.'&'.$class->{table};
+            print qq (<td class="body" align="center" width="$titleWidth{Edit}">);
+            print qq (<a href="javascript:edit_this_rule('$key_for_shortcut','$rulekey');selectedColor(ruleList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit rule properties" border="0"></a></td>);
+
+            print qq (</tr>\n);
+         
+            if ( $rulekey eq $action{keyofrule} ) { print qq (<script>initSelect(ruleList.rows[$lineCount]);</script>); }
+            
+            $lineCount++;
+        }
+    }
+    print qq (</table>);
+    print qq (</div>);
+}
+#showPtcRules
+
+
+#==============================================================================================================
+sub showPtcRuleScript 
+{
+    print << "EDIT_INI_RULE_SCRIPT";
+    
+    <div id="ServiceDiv" class="infodiv"></div>
+    <div id="TableDiv" class="infodiv"></div>
+
+    <script type="text/javascript" src="grid.js"></script>
+    
+  <script language="javascript">
+    
+    var myform;
+    
+    function cgi_dep_onload() 
+    { 
+        myform=window.document.forms[0];
+        setTimeout("informProute()",500);
+    }
+    
+    function sortPolicy(key)
+    {
+        myform.sortingkey.value=key;
+        myform.submit();
+    }    
+    
+    function delPolicy()
+    {
+        if (!myform.rule) return;
+        var setDeleteOn=false;
+        if ( !myform.rule.length ) setDeleteOn=myform.rule.checked;
+        for(var i=0;i<myform.rule.length;i++) { if (myform.rule[i].checked) { setDeleteOn=true; break; } }
+        if (!setDeleteOn) { alert("There is No Policy Rule Checked"); }
+        if (setDeleteOn) { if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )  { goSubmit('DELRULES');} }
+    }
+    
+    function informProute()
+    {
+        var action=myform.action.value;
+        if ( action=="DELRULES" )
+        {
+            window.top.mainFrame.iniroute.document.forms[0].action.value="UPDATEINTERFACE";        
+            window.top.mainFrame.iniroute.document.forms[0].submit();
+        }          
+    }
+    
+    function edit_this_rule(rule_key_to_edit, focusedrule)
+    {
+        document.editpruleform.focusedrule.value=focusedrule;
+        var from=document.editpruleform.viewpoint.value;
+        var qstring='';
+        var params=rule_key_to_edit.split('&'); 
+        qstring+='editptcrule.cgi?';
+        qstring+='viewpoint'+'='+params[0]+'&';
+        qstring+='isp'+'='+params[1]+'&';
+        qstring+='source'+'='+params[2]+'&';
+        qstring+='service'+'='+params[3]+'&';
+        qstring+='advance'+'='+params[4]+'&';
+        qstring+='dest'+'='+params[5]+'&';
+        qstring+='table'+'='+params[6]+'&';
+        window.top.mainFrame.iniroute.location.href=qstring;
+    }
+
+    function showServiceInfo(service)
+    {
+        var pattern=/\\.|\\*|system|others|\\:d|\\:s|\\:/g; service=service.replace(pattern,'');
+        if(!service) { return; }
+        var service=eval(service);
+        ServiceDiv.innerText="<table class=infodivtable><tr><td>"+"Service Name:"+service.info[1]+"</td><td>"+"Type:"+service.info[0]+"</td></tr>";
+            
+        with(service)
+        for(count=0;count<port.length;count++)
+        {
+            //Brian for layer7
+            if(service.info[0]=="layer7")
+            {
+              ServiceDiv.innerText+="<tr><td>Protocol:"+port[count].protocol+"</td><td>Info:"+port[count].port+"</td></tr>";
+            }
+            else
+            {
+            ServiceDiv.innerText+="<tr><td>Protocol:"+port[count].protocol+"</td><td>Port:"+port[count].port+"</td></tr>";
+            }
+        }
+ 
+        with(ServiceDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop + event.y; 
+            style.display="block";
+        }
+    }
+   
+    function showTableInfo(Table)
+    {
+        if(Table=='$gDROP' || Table=='$gALLPATH' || Table=='$gRRG' || !Table ) { return; } 
+        
+        var table=eval('T'+Table); 
+        
+        with(TableDiv)
+        {
+            TableDiv.innerText="<table class=infodivtable><tr><td>"+"Pool ID:"+Table+"</td><td>";
+            //20100223 Brian To show the note of the pool
+            TableDiv.innerText+="Pool Name:"+table.I[4]+"</td><td>";
+            TableDiv.innerText+="By Packet:"+table.I[0]+"</td><td>";
+            TableDiv.innerText+="Mode:"+table.I[1]+"</td><td>";
+            TableDiv.innerText+="Truely Aggregate:"+table.I[2]+"</td></tr>";
+        }
+            
+        with(eval('T'+Table))
+        for(count=0;count<P.length;count++)
+        {
+	    TableDiv.innerText+="<tr><td>ISP ID:"+P[count].a+"</td><td>Name:"+P[count].b+"</td><td>Weight:"+P[count].c+"</td><td>DSIP:"+P[count].d+"</td></tr>";
+        }
+        
+        with(TableDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop + event.y; 
+            style.display="block";
+        }
+    }
+
+    function hideTableInfo(){TableDiv.style.display="none";}
+    function hideServiceInfo(){ServiceDiv.style.display="none";}
+    
+  </script>
+    
+EDIT_INI_RULE_SCRIPT
+}
+#showPtcRuleScript
+
+
+#==============================================================================================================
+sub showIniPtc 
+{
+    my (%action)=@_;
+    my $iniroute=XMLread( $gPATH.'iniroute.xml');
+    my $target;
+    my %desthash;
+    my $classarray=$iniroute->{$action{viewpoint}}->[0]->{class};
+    
+    #****** judge if it is in advance mode *******************************  
+    if ( !$action{advance} ) { $action{destination}='system'; }
+    
+    print qq(<table width="100%" class="body" cellspacing="0" border="0">);
+    
+    #**************************** search key: ( source x service x direction x destination x table ) in iniroute in certern ViewPoint *****
+    #  比對介面傳達的搜尋條件，找出符合條件的 policy rule，若有，則將它show出來
+    my $target_exist=0;
+    foreach my $item ( @$classarray ) 
+    { 
+        if ( $item->{source}.$item->{service}.':'.$item->{direction}.$item->{destination}.':'.$item->{table}  ne $action{keyofrule} ) { next; }
+        $target_exist=1;
+        $target=$item; 
+        last; 
+    }
+    
+    #**************************** arrange ******************************************
+    my %NicClassMap=maintainTC(action=>'GETNICCLASSMAP');
+    my @tablepathids=maintainRtable(action=>'GETTABLEPATHIDS', table=>$target->{table} );
+    my $qosarray=$target->{qos};
+    my @pathiidlist=maintainRtable( action=>'GETTABLEPATHIDS', table=>$target->{table});
+     
+    print qq (<tr><td align="center">Outbound</td><td align="center">Inbound</td></tr>);
+    foreach my $path ( @pathiidlist )
+    {
+        print qq (<tr>);
+    
+        print qq (<td class="body"  valign="top" align="center" bordercolor="#ffffff">);
+        my $imqvalue=nicTranslate('ISP'.$path.'-OUT'); 
+        my $classarray=$NicClassMap{$imqvalue};
+
+        #========================================================
+        # read original classid in the imq of this policy [ $qosarray=$target->{qos} ]
+        my $imqclass;
+        foreach my $qos ( @$qosarray )
+        {
+            if ($qos->{area} ne $imqvalue) { next; }
+            $imqclass=$qos->{classid};
+        }
+        
+        print qq ( ISP$path-OUT : <select class="qbopt" size="2" name="$imqvalue" style="width:160">);
+        foreach my $class ( '', @$classarray ) 
+        { 
+            my $status=( $class eq $imqclass ) ? ( 'selected' ) : ( '' );
+            my $showclass=( $class ) ? ( "class ".$class) : ( 'default' );
+            print qq(<option $status value="$class">$showclass</option>); 
+        }
+        print qq (</select>);
+        print qq (</td>);
+
+        print qq (<td class="body"  valign="top" align="center" bordercolor="#ffffff">);
+        my $imqvalue=nicTranslate('ISP'.$path.'-IN'); 
+        my $classarray=$NicClassMap{$imqvalue};
+
+        #========================================================
+        # read original classid in the imq of this policy [ $qosarray=$target->{qos} ]
+        my $imqclass;
+        foreach my $qos ( @$qosarray )
+        {
+            if ($qos->{area} ne $imqvalue) { next; }
+            $imqclass=$qos->{classid};
+        }
+        
+        print qq ( ISP$path-IN : <select class="qbopt" size="2" name="$imqvalue" style="width:160">);
+        foreach my $class ( '', @$classarray ) 
+        { 
+            my $status=( $class eq $imqclass ) ? ( 'selected' ) : ( '' );
+            my $showclass=( $class ) ? ( "class ".$class) : ( 'default' );
+            print qq(<option $status value="$class">$showclass</option>); 
+        }
+
+        print qq (</select>);
+        print qq (</td>);
+        print qq (</tr>);
+    }
+    
+    
+    #**************************************************************************************
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (<tr><td colspan="2" class="body" align="center" valign="top">);
+    print qq (<input type="button" class="qb" value="Ok"    title="Save Changes"  onClick="goSubmit('UPDATE')" style="width:180"><br>);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showIniPtc
+
+
+#===============================================================================================
+sub showIniPtcScript 
+{
+    print << "SHOWINIPTCSCRIPT";
+
+    <div id="ServiceDiv" class="infodiv"></div>
+    <div id="TableDiv" class="infodiv"></div>
+
+  <script language="javascript">
+
+    var dropTable=$gDROP;
+    var myform=window.document.forms[0];  
+  
+    function cgi_dep_onload() { }
+
+  </script>
+  
+  
+SHOWINIPTCSCRIPT
+}
+#showIniPtcScript
+
+
+#===================================================================================================
+#maintainIniPtc(%action)
+sub maintainIniPtc 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    
+    my $iniroute=XMLread($gPATH."iniroute.xml");
+    my $target;
+    
+    if ( $action{action}=~m/^UPDATE$/ ) 
+    {
+        my $classes=$iniroute->{$action{viewpoint}}->[0]->{class};
+        
+        #============================================================================================================
+        my $target;
+
+        #******** search ( source x service x direction x destination x table ) in iniroute ******
+
+        foreach my $item ( @$classes) 
+        { 
+            my $rulekey=$item->{source}.$item->{service}.':'.$item->{direction}.$item->{destination}.':'.$item->{table};
+            
+            
+            if ( $rulekey eq $action{keyofrule} ) { $target=$item; last; }
+        }
+
+        $target->{qos}=$action{qos};
+    }
+
+
+    #======== Update iniroute.xml =============================
+    XMLwrite($iniroute, $gPATH."iniroute.xml");
+}
+#maintainIniPtc
+
+#================================================================
+1
+

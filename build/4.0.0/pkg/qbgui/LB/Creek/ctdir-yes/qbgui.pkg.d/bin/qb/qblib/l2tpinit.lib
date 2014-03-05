@@ -1,0 +1,286 @@
+###############################################################################################
+#                                           l2tpinit Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showl2tpinit 
+{
+    my (%action)=@_;
+    my $l2tpinit=XMLread($gPATH.'l2tpinit.xml');
+    
+    
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[190] ); #</td></tr>);
+    #print qq (<a href="javascript:qbShowHelp('l2tpinit')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[191]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $l2tpinit->{isenable} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="isenable"  $status >); 
+    print qq (</td>);
+    print qq (</tr>);  
+
+    #****************************************************************************************
+    print qq (<tr><td class="body" align="left">$qblang[192]: </td>);
+    print qq (<td><select class="qbopt" name="servername" span title="$l2tpinit->{serverip}" style="width:120">\n);
+    my @WANISPNAME=maintainBasic(action=>'GETWANISPNAME');
+    #my @WANIP=maintainBasic(action=>'GETWANIP');
+    foreach my $wanip (@WANISPNAME)
+    {
+        my $status=( $wanip eq "$l2tpinit->{servername}" ) ? ('selected'):('');
+        my $value=( $wanip eq "" ) ? (''):("$wanip");
+        my $showip=maintainBasic(action=>'GETIP', ispname=>$value);
+        print qq (<option $status value="$value" span title="$showip">$value</option>\n);
+    }
+    print qq (</select></td>);
+    print qq (</tr>);
+    #$ssl->{serverip}=maintainBasic(action=>'GETIP', ispname=>$ssl->{servername});
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[193]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text"  class="qbtext" name="iprange1" value="$l2tpinit->{iprange1}" onchange="iprange_dep()" style="width:120">);
+    print qq (-);
+    print qq (<INPUT type="text"  class="qbtext" name="iprange2" value="$l2tpinit->{iprange2}"  style="width:120">);
+    print qq (</td>);
+    print qq (</tr>); 
+ 
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[194]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="password"  class="qbtext" name="psk" value="$l2tpinit->{psk}"  style="width:120">);
+    print qq (</td>);
+    print qq (</tr>); 
+
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Login Name:); 
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (<INPUT type="text"  class="qbtext" name="name" value="$l2tpinit->{name}"  style="width:100">);
+    #print qq (</td>);
+    #print qq (</tr>);
+    
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Login Password:); 
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (<INPUT type="password"  class="qbtext" name="password" value="$l2tpinit->{password}"  style="width:100">);
+    #print qq (</td>);
+    #print qq (</tr>);
+#=cut
+    #****************************************************************************************
+    #Local IP
+    #my @normalsystemiplist=maintainBasic(action=>'GETNORMALSYSTEMIPLIST');
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Server Local IP:);
+    #print qq (</td>);
+    #print qq (<td class="body"  colspan="2" valign="top" align="left">);
+    #print qq (<select class="qbopt" multiple name="l2tplocalip" style="WIDTH: 120px" size="3">\n);
+                                
+    #foreach my $l2tplocalip ( @normalsystemiplist )
+    #{
+    #    my $status=( $l2tpinit->{l2tplocalip} ) ? ('selected') : ('');
+    #    print qq (<option $status value="$portvalue">$l2tplocalip</option>\n);
+    #}
+                                                                            
+    #print qq (</select>);
+    #print qq (</td>);
+    #print qq (</tr>);
+#=cut
+    #****************************************************************************************
+    #Server Local IP
+    #my $siplist=$l2tpinit->{sip};
+           
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Server Local IP:);
+    #print qq (</td>);
+    #print qq (<td class="body"  colspan="2" valign="top" align="left">);
+    ##==== sip infomation  ========================================================
+    #my @iidlist=maintainBasic(action=>'GETGOODIIDLIST');
+    #print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:160"> );
+    #print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:360"> );
+    #foreach my $iid ( @iidlist)
+    #{
+    #     my @natips=maintainIPBank(action=>'READPUBLICIP', isp=>$iid);
+    #     my $targetsip;
+    #     foreach my $sip ( @$siplist ) { if ( $sip->{isp} eq $iid ) { $targetsip=$sip; } }
+    #     foreach my $natip ( @natips )
+    #     {
+    #         my $sipip=$iid.'j'.$natip;
+    #         my $status=( grep(/^$natip$/, $targetsip->{ip}) ) ? ( 'selected' ) : ('');
+    #         #print qq (<option $status value="$sipip">ISP $iid [ $natip ][ $targetsip->{ip} ][$status]</option>);
+    #         print qq (<option $status value="$sipip">ISP $iid [ $natip ]</option>);
+    #     }
+    
+    #}
+    #print qq (</select><br>);
+    #print qq (</td>);
+    #print qq (</tr>);
+                                                                                                                                                                     
+                                        
+
+
+    #****************************************************************************************
+    #my $range=$l2tpinit->{rangelist}; $range=~s/\;/\;\n/g;
+    #print qq (<tr><td>Client IP Range</td><td><textarea name="rangelist" class="qbtext" style="width:240;height:30">$range</textarea></td></tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+            
+    #************************************ Command Button  ********************************************
+    print qq (<tr>);
+    print qq (<td colspan="2" align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[139]" title="Apply All Parameters now !" onClick="goSubmit('SAVE')" style="width:50">);
+    print qq (</td></tr>);
+    print qq (</table>);
+
+}
+#showConsole
+
+
+#======================================================================================================================
+sub l2tpinitScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+                                                            
+    function checkAndSetidletime()
+    {
+        if ( !isValidPort(myform.idletime.value) ) 
+        { 
+            myform.idletime.value=""; 
+            alert("Time format Error");
+        }
+    }
+    function iprange_dep()
+    {
+    	var iprange = myform.iprange1.value;
+        var array = iprange.split('\.');
+        myform.iprange2.value = array[0] + '\.' + array[1] + '\.' + array[2] + '\.'; 
+    }
+
+                                                                                                                                    
+    </script>
+SCRIPT
+}
+#l2tpinitScript
+
+
+#======================================================================================================================
+#maintainl2tpinit( %action )
+sub maintainl2tpinit 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $l2tpinit=XMLread($gPATH.'l2tpinit.xml');
+    my $IS_EVERYTHING_OK=1;
+     
+    if ( $action{action}=~m/^SAVE$/ ) 
+    {
+        $l2tpinit->{isenable}=$action{isenable};
+        $l2tpinit->{servername}=$action{servername};
+        $l2tpinit->{iprange1}=$action{iprange1};
+        $l2tpinit->{iprange2}=$action{iprange2};
+        $l2tpinit->{psk}=$action{psk};
+        $l2tpinit->{name}=$action{name};
+        $l2tpinit->{password}=$action{password};
+    	$l2tpinit->{serverip}=maintainBasic(action=>'GETIP', ispname=>$action{servername});
+    	if ( !isValidIP($l2tpinit->{iprange1}) )
+    	{
+    	    $gMSGPROMPT.=qq ( ERROR:IP Release Range Format Error\\n);
+    	    $IS_EVERYTHING_OK=0;
+    	}
+    	                                                        
+    	if ( !isValidIP($l2tpinit->{iprange2}) )
+    	{
+    	    $gMSGPROMPT.=qq ( ERROR:IP Release Range Format Error\\n);
+    	    $IS_EVERYTHING_OK=0;
+    	}
+    	
+    	my @subnet1=split(/\./, $l2tpinit->{iprange1});
+    	my @subnet2=split(/\./, $l2tpinit->{iprange2});
+    	if ( $subnet1[0].$subnet1[1].$subnet1[2] ne $subnet2[0].$subnet2[1].$subnet2[2] )
+    	{
+    	    $gMSGPROMPT.=qq ( ERROR:IPrange Must be the same subnet\\n);
+    	    $IS_EVERYTHING_OK=0;
+    	}
+    	
+    	@SUBNET=maintainZone(action=>'GETNATZONES');
+    	my $islan = 0;
+    	my $ip1=$l2tpinit->{iprange1}.'/32';
+    	my $ip2=$l2tpinit->{iprange2}.'/32';
+    	foreach my $lan ( @SUBNET )
+    	{
+            #if ( $lan eq $subnet1[0]."\.".$subnet1[1]."\.".$subnet1[2]."\.0/24" )
+            if ( subnet_belong_check($lan, $ip1) eq '2' && subnet_belong_check($lan, $ip2) eq '2' )
+            {
+                $islan = 1;
+                last;
+            }
+    	}
+    	if ( $islan eq '0' )
+    	{
+    	    $gMSGPROMPT.=qq ( ERROR:IPrange Must be the LAN subnet\\n);
+    	    $IS_EVERYTHING_OK=0;
+    	}
+    	if ( $subnet1[3] > $subnet2[3] )
+    	{
+    	    $gMSGPROMPT.=qq ( ERROR:IP Release Range Format Error\\n);
+    	    $IS_EVERYTHING_OK=0;
+    	}
+    	
+    	LogUserAction( action=>'APPLYL2TP', servername=>$action{servername}, iprange1=>$action{iprange1}, iprange2=>$action{iprange2}, isenable=>$action{isenable} );
+    }
+    runCommand(command=>'/etc/racoon/stopl2tp', params=>''); 
+    #-------updating l2tpinit.xml------------------------ 
+    if ( $IS_EVERYTHING_OK eq '1' )
+    {
+        XMLwrite($l2tpinit, $gPATH."l2tpinit.xml");
+    	#runCommand(command=>'/sbin/setkey', params=>'-f'.' '.'/etc/racoon/dell2tpipsec.conf');
+    	#runCommand(command=>'killall', params=>'-9'.' '.'xl2tpd');
+    	#runCommand(command=>'/etc/racoon/stopl2tp', params=>'');
+    	
+        if ( $l2tpinit->{isenable} eq '1' )
+        {
+            runCommand(command=>'/usr/local/apache/qb/setuid/do_qbl2tpipsec.pl', params=>'');
+        }
+        
+    }
+
+    #@dep
+    
+    #runCommand(command=>'do_qbl2tpinit.pl', params=>'');
+
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    #qbSync();
+}
+#maintainl2tpinit
+#
+1

@@ -1,0 +1,85 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Inbound Multi-DNS Setup</title>
+</head>
+<body>
+
+<h2>Inbound Multi-DNS Setup</h2>
+<p>
+We use a simple topology to explain Inbound Load Balance Setup (DNS Setup).  
+<table>
+<tr><td class="light">ISP1</td><td class="light">163.99.111.1/29</td><td>ISP2</td><td>217.66.222.254/29</td></tr>
+<tr><td class="light">QB(DNS)</td><td class="light">163.99.111.2/29</td><td>QB(DNS)</td><td>217.66.222.253/29</td></tr>
+<tr><td class="light">HTTP</td><td class="light">163.99.111.3:80</td><td>HTTP</td><td>217.66.222.252:80</td></tr>
+<tr><td colspan=2 align=right>QB</td><td colspan=2>168.95.1.254/24</td></tr>
+<tr><td colspan=2 align=right>Web/DNS Server</td><td colspan=2>168.95.1.100/24</td></tr>
+</table>
+<p>	This is a simple topology. The Q-Balancer box takes the role of a DNS server. This is equivalent to having a DNS server on both ISP1 and ISP2, providing domain name resolutions. 
+</p>
+<b>Example and Configuration Parameters Explained:</b>
+<ol>
+<li>ISP 1 DNS Config</li>
+<table>
+<tr><td colspan=3><b>Inbound Load Balance Mode</b><td></tr>
+<tr><td>BTK</td><td colspan=2>	Reply according to response time.</td></tr> 	
+<tr><td>WLT</td><td colspan=2>	Reply according to available outbound bandwidth ratios.</td></tr> 	
+<tr><td>WRR</td><td colspan=2>	Reply by Weighted Round Robin.</td></tr> 	
+<tr><td>FAILOVER</td><td colspan=2>	Reply according to user-defined priorities.</td></tr>	
+<tr><td colspan=3><b>ISP Selection</b></td></tr>
+<tr><td>ISP :	</td><td class="light"><b>ISP 1	</b></td><td>Select links. Every ISP has its on set of DNS configurations.</td></tr> 
+<tr><td>Weight :	</td><td class="light"><b>1	</b></td><td>WRR and WLT weights.</td></tr> 
+<tr><td>Priority :	</td><td class="light"><b>1	</b></td><td>Priority for FAILOVER. Smaller numbers precede larger ones.</td></tr>   
+<tr><td colspan=3><b>Domain Selection</b></td></tr>
+<tr><td>Domain :</td><td class="light"><b>	test.com	</b></td><td>Domain Name</td></tr>
+<tr><td>Domain IP :</td><td class="light"><b>	163.99.111.2	</b></td><td>Set it according to the original DNS setting. If not explicitly given, DNS IP is usually used.</td></tr>
+<tr><td colspan=3><b>Domain Level MX and NS</b></td></tr>
+<tr><td>MX :</td><td>	mail	</td><td>Although the type in Host Properties also has MX record, Domain Level MX record should be set here.</td></tr>
+<tr><td>DNS :</td><td>	dns	</td><td>DNS responsible for this domain.</td></tr>
+<tr><td colspan=3><b>Host Properties</b></td></tr>
+<tr><td>Host :</td><td class="light"><b>	www	</b></td><td>Record Host Name</td></tr>
+<tr><td>Type :</td><td class="light"><b>	A	</b></td><td>Record Type, either A, CNAME, MX, or NS. </td></tr>
+<tr><td>Priority :</td><td class="light"><b>	None	</b></td><td>Priority for the MX record.</td></tr>
+<tr><td>Value :</td><td class="light"><b>	163.99.111.3	</b></td><td>The IP address value for this record in ISP1. </td></tr>
+</table>
+<p>
+	After configuring ISP2, we begin to configure ISP2. In ISP2, we see that all records exists in ISP1 has already been created for ISP2. We need to fill in ISP2's corresponding IP addresses for each of these records and press Update.  
+</p>
+<li>ISP 2 DNS Config</li>
+<table>
+<tr><td colspan=3><b>Inbound Load Balance Mode</b><td></tr>
+<tr><td>BTK</td><td colspan=2>	Reply according to response time.</td></tr> 	
+<tr><td>WLT</td><td colspan=2>	Reply according to available outbound bandwidth ratios.</td></tr> 	
+<tr><td>WRR</td><td colspan=2>	Reply by Weighted Round Robin.</td></tr> 	
+<tr><td>FAILOVER</td><td colspan=2>	Reply according to user-defined priorities.</td></tr>	
+<tr><td colspan=3><b>ISP Selection</b></td></tr>
+<tr><td>ISP :	</td><td class="light"><b>ISP 2	</b></td><td>Select links. Every ISP has its on set of DNS configurations.</td></tr> 
+<tr><td>Weight :	</td><td class="light"><b>1	</b></td><td>WRR and WLT weights.</td></tr> 
+<tr><td>Priority :	</td><td class="light"><b>1	</b></td><td>Priority for FAILOVER. Smaller numbers precede larger ones.</td></tr>   
+<tr><td colspan=3><b>Domain Selection</b></td></tr>
+<tr><td>Domain :</td><td class="light"><b>	test.com	</b></td><td>Domain Name</td></tr>
+<tr><td>Domain IP :</td><td class="light"><b>	217.66.222.253	</b></td><td>Set it according to the original DNS setting. If not explicitly given, DNS IP is usually used.</td></tr>
+<tr><td colspan=3><b>Domain Level MX and NS</b></td></tr>
+<tr><td>MX :</td><td>	mail	</td><td>Although the type in Host Properties also has MX record, Domain Level MX record should be set here.</td></tr>
+<tr><td>DNS :</td><td>	dns	</td><td>DNS responsible for this domain.</td></tr>
+<tr><td colspan=3><b>Host Properties</b></td></tr>
+<tr><td>Host :</td><td class="light"><b>	www	</b></td><td>Record Host Name</td></tr>
+<tr><td>Type :</td><td class="light"><b>	A	</b></td><td>Record Type, either A, CNAME, MX, or NS. </td></tr>
+<tr><td>Priority :</td><td class="light"><b>	None	</b></td><td>Priority for the MX record.</td></tr>
+<tr><td>Value :</td><td class="light"><b>	217.66.222.252	</b></td><td>The IP address value for this record in ISP2. </td></tr>
+</table>
+<p>
+After setting up Inbound DNS, we still need to set up server mappings to let Q-Balance redirect the service to itself. Please refer to the previous chapter. 
+</p>
+</ol>
+<p><b>Some important notes:</b></p> 
+<ol>
+<li>Use Q-Balancer as DNS for the domain</li>
+<p>
+	This is the standard way. Q-Balancer directly replaces the original DNS server. If the original DNS IP address cannot be used on the box, a new Domain Name Server IP needs to be registered on the upper DNS hierarchy responsible for your domain. We can also let the original DNS server acts as a backup. This can be achieved by using public IP reused as pass through IP</p>
+<li>Keep the Old DNS server for the Domain and use CNAME for load balance in the Sub Domain</li>
+<p>
+	If it is too troublesome to transfer all the responsibility of the original DNS server to Q-Balancer, we can alternatively choose to keep the old DNS server. We let Q-Balancer handles a sub domain or an alternative domain. For the records we want to load balance, we can create CNAME records on the original DNS server. The CNAME records would provide links to one that Q-Balancer is configured to load-balance for. </p>
+</ol>
+</p>
+</body></html>

@@ -1,0 +1,741 @@
+###############################################################################################
+#                                           Dashboard
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showDashboard
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    #--------------------------------------------------------------------
+    # Refresh 
+    #--------------------------------------------------------------------
+    print qq (<table width=100% border=0 cellpadding=0 cellspacing=0>);
+    print qq (<tr>);
+    print qq (<td class="body" width="350" align="center">);
+    print $qblang[0];
+    print qq (<select class="qbopt" id="refreshtime" name="refreshtime">);
+    my @time=("60", "45", "30", "15");
+    foreach my $tm ( @time )
+    {
+        my $status = ( $action{refreshtime} eq $tm ) ? ( 'selected' ) : ( '' );
+        print qq(<option value="$tm" $status>$tm</option>);
+    }
+    print qq (</select>);
+	print $qblang[1];
+    print qq (</tr></td>);
+    print qq (<td class="body" width="350" align="center"></td>);
+    print qq (</table>);
+    
+    # top  of main table 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" valign="top" width="450" height="120">);
+    
+    #--------------------------------------------------------------------
+    # System Status
+    #--------------------------------------------------------------------
+    print qq (<div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    # print qq (<td width="100%"> System Status</td>);
+    print qq (<td width="100%"> $qblang[2]</td>);
+    print qq (</table>);
+    print qq (</div>);
+    
+    print qq (<div style="width:380; height:40; background:#223344">);
+    print qq (<table id="system_status" border="0" width="380" height="40">);
+    
+    my $time = runCommand(command=>'date', params=>'');
+    #$time =~ s/CST //g;
+    my $uptime = runCommand(command=>'/opt/qb/bin/script/getuptime', params=>'');
+    my $pkginfo = `cat /mnt/conf/pkginfo|grep \"VERSION DETAIL\"`;
+    $pkginfo =~ s/VERSION DETAIL : //g;
+    
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[3] :</td>); 
+    print qq (<td class="body" width="230" align="left">);
+    print qq (<table><tr>);
+    print qq (<td class="body" width="220" align="left">$time);
+    print qq (<td class="body" width="10" align="right"><a href="javascript:gotocgi('time.cgi')" style="text-decoration:none" ><img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+    print qq (</tr></table>);
+    print qq (</td></tr>); 
+    #print qq (<a href="javascript:gotocgi('time.cgi')" style="text-decoration:none" >);
+    #print qq (<img src="image/link.gif" width="12" height="12" border="0" /></a></td></tr>);
+    print qq (<tr height="20" bgcolor="#556677" originalColor="#556677"><td class="body" width="150" align="left" >$qblang[4] :</td>); 
+    print qq (<td class="body" width="230" align="left">$uptime</td></tr>);
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[5] :</td>); 
+    print qq (<td class="body" width="230" align="left">);
+    print qq (<table><tr>);
+    print qq (<td class="body" width="220" align="left">$pkginfo);
+    print qq (<td class="body" width="10" align="right"><a href="javascript:gotocgi('rmconfig.cgi?viewpoint=firmware')" style="text-decoration:none" ><img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+    print qq (</tr></table>);
+    print qq (</td></tr>); 
+    print qq (</table>);
+    print qq (</div>);
+    print qq (</td>);
+    #--------------------------------------------------------------------
+    # System Usage
+    #--------------------------------------------------------------------
+    print qq (<td align="center" valign="top" width="450" height="120">);
+    print qq (<div class="divframe" style="width:300">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    print qq (<td width="100%"> $qblang[6]</td>);
+    print qq (</table>);
+    print qq (</div>);
+    #my $totalmem = `cat /proc/meminfo|grep MemTotal`;
+    #$totalmem =~ s/MemTotal:\s+|kB//g;
+    #my $freemem = `cat /proc/meminfo|grep MemFree`;
+    #$freemem =~ s/MemFree:\s+|kB//g;
+    #$memusage = int(($totalmem - $freemem) / $totalmem * 100);
+    #my $free = 100 - $memusage;
+    #my $cpuusage = `cat /usr/local/apache/qb/status/cpu.status`;
+    my $cpuusage = runCommand(command=>'/usr/local/apache/qb/status/getsysstatus.cgi', params=>'');
+    my $cpufree = 100 - $cpuusage;
+    
+    my $memusage = `cat /usr/local/apache/qb/status/memory.status`; 
+    $memusage =~ s/,.*//g; 
+    my $memfree = 100 - $memusage;
+
+    my $cacheusage = `cat /usr/local/apache/qb/status/cache.status`;
+    $cacheusage =~ s/,.*//g;
+    my $cachefree = 100 - $cacheusage;
+    
+    my $ramdiskusage = `cat /usr/local/apache/qb/status/ramdisk.status`;
+    $ramdiskusage =~ s/,.*//g; 
+    my $ramdiskfree = 100 - $ramdiskusage;
+    
+    my $session = `cat /usr/local/apache/qb/status/session.status`;
+    my @session = split(/,/, $session);
+    my $sessionusage = $session[0];
+    my $sessionfree = 100 - $sessionusage;
+    my $showsession = $session[3].'/'.$session[1];
+    $showsession =~ s/\s//g;
+      
+ 
+
+
+ 
+    #--------------------------------------------------------------------
+    # CPU Usage
+    #--------------------------------------------------------------------
+    print qq (<div style="width:380; height:40; background:#223344">);
+    print qq (<table id="system_usage" border="0" width="380" height="40">);
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[7]:</td>); 
+    print qq (<td class="body" width="150" align="left">);
+    print qq (<table width=100% border=0 cellpadding=0 cellspacing=0>);
+    print qq (<tr>);
+    print qq (<td width="$cpuusage%" height="15" background="../image/usage.gif"></td>);
+    print qq (<td width="$cpufree%" height="15" background="../image/free.gif"></td>);
+    print qq (</table>);
+    print qq (</td>);
+    print qq (<td class="body" width="80" align="right">$cpuusage%</td></tr>);
+    
+    #--------------------------------------------------------------------
+    # Memory Usage
+    #--------------------------------------------------------------------
+
+    print qq (<tr height="20" bgcolor="#556677" originalColor="#556677"><td class="body" width="150" align="left" title="Memory usage contain the cache usage">$qblang[8]:</td>); 
+    print qq (<td class="body" width="150" align="left">);
+    print qq (<table width=100% border=0 cellpadding=0 cellspacing=0>);
+    print qq (<tr>);
+    print qq (<td width="$memusage%" height="15" background="../image/usage.gif"></td>);
+    print qq (<td width="$memfree%" height="15" background="../image/free.gif"></td>);
+    print qq (</table>);
+    print qq (</td>);
+    print qq (<td class="body" width="80" align="right">$memusage %</td></tr>);
+
+    #--------------------------------------------------------------------
+    # Cache Usage
+    #--------------------------------------------------------------------
+
+    print qq (<tr height="20" bgcolor="#556677" originalColor="#556677"><td class="body" width="150" align="left" title="The cache will be freed automatically if memory is not enough!!!">$qblang[9]:</td>);
+    print qq (<td class="body" width="150" align="left">);
+    print qq (<table width=100% border=0 cellpadding=0 cellspacing=0>);
+    print qq (<tr>);
+    print qq (<td width="$cacheusage%" height="15" background="../image/usage.gif"></td>);
+    print qq (<td width="$cachefree%" height="15" background="../image/free.gif"></td>);
+    print qq (</table>);
+    print qq (</td>);
+    print qq (<td class="body" width="80" align="right">$cacheusage %</td></tr>);
+
+    #--------------------------------------------------------------------
+    # Ramdisk Usage
+    #--------------------------------------------------------------------
+
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[10]:</td>); 
+    print qq (<td class="body" width="150" align="left">);
+    print qq (<table width=100% border=0 cellpadding=0 cellspacing=0>);
+    print qq (<tr>);
+    print qq (<td width="$ramdiskusage%" height="15" background="../image/usage.gif"></td>);
+    print qq (<td width="$ramdiskfree%" height="15" background="../image/free.gif"></td>);
+    print qq (</table>);
+    print qq (</td>);
+    print qq (<td class="body" width="80" align="right">$ramdiskusage %</td></tr>);
+
+    #--------------------------------------------------------------------
+    # Session Usage
+    #--------------------------------------------------------------------
+
+    print qq (<tr height="20" bgcolor="#556677" originalColor="#556677"><td class="body" width="150" align="left" >$qblang[11]:</td>); 
+    print qq (<td class="body" width="150" align="left">);
+    print qq (<table width=100% border=0 cellpadding=0 cellspacing=0>);
+    print qq (<tr>);
+    print qq (<td width="$sessionusage%" height="15" background="../image/usage.gif"></td>);
+    print qq (<td width="$sessionfree%" height="15" background="../image/free.gif"></td>);
+    print qq (</table>);
+    print qq (</td>);
+    print qq (<td class="body" width="80" align="right">$showsession</td></tr>);
+    print qq (</table>);
+    print qq (</div>);
+    print qq (</td></tr>); 
+    
+    print qq (<tr><td align="center" valign="center" width="450" height="150" >);
+    
+    #--------------------------------------------------------------------
+    # Device Information
+    #--------------------------------------------------------------------
+    print qq (<div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    print qq (<td width="100%"> $qblang[12]</td>);
+    print qq (</table>);
+    print qq (</div>);
+    my $hostname = $overview->{hostname};
+    @pkginfo = split(/-/, $pkginfo);
+    my $modelname = $pkginfo[0].' '.$pkginfo[3].$pkginfo[1];
+    #my $qbsn = `cat /mnt/conf/qbsn`;
+    my $macrange = `/opt/qb/bin/script/getmacrange`;
+    print qq (<div style="width:380; height:40; background:#223344">);
+    print qq (<table id="device_information" border="0" width="380" height="40">);
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[13]:</td>); 
+    print qq (<td class="body" width="230" align="left">);
+    print qq (<table>); 
+    print qq (<tr><td class="body" width="220" align="left">$hostname</td>);
+    print qq (<td class="body" width="10" align="right"><a href="javascript:gotocgi('admin.cgi')" style="text-decoration:none" ><img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+    print qq (</tr></table>);
+    print qq (</td>);
+    
+    print qq (<tr height="20" bgcolor="#556677" originalColor="#556677"><td class="body" width="150" align="left" >$qblang[14]:</td>); 
+    print qq (<td class="body" width="230" align="left">$modelname</td></tr>);
+    #print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >&#32Serial Number:</td>); 
+    #print qq (<td class="body" width="230" align="left">$qbsn</td></tr>);
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[15]:</td>); 
+    print qq (<td class="body" width="230" align="left">$macrange</td></tr>);
+    print qq (</table>);
+    print qq (</div><br>);
+    
+    #--------------------------------------------------------------------
+    # User Flow Ranking
+    #--------------------------------------------------------------------
+    print qq (<div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    print qq (<td width="100%"> User Flow Ranking </td>);
+    print qq (</table>);
+    print qq (</div>);
+    print qq (<div style="width:380; height:40; background:#223344">);
+    print qq (<table id="device_information" border="0" width="380" height="40">);
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455">);
+    print qq (<td class="body" width="100" align="center" >Top</td>); 
+    print qq (<td class="body" width="100" align="center" >IP</td>); 
+    print qq (<td class="body" width="100" align="center" >Flows</td>);
+    my $now_data=`date "+%Y%m%d%H%M" -d'-1 min'`;
+    my @yy = `/usr/local/apache/qb/setuid/run /usr/local/bin/nfdump -s srcip/flows -n 10 -r /mnt/tclog/nfcapd.$now_data`;
+    my $ooo=1;
+    foreach my $a (@yy)
+    {
+        if (!grep(/(\d+)\.(\d+)\.(\d+)\.(\d+)/,$a) || grep(/172.31.3/,$a) || grep(/127.0.0.1/,$a) || grep(/8.8./,$a)){next;}
+        if ($ooo > 3){next;}
+        print qq (<tr height="20" bgcolor="#334455" originalColor="#334455">);
+        $a=~s/\s+/ /g;
+        $a=~s/\(\s/\(/g;
+        my @ffile = split(/\s/,$a);
+        print qq (<td class="body" width="100" align="center" >$ooo</td>); 
+        print qq (<td class="body" width="100" align="center" >$ffile[4]</td>);
+        $ffile[5]=~s/\)/%\)/;
+        print qq (<td class="body" width="200" align="center" >$ffile[5]</td></tr>); 
+        $ooo++;
+    }
+    if ($ooo eq 1)
+    {
+        print qq (<tr height="20" bgcolor="#334455" originalColor="#334455">);
+        print qq (<td class="body" width="100" align="center" colspan=3>--- No Data ---</td></tr>);
+    }
+    print qq (</table>);
+    print qq (</div>);
+    
+    print qq (</td>);
+    
+    #--------------------------------------------------------------------
+    # Security Status
+    #--------------------------------------------------------------------
+    
+    print qq (<td align="center" width="450" valign="center" height="120">);
+    print qq (<div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    print qq (<td width="100%"> Security Status </td>);
+    print qq (</table>);
+    print qq (</div>);
+    print qq (<div style="width:380; height:40; background:#223344">);
+    print qq (<table id="" border="0" width="380" height="40">);
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455">);
+    print qq (<td class="body" width="300" align="left" rowspan=2>Attack Type <a href="javascript:gotocgi('dos.cgi')" style="text-decoration:none" ><img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+    print qq (<td class="body" width="150" align="center" colspan=2> Status </td>);
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455">);
+    print qq (<td class="body" width="150" align="center" > Applied </td>);
+    print qq (<td class="body" width="150" align="center" > Traffic Dropped </td></tr>);
+    
+    my @file=`/bin/cat /mnt/log/iptables.log`;
+    my $syn_f=0,$icmp_f=0,$udp_f=0,$tcp_c=0,$udp_c=0,$port=0;
+    foreach my $o (@file)
+    {
+        if (grep(/SYN/,$o))
+        {
+           $syn_f++; 
+        }elsif (grep(/ICMP/,$o))
+        {
+            $icmp_f++;
+        }elsif (grep(/UDP/,$o))
+        {
+            $udp_f++;
+        }elsif (grep(/t_connect/,$o))
+        {
+            $tcp_c++;
+        }elsif (grep(/u_connect/,$o))
+        {
+            $udp_c++;
+        }elsif (grep(/psd/,$o))
+        {
+            $port++;
+        }
+    }
+    
+    print qq (<tr bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="center" > <a href="newflood.cgi?option=syn">SYN Flood</a></td>);
+    my $cc = ($syn_f > 0)?('Yes'):('No');
+    print qq (<td class="body" width="150" align="center" >$cc</td>);
+    print qq (<td class="body" width="150" align="center" >$syn_f</td>);
+    print qq (</tr>);
+    print qq (<tr bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="center" > <a href="newflood.cgi?option=icmp">ICMP Flood</a></td>);
+    my $cc = ($icmp_f > 0)?('Yes'):('No');
+    print qq (<td class="body" width="150" align="center" >$cc</td>);
+    print qq (<td class="body" width="150" align="center" >$icmp_f</td>);
+    print qq (</tr>);
+    print qq (<tr bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="center" > <a href="newflood.cgi?option=udp">UDP Flood</a></td>);
+    my $cc = ($udp_f > 0)?('Yes'):('No');
+    print qq (<td class="body" width="150" align="center" >$cc</td>);
+    print qq (<td class="body" width="150" align="center" >$udp_f</td>);
+    print qq (</tr>);
+    print qq (<tr bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="center" > <a href="newdos.cgi?option=tcp">TCP Connection Limit</a></td>);
+    my $cc = ($tcp_c > 0)?('Yes'):('No');
+    print qq (<td class="body" width="150" align="center" >$cc</td>);
+    print qq (<td class="body" width="150" align="center" >$tcp_c</td>);
+    print qq (</tr>);
+    print qq (<tr bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="center" > <a href="newdos.cgi?option=udp">UDP Connection Limit</a></td>);
+    my $cc = ($udp_c > 0)?('Yes'):('No');
+    print qq (<td class="body" width="150" align="center" >$cc</td>);
+    print qq (<td class="body" width="150" align="center" >$udp_c</td>);
+    print qq (</tr>);
+    print qq (<tr bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="center" > <a href="newportscan.cgi">Port Scan</a></td>);
+    my $cc = ($port > 0)?('Yes'):('No');
+    print qq (<td class="body" width="150" align="center" >$cc</td>);
+    print qq (<td class="body" width="150" align="center" >$port</td>);
+    print qq (</tr>);
+    
+    print qq (</table>);
+    print qq (</div>);
+    
+    #--------------------------------------------------------------------
+    # Connections
+    #--------------------------------------------------------------------
+    print qq (<tr><td align="center" valign="center" width="450" height="150" >);
+    print qq (<div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    print qq (<td width="100%"> Connections <a href="javascript:gotocgi('userflow.htm')" style="text-decoration:none" ><img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+    print qq (</table>);
+    print qq (</div>);
+    
+    print qq (<div style="width:380; height:40; background:#223344">);
+    print qq (<table id="device_information" border="0" width="380" height="40">);
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455">);
+    print qq (<td class="body" width="150" align="center" >Soure:Port</td>); 
+    print qq (<td class="body" width="150" align="center" >Direction</td>); 
+    print qq (<td class="body" width="150" align="center" >Destination:Port</td>); 
+    print qq (<td class="body" width="150" align="center" >Protocol</td></tr>);
+    
+    my $now_data=`date "+%Y%m%d%H%M" -d'-1 min'`;
+    my @yy = `/usr/local/apache/qb/setuid/run /usr/local/bin/nfdump -o line -c 20 -r /mnt/tclog/nfcapd.$now_data`;
+    my $asd=1;
+    foreach my $a (@yy)
+    {
+        if (!grep(/(\d+)\.(\d+)\.(\d+)\.(\d+)/,$a) || grep(/172.31.3/,$a) || grep(/127.0.0.1/,$a) || grep(/8.8./,$a)){next;}
+        if ($asd > 3){next;}
+        print qq (<tr height="20" bgcolor="#334455" originalColor="#334455">);
+        $a=~s/\s+/ /g;
+        $a=~s/\(\s/\(/g;
+        my @ffile = split(/\s/,$a);
+        print qq (<td class="body" width="100" align="center" >$ffile[4]</td>);
+        print qq (<td class="body" width="200" align="center" >$ffile[5]</td>);
+        print qq (<td class="body" width="100" align="center" >$ffile[6]</td>);
+        print qq (<td class="body" width="200" align="center" >$ffile[3]</td>);
+        print qq (</tr>);
+        $asd++;
+    }
+    if ($asd eq 1)
+    {
+        print qq (<tr height="20" bgcolor="#334455" originalColor="#334455">);
+        print qq (<td class="body" width="100" align="center" colspan=4>--- No Data ---</td></tr>);
+    }
+    print qq (</table></div>); 
+    
+    print qq (</div><br>);
+    
+    #--------------------------------------------------------------------
+    # Regist Information
+    #--------------------------------------------------------------------
+    
+    print qq (<td align="center" width="450" valign="center" height="120">);
+    print qq (<div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    print qq (<td width="100%"> $qblang[16]</td>);
+    print qq (</table>);
+    print qq (</div>);
+    
+    my $qbsn = `cat /mnt/conf/qbsn`;
+    my $registered_date = '';
+    my $needregister = 1;
+    my $registered_date_sec;
+    if (open(INSDATE, "/mnt/conf/insdate"))
+    {
+        
+        $registered_date_sec=runCommand(command=>"cat", params=>'/mnt/conf/dtstamp.dc');
+   
+        if ( $registered_date_sec ne '' )
+        {
+            $registered_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $registered_date_sec seconds\"));
+            #$registered_date =~ s/ CST//g
+        }
+    }
+    else
+    {
+        $needregister = 0;
+    }
+    close(INSDATE);
+    
+    my $Warranty_time=runCommand(command=>'cat', params=>qq('/tmp/init'\|grep Warranty\|tail -n 1\|awk \'\{print \$2\}\'));
+    my $Reg_Warranty_time;
+    $Warranty_time=~s/\n//g;
+    if ( $registered_date_sec ne '' )
+    {
+        $Reg_Warranty_time=365 * 86400 + $registered_date_sec;
+    }
+    if ( $Warranty_time ne '' )
+    {
+        $Warranty_time_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $Warranty_time seconds\"));
+        if ( $Reg_Warranty_time >= $Warranty_time )
+        {
+            $Warranty_time_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $Reg_Warranty_time seconds\"));
+        }
+        else
+        {
+            $Warranty_time_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $Warranty_time seconds\"));
+        }
+    }
+    
+    print qq (<div style="width:380; height:50; background:#223344">);
+    print qq (<table id="register_infmation" border="0" width="380" height="60">);
+    print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[17]:</td>); 
+    print qq (<td class="body" width="230" align="left">$qbsn</td>);
+    print qq (<tr height="20" bgcolor="#556677" originalColor="#556677"><td class="body" width="150" align="left" >$qblang[18]:</td>); 
+    print qq (<td class="body" width="230" align="left" >);
+    if ( $registered_date_sec eq '' && $needregister )
+    {
+        print qq (<table>); 
+        print qq (<tr><td class="body" width="220" align="left"><font color="red">$qblang[19]</font></td>);
+        print qq (<td class="body" width="10" align="right"><a href="javascript:gotocgi('regist.cgi')" style="text-decoration:none" ><img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+        print qq (</tr></table>);
+        if ( !$gENABLEVM )
+        {
+            $Trial_time = runCommand(command=>'/opt/qb/bin/script/trialtime', params=>'');
+            print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[20]:</td>); 
+            print qq (<td class="body" width="230" align="left">$Trial_time </td></tr>);
+        }
+    }
+    else
+    {
+        print qq ($registered_date</td></tr>);
+    }
+    
+    print qq (</td>);
+    if ( $gENABLEVM )
+    {
+        my $license_expired=runCommand(command=>'/opt/qb/bin/script/licensetime', params=>'');
+        print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[21]:</td>);
+        print qq (<td class="body" width="230" align="left">$license_expired</td></tr>);
+    }
+    else
+    {
+        print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >$qblang[22]:</td>); 
+        print qq (<td class="body" width="230" align="left">$Warranty_time_date</td></tr>);
+    }
+    print qq (</div></table>);
+    #================================================== 
+    #print qq (</td></tr></table>);    
+    
+    #--------------------------------------------------------------------
+    # WAN Link
+    #--------------------------------------------------------------------
+    #print qq (<table>);
+    print qq (<tr>);
+    print qq (<td valign="top" align="center" width="450" >);
+    print qq (<div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" style=width:380" border="0"><tr>);
+    print qq (<td width="100%">$qblang[23] </td>);
+    print qq (<td class="body" width="20" align="right"><a href="javascript:gotocgi('status/rttraffic.cgi')" style="text-decoration:none" >);
+    print qq (<img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+    print qq (</table>);
+    print qq (</div>);
+    
+    my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    
+    print qq (<div style="width:380; height:20; background:#223344">);
+    print qq (<table id="wan_link" border="0" width="380" height="20">);
+    print qq (<tr height="20" bgcolor="#332211" >);
+    print qq (<td class="body" width="150" align="center" >&#32 ISP</td>); 
+    print qq (<td class="body" width="160" align="center" >&#32 System IP</td>); 
+    print qq (<td class="body" width="40" align="center" >&#32 $qblang[24]</td>); 
+    my $index=0;
+    foreach my $isp ( @$isplist )
+    {
+        if ( $isp->{iid} eq 'system' ) { next; }
+        if ( $isp->{isptype} ne 'tunnel' &&  $isp->{isptype} ne 'ipsec' && $isp->{isptype} ne 'dtunnel' )
+        {
+            my $originalColor=$bgcolor=($index % 2) ? ( '#556677' ) : ( '#334455' );
+            print qq (<tr height="20" bgcolor="$bgcolor" originalColor="$originalColor">);
+            print qq (<td class="body" width="150" align="left" >&#32ISP$isp->{iid} - $isp->{ispname} </td>); 
+            print qq (<td class ="body" style="left: 0px; width: 155px; table-layout: fixed; word-break: normal; word-wrap: break-word;" >&#32 $isp->{systemip}</td>); 
+            #print qq (<td class="body" width="160" align="center" >);#&#32 $isp->{systemip}</td>); 
+            #print qq (<table>);
+            #print qq (<tr><td class="body" width="120" align="center">$isp->{systemip}</td>);
+            #print qq (<td style="font-size=10" width="40" align="right"><a href="javascript:showDetail('$isp->{iid}')">Detail</a></td>);#<a href="javascript:showDetail($isp->{iid})>);
+            #print qq (Detail</a></td>);
+            #print qq (</table>);
+            #print qq (</td>);
+            print qq (<td class="body" width="40" align="center" >); 
+            my $imgsrc = ( $isp->{alive} ) ? ( 'alive.png' ) : ( 'dead.png' );
+            print qq (<img src="image/$imgsrc" width="14" height="14" border="0" /></td>)
+        }
+        print qq (</tr>);
+        $index++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+    
+    #--------------------------------------------------------------------
+    # Bandwidth Management
+    #--------------------------------------------------------------------
+    print qq (<br><div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    print qq (<td width="100%"> Bandwidth Management <a href="javascript:gotocgi('lantraffic.cgi')" style="text-decoration:none" ><img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+    print qq (</table>);
+    print qq (</div>);
+    print qq (<select name="interface" id="interface" style="width:220;display:none">);
+    print qq (<option value="ALL">ALL);
+    print qq (<option>SUBNET);
+    my $zoneref=XMLread($gACTIVEPATH.'zonecfg.xml');
+    my $zonelist=$zoneref->{nat};
+    foreach my $nic ( @$zonelist )
+    {
+        if ($nic->{natid} eq 'system' || $nic->{network} eq ""){next;}
+        my $status = ( $action{interface} eq $nic->{network} ) ? 'selected' : '';
+        print qq (<option $status id="T" value="$nic->{network}">$nic->{network}</option>);
+        $name = $nic->{network};
+        $name =~ s/\/.*//;
+        `/usr/local/apache/qb/setuid/run /usr/local/apache/qb/setuid/opreset.sh $nic->{network} $name`;
+    }
+    print qq (</select>);
+    print qq (<div id="Bandwidth" style="width:380; height:40; background:#223344">);
+    print qq (</div>);
+    print qq (</td>);
+    
+    
+    #--------------------------------------------------------------------
+    # LAN
+    #--------------------------------------------------------------------
+    
+    print qq (<td align="center" valign="top" width="450">);
+    print qq (<div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    print qq (<td width="100%">LAN </td>);
+    print qq (<td class="body" width="20" align="right"><a href="javascript:gotocgi('zone.cgi?viewpoint=nat')" style="text-decoration:none" >);
+    print qq (<img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+    print qq (</table>);
+    print qq (</div>);
+    
+    my $zoneref=XMLread($gACTIVEPATH.'zonecfg.xml');
+    my $zonelist=$zoneref->{nat};
+  
+    print qq (<div style="width:380; height:40; background:#223344">);
+    print qq (<table id="lan" border="0" width="380" height="20">);
+    my $index=0;
+    print qq (<tr height="20" bgcolor="#332211" >);
+    print qq (<td class="body" width="100" align="center" >&#32 Interface</td>); 
+    print qq (<td class="body" width="100" align="center" >&#32 Network</td>); 
+    print qq (<td class="body" width="150" align="center" >&#32 IP / Gateway</td>); 
+    foreach my $zone ( @$zonelist )
+    {
+        if ( $zone->{natid} eq 'system' ) { next; }
+        my $originalColor=$bgcolor=($index % 2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr height="20" bgcolor="$bgcolor" originalColor="$originalColor">);
+        print qq (<td class="body" width="100" align="center" >&#32 $zone->{nic}</td>); 
+        print qq (<td class="body" align="center" style="left: 0px; width: 155px; table-layout: fixed; word-break: normal; word-wrap: break-word;" >&#32 $zone->{network}</td>); 
+        print qq (<td class="body" align="center" style="left: 0px; width: 155px; table-layout: fixed; word-break: normal; word-wrap: break-word;" >&#32 $zone->{ip}</td>); 
+            
+        print qq (</tr>);
+        $index++;
+    }
+    
+    print qq (</table>);
+    print qq (<div class="divframe" style="width:380">); 
+    print qq (<table bgcolor="#332211" width="380" border="0"><tr>);
+    print qq (<td width="100%">Transparent </td>);
+    print qq (<td class="body" width="20" align="right"><a href="javascript:gotocgi('zone.cgi?viewpoint=dmz')" style="text-decoration:none" >);
+    print qq (<img src="image/link.gif" width="12" height="12" border="0" /></a></td>);
+    print qq (</table>);
+    print qq (</div>);
+    
+    my $dmzref=XMLread($gACTIVEPATH.'dmzreg.xml');
+    my $dmzlist=$dmzref->{host};
+    
+    print qq (<div style="width:380; height:0; background:#223344">);
+    print qq (<table class="sortable" id="dmz" border="0" width="380" height="20">);
+    print qq (<tr height="20" bgcolor="#332211" >);
+    print qq (<td class="body" width="150" align="center" >&#32 ISP</td>); 
+    print qq (<td class="body" width="230" align="center" >&#32 Pass Through IP </td>); 
+    my $index=0;
+    foreach my $dmz ( @$dmzlist )
+    {
+        if ( $dmz eq 'system' ) { next; }
+        my $originalColor=$bgcolor=($index % 2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr height="20" bgcolor="$bgcolor" originalColor="$originalColor">);
+        print qq (<td class="body" width="180" align="center" >&#32 ISP$dmz->{isp}</td>); 
+        print qq (<td class="body" width="200" align="center" >&#32 $dmz->{ip}</td>); 
+        
+        print qq (</tr>);
+        $index++;
+    }
+    
+    print qq (</table>);
+    
+    #================================================== 
+}
+
+sub scriptDashboard
+{
+    print qq(<script type="text/javascript" src="grid.js"></script>);
+    print qq(<script type="text/javascript" src="qbjs/sorttable.js"></script>);
+    print qq(<script type="text/javascript" src="./qbjs/jquery.js"></script>);
+    print qq(<script type="text/javascript" src="qbjs/jquery.dataTables.min.js"></script>);
+    print qq(<script language="javascript">);
+    
+    print << "scriptDashboard";
+    
+    var myform;
+           
+    function cgi_dep_onload() { myform=window.document.forms[0]; auto_refresh();}
+    
+    function gotocgi(cgi)
+    {
+        window.top.mainFrame.location.href = cgi;
+    }
+    
+    function auto_refresh()
+    {
+        var refreshtime=document.getElementById('refreshtime');
+        //alert(myform.refreshtime.value);
+        setTimeout("fresh();",parseInt(refreshtime.value)*1000);
+    }
+    
+    function fresh()
+    {
+        myform.submit();
+    }
+    
+    function Ajax()
+    {
+        var tmp = \$("#interface").val();
+        var data="";
+        var url = "lantc1.cgi";
+        if (tmp == "ALL"){
+           for (var x = 2; x < \$("#interface").children("option").length ; x ++)
+           {
+               if( \$("#interface").children("option").eq(x).val() != "DMZ")
+               data += \$("#interface").children("option").eq(x).val() + ",";
+           }
+           var db = data + "&time="+new Date().getTime();
+       }else{
+           var db = tmp + "&time="+new Date().getTime();
+       }
+       \$.get(url,{tm:db},function fno(data)
+       {
+           var status;
+           \$("#Bandwidth").html(data);
+           var oTable =  \$('#tables').dataTable({
+               "fnFooterCallback": function ( nRow, aaData, iStart, iEnd, aiDisplay ) {
+                   var iPageMarket = 0;
+                   var iPageMarket2 = 0;
+               },
+               "bPaginate": false,
+               "bInfo": false,
+               "aoColumns": [
+                   { "sType": 'html' },
+                   { "sType": 'string-case' },
+                   { "sType": 'string-case' },
+                   { "sType": 'string-case' },
+                   { "sType": 'string-case' },
+                   { "sType": 'string-case' }
+               ]
+          });
+          
+          jQuery.fn.dataTableExt.oSort['string-case-asc']  = function(x,y) {
+              x = x.replace(" Kbps","");
+              y = y.replace(" Kbps","");
+              var ssv3 = x-y;
+              return ssv3;
+          };
+          
+          jQuery.fn.dataTableExt.oSort['string-case-desc'] = function(x,y) {
+              x = x.replace(" Kbps","");
+              y = y.replace(" Kbps","");var ssv3 = y-x;
+              return ssv3;
+          };
+          
+          \$("th").eq(4).click();
+          \$("th").eq(4).click();
+          
+          \$("tfoot").remove();
+          \$("#tables_filter").attr("style","display:none");
+          \$("#tables").children("thead").children("tr").children("th").eq(1).attr("style","display:none");
+          \$("#tables").children("thead").children("tr").children("th").eq(2).attr("style","display:none");
+          \$("#tables").children("thead").children("tr").children("th").eq(3).attr("style","display:none");
+          for (var x=0; x < \$("#tables").children("tbody").children("tr").length; x++)
+          {
+              if (x > 2)
+              {
+                  //\$("#tables").children("tbody").children("tr").eq(x).remove();
+                  \$("#tables").children("tbody").children("tr").eq(x).attr("style","display:none");
+              }
+              else
+              {
+                  \$("#tables").children("tbody").children("tr").eq(x).children("td").eq(1).attr("style","display:none");
+                  \$("#tables").children("tbody").children("tr").eq(x).children("td").eq(2).attr("style","display:none");
+                  \$("#tables").children("tbody").children("tr").eq(x).children("td").eq(3).attr("style","display:none");
+              }    
+          }
+  });
+}                   
+Ajax();        
+    
+    </script>
+    
+scriptDashboard
+} 
+#showDashboard
+#
+1

@@ -1,0 +1,107 @@
+#=============================================================================================
+sub showCategory
+{
+    my (%action)=@_;
+    my $categoryref=XMLread($gPATH.'category.xml');
+    my $categorylist=$categoryref->{category};
+    
+    my @titleHeadList=('Name', 'Description', 'Edit');
+    my %titleWidth=('Name'=>300, 'Description'=>300, 'Edit'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Category);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    #==============================================================
+    # Print Title first
+    # show 
+    #===============================================================
+    print qq (<div class="divframe" style="width:800">);
+    print qq (<table bgcolor="#332211" width="100%" border="0"><tr>); 
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    print qq (<td align="center" width="100">);
+    print qq (<a href="javascript:delCategory()"><image src="image/del.gif" title="Delete Checked Schdule(s)" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('categorys', this.checked)">);
+    print qq (</tr></table>);
+    print qq (</div>);
+    print qq (<div class="divframe" style="height:250; width:800">);
+    print qq (<table id="categoryList" width="100%"  class="body" border="0" style="table-layout:fixed;word-break:break-all">);
+    my $lineCount=0;
+    foreach my $item ( @$categorylist )
+    {
+        if ( $item->{categoryname} eq "system" ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+        print qq (<td align="center" width="$titleWidth{Name}" height="25" >$item->{categoryname}</td>);
+        print qq (<td align="center" width="$titleWidth{Description}" height="25">$item->{description}</td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<a href="editcategory.cgi?categoryname=$item->{categoryname}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit Schedule properties" border="0"></a></td>);
+        print qq (<td align="center" width="$title{title}" height="25">);
+        print qq (<input type="checkbox" name="categorys" value="$item->{categoryname}">);
+        print qq (</tr>);
+        $lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center" >);
+    print qq (<input class="qb" type="button" width="100" value="New Entry" onclick="NewCategory();">);
+    print qq (</td>);
+=cut
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="right" width="500">);
+    print qq (<input class="qb" type="button" width="100" value="Select All" onclick="checkcategory(true);">);
+    print qq (<input class="qb" type="button" width="100" value="Clear All" onclick="checkcategory(false);">);
+    print qq (<input class="qb" type="button" width="100" value="Apply" onclick="goSubmit('APPLY');">);
+    print qq (</td>);
+    print qq (<td align="right" >);
+    print qq (<input class="qb" type="button" width="100" value="Add category Type" onclick="Newcategory();">);
+    print qq (</td>);
+=cut
+}
+#showCategory
+    
+
+
+#=============================================================================================
+
+sub scriptCategory
+{
+    print << "scriptCategory";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+    
+    function NewCategory() 
+    {
+        window.top.mainFrame.location.href="editcategory.cgi";
+    }
+    
+    function delCategory()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+    
+    </script>
+    
+scriptCategory
+}
+#
+#
+1

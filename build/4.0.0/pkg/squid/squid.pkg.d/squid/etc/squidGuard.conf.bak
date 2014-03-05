@@ -1,0 +1,416 @@
+dest abortion {
+	domainlist      abortion/domains
+	urllist         abortion/urls
+	log 		blockaccesses
+}
+
+dest ads {
+	domainlist      ads/domains
+	urllist         ads/urls
+	log 		blockaccesses
+}
+
+dest adult {
+	domainlist      adult/domains
+	urllist         adult/urls
+	log 		blockaccesses
+}
+
+dest aggressive {
+	domainlist      aggressive/domains
+	urllist         aggressive/urls
+	log 		blockaccesses
+}
+
+dest antispyware {
+	domainlist      antispyware/domains
+	urllist         antispyware/urls
+	log 		blockaccesses
+}
+
+dest artnudes {
+	domainlist      artnudes/domains
+	urllist         artnudes/urls
+	log 		blockaccesses
+}
+
+dest astrology {
+	domainlist      astrology/domains
+	urllist         astrology/urls
+	log 		blockaccesses
+}
+
+dest banking {
+	domainlist      banking/domains
+	urllist         banking/urls
+	log 		blockaccesses
+}
+
+dest beerliquorinfo {
+	domainlist      beerliquorinfo/domains
+	log 		blockaccesses
+}
+
+dest beerliquorsale {
+	domainlist      beerliquorsale/domains
+	log 		blockaccesses
+}
+
+dest blog {
+	domainlist      blog/domains
+	urllist         blog/urls
+	log 		blockaccesses
+}
+
+dest cellphones {
+	domainlist      cellphones/domains
+	log 		blockaccesses
+}
+
+dest chat {
+	domainlist      chat/domains
+	urllist         chat/urls
+	log 		blockaccesses
+}
+
+dest childcare {
+	domainlist      childcare/domains
+	urllist         childcare/urls
+	log 		blockaccesses
+}
+
+dest cleaning {
+	domainlist      cleaning/domains
+	urllist         cleaning/urls
+	log 		blockaccesses
+}
+
+dest clothing {
+	domainlist      clothing/domains
+	log 		blockaccesses
+}
+
+dest contraception {
+	domainlist      contraception/domains
+	urllist         contraception/urls
+	log 		blockaccesses
+}
+
+dest dating {
+	domainlist      dating/domains
+	urllist         dating/urls
+	log 		blockaccesses
+}
+
+dest desktopsillies {
+	domainlist      desktopsillies/domains
+	urllist         desktopsillies/urls
+	log 		blockaccesses
+}
+
+dest dialers {
+	domainlist      dialers/domains
+	urllist         dialers/urls
+	log 		blockaccesses
+}
+
+dest drugs {
+	domainlist      drugs/domains
+	urllist         drugs/urls
+	log 		blockaccesses
+}
+
+dest ecommerce {
+	domainlist      ecommerce/domains
+	urllist         ecommerce/urls
+	log 		blockaccesses
+}
+
+dest entertainment {
+	domainlist      entertainment/domains
+	urllist         entertainment/urls
+	log 		blockaccesses
+}
+
+dest filehosting {
+	domainlist      filehosting/domains
+	urllist         filehosting/urls
+	log 		blockaccesses
+}
+
+dest frencheducation {
+	domainlist      frencheducation/domains
+	urllist         frencheducation/urls
+	log 		blockaccesses
+}
+
+dest gambling {
+	domainlist      gambling/domains
+	urllist         gambling/urls
+	log 		blockaccesses
+}
+
+dest games {
+	domainlist      games/domains
+	urllist         games/urls
+	log 		blockaccesses
+}
+
+dest gardening {
+	domainlist      gardening/domains
+	urllist         gardening/urls
+	log 		blockaccesses
+}
+
+dest government {
+	domainlist      government/domains
+	urllist         government/urls
+	log 		blockaccesses
+}
+
+dest guns {
+	domainlist      guns/domains
+	urllist         guns/urls
+	log 		blockaccesses
+}
+
+dest hacking {
+	domainlist      hacking/domains
+	urllist         hacking/urls
+	log 		blockaccesses
+}
+
+dest homerepair {
+	domainlist      homerepair/domains
+	urllist         homerepair/urls
+	log 		blockaccesses
+}
+
+dest hygiene {
+	domainlist      hygiene/domains
+	log 		blockaccesses
+}
+
+dest instantmessaging {
+	domainlist      instantmessaging/domains
+	urllist         instantmessaging/urls
+	log 		blockaccesses
+}
+
+dest jewelry {
+	domainlist      jewelry/domains
+	log 		blockaccesses
+}
+
+dest jobsearch {
+	domainlist      jobsearch/domains
+	urllist         jobsearch/urls
+	log 		blockaccesses
+}
+
+dest kidstimewasting {
+	domainlist      kidstimewasting/domains
+	urllist         kidstimewasting/urls
+	log 		blockaccesses
+}
+
+dest mail {
+	domainlist      mail/domains
+	urllist         mail/urls
+	log 		blockaccesses
+}
+
+dest marketingware {
+	domainlist      marketingware/domains
+	urllist         marketingware/urls
+	log 		blockaccesses
+}
+
+dest medical {
+	domainlist      medical/domains
+	urllist         medical/urls
+	log 		blockaccesses
+}
+
+dest mixed_adult {
+	domainlist      mixed_adult/domains
+	urllist         mixed_adult/urls
+	log 		blockaccesses
+}
+
+dest naturism {
+	domainlist      naturism/domains
+	urllist         naturism/urls
+	log 		blockaccesses
+}
+
+dest news {
+	domainlist      news/domains
+	urllist         news/urls
+	log 		blockaccesses
+}
+
+dest onlineauctions {
+	domainlist      onlineauctions/domains
+	urllist         onlineauctions/urls
+	log 		blockaccesses
+}
+
+dest onlinegames {
+	domainlist      onlinegames/domains
+	urllist         onlinegames/urls
+	log 		blockaccesses
+}
+
+dest onlinepayment {
+	domainlist      onlinepayment/domains
+	log 		blockaccesses
+}
+
+dest personalfinance {
+	domainlist      personalfinance/domains
+	urllist         personalfinance/urls
+	log 		blockaccesses
+}
+
+dest pets {
+	domainlist      pets/domains
+	urllist         pets/urls
+	log 		blockaccesses
+}
+
+dest phishing {
+	domainlist      phishing/domains
+	urllist         phishing/urls
+	log 		blockaccesses
+}
+
+dest porn {
+	domainlist      porn/domains
+	urllist         porn/urls
+	log 		blockaccesses
+}
+
+dest proxy {
+	domainlist      proxy/domains
+	urllist         proxy/urls
+	log 		blockaccesses
+}
+
+dest radio {
+	domainlist      radio/domains
+	urllist         radio/urls
+	log 		blockaccesses
+}
+
+dest religion {
+	domainlist      religion/domains
+	urllist         religion/urls
+	log 		blockaccesses
+}
+
+dest ringtones {
+	domainlist      ringtones/domains
+	log 		blockaccesses
+}
+
+dest searchengines {
+	domainlist      searchengines/domains
+	log 		blockaccesses
+}
+
+dest sect {
+	domainlist      sect/domains
+	urllist         sect/urls
+	log 		blockaccesses
+}
+
+dest sexuality {
+	domainlist      sexuality/domains
+	urllist         sexuality/urls
+	log 		blockaccesses
+}
+
+dest shopping {
+	domainlist      shopping/domains
+	urllist         shopping/urls
+	log 		blockaccesses
+}
+
+dest socialnetworking {
+	domainlist      socialnetworking/domains
+	urllist         socialnetworking/urls
+	log 		blockaccesses
+}
+
+dest sportnews {
+	domainlist      sportnews/domains
+	urllist         sportnews/urls
+	log 		blockaccesses
+}
+
+dest sports {
+	domainlist      sports/domains
+	urllist         sports/urls
+	log 		blockaccesses
+}
+
+dest spyware {
+	domainlist      spyware/domains
+	log 		blockaccesses
+}
+
+dest updatesites {
+	domainlist      updatesites/domains
+	urllist         updatesites/urls
+	log 		blockaccesses
+}
+
+dest vacation {
+	domainlist      vacation/domains
+	urllist         vacation/urls
+	log 		blockaccesses
+}
+
+dest violence {
+	domainlist      violence/domains
+	urllist         violence/urls
+	log 		blockaccesses
+}
+
+dest virusinfected {
+	domainlist      virusinfected/domains
+	urllist         virusinfected/urls
+	log 		blockaccesses
+}
+
+dest warez {
+	domainlist      warez/domains
+	urllist         warez/urls
+	log 		blockaccesses
+}
+
+dest weather {
+	domainlist      weather/domains
+	urllist         weather/urls
+	log 		blockaccesses
+}
+
+dest weapons {
+	domainlist      weapons/domains
+	urllist         weapons/urls
+	log 		blockaccesses
+}
+
+dest webmail {
+	domainlist      webmail/domains
+	urllist         webmail/urls
+	log 		blockaccesses
+}
+
+dest whitelist {
+	domainlist      whitelist/domains
+	urllist         whitelist/urls
+	log 		blockaccesses
+}
+

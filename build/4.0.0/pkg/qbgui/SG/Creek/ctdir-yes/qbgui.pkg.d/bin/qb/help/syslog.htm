@@ -1,0 +1,35 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Syslog Support</title>
+</head>
+<body>
+
+<h2>Syslog Support</h2>
+<p>
+	Syslog is a very widely used and supported logging mechanism. Q-Balancer uses the following parameters to control message logging. <br>
+<table>	 
+<tr align=left><th width=60>facility</th><th class="light">level</th><th>	message</th></tr>
+<tr><td>local2	</td><td class="light">info</td><td>	Server log</td></tr>
+<tr><td>local4	</td><td class="light">info</td><td>	Event log</td></tr>
+<tr><td>kern	</td><td class="light">info</td><td>	Traffic log for each connection</td></tr>
+<tr><td>kern	</td><td width=60 class="light">warning</td><td>	Traffic log set up in DOS perversion menu</td></tr>
+</table></p>
+<p>
+<b>Syslog Message Format</b>
+<table> 
+<tr align=left><th>Timestamp	</th><th class="light">Priority	</th><th>Hostname	</th><th  class="light">Message</th></tr>
+<tr><td>2003-11-19 14:57:40	</td><td class="light">Local4.Info	</td><td>192.168.1.254	</td><td class="light">qbrunway: QB init started</td></tr>
+</table>
+
+The above example shows host 192.168.1.254 sent a "qbrunway: QB init started" message.</p>
+<p> 
+<b>Syslog Options</b>
+<table>
+<tr><td width=200 valign=top>Enable QB Server Log	</td><td>This includes ISP connectivity, server crash, system instability (e.g. space overrun).</td></tr> 
+<tr><td valign=top class="light">Enable QB Traffic Log	</td><td class="light">Every connection's data such as header, number of packets, gateway IP address are reported. Turning this on may hamper system performance. The recommended procedure is to turn this off. Only turn this option on to debug when there are problems with the network such as during an attack from viruses.</td></tr> 
+<tr><td valign=top>Enable Log on Local	</td><td>Log detailed debugging messages to Q-Balancer's flash memory. This allows a Q-Balancer technical support personnel to debug.</td></tr> 
+<tr><td valign=top class="light">Enable Remote Syslog Server	</td><td class="light">Fill in syslog server IP address to send QB server log and/or QB Traffic log to remote server for the checked services.</td></tr> 
+</table>
+</p>
+</body></html>

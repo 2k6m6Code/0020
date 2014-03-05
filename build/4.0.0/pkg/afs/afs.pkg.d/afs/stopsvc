@@ -1,0 +1,114 @@
+#!/bin/sh
+#Dean Info.
+# shutdown primary server
+## stopsvc <MODEL> <HOST> <SERVICE_SYS>
+
+MODEL=$1
+HOST=$2
+SVC=$3
+case $SVC in
+A)	NNET=1 ;;
+B)	NNET=2 ;;
+esac
+export HOST SVC UMOUNT NNET
+
+PATH=$PATH:/sbin:/etc:/usr/sbin:/usr/etc
+SFS=/usr/afs/conf/sfs
+SPROG=/usr/afs/conf/sprog
+UMOUNT=umount
+MOUNT=mount
+FUSER=fuser
+CHGVHOST=/usr/afs/chgvhost
+
+UMOUNTFAIL=99
+
+sync;sync
+
+# shutdown system
+#echo "<<Warning>> System warning, shutdown in 1 miniute !" |wall
+#echo "Please logout now!!" |wall
+#echo "You can login again after 2 miniutes." |wall
+#sleep 50
+
+# stop service engine programs
+echo -e "\rStop service engine programs...\r" >/dev/console
+STOPOK=`true`
+SIFS=$IFS
+if [ -s $SPROG ] ;then
+	exec 3< $SPROG
+	while read LINE <&3 ;do
+		if [ -n "$LINE" ] ;then
+			IFS=":"
+			set $LINE
+			if [ -n "$1" -a X"$1" = X$SVC ] ;then
+			   if [ X"$2" = X"init" -o X"$2" = X"respawn" ] ;then
+				STOPCMD=$5
+				if [ -n "$STOPCMD" ] ;then
+					IFS=$SIFS
+					set $STOPCMD
+					echo -e "do $STOPCMD\r" >/dev/console
+					[ -n "$1" ] && [ -f "$1" -a -x "$1" ] && $*
+				fi
+			   fi
+			fi
+		fi
+	done
+	exec 3<&-
+fi
+
+# umount shared file systems
+# read shared file systems
+IFS=$SIFS
+echo -e "Unmount shared file systems...\r" >/dev/console
+if [ -s $SFS ] ;then
+	exec 3<$SFS
+ 	while read FS <&3 ;do
+	if [ -n "$FS" ] ;then
+		set $FS
+		if [ $# = 5 ] ;then
+			if [ $1 = $SVC ] ;then
+				if [ -n "$3" ] && $MOUNT | grep "$3" >/dev/null;then
+				    $FUSER -km "$2" >/dev/null 2>&1
+					sleep 5
+					PROCS=`$FUSER $2 2>/dev/null`
+					if [ -n "$PROCS" ] ;then
+					   for PPPP in $PROCS ;do
+						   kill -9 $PPPP >/dev/null 2>&1
+					   done
+					   sleep 2
+					fi
+				    $UMOUNT $3
+				    if [ ! $? = 0 ] ;then
+					echo -e "umount $3 fail! maybe someone still in the filesystem.\r" >/dev/console
+					echo -e "Stop service FAIL!!\r" >/dev/console
+					exit $UMOUNTFAIL
+					STOPOK=`false`
+				    fi
+				fi
+			fi
+		fi
+	fi
+	done
+	exec 3<&-
+fi
+
+# shutdown ethernet
+if [ $MODEL = AFS1000HS -o $MODEL = AFS1000DA ] ;then
+: AFS1000 not necessary to process network services
+else
+	echo -e "Shutdown shared network interface...\r" >/dev/console
+	/usr/afs/stopnet H${HOST}SVC${SVC}
+	$CHGVHOST -d ${SVC}
+	if [ ! $? = 0 ] ;then
+		STOPOK=`false`
+	else
+		/usr/afs/startnet H${HOST}N${NNET}
+	fi
+fi
+if $STOPOK ;then
+	echo -e "Service systems STOP !!\r" >/dev/console
+	exit 0
+else
+	echo -e "Warning!! Service system is not whole stopped!\r" >/dev/console
+	exit 1
+fi

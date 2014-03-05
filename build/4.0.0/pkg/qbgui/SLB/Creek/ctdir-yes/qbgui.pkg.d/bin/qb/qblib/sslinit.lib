@@ -1,0 +1,321 @@
+###############################################################################################
+#                                           Pptpinit Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showSslinit 
+{
+    my (%action)=@_;
+    my $ssl=XMLread($gPATH.'sslinit.xml');
+    my $ava=XMLread($gPATH.'avanet.xml');
+    my $lea=XMLread($gPATH.'leanet.xml');
+    my $avanet=$ava->{subnet};
+    my $leanet=$lea->{subnet};
+    
+    print qq (<tr><td colspan="8" class="bigtitle">$qblang[214]</td></tr>);
+    
+    #********************************** SSL Server State ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[215] ]</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[216]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $ssl->{enablessl} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="enablessl"  $status >); 
+    #********************************** General Setting ********************************************
+
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[217] ]</td></tr>);
+    #********************************** Server IP ***************************************************
+    print qq (<input type="hidden" name="serverip" value="$ssl->{serverip}">\n);
+
+    print qq (<tr><td class="body" align="left">$qblang[218]: </td>);
+    print qq (<td><select class="qbopt" name="servername" span title="$ssl->{serverip}" style="width:120">\n);
+    my @WANISPNAME=maintainBasic(action=>'GETWANISPNAME');
+    #my @WANIP=maintainBasic(action=>'GETWANIP');
+    foreach my $wanip (@WANISPNAME)
+    {
+        my $status=( $wanip eq "$ssl->{servername}" ) ? ('selected'):('');
+        my $value=( $wanip eq "" ) ? (''):("$wanip");
+        my $showip=maintainBasic(action=>'GETIP', ispname=>$value);
+        print qq (<option $status value="$value" span title="$showip">$value</option>\n);
+    }
+    print qq (</select></td>);
+    print qq (</tr>);
+    $ssl->{serverip}=maintainBasic(action=>'GETIP', ispname=>$ssl->{servername});
+    #********************************** Protocol ***************************************************
+    print qq (<tr><td class="body" align="left">$qblang[166]: </td>);
+    print qq ( <td colspan="3" align="left"><select class="qbopt" name="protocol" style="width:120">);
+    @PROTOCOL=("tcp", "udp");
+    foreach my $proto (@PROTOCOL)
+    {
+
+        my $status=( $proto eq $ssl->{protocol} ) ? ('selected'):('');
+        my $value=( $proto eq "" ) ? ('tcp'):("$proto");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select></td>);
+    print qq (</tr>);
+
+    #********************************** Port ***************************************************
+    print qq (<tr><td class="body" align="left">$qblang[71]: </td>);
+    print qq (<td class="body" >);
+    print qq (<input class="qbtext" name="port" style="WIDTH: 120px" value="$ssl->{port}" >\n);
+    print qq (</td></tr>); 
+
+    #********************************** VPN Net ***************************************************
+    print qq (<tr><td class="body" align="left">$qblang[219]: </td>);
+    print qq (<td class="body" >);
+    print qq (<input class="qbtext" name="vpnnet" style="WIDTH: 120px" value="$ssl->{vpnnet}" >\n);
+    #print qq (<input type="hidden" name="orivpnlan" value="$ssl->{vpnnet}">);
+    print qq (</td></tr>);
+    print qq (<tr><td class="body" align="left">$qblang[220]: </td>);
+    print qq (<td class="body" >);
+    print qq (<input class="qbtext" name="netmask" style="WIDTH: 120px" value="$ssl->{netmask}" >\n);
+    print qq (</td></tr>);
+    #********************************** Full Access Settings ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[221] ]</td></tr>);
+
+    #********************************** MAX Client ********************************************
+    print qq (<tr><td class="body" align="left">$qblang[222]: </td>);
+    print qq (<td class="body" >);
+    print qq (<input class="qbtext" name="max" style="WIDTH: 120px" value="$ssl->{max}" >\n);
+    print qq (<input type="hidden" name="orimask" value="$ssl->{max}">);
+    print qq (</td></tr>);
+
+    #********************************** DNS ********************************************
+    #print qq (<tr><td class="body" align="left">Primary DNS: </td>);
+    #print qq (<td class="body" >);
+    #print qq (<input class="qbtext" name="pridns" style="WIDTH: 120px" value="$ssl->{pridns}" >\n);
+    #print qq (<input type="hidden" name="oripridns" value="$ssl->{pridns}">);
+    #print qq (<td class="body" align="left">Secondary DNS: </td>);
+    #print qq (<td class="body" >);
+    #print qq (<input class="qbtext" name="secdns" style="WIDTH: 120px" value="$ssl->{secdns}" >\n);
+    #print qq (<input type="hidden" name="orisecdns" value="$ssl->{secdns}">);
+    #print qq (</td></tr>);
+
+    #********************************** WINS ********************************************
+    #print qq (<tr><td class="body" align="left">Primary WINS: </td>);
+    #print qq (<td class="body" >);
+    #print qq (<input class="qbtext" name="priwins" style="WIDTH: 120px" value="$ssl->{priwins}" >\n);
+    #print qq (<input type="hidden" name="oripriwins" value="$ssl->{priwins}">);
+    #print qq (<td class="body" align="left">Secondary WINS: </td>);
+    #print qq (<td class="body" >);
+    #print qq (<input class="qbtext" name="secdns" style="WIDTH: 120px" value="$ssl->{secwins}" >\n);
+    #print qq (<input type="hidden" name="orisecwins" value="$ssl->{secwins}">);
+    #print qq (</td></tr>);
+
+    #********************************** Lease Subnet ********************************************
+    print qq (<tr><td class="body" align="left">$qblang[223]</td>);
+    #@SUBNET=maintainZone(action=>'GETNATZONES');
+    @SUBNET=maintainSslnet(action=>'GETSUBNET', viewpoint=>'ava');
+    #print qq (<td><select class="qbopt" multiple size="5" name="sltava" onblur="mark_select(this)" style="WIDTH:150px">);
+    #foreach my $subnet ( @SUBNET )
+    #{
+    #    #my $subnettxt=( $subnet eq "others" ) ?  ( 'ANY' ) : ( $subnet );
+    #    print qq (<option value="subnet" $status>$subnet</option>);
+    #}
+    print qq (<td><select class="qbopt" name="sltava" size="5" multiple style="width:150">);
+    foreach my $subnet ( @$avanet )
+    {
+        if ( $subnet->{network} eq 'system' ) { next; }
+        print qq (<option>$subnet->{network}</optin>);
+    }
+    print qq (</select></td>);
+
+    print qq (<td class="body"  align="center" class="body">);
+    print qq (<input class="qb" type="button" value=">" onClick="goSubmit('MOVERIGHT')" style="width:20"><br>);
+    print qq (<input class="qb" type="button" value="<" onClick="goSubmit('MOVELEFT')" style="width:20">);
+    print qq (</td>);
+
+    print qq (<td class="body">$qblang[224]</td>);
+    @LEASE=maintainSslnet(action=>'GETSUBNET', viewpoint=>'lea');
+    #print qq (<td><select class="qbopt" multiple size="5" name="sltlea" onblur="mark_select(this)" style="WIDTH:150px">);
+    #foreach my $subnet ( @LEASE )
+    #{
+    #    my $subnettxt=( $subnet eq "others" ) ?  ( 'ANY' ) : ( $subnet );
+    #    print qq (<option value="$subnet">$subnettxt</option>);
+    #}
+    #print qq (</select></td>);
+    print qq (<td><select class="qbopt" name="sltlea" size="5" multiple style="width:150">);
+    foreach my $subnet ( @$leanet )
+    {
+        if ( $subnet->{network} eq 'system' ) { next; }
+        print qq (<option>$subnet->{network}</optin>);
+    }
+    print qq (</select></td>);
+   
+    print qq (</tr>);
+    
+    #********************************** SSL Server State ********************************************
+    #print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ SSL Server State ]</td></tr>);
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Enable QB SSL Server);
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #my $status=( $ssl->{enablessl} ) ? ('checked') : ('');
+    #print qq (<INPUT type="checkbox" name="enablessl"  $status >); 
+    #print qq (</td>);
+    #print qq (</tr>);
+    print qq (<tr><td></td>);
+    print qq (<td colspan="2" align="right">);
+    print qq (<input class="qb" type="button" value="$qblang[139]" title="Apply All Parameters now !" onClick="goSubmit('SAVE')" style="width:120">);
+    print qq (</td></tr>);
+}
+#showConsole
+
+
+#======================================================================================================================
+sub sslinitScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+                                                            
+    function checkAndSetidletime()
+    {
+        if ( !isValidPort(myform.idletime.value) ) 
+        { 
+            myform.idletime.value=""; 
+            alert("Time format Error");
+        }
+    }
+                                                                                                                                    
+    </script>
+SCRIPT
+}
+#sslinitScript
+
+#======================================================================================================================
+sub maintainSslnet
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    
+    my $XMLFILE=$gPATH.$action{viewpoint}.'net.xml';
+    my $sslnet=XMLread($XMLFILE);
+    my $subnetarray=$sslnet->{subnet};
+    my @tempsubnetarray;
+    
+    if ( $action{action}=~m/^ADD$/ )
+    {
+        foreach $net ( @$subnetarray ) 
+        {
+            if ( $net->{network} eq $action {network}) { next; }
+            push( @tempsubnetarray, $net );
+        }
+        my %newsubnet=( network=>$action{network} );
+        push( @tempsubnetarray, \%newsubnet);
+        $sslnet->{subnet}=\@tempsubnetarray;
+    }
+        
+    if ( $action{action}=~m/^DEL$/ )
+    {
+        foreach $net ( @$subnetarray ) 
+        {
+            if ( $net->{network} eq $action {network}) { next; }
+            push( @tempsubnetarray, $net );
+        }
+        $sslnet->{subnet}=\@tempsubnetarray;
+    }
+    
+    #if ( $action{action}=~m/^GETSUBNET$/ )
+    #{
+    #   my @network;
+    #   foreach $item ( @$subnetarray )
+    #   {
+    #       if( $item->{network} eq 'system' )  { next; }
+    #       push( @network, $item->{network} );
+    #   }
+    #   return @network; 
+   # 
+    #}
+     #==================================================
+     XMLwrite($sslnet, $XMLFILE);
+
+}
+
+#======================================================================================================================
+#maintainSslinit( %action )
+sub maintainSslinit 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $ssl=XMLread($gPATH.'sslinit.xml');
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+    	$ssl->{enablessl}=$action{enablessl};
+    	$ssl->{servername}=$action{servername};
+    	$ssl->{protocol}=$action{protocol};
+    	$ssl->{port}=$action{port};
+    	$ssl->{vpnnet}=$action{vpnnet};
+    	$ssl->{netmask}=$action{netmask};
+    	$ssl->{max}=$action{max};
+    	$ssl->{pridns}=$action{pridns};
+    	$ssl->{secdns}=$action{secdns};
+    	$ssl->{priwins}=$action{priwins};
+    	$ssl->{secwins}=$action{secwins};
+        $ssl->{serverip}=maintainBasic(action=>'GETIP', ispname=>$ssl->{servername});
+        
+        #-------updating pptpinit.xml------------------------ 
+        XMLwrite($ssl, $gPATH."sslinit.xml");
+            runCommand(command=>'killall', params=>'-9'.' '.'openvpn');
+            runCommand(command=>'/etc/ssl/sslstop', params=>'');
+            runCommand(command=>'rm', params=>'-f'.' '.'/var/log/sslvpn-status.log');
+            
+        if ( $action{enablessl} eq '1' ) 
+        {
+            #runCommand(command=>'killall', params=>'-9'.' '.'openvpn');
+            runCommand(command=>'/usr/local/apache/qb/setuid/do_qbsslinit.pl', params=>'');
+            runCommand(command=>'/etc/ssl/sslstart', params=>'');
+            #runCommand(command=>'/etc/ssl/zipsslclient', params=>'');
+        }
+        
+        LogUserAction( action=>'APPLYSSL', servername=>$action{servername}, protocol=>$action{protocol}, port=>$action{port}, vpnnet=>$action{vpnnet}, netmask=>$action{netmask}, enablessl=>$action{enablessl} );
+    }
+    elsif ( $action{action}=~m/^MOVERIGHT$/ )
+    {
+        #runCommand(command=>'echo', params=>$action{sltava}.' '.'>/tmp/slt');
+        maintainSslnet(action=>'DEL', viewpoint=>'ava', network=>$action{sltava});
+        maintainSslnet(action=>'ADD', viewpoint=>'lea', network=>$action{sltava});
+    }
+    elsif ( $action{action}=~m/^MOVELEFT$/ )
+    {
+        maintainSslnet(action=>'DEL', viewpoint=>'lea', network=>$action{sltlea});
+        maintainSslnet(action=>'ADD', viewpoint=>'ava', network=>$action{sltlea});
+    }
+  
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+#    qbSync();
+#=cut
+#    if ( $action{enableppd}==0 )
+#    { 
+#    # stop pptp server
+#    my $result=runCommand(command=>'service', params=>'pptpd stop');
+#    if ( $result==0 ) { $gMSGPROMPT.=qq ( Success to stop pptp server!!!\\n);  }
+#    if ( $result==1 ) { $gMSGPROMPT.=qq ( Fail to stop pptp server!!!\\n);  }
+#    my $result=runCommand(command=>'rm', params=>'-f /usr/local/apache/qbconf/pptp.sh');
+#    }
+#    else
+#    {   
+#    # restart squid
+#    my $result=runCommand(command=>'service', params=>'squid restart');
+#    if ( $result==0 ) { $gMSGPROMPT.=qq ( Success to restart pptp server!!!\\n);  }
+#    if ( $result==1 ) { $gMSGPROMPT.=qq ( Fail to restart pptp server!!!\\n);  }
+#    }
+#=cut
+}
+#maintainPptpinit
+#
+1

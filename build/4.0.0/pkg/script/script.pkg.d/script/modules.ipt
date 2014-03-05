@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# Source function library.
+case "$1" in
+  start)
+	modprobe ip_tables
+	modprobe iptable_filter
+	modprobe ip_conntrack hashsize=8192
+	modprobe iptable_nat
+	modprobe ip_conntrack_ftp
+	modprobe ip_nat_ftp
+	modprobe ip_conntrack_h323
+	modprobe ip_nat_h323
+	modprobe iptable_mangle
+	modprobe ipt_MASQUERADE
+        ;;
+  stop)
+	rmmod ip_tables
+	rmmod iptable_filter
+	rmmod ip_conntrack
+	rmmod iptable_nat
+	rmmod ip_conntrack_ftp
+	rmmod ip_nat_ftp
+	rmmod ip_conntrack_h323
+	rmmod ip_nat_h323
+	rmmod iptable_mangle
+	rmmod ipt_MASQUERADE
+	;;
+esac
+exit 0

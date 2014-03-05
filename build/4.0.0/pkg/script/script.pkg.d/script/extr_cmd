@@ -1,0 +1,14 @@
+#!/bin/bash
+#/usr/local/sbin/iptables -t filter -A INPUT -m pfd -j DROP
+#..........................................................
+# 2005-1124 Brian
+# * To exe. bindmac config file.
+#..........................................................
+
+#MACSET="/mnt/qb/conf/macset"
+#if [ -f $MACSET ]; then
+#    chmod a+x $MACSET
+#    . $MACSET
+#    sync;sync
+#fi
+

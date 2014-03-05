@@ -1,0 +1,17 @@
+<opt status="lock" lastupdate="" file="iniroute">
+  <app>
+    <class dirty="0" service="system" method="system" source="system" table="system" direction="system" advance="system" priority="system" />
+  </app>
+  <dmz>
+    <class dirty="0" service="system" method="system" source="system" table="system" direction="system" advance="system" priority="system" />
+  </dmz>
+  <nat>
+    <class dirty="0" service="system" method="system" source="system" table="system" direction="system" advance="system" priority="system" />
+  </nat>
+  <service>
+    <class dirty="0" service="system" method="system" source="system" table="system" direction="system" advance="system" priority="system" />
+  </service>
+  <lvs>
+    <class dirty="0" service="system" table="system" advance="system" direction="system" source="system" priority="system" />
+  </lvs>
+</opt>

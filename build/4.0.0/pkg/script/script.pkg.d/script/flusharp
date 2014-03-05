@@ -1,0 +1,3 @@
+#!/bin/sh
+arptodel=$(arp -ne | grep ether | grep CM | awk '{ print $1 } ')
+for ip in $arptodel ; do  echo arp -d $ip ; done

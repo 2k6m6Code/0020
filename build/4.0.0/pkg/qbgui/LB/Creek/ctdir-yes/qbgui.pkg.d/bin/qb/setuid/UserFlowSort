@@ -1,0 +1,28 @@
+#!/bin/sh
+#set -x
+# 
+
+ 
+TOPNUMBER=$1
+NFDUMPBIN="/usr/local/bin/nfdump"
+LOGADDR="/mnt/tclog/nfcapd/"
+TMPDATA="/tmp/userflow_data"
+GUIDATA="/usr/local/apache/qb/userflow_data"
+
+#now_data=`date "+%Y%m%d%H%M"`
+#now_data=`date "+%Y%m%d%H%M" -d'-2 min'`
+now_all_data=`date "+%Y.%m.%d.%H.%M" -d'-1 min'`
+now_year=`echo $now_all_data | awk -F'.' '{print $1}'`
+now_month=`echo $now_all_data | awk -F'.' '{print $2}'`
+now_date=`echo $now_all_data | awk -F'.' '{print $3}'`
+now_hour=`echo $now_all_data | awk -F'.' '{print $4}'`
+now_min=`echo $now_all_data | awk -F'.' '{print $5}'`
+
+
+echo "Date first seen|Duration|Proto|Src IP Addr:Port|Dst IP Addr:Port|Packets|Bytes|Flows" > $TMPDATA
+$NFDUMPBIN -r $LOGADDR$now_year/$now_month/$now_date/nfcapd.$now_year$now_month$now_date$now_hour$now_min -n $TOPNUMBER -s record/flows >> $TMPDATA
+sed '2,4d' $TMPDATA |grep -v "127.0.0.1"|grep -v "172.31.3.1"| sed '$d' | sed '$d' | sed '$d' |sed '$d' | sed 's/->//g' | sed 's/  /|/g' | sed 's/||/|/g' | sed 's/||/|/g' |sed 's/||/|/g' > $GUIDATA
+#sed '2,4d' $TMPDATA |grep -v "127.0.0.1"| sed '$d' | sed '$d' | sed '$d' |sed '$d' | sed 's/->//g' | sed 's/  /|/g' | sed 's/||/|/g' | sed 's/||/|/g' |sed 's/||/|/g' > $GUIDATA
+
+
+

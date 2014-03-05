@@ -1,0 +1,45 @@
+#!/bin/sh
+## Dean Info.
+## change host table
+## Usage: changeht <old_host> <new_host>
+
+PATH=$PATH:/etc:/usr/sbin
+OLDHOST=$1
+NEWIPHOST=$2
+SNET=/usr/afs/conf/snet
+F_NEWIP=/tmp/afs.newip
+F_HOST_NAME=/tmp/afs.oldhname
+F_HT=/etc/hosts
+F_SV_HT=/etc/hosts.afsv
+F_TMP_HT=/tmp/afs_tmpht_$$
+
+>$F_NEWIP
+>$F_HOST_NAME
+
+exec 3< $SNET
+while read LINE <&3 ;do
+	if [ -n "$LINE" ] ;then
+		set $LINE
+		case $1 in
+		\#*) continue
+			;;
+		$NEWIPHOST)
+			echo $3 > $F_NEWIP
+			;;
+		$OLDHOST)    
+			echo $6 > $F_HOST_NAME
+			;;
+		esac
+	fi
+done
+
+read NEWIP < $F_NEWIP
+read HOST_NAME < $F_HOST_NAME
+
+## change host table
+echo "$NEWIP  $HOST_NAME  AFS_@^~_${OLDHOST}_2_${NEWIPHOST}" >$F_TMP_HT
+cat $F_HT >> $F_TMP_HT
+cp $F_HT $F_SV_HT
+cp $F_TMP_HT $F_HT
+rm -f $F_TMP_HT $F_NEWIP $F_HOST_NAME
+exit 0

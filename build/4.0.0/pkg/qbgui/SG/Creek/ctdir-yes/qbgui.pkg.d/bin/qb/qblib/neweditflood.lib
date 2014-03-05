@@ -1,0 +1,513 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showEditDos
+{
+    my (%action)=@_;
+    my $dosref=XMLread($gPATH.'newflood.xml');
+    my $doslist=$dosref->{newflood};
+    my $edit;
+	
+	my $hostref=XMLread($gPATH.'host.xml');
+    my $hostlist=$hostref->{host};
+    
+    foreach my $sh ( @$doslist )
+    {
+        if ( $sh->{dosip} eq $action{dosip} && $sh->{cls} eq $action{option} ) { $edit=$sh; }
+    }
+	
+	print qq (<input class="qb" type="button" style="display: none;" id="AutoSubmit" value="load" onclick=");
+	foreach my $show ( @$doslist )
+    {
+		if ( $show->{dosip} eq $action{dosip} && $show->{cls} eq $action{option} )
+		{
+			print qq (mytest('$show->{enable}','$show->{icmp_num}','$show->{syn_num}','$show->{logset}','$show->{timenumber}','$show->{time}','$show->{logprefix}'););
+		}
+	}
+	print qq (">);
+	
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0" style="width:100%">);
+    print qq (<tr><td class="bigtitle"></td></tr>);
+
+    print qq (<tr><td><hr size=1></td></tr>);
+
+    print qq (<table bgcolor="#667788" width="600">);
+    #-------------------------------------------------------------------------------------------
+    #  Flood : Setting
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Host :);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+	if($action{dosip})
+	{
+		print qq (<select sytle="width:200px" id="type" name="type" value="$action{dosip}" onChange="select_type();" disabled>);
+	}
+	else
+	{
+		print qq (<select sytle="width:200px" id="type" name="type" value="$action{dosip}" onChange="select_type();">);
+	}
+	print qq (<option value="ip">Custom</option>);
+	my $ispref = XMLread('/usr/local/apache/qbconf/zonecfg.xml');
+	my $isplist = $ispref->{nat};
+    foreach my $list (@$isplist)
+    {
+        if ($list->{network} eq ''){next;}
+        foreach my $listiref (@$doslist)
+		{
+			if ($list->{network} eq $listiref->{list}){$prt = "1";}
+		}
+		if ($prt ne '1')
+		{
+			if($action{dosip} eq $list->{network})
+			{
+				print qq (<option value="ip" Selected>);
+			}
+			else{print qq (<option value="ip">);}
+			
+			print qq ($list->{network}</option>);
+		}
+    }
+	
+	foreach my $item (@$hostlist )
+    {
+		if ( $item->{hostname} eq "system" || $item->{hide} eq "1" ) { next; }
+		if ( $action{showkeyword} eq '1' )
+		{
+			if ( $item->{hosttype} ne "weburl" ) { next; }
+		}
+		else
+        {
+			if ( $item->{hosttype} eq "weburl" ) { next; }
+        }
+		if($action{dosip} eq $item->{hostname})
+		{
+			print qq (<option value="host" Selected>);
+		}
+		else{print qq (<option value="host">);}
+		
+		print qq ($item->{hostname}</option>);
+    }
+	
+	if($action{dosip})
+	{
+		print qq (<input type="text" class="qbtext" style="width:50%; display: true;" id="dosip" name="dosip" value="$action{dosip}" readonly>);
+	}
+	else
+	{
+		print qq (<input type="text" class="qbtext" style="width:50%; display: true;" id="dosip" name="dosip" value="$action{dosip}">);
+	}
+	print qq (<input type="hidden" class="qbtext" id="dosip_hidden" name="dosip_hidden" value="$action{dosip}" >);
+    print qq (</td></tr>);
+	
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (<input type="checkbox" id="enable" name="enable" onClick="setEnable('enable',this.checked)" title="Enable" style="display:none" checked >);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+#=====================================================================	
+    if ($action{option} eq 'ICMP')
+    {
+        print qq (<p><a>Drop When ICMP</a><br>);
+    	print qq (<a>Exceeds </a>);
+    	print qq (<input type="text" class="qbtext" id="icmp_num" name="icmp_num" value="$edit->{icmp_num}" style="width:20%">);
+    	print qq (<a> Packets per Sec.</a></p>);
+    }elsif ($action{option} eq 'SYN')
+    {
+    	print qq (<p><a>Drop When SYN</a><br>);
+    	print qq (<a>Exceeds </a>);
+    	print qq (<input type="text" class="qbtext" id="syn_num" name="syn_num" value="$edit->{syn_num}" style="width:20%">);
+    	print qq (<a> Packets per Sec.</a></p></td>);
+    }elsif ($action{option} eq 'UDP')
+    {
+    	print qq (<p><a>Drop When UDP</a><br>);
+    	print qq (<a>Exceeds </a>);
+    	print qq (<input type="text" class="qbtext" id="udp_num" name="udp_num" value="$edit->{udp_num}" style="width:20%"">);
+    	print qq (<a> Packets per Sec.</a></p></td>);
+    }
+#=====================================================================
+    print qq (</td></tr>);
+	
+	print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+	
+	#-------------------------------------------------------------------------------------------
+    #  Connection Overflow: Log Rate
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr style="display:none">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Log Rate :<br><br>);
+	print qq (<input type="checkbox" id="logset" name="logset" onclick="setLog('logset',this.checked)" checked>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+	print qq (<p><a>Save </a><input type="text" class="qbtext" id="timenumber" name="timenumber" style="width:50" value="1"> / );
+	print qq (<select id="time" name="time">);
+	print qq (<option value="h">Hours);
+	print qq (<option value="m" selected>Minute);
+	print qq (<option value="s">Second);
+	print qq (</select><p>);
+	print qq (<a>Log Prefix :</a><br><input type="text" class="qbtext" id="logprefix" name="logprefix" style="width:60%" value="icmp_flood:"></td>);
+    print qq (</td></tr>);
+	
+    print qq (</table>);
+    #print qq (<tr><hr size=1></tr>);
+    #print qq (<table>);
+    #print qq (<tr><td><hr size=1></td></tr>);
+    #print qq (</table>);
+    #-------------------------------------------------------------------------------------------
+    #  Flood : Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Description :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<textarea class="qbtext" id="description" name="description" style="width:200;height:80" >$edit->{description}</textarea>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    #-----------------------------------------------------------------------------------------------------
+
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 600px">);
+    print qq (<input class="qb" type="button" style="width:50" value="Save" onclick="SaveFlood();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showEditDos
+    
+
+
+#=============================================================================================
+
+sub scriptEditDos
+{
+    print << "scriptEditDos";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="jquery-1.10.2.js"></script>
+   <script language="javascript">
+
+    var myform;
+    \$("td[class='bigtitle'").text(\$("#option").val()+" Flood");
+    function cgi_dep_onload() { myform=window.document.forms[0]; checkState(); showclick();}
+
+	function newCancel() { window.top.mainFrame.location.href="./dos.cgi"; }
+
+	function setEnable(checkboxname,boolvalue)
+	{
+		var enable=document.getElementById(checkboxname);
+		var icmp_num=document.getElementById('icmp_num');
+		var syn_num=document.getElementById('syn_num');
+		//alert(boolvalue);
+		if(enable.checked==true)
+		{
+			icmp_num.disabled=false;
+			syn_num.disabled=false;
+		}
+		else
+		{
+			icmp_num.disabled=false;
+			syn_num.disabled=false;
+		}
+	}
+	
+	function setLog(checkboxname,boolvalue)
+	{
+		var logset=document.getElementById(checkboxname);
+		var timenumber=document.getElementById('timenumber');
+		var time=document.getElementById('time');
+		var logprefix=document.getElementById('logprefix');
+		if(logset.checked==true)
+		{
+			timenumber.disabled=false;
+			time.disabled=false;
+			logprefix.disabled=false;
+		}
+		else
+		{
+			timenumber.disabled=false;
+			time.disabled=false;
+			logprefix.disabled=false;
+		}
+	}
+	
+	function mytest(dosenable,dosicmp_num,dossyn_num,doslogset,dostimenumber,dostime,doslogprefix)
+	{
+		var enable=document.getElementById('enable');
+		var icmp_num=document.getElementById('icmp_num');
+		var syn_num=document.getElementById('syn_num');
+		var logset=document.getElementById('logset');
+		var timenumber=document.getElementById('timenumber');
+		var time=document.getElementById('time');
+		var logprefix=document.getElementById('logprefix');
+		if(dosenable=='true')
+		{
+			enable.checked=true;
+		}
+		if(dosenable=='false')
+		{
+			enable.checked=false;
+		}
+		setEnable('enable',dosenable);
+		icmp_num.value=dosicmp_num;
+		syn_num.value=dossyn_num;
+		if(doslogset=='true'){logset.checked=true;}
+		if(doslogset=='false'){logset.checked=false;}
+		setLog('logset',doslogset);
+		timenumber.value=dostimenumber;
+		time.value=dostime;
+		logprefix.value=doslogprefix;
+		//alert(dosenable+'.'+dosicmp_num+'.'+dossyn_num+'.'+doslogset+'.'+dostimenumber+'.'+dostime+'.'+doslogprefix+"."+enable.checked);
+	}
+	
+	function SaveFlood() 
+    {
+		var type=document.getElementById('type').value;
+		var cls=document.getElementById('option').value;
+        	var enable=document.getElementById('enable').checked;
+        	
+		var icmp_num=(document.getElementById('icmp_num'))?(document.getElementById('icmp_num').value):('');
+		var syn_num=(document.getElementById('syn_num'))?(document.getElementById('syn_num').value):('');
+		var udp_num=(document.getElementById('udp_num'))?(document.getElementById('udp_num').value):('');
+		var logset=document.getElementById('logset').checked;
+		var timenumber=document.getElementById('timenumber').value;
+		var time=document.getElementById('time').value;
+		var logprefix=document.getElementById('logprefix').value;
+        
+		var n_dosip=document.getElementById('dosip');
+		var dosip=n_dosip.value;
+        var description=document.getElementById('description').value;
+		if ( dosip == '' )
+        {
+            alert('IP must be English or nember');
+            return;
+        }
+
+		//for (i = 0; i < schname.length; i++)
+        //{
+        //    var ch = schname.charCodeAt(i);
+        //    if ( ch < 32 || ch > 126 )
+        //    {
+        //       alert("Schedule Name must be English or nember");
+        //       return;
+        //    }
+        //}
+
+		for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Description must be English ");
+               return;
+            }
+        }
+        //if ( n_dosip.disabled != true )
+            myform.dosip.value = n_dosip.value;
+        
+        myform.action.value = 'SAVE';
+	myform.newtype.value=type;
+	myform.newenable.value=enable;
+	myform.newicmp_num.value=icmp_num;
+	myform.newsyn_num.value=syn_num;
+	myform.newudp_num.value=udp_num;
+	myform.newcls.value=cls;
+	myform.newlogset.value=logset;
+	myform.newtimenumber.value=timenumber;
+	myform.newtime.value=time;
+	myform.newlogprefix.value=logprefix;
+        myform.submit();
+    }
+	
+	function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var dosip=document.getElementById('dosip');
+        var dosip_hidden=document.getElementById('dosip_hidden');
+        if ( dosip.value != '' ){
+			//dosip_hidden.disabled = true; 
+		}
+        
+        if ( action != '' ){
+            //window.top.mainFrame.location.href="newflood.cgi";
+			history.go(-2); 
+			location.replace('newflood.cgi?option='+ document.getElementById("option").value);
+		}
+    }
+
+	function showclick() 
+	{
+		document.getElementById('AutoSubmit').click();
+	}
+	
+	function select_type() 
+	{
+		var type=document.getElementById('type');
+		var dosip=document.getElementById('dosip');
+		
+		if (type.selectedIndex != -1)
+		{
+			dosip.value = type.options[type.selectedIndex].text;
+			if(type.options[type.selectedIndex].text=='Custom')
+			{
+				dosip.value = '';
+				dosip.readonly=true;
+			}else
+			{
+				dosip.value = type.options[type.selectedIndex].text;
+				dosip.readonly = false;
+			}
+			
+			
+		}
+	}
+	
+    </script>
+    
+scriptEditDos
+}
+#scriptEditDos
+
+sub byName
+{
+    $a->{schname} cmp $b->{schname};
+}
+#byName
+
+sub maintainCOD
+{
+    my (%action)=@_;
+
+    my $dosref=XMLread($gPATH.'newflood.xml');
+    my $doslist=$dosref->{newflood};
+    my $exist=0;
+	my $exist2=0;
+    my %newflood;
+	my %newfloods;
+	
+	my $option=$action{option};
+	
+	my $dqos=XMLread('/usr/local/apache/qbconf/dqos.xml');
+    my $hostList=$dqos->{list};
+	
+	@type=$action{newtype};
+	@enable=$action{newenable};
+	@icmp_num=$action{newicmp_num};
+	@syn_num=$action{newsyn_num};
+	@logset=$action{newlogset};
+	@timenumber=$action{newtimenumber};
+	@time=$action{newtime};
+	@logprefix=$action{newlogprefix};
+    
+    $action{dosip}=~s/^\s*|\s*$//g;
+    if ( !$action{action} ) { return; }
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+		@type=$action{newtype};
+		@enable=$action{newenable};
+		@icmp_num=$action{newicmp_num};
+		@syn_num=$action{newsyn_num};
+		$udp_num=$action{newudp_num};
+		$cls=$action{newcls};
+		@logset=$action{newlogset};
+		@timenumber=$action{newtimenumber};
+		@time=$action{newtime};
+		@logprefix=$action{newlogprefix};
+		
+		$newflood{type}=$type[0];
+        	$newflood{dosip}=$action{dosip};
+        	$newflood{description}=$action{description};
+		$newflood{enable}=$enable[0];
+		$newflood{icmp_num}=$icmp_num[0];
+		$newflood{syn_num}=$syn_num[0];
+		$newflood{udp_num}=$udp_num;
+		$newflood{cls}=$cls;
+		
+		$newflood{logset}=$logset[0];
+		$newflood{timenumber}=$timenumber[0];
+		$newflood{time}=$time[0];
+		$newflood{logprefix}=$logprefix[0];
+		
+		$newfloods{list}=$action{dosip};
+		
+        foreach my $sh ( @$doslist )
+        {
+            if ( $sh->{dosip} eq $action{dosip} && $sh->{cls} eq $option )
+            {
+                $exist=1;
+                $sh=\%newflood;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            #delete($action{action});
+            push( @$doslist, \%newflood); 
+            @$doslist=sort byName @$doslist;
+        }
+	foreach my $sh ( @$hostList )
+	{
+		if ( $sh->{list} eq $action{dosip} )
+		{
+			$exist2=1;
+			$hostList=\%newfloods;
+		}
+	}
+	if ( $exist2 eq '0' ){push( @$hostList, \%newfloods);}
+        LogUserAction( action=>'SaveFlood', dosip=>$action{dosip});
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{newflood};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        
+        my @temparray;
+		my @temparray2;
+        foreach my $item ( @$doslist )
+        {
+            if ( grep(/^$item->{dosip}$/, @$delet) && $item->{cls} eq $option ) { LogUserAction( action=>'DELCOD', dosip=>$item->{dosip} ); next; }
+            push(@temparray, $item); 
+        }
+		foreach my $item ( @$hostList )
+        {
+            if ( grep(/^$item->{list}$/, @$delet) && $item->{cls} eq $option ) { LogUserAction( action=>'DELCOD', list=>$item->{list} ); next; }
+            push(@temparray2, $item); 
+        }
+        $dosref->{newflood}=\@temparray;
+		$dqos->{list}=\@temparray2;
+        
+    }
+	elsif ( $action{action}=~m/^ENABL$/ )
+    {
+		my $enable=$action{enable};
+		my @temparray;
+        foreach my $item ( @$doslist )
+        {
+			if ( grep(/^$item->{dosip}$/, @$enable) && $item->{cls} eq $option )
+            {
+if ( $item->{dosip} eq "system" ) { next; }
+                $item->{enable}=true;
+				$item->{logset}=true;
+            }
+			elsif ( !grep(/^$item->{dosip}$/, @$enable) && $item->{cls} eq $option ){$item->{enable}=false; $item->{logset}=false;}
+            push(@temparray, $item); 
+        }
+        $dosref->{newflood}=\@temparray;
+    }
+	XMLwrite($dqos, $gPATH."dqos.xml");
+    XMLwrite($dosref, $gPATH."newflood.xml");
+    makeshell();
+}
+
+#
+1

@@ -1,0 +1,590 @@
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showDiag
+{
+    my (%action)=@_;
+    my @iidlist=maintainBasic(action=>'GETGOODIIDLIST');
+    my @normaliidlist=maintainBasic(action=>'GETNORMALISPIIDLIST');
+    #my @tunnelsystemiplist=maintainBasic(action=>'GETTUNNELSYSTEMIPLIST');
+    #my @normalsystemiplist=maintainBasic(action=>'GETNORMALSYSTEMIPLIST');
+    #my @tunnelgatewaylist=maintainBasic(action=>'GETTUNNELGATEWAYLIST');
+    my @tunnelispidlist=maintainBasic( action=>'GETTUNNELISPIDLIST' );
+   
+    print qq (<table>);
+
+    print qq (<tr><td class="bigtitle" colspan="2">$qblang[420] ); #</td></tr>); 
+    print qq (<a href="javascript:qbShowHelp('diagnose')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    print qq (<tr><td class="bigtitle" colspan="2"><hr size="1"></td></tr>); 
+    print qq (<tr><td rowspan="2">);
+    print qq (<iframe onload="clearInterval(Timer)" name="result" style="background-color:#C2D1E1; width:500; height:530; filter:alpha(opacity=70);"></iframe>);
+    print qq (<iframe id="kill" style="display:none"></iframe>);
+    print qq (</td>);
+    
+    print qq (<td valign="top" align="center">);
+    
+    #=========================================================================
+    # printing Selection Menu of Tool
+    print qq (<fieldset class="fieldset">);
+    print qq (<legend class="subtitle">$qblang[421]</legend>);
+    print qq (<table class="body">);
+    print qq (<tr><td><input name="tool" type="radio" value="ping"   checked onClick="switchOption('ping')">Ping</td></tr>);
+
+#Brian 2005-0909
+    print qq (<tr><td><input name="tool" type="radio" value="ethtool"  onClick="switchOption('ethtool')">$qblang[422]</td></tr>);
+
+    print qq (<tr><td><input name="tool" type="radio" value="traceroute" onClick="switchOption('traceroute')">$qblang[423]</td></tr>);
+    print qq (<tr><td><input name="tool" type="radio" value="arping"  onClick="switchOption('arping')">$qblang[424]</td></tr>); 
+    print qq (<tr><td><input name="tool" type="radio" value="tcpdump" onClick="switchOption('tcpdump')">$qblang[425]</td></tr>); 
+    print qq (<tr><td><input name="tool" type="radio" value="arp" onClick="switchOption('arp')">$qblang[426]</td></tr>); 
+    #print qq (<tr><td><input name="tool" type="radio" value="tc" onClick="switchOption('tc')">Query QoS Status</td></tr>); 
+    
+#Brian 2010-1019
+    print qq (<tr><td><input name="tool" type="radio" value="telnet" onClick="switchOption('telnet')">$qblang[427]</td></tr>); 
+
+#Brian 2006-0912
+    print qq (<tr><td><input name="tool" type="radio" value="wget" onClick="switchOption('wget')">$qblang[428]</td></tr>); 
+
+#Brian 2006-0915
+    print qq (<tr><td><input name="tool" type="radio" value="tunnel_speed" onClick="switchOption('tunnel_speed')">$qblang[429]</td></tr>); 
+
+#Brian 2009-1117
+    print qq (<tr><td><input name="tool" type="radio" value="tunnel_speed_pool" onClick="switchOption('tunnel_speed_pool')">$qblang[430]</td></tr>); 
+
+#Brian 2011-0412
+    print qq (<tr><td><input name="tool" type="radio" value="latency_speed" onClick="switchOption('latency_speed')">$qblang[431]</td></tr>); 
+
+#Brian 2006-0920
+    print qq (<tr><td><input name="tool" type="radio" value="packet_lost" onClick="switchOption('packet_lost')">$qblang[432]</td></tr>); 
+
+#Brian 2005-0929
+    print qq (<tr><td><input name="tool" type="radio" value="arpcache" onClick="switchOption('arpcache')">$qblang[433]</td></tr>);
+ 
+#Brian 2005-1122
+    #print qq (<tr><td><input name="tool" type="radio" value="bindmac" onClick="switchOption('bindmac')">Bind Mac Address</td></tr>); 
+
+    print qq (<tr><td><input name="tool" type="radio" value="restartqbserv" onClick="switchOption('restartqbserv')">$qblang[434]</td></tr>); 
+
+#Brian 2005-0913
+    #print qq (<tr><td><input name="tool" type="radio" value="rebootqb"  onClick="switchOption('rebootqb')">Reboot QB</td></tr>);
+
+    print qq (</table>); 
+    print qq (</fieldset>);
+    print qq (</td></tr>);
+
+    #=========================================================================
+    # print config options of selected diagnosetic tool
+    print qq (<tr><td valign="top" align="center">);
+    
+    #=================================================================================================
+    print qq (<fieldset id="ping" class="fieldset" style="display:block">);
+    print qq (<legend class="subtitle">$qblang[435]</legend>);
+    print qq (<table class="body">);
+    print qq (<tr><td>$qblang[436]:</td><td><input class="qbtext"  type="text" name=pingoptions></td></tr>);
+    print qq (<tr><td>$qblang[437]:</td>);
+    print qq (<td><select class="qbopt"  name=ping_count style="width:130">);
+    foreach my $count ( 0..10  )
+    {  
+       my $showvalue=( $count eq "0" ) ? ('Unlimited') : ($count);
+       print qq (<option value="$count">$showvalue pings</option>); 
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (<tr><td>$qblang[438]:</td><td><select class="qbopt" name="pingpath" style="width:130">);
+    foreach my $isp ( @iidlist ) { print qq (<option value="$isp">ISP $isp</option>); }
+    print qq (<option value=''>LAN</option>);
+    print qq (</select></td></tr>);
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+
+ 
+    #=================================================================================================
+    # print config options of selected ethtool
+    #Brian 2005-0908 
+    #=================================================================================================
+    print qq (<fieldset id="ethtool" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[439]</legend>);
+    print qq (<table class="body" cellpadding="0">);
+
+    print qq (<tr><td>$qblang[28]: </td>);
+    print qq (<td><select class="qbopt" name="ethtool_nic" style="width:130">);
+    foreach my $eth ( 0.. $gNUMOFPORT-1 ) { $port=$eth+1; print qq (<option value="eth$eth">PORT $port</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td>$qblang[440]:</td>);
+    print qq (<td><select class="qbopt"  name="ethtool_duplex" style="width:130">);
+    foreach my $duplexmode (Query,full,half ) {  print qq (<option value="$duplexmode">$duplexmode Duplex</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+
+    print qq (<tr><td>$qblang[441]:</td>);
+    print qq (<td><select class="qbopt"  name="ethtool_speed" style="width:130">);
+    foreach my $nicspeed (Query,10,100,1000 ) {  print qq (<option value="$nicspeed">$nicspeed Mbits</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td>$qblang[442]:</td>);
+    print qq (<td><select class="qbopt"  name="ethtool_nego" style="width:130">);
+    foreach my $nicnego ($qblang[101],$qblang[100] ) {  print qq (<option value="$nicnego">$nicnego</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+ 
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+   
+    #=================================================================================================
+    # Modify ARP Cache
+    #Brian 2005-0929 
+    #=================================================================================================
+    print qq (<fieldset id="arpcache" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[458]</legend>);
+    print qq (<table class="body" cellpadding="0">);
+
+    print qq (<tr><td>$qblang[28]: </td>);
+    print qq (<td><select class="qbopt" name="arpcache_nic" style="width:130">);
+    foreach my $eth ( 0.. $gNUMOFPORT-1 ) { $port=$eth+1; print qq (<option value="eth$eth">PORT $port</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td>$qblang[459]:</td>);
+    print qq (<td><select class="qbopt"  name="packet_num" style="width:130">);
+    foreach my $pnum (1..20) {  print qq (<option value="$pnum">$pnum</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+ 
+    print qq (<tr><td>$qblang[445]:</td><td><input class="qbtext"  type="text" name=arpcache_sip></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+   
+    print qq (<tr><td>$qblang[460]:</td><td><input class="qbtext"  type="text" name=arpcache_tip></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+    
+    print qq (<tr><td>$qblang[461]:</td><td><input class="qbtext"  type="text" name=arpcache_mac></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+    
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+   
+    #=================================================================================================
+    #Bind Mac Address 
+    #Brian 2005-1122 
+    #=================================================================================================
+    print qq (<fieldset id="bindmac" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">Options of Host Info.</legend>);
+    print qq (<table class="body" cellpadding="0">);
+
+    print qq (<tr><td>Interface: </td>);
+    print qq (<td><select class="qbopt" name="bindmac_nic" style="width:130">);
+    foreach my $eth ( 0.. $gNUMOFPORT-1 ) { $port=$eth+1; print qq (<option value="eth$eth">PORT $port</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    print qq (<tr><td>Target IP:</td><td><input class="qbtext"  type="text" name=bindmac_tip></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+    
+    print qq (<tr><td>Target MAC:</td><td><input class="qbtext"  type="text" name=bindmac_mac></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+    
+    print qq (<tr><td>Save on boot: </td>);
+    print qq (<td><select class="qbopt" name="bindmac_save" style="width:130">);
+    foreach my $macsave ( 'no', 'yes', 'clear' ) { print qq (<option value="$macsave">$macsave</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="Go" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="Stop"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+   
+    #=================================================================================================
+    #Open Port Check
+    #Brian 2010-1019
+    #=================================================================================================
+    print qq (<fieldset id="telnet" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle" span title="Check the port open or not" >$qblang[449]</legend> );
+    print qq (<table class="body" cellpadding="0" >);
+
+    print qq (<tr><td>$qblang[446]:</td><td><input class="qbtext" onchange="checkIPformat()" type="text" name=telnet_dstip></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+   
+    print qq (<tr><td>$qblang[450]:</td><td><input class="qbtext" maxlength="5" type="text" name=telnet_dstport></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+   
+    #=================================================================================================
+    #Measure ISP Download Speed 
+    #Brian 2006-0912 
+    #=================================================================================================
+    print qq (<fieldset id="wget" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle" span title="Support Http&Ftp Download" >$qblang[451]</legend> );
+    print qq (<table class="body" cellpadding="0" >);
+
+    print qq (<tr><td>$qblang[452]: </td>);
+    print qq (<td><select class="qbopt" name="isp_iid" style="width:130">);
+    foreach my $isp_iid ( @normaliidlist ) 
+    { 
+      my $ISPNAME=maintainBasic(action=>'GETNAMEBYIID', iid=>$isp_iid );
+      print qq (<option value="$isp_iid">ISP $isp_iid ($ISPNAME)</option>); 
+    }
+    print qq (</select>);
+
+    print qq (<tr><td>$qblang[453]:</td><td><input class="qbtext"  type="text" value="http://www.kernel.org/pub/linux/kernel/v1.2/linux-1.2.0.tar.gz" span title="Expample: http://www.kernel.org/pub/linux/kernel/v1.2/linux-1.2.0.tar.gz" name=remote_file></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+    
+    print qq (<tr><td>$qblang[454]:</td><td><input class="qbtext"  type="text" span title="Some server need to login(User name)" name=login_user></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+    
+    print qq (<tr><td>$qblang[342]:</td><td><input class="qbtext"  type="text" span title="Some server need to login(Password)" name=login_password></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+    
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+   
+    #=================================================================================================
+    #Measure Tunnel Speed by Link 
+    #Brian 2006-0915 
+    #=================================================================================================
+    print qq (<fieldset id="tunnel_speed" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle" span title="Select Src. and Dst.">$qblang[451]</legend>);
+    print qq (<table class="body" cellpadding="0">);
+
+    print qq (<tr><td>$qblang[56]: </td>);
+    print qq (<td><select class="qbopt" name="tunnel_iid" style="width:130">);
+    foreach my $tunnelid ( @tunnelispidlist ) 
+    { 
+      my $ISPNAME=maintainBasic(action=>'GETNAMEBYIID', iid=>$tunnelid );
+      print qq (<option value="$tunnelid">ISP $tunnelid ($ISPNAME)</option>); 
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+   
+    #=================================================================================================
+    #Measure Tunnel Speed by Pool 
+    #Brian 2009-1117
+    #=================================================================================================
+    print qq (<fieldset id="tunnel_speed_pool" class="fieldset" style="display:none">);
+    my @rtablelist=maintainRtable( action=>'GETBYPACKETSTABLEIDLIST' );
+    print qq (<legend class="subtitle" span title="Select Src. and Dst.">$qblang[451]</legend>);
+    print qq (<table class="body" cellpadding="0">);
+
+    print qq (<tr><td>$qblang[172]: </td>);
+    print qq (<td><select class="qbopt" name="tunnel_pool" style="width:130">);
+    foreach my $poolid ( @rtablelist ) 
+    { 
+      my $TableNote=maintainRtable(action=>'GETPOOLNOTE', poolnum=>$poolid);
+      if ( $TableNote ){print qq (<option value="$poolid">Pool $poolid ($TableNote)</option>);}
+      else {print qq (<option value="$poolid">Pool $poolid </option>);}
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+   
+    #=================================================================================================
+    #Measure Speed and Latency
+    #Brian 2011-0412
+    #=================================================================================================
+    print qq (<fieldset id="latency_speed" class="fieldset" style="display:none">);
+    my @rtablelist=maintainRtable( action=>'GETBYPACKETSTABLEIDLIST' );
+    print qq (<legend class="subtitle" span title="Select links and specify a optimal latency">$qblang[451]</legend>);
+    print qq (<table class="body" cellpadding="0">);
+
+    print qq (<tr><td>$qblang[455]: </td>);
+    print qq (<td><select class="qbopt" name="speed_latency_link" style="width:130">);
+    foreach my $tunnelid ( @tunnelispidlist ) 
+    { 
+      my $ISPNAME=maintainBasic(action=>'GETNAMEBYIID', iid=>$tunnelid );
+      print qq (<option value="$tunnelid">ISP $tunnelid ($ISPNAME)</option>); 
+    }
+    foreach my $poolid ( @rtablelist ) 
+    { 
+      my $TableNote=maintainRtable(action=>'GETPOOLNOTE', poolnum=>$poolid);
+      if ( $TableNote ){print qq (<option value="pool$poolid">Pool $poolid ($TableNote)</option>);}
+      else {print qq (<option value="pool$poolid">Pool $poolid </option>);}
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td>$qblang[456]:</td><td><input class="qbtext"  type="text" value="100" span title="Specify an optimal latency" name=max_latency></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+   
+    #=================================================================================================
+    #Tunnel Packet Lost Detection 
+    #Brian 2006-0920 
+    #=================================================================================================
+    print qq (<fieldset id="packet_lost" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle" span title="Select Src. and Dst.">$qblang[457]</legend>);
+    print qq (<table class="body" cellpadding="0">);
+
+    print qq (<tr><td>$qblang[56]: </td>);
+    print qq (<td><select class="qbopt" name="tunnel_iid_pl" style="width:130">);
+    foreach my $tunnelid ( @tunnelispidlist ) 
+    { 
+      my $ISPNAME=maintainBasic(action=>'GETNAMEBYIID', iid=>$tunnelid );
+      print qq (<option value="$tunnelid">ISP $tunnelid ($ISPNAME)</option>); 
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+   
+    #=================================================================================================
+         #Ping by Arp Packet
+    #=================================================================================================
+    print qq (<fieldset id="arping" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[444]</legend>);
+    print qq (<table class="body">);
+    print qq (<tr><td>$qblang[445]:</td> <td><input class="qbtext"  type="text" name=arping_sip></td></tr>);
+    
+    
+    print qq (<tr><td>$qblang[28]: </td>);
+    print qq (<td><select class="qbopt" name="arping_dev" style="width:130">);
+    foreach my $eth ( 0.. $gNUMOFPORT-1 ) { $port=$eth+1; print qq (<option value="eth$eth">PORT $port</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td>$qblang[437]:</td>);
+    print qq (<td><select class="qbopt"  name=arping_count style="width:130">);
+    foreach my $count ( 2..10  ) {  print qq (<option value="$count">$count pings</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td>$qblang[446]:</td><td><input class="qbtext"  type="text" name=arping_dip></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+ 
+   
+    #=================================================================================================
+    print qq (<fieldset id="tcpdump" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[447]</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>$qblang[436]:</td><td><input class="qbtext"  type="text" name=tcpdumpoptions></td></tr>);
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+
+
+    #=================================================================================================
+    print qq (<fieldset id="traceroute" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[443]</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>$qblang[436]:</td><td><input class="qbtext"  type="text" name=tracerouteoptions></td></tr>);
+    print qq (<tr><td>$qblang[438]:</td><td><select class="qbopt" name="traceroutepath" style="width:130">);
+    foreach my $isp ( @iidlist ) { print qq (<option value="$isp">ISP $isp</option>); }
+    print qq (<option value=''>LAN</option>);
+    print qq (</select></td></tr>);
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+
+
+    #=================================================================================================
+    print qq (<fieldset id="arp" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[448]</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td colspan="2">$qblang[448]</td></tr>);
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+
+
+    #=================================================================================================
+    print qq (<fieldset id="tc" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">QoS Query</legend>);
+    print qq (<table class="body">);
+       
+    print qq (<tr><td>Object: </td>);
+    print qq (<td><select class="qbopt" name="tcobj" style="width:130">);
+    foreach my $obj ( 'filter', 'class', 'qdisc' ) { print qq (<option value="$obj">$obj</option>); }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td>Interface: </td>);
+    print qq (<td><select class="qbopt" size="4" multiple name="tcdev" style="width:130">);
+    foreach my $eth ( 0.. $gNUMOFPORT-1 ) { $port=$eth+1; print qq (<option value="eth$eth">PORT $port</option>); }
+    foreach my $dir ('-IN', '-OUT')
+    {
+        foreach my $isp ( @iidlist ) 
+        { 
+            my $imq=nicTranslate('ISP'.$isp.$dir); 
+            print qq (<option value="$imq">ISP$isp$dir</option>); 
+        }
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    print qq (<tr><td colspan="2" align="center">);
+    print qq (<input type="button" class="qb" value="Go" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="Stop"  style="width:50px;width:50px" onClick="stopResult()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+    
+    #=================================================================================================
+    print qq (<fieldset id="restartqbserv" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[462]</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td colspan="2">$qblang[462]</td></tr>);
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" name="rstqb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+    #=================================================================================================
+#Brian 2005-0913
+    print qq (<fieldset id="rebootqb" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">Reboot QB:</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>Reboot QB at </td>);
+    print qq (<td><select class="qbopt"  name=reboot_time style="width:100">);
+    my $reboot_time_cfg=runCommand(command=>'cat', params=>'/tmp/reboot_time');
+    $reboot_time_cfg=~s/\n//g;
+    foreach my $time ( 24, 0..23 ) 
+    {  
+       my $status=( $time eq $reboot_time_cfg ) ? ('selected'):('');
+       my $showvalue=( $time eq "24" ) ? ('the moment') : ($time.':00');
+       print qq (<option $status value="$time">$showvalue</option>); 
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="Go" style="width:50px;width:50px" onClick="go();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+    print qq (</td></tr>);
+
+    print qq (</table>);
+
+    print qq (<input type="hidden" name="stop" value="">);
+}
+
+sub diagScript
+{
+    print << "DIAGSCRIPT";
+
+    <script language="javascript">
+
+        var preMethod="ping";
+        var myform;
+    
+        function cgi_dep_onload() { myform=window.document.forms[0]; } 
+
+        //function window.onunload() { qbCleanUpModule('../clean/cleandiagnose.htm'); }
+        
+        function stopResult() 
+        { 
+            kill.location='../setuid/rundiatool.cgi?'+'action=stop&'+'tool='+preMethod;
+            //window.document.execCommand('Stop');
+            clearInterval(Timer); 
+        }
+        
+        function switchOption(method) 
+        {
+            stopResult();
+            document.all[preMethod].style.display="none";
+            document.all[method].style.display="block";
+            preMethod=method;
+        }
+
+        function checkIPformat() 
+        {
+           if ( !isValidIP(myform.telnet_dstip.value) )
+           {
+              alert('IP format error !!!');
+              return;
+           }
+        }
+
+        function go()
+        {  
+            myform.action.value='start';
+            myform.submit();
+            moveResultScrollBarToBottom('start');
+
+            if (preMethod=="restartqbserv") 
+            { 
+                myform.rstqb.disabled=true; 
+                setTimeout("enableRestartQB()",5000);
+            }
+        }
+
+        function enableRestartQB() { myform.rstqb.disabled=false; }
+        
+        var Timer;
+        var BigInteger=1<<30;
+        function moveResultScrollBarToBottom(action)
+        {
+            if (action=='start')    { Timer = setInterval("result.scroll(0, BigInteger)",1000); }
+            if (action=='stop')     { clearInterval(Timer); }
+        }
+        
+    </script>
+    
+DIAGSCRIPT
+
+}
+
+
+#
+1

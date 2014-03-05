@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!doctype html public "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title></title>
+  <meta http-equiv="Content-Type" content="text/html; {txt_charset}" />
+</head>
+
+<style type="text/css">
+<!--
+  h4 {
+      font-family:Courier New,Sans-serif;
+      }
+
+  p, td, br, form, div, span {
+      font-family:Courier New,Sans-serif;
+      font-size:9.5pt;
+      }
+
+  .code {
+      font-family:Courier New,Sans-serif;
+      }
+
+  .code strong {
+      color:#FF9F00;
+      }
+
+-->
+</style>
+
+<body>
+  <p>
+    <LOOP NAME="extensions">
+      <a href="./index.php?test.{ext}">Download File</a> {EXT}<br />
+    </LOOP NAME="extensions">
+
+      <a href="./index.php?test">Download File</a> No Extension<br />
+  </p>
+
+  <form action="./index.php" method="get">
+    <input type="hidden" name="download_file" value="test.txt" />
+    <input type="submit" name="button" value="Download" />
+  </form>
+
+  </body>
+</html>

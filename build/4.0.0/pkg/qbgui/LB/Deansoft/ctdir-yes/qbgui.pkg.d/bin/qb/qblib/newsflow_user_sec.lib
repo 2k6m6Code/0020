@@ -1,0 +1,478 @@
+#=============================================================================================
+sub showNewSchedule
+{
+    my (%action)=@_;
+    my $schref=XMLread($gPATH.'flow_sec.xml');
+    my $schlist=$schref->{user};
+    my $edit; 
+   
+    foreach my $sh ( @$schlist )
+    {
+        if ( $sh->{schname} eq $action{schname} ) { $edit=$sh; }
+    }
+   
+    
+    my @titleHeadList=('IP', 'Description' ,'Edit');
+#    my @titleHeadList=('IP', 'Description');
+    my %titleWidth=('IP'=>300,'Description'=>300,'Edit'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Transparent subnet);
+
+    print qq (<hr size=1>);
+    
+    print qq (<table width="600">);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 250px">);
+    print qq (<input type="text" class="qbtext" id="schname_show" name="schname_show" style="WIDTH: 120px" value="$edit->{schname}">);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Description :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 250px">);
+    print qq (<textarea class="qbtext" id="description" name="description" style="WIDTH: 120px" >$edit->{description}</textarea>);
+    
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+    print qq (<div class="divframe" style="width:600; height:150;display:block;">); 
+    print qq (<table id="scheduleList" style="width:600" border="0"><tr bgcolor="#332211">);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    print qq (<td>);
+    print qq (<a href="javascript:DeleteSchedule()"><image src="../image/del.gif" title="Delete Checked Schdule(s)" border="0"></a>);
+    print qq (<input type="checkbox" id="del" title="select or deselect all items" onClick="setAllCheckBoxValue('subschs', this.checked)">);
+    print qq (</td></tr>);
+    
+    #my $index = 0;
+    my $showlist = $edit->{member};
+    my $ip;
+    foreach my $show ( @$showlist )
+    {
+        print qq (<tr>);
+        print qq (<td align="center" width="100">$show->{ip}</td>);
+        print qq (<td align="center" width="100">$show->{mail}</td>);
+        print qq (<td align="center" width="50">);
+        print qq (<a onclick="EDIT('$show->{ip}','$show->{mail}')"><img src="../image/edit.gif"></a></td>);
+        print qq (<td><input type="checkbox" name="subschs" ></td>);
+        print qq (</tr>);
+    }
+    print qq (</table></div>);
+    
+    print qq (<table bgcolor="#667788" width="600">);
+    #-------------------------------------------------------------------------------------------
+    #  Schedule: Days , Start time , Stop Time
+    #-------------------------------------------------------------------------------------------
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (IP :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 200px">);
+    print qq (<input type="text" id="port" name="alldays" value=""></td>);
+	print qq (<td class="body"  valign="center" align="left">e.g. 192.168.1.10 or<br>192.168.2.100-192.168.2.110<br>IP Range must be on the same subnet!!);
+	print qq (</td>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Note :);
+    print qq (<td colspan="2" class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<textarea id="mail" value="" ></textarea></td>);
+    print qq (</td></tr>);
+    
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+    #-----------------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 600px">);
+    print qq (<input class="qb" type="button" style="width:50" value="Save" onclick="SaveSchedule();">);
+    print qq (<input class="qb" type="button" style="width:50" value="Back" onclick="window.top.mainFrame.location.href='flow_user_sec.cgi'">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+}
+#showSchedule
+
+
+#=============================================================================================
+
+sub scriptNewSchedule
+{
+    print << "scriptNewSchedule";
+
+   <script type="text/javascript" src="../grid.js"></script>
+   <script type="text/javascript" src="../qb.js"></script>
+   <script language="javascript">
+
+    var myform;
+    function cgi_dep_onload() { myform=window.document.forms[0]; checkState();}
+    
+    function EDIT(x,y)
+    {
+        var ip = document.getElementById("port").value;
+        var mail = document.getElementById("mail").value;
+        document.getElementById("port").value=x;
+        document.getElementById("mail").value=y;  
+    }
+    
+    function AddSchedule()
+    {
+        var subsch = document.getElementById('scheduleList').rows;
+        var total = subsch.length;
+        var ip=document.getElementById('port').value;
+        var mail=document.getElementById('mail').value;
+        var isOK=1;
+		var isOKk=1;
+        var color=(total % 2) ? ( "#556677" ) : ( "#334455" );
+        if (ip == '' || ip == null)
+        {
+            alert("The IP can't empty!!");
+            return;
+        }
+		var error='Invalid Address!!\\n';
+		var msg='';
+		var re = /[-]/;
+		var ree = /[\/]/;
+		
+		if(re.test(ip))
+		{
+			var range=ip.split('-');
+			var subiprange1 = range[0].split('.');
+			var subiprange2 = range[1].split('.');
+			if (!isValidIP(range[0])||!isValidIP(range[1]))
+			{
+				msg+=ip+'\\n';
+				isOK=0;
+			}
+			if (isOK==1 && subiprange1[0] + subiprange1[1] + subiprange1[2] != subiprange2[0] + subiprange2[1] + subiprange2[2])
+			{
+				msg+=ip+'\\n';
+				isOK=0;
+				//alert('IP range MUST the same subnet!!\\n e.g : 192.168.1.10-192.168.1.20');
+				//return;
+			}
+			if (isOK==1 && parseInt(subiprange1[3]) >=  parseInt(subiprange2[3]))
+			{
+				msg+=ip+'\\n';
+				isOK=0;
+				//alert('Invalid Address!!');
+				//return;
+			}
+			if (isOK==1)
+			{
+				num = subiprange2[3] - subiprange1[3] +1;
+				var n=0;
+				var range_total = new Array(num);
+				for (var t = parseInt(subiprange1[3]); t <= parseInt(subiprange2[3]); t++)
+				{
+					for (var i = 0; i < total; i++)
+					{
+						if ( subsch[i].cells[0].innerHTML == subiprange1[0] +'.'+ subiprange1[1] +'.'+ subiprange1[2] +'.'+ (parseInt(t)) )
+						{
+							 var a= confirm(subiprange1[0] +'.'+ subiprange1[1] +'.'+ subiprange1[2] +'.'+ (parseInt(t))+" already exist!! \\nAre you continue??");
+							 if (a)
+							 {
+								 isOKk = 1;
+								 var aaa = document.getElementsByName('subschs');
+								 aaa[i-1].checked=true;
+								 DeleteSchedule()
+								 total--;
+							 }
+							 else
+							 {
+								 isOKk = 0;
+								 return false;
+							 }
+						}   
+					}
+					if ( isOKk == 1) 
+					{
+						var schedule = document.getElementById('scheduleList').insertRow(total);
+						var t_ip = schedule.insertCell(0);
+						var t_mail = schedule.insertCell(1);
+						var t_edit = schedule.insertCell(2);
+						var t_checkitem  = schedule.insertCell(3);
+						
+						//insertdays.setAttribute("style", "width:250");
+						t_ip.innerHTML=subiprange1[0] +'.'+ subiprange1[1] +'.'+ subiprange1[2] +'.'+ (parseInt(t));
+						t_mail.innerHTML=mail;
+						var tordit = '<a onclick=\"EDIT(\\'';
+						tordit += ip + "','" + mail ;
+						tordit +=  '\\')\">';
+						tordit +='<img src=\"../image/edit.gif\"></a></td>';
+						var tochecked = '<input type=\"checkbox\" name=\"subschs\" >';
+						t_checkitem.innerHTML = tochecked;
+						t_edit.innerHTML = tordit;
+					}  
+					//range_total[n]= subiprange1[0] +'.'+ subiprange1[1] +'.'+ subiprange1[2] +'.'+ (parseInt(t));
+					//n++;
+				}
+				//iparray[i] = range_total.join();
+				//alert(iparray[i]);
+			}
+		}
+		else
+		{
+			if(ree.test(ip))
+			{
+				if (!isValidSubnet(ip))
+				{
+					isOK = 0;
+					msg+=ip+'\\n';
+					//alert('Invalid Address!!');
+					//return;
+				}
+			}
+			else
+			{
+				if (!isValidIP(ip))
+				{
+					isOK = 0;
+					msg+=ip+'\\n';
+					//alert('Invalid Address!!');
+					//return;
+				}
+			}
+			if (isOK==1)
+			{
+				for (var i = 0; i < total; i++)
+				{
+					if ( subsch[i].cells[0].innerHTML == ip )
+					{
+						 var a= confirm(ip+" already exist!! \\nAre you continue??");
+						 if (a)
+						 {
+							 isOKk = 1;
+							 var aaa = document.getElementsByName('subschs');
+							 aaa[i-1].checked=true;
+							 DeleteSchedule()
+							 total--;
+						 }
+						 else
+						 {
+							 isOKk = 0;
+							 return false;
+						 }
+					}   
+				}
+				if ( isOKk == 1) 
+				{
+					var schedule = document.getElementById('scheduleList').insertRow(total);
+					var t_ip = schedule.insertCell(0);
+					var t_mail = schedule.insertCell(1);
+					var t_edit = schedule.insertCell(2);
+					var t_checkitem  = schedule.insertCell(3);
+					
+					//insertdays.setAttribute("style", "width:250");
+					t_ip.innerHTML=ip;
+					t_mail.innerHTML=mail;
+					var tordit = '<a onclick=\"EDIT(\\'';
+					tordit += ip + "','" + mail ;
+					tordit +=  '\\')\">';
+					tordit +='<img src=\"../image/edit.gif\"></a></td>';
+					var tochecked = '<input type=\"checkbox\" name=\"subschs\" >';
+					t_checkitem.innerHTML = tochecked;
+					t_edit.innerHTML = tordit;
+				}
+			}
+		}
+		if(msg!=''){alert(error+msg); return;}        
+    }
+    
+    
+    function DeleteSchedule()
+    {
+        var sch = document.getElementsByName('subschs'); 
+        total = sch.length;
+        
+        
+        for (var i = total ; i > 0; i--)
+        {
+            if ( sch[i-1].checked == true )
+                document.getElementById('scheduleList').deleteRow(i);
+        }
+    }
+    
+
+    function SaveSchedule() 
+    {
+        if ( document.getElementById('port').value )
+            AddSchedule();
+        var subsch = document.getElementById('scheduleList').rows;
+        var total = subsch.length;
+        var ip ='';
+        var description ='';
+        var mail = '';
+        var schname_show=document.getElementById('schname_show');
+        var schname=schname_show.value;
+        var description=document.getElementById('description').value;
+        if(schname == ''){alert("Name must enter a message");return;}
+		for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Name must be English ");
+               return;
+            }
+        }
+		
+	for (var i = 1; i < total; i++)
+	{
+	    if (subsch[i].cells[0].innerHTML == '')
+	        continue;
+	    ip += subsch[i].cells[0].innerHTML + ';';
+	    mail += subsch[i].cells[1].innerHTML + ';';
+	}
+	for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Description must be English ");
+               return;
+            }
+        }
+        myform.schname.value=schname;
+        myform.action.value = 'SAVE';
+        myform.d_ip.value = ip;
+        myform.d_mail.value = mail;
+        myform.submit();
+    }
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var schname=document.getElementById('schname');
+        var schname_show=document.getElementById('schname_show');
+        
+        if ( schname.value != '' )
+            schname_show.disabled = true; 
+        
+        //if ( action != '' )
+	//	{
+        //    if(action == 'GROUP'){}
+	//		else{window.top.mainFrame.location.href="flow_user_sec.cgi";}
+        //}
+    }
+	
+	function sleep( seconds ) 
+	{
+		var timer = new Date();
+		var time = timer.getTime();
+		do
+			timer = new Date();
+		while( (timer.getTime() - time) < (seconds * 100) );
+	}
+	
+    </script>
+scriptNewSchedule
+}
+#scheduleScript
+
+sub byName
+{
+    $a->{schname} cmp $b->{schname};
+}
+#byName
+
+sub maintainSchedule
+{
+    my (%action)=@_;
+    
+    my $schref=XMLread($gPATH.'flow_sec.xml');
+    my $schlist=$schref->{user};
+    my $exist=0;
+    my @subscharrary;
+    my %newschedule;
+
+    #$action{schname}=~s/^\s*|\s*$//g;
+    
+    if ( !$action{action} ) { return; }
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        my %newschedule;
+        
+        my @ip = split(/;/, $action{d_ip});
+        my @mail = split(/;/, $action{d_mail});
+        my $index=0;
+        
+        foreach my $aaa( @ip ) 
+        {
+            my %newschedule1;
+            $newschedule1{ip}=$ip[$index];
+            $newschedule1{mail}=$mail[$index];
+            push(@subscharray, \%newschedule1);
+            $index++;
+        }
+        
+	$newschedule{member}=\@subscharray;
+        $newschedule{schname}=$action{schname};
+        $newschedule{description}=$action{description};
+        
+        foreach my $sh ( @$schlist )
+        {
+            if ( $sh->{schname} eq $action{schname} )
+            {
+                $exist=1;
+                #delete($action{action});
+                $sh=\%newschedule;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            #delete($action{action});
+            push( @$schlist, \%newschedule); 
+            @$schlist=sort byName @$schlist;
+        }
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{schedule};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        
+        my @temparray;
+        foreach my $item ( @$schlist )
+        {
+            if ( grep(/^$item->{schname}$/, @$delet) ) { LogUserAction( action=>'DELSCH', schname=>$item->{schname} ); next; }
+            push(@temparray, $item); 
+            
+        }
+        $schref->{user}=\@temparray;
+        
+    }
+    #@$schlist=sort byName @$schlist;
+    XMLwrite($schref, $gPATH."flow_sec.xml");
+}
+
+sub timeSelect()
+{
+    my $time=shift;
+   
+    foreach my $seq ( 0..23 )
+    {
+         my $tm=$seq.":00";
+         my $status = ( $time eq $tm ) ? ( "selected" ) : ( "" );
+         print qq (<option $status value="$tm" >$tm</option>);
+         my $tm=$seq.":30";
+         my $status = ( $time eq $tm ) ? ( "selected" ) : ( "" );
+         print qq (<option $status value="$tm" >$tm</option>);
+    }
+    my $status = ( $time eq "23:59" ) ? ( "selected" ) : ( "" );
+    print qq (<option $status value="23:59" >23:59</option>);
+}
+#timeSelect
+#
+1

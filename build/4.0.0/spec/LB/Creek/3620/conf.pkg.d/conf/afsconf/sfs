@@ -1,0 +1,2 @@
+#A /dev/sda1  /da  ext2  rw
+#B /dev/sda2  /db  -  rw

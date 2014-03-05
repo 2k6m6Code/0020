@@ -1,0 +1,220 @@
+#! /bin/sh
+unalias cp
+unalias rm  
+#set -x
+
+#To show some error message
+cp -af /tmp/tmpupg/upg/doupgrade.sh /usr/local/apache/qb/setuid/doupgrade.sh
+
+SNDB_file="/tmp/tmpupg/upg/sndb"
+QBSN_file="/mnt/conf/qbsn"
+if [ -f $SNDB_file ] && [ ! -f $QBSN_file ]; then
+  QBMAC=`/sbin/ip addr show dev eth0|grep 'ether'|awk '{print $2}'|sed -e "s/\n//"`
+  QBSN=`grep $QBMAC $SNDB_file|awk '{print $1}'|sed -e "s/\n//"`
+  if [ "$QBSN" != "" ]; then
+  echo "$QBSN" >$QBSN_file
+  else
+  echo "Please contact the distributor!" >$QBSN_file
+   #rm -rf /opt/qb/bin/script
+   #tar zxfC /tmp/tmpupg/upg/script.pkg /opt/qb/bin/
+   /opt/qb/bin/script/mail.sh nosn
+    exit 4
+  fi
+fi
+#rm -f $SNDB_file
+
+DATEDB_file="/tmp/tmpupg/upg/datedb"
+INITDATE_file="/mnt/conf/init.dat"
+#if [ -f $DATEDB_file ] && [ ! -f $INITDATE_file ]; then
+if [ -f $DATEDB_file ]; then
+  Firmware_ver=`cat /mnt/conf/pkginfo|grep 'VERSION DETAIL'|awk '{print $4}'|sed -e "s/\n//"`
+  QBMAC_eth0=`/sbin/ip addr show dev eth0|grep 'ether'|awk '{print $2}'|sed -e "s/\n//"`
+  QBMAC_eth1=`/sbin/ip addr show dev eth1|grep 'ether'|awk '{print $2}'|sed -e "s/\n//"`
+  QB_Shipment_DATE=`grep $QBMAC_eth0 $DATEDB_file|awk '{print $1}'|tail -n 1|sed -e "s/\n//"`
+  QB_Expired_DATE=`grep $QBMAC_eth0 $DATEDB_file|awk '{print $3}'|tail -n 1|sed -e "s/\n//"`
+
+  if [ "$QB_Shipment_DATE" != "" ] || [ "$QB_Expired_DATE" != "" ]; then
+    Shipment_DATE_sec=`date -d $QB_Shipment_DATE +%s`
+    Expired_DATE_sec=`date -d $QB_Expired_DATE +%s`
+    #let Warranty_sec=366*86400+$Shipment_DATE_sec
+
+    rm -f /mnt/conf/dtstamp.dc
+    /usr/bin/mcrypt -d /mnt/conf/dtstamp -k 2k6m6 >/dev/null 2>&1
+    registered_date=`cat /mnt/conf/dtstamp.dc`
+    if [ "$registered_date" != "" ]; then
+      let Warranty_sec=366*86400+$registered_date
+      #TC has 4 year warranty
+      grep "TC-" /mnt/conf/pkginfo
+      checkTC=$?
+      if [ "$checkTC" == "0" ]; then
+      let Warranty_sec=1461*86400+$registered_date
+      fi
+      if [ "$Warranty_sec" -lt "$Expired_DATE_sec" ]; then
+      let Warranty_sec=$Expired_DATE_sec
+      fi
+      continue
+    elif [ "$QB_Expired_DATE" != "" ]; then
+      let Warranty_sec=$Expired_DATE_sec
+      continue
+    else
+      let Warranty_sec=455*86400+$Shipment_DATE_sec #For 15 months Warranty
+      continue
+    fi
+ 
+    echo "Firmware $Firmware_ver" >/tmp/init
+    echo "MAC_eth0 $QBMAC_eth0" >>/tmp/init
+    echo "MAC_eth1 $QBMAC_eth1" >>/tmp/init
+    echo "Shipment $Shipment_DATE_sec" >>/tmp/init
+    echo "Warranty $Warranty_sec" >>/tmp/init
+    echo "Register $registered_date" >>/tmp/init
+    echo "New_Goods 0" >>/tmp/init
+    rm -f /tmp/init.nc
+    /usr/bin/mcrypt /tmp/init -k 2k6m6$ >/dev/null 2>&1
+    mv -f /tmp/init.nc $INITDATE_file
+   elif [ -f $INITDATE_file ]; then
+    echo "Warranty file existed!!!" >$INITDATE_file
+   else
+    echo "Please contact the distributor!" >$INITDATE_file
+    #rm -rf /opt/qb/bin/script
+    #tar zxfC $TMPUPG/script.pkg /opt/qb/bin/
+    /opt/qb/bin/script/mail.sh nodate
+    exit 5
+  fi
+fi
+#rm -f $DATEDB_file
+
+#Check Local time/shipment/register/warranty time/firmware release time
+TMPUPG="/tmp/tmpupg/upg"
+Release_Date_File="/tmp/tmpupg/upg/release.dat"
+
+mv -f $Release_Date_File $TMPUPG/release.nc
+/usr/bin/mcrypt $TMPUPG/release.nc  -u -d -k 2k6m6$ >/dev/null 2>&1
+Release_Date=`cat $TMPUPG/release`
+Local_time=`date +%s`
+cp -f $INITDATE_file  /tmp/init.nc
+rm -f /tmp/init
+/usr/bin/mcrypt -d /tmp/init.nc -k 2k6m6$ >/dev/null 2>&1
+
+#Check Mac info
+InitMAC_eth0=`cat /tmp/init|grep 'MAC_eth0'|awk '{print $2}'|sed -e "s/\n//"`
+InitMAC_eth1=`cat /tmp/init|grep 'MAC_eth1'|awk '{print $2}'|sed -e "s/\n//"`
+QBMAC_eth0=`/sbin/ip addr show dev eth0|grep 'ether'|awk '{print $2}'|sed -e "s/\n//"`
+QBMAC_eth1=`/sbin/ip addr show dev eth1|grep 'ether'|awk '{print $2}'|sed -e "s/\n//"`
+if [ "$InitMAC_eth0" != "$QBMAC_eth0" ] || [ "$InitMAC_eth1" != "$QBMAC_eth1" ];then
+
+   #if error,send alert mail to creek and stop upgrade
+   #rm -rf /opt/qb/bin/script
+   #tar zxfC $TMPUPG/script.pkg /opt/qb/bin/
+   /opt/qb/bin/script/mail.sh hardware
+   exit 2
+fi
+
+#Get time info
+Shipment_time=`cat /tmp/init|grep 'Shipment'|awk '{print $2}'|sed -e "s/\n//"`
+Register_time=`cat /tmp/init|grep 'Register'|awk '{print $2}'|sed -e "s/\n//"`
+Warranty_time=`cat /tmp/init|grep 'Warranty'|awk '{print $2}'|tail -n 1|sed -e "s/\n//"`
+Firmware_release_time=`date -d $Release_Date +%s`
+
+#Compare Local Time and "Release time + Jet Lag(24hr)" 
+ let New_Release_Time=86400+$Firmware_release_time
+ let New_Register_Time=365*86400+$Register_time
+ if [ "$Local_time" -lt "$New_Release_Time" ]; then
+    Compare_time=$New_Release_Time
+ else
+    Compare_time=$Local_time
+ fi
+ if [ "$Compare_time" -lt "$Warranty_time" ];then
+    continue
+ elif [ "$Compare_time" -lt "$New_Register_Time" ];then
+    continue
+ else
+   #rm -rf /opt/qb/bin/script
+   #tar zxfC $TMPUPG/script.pkg /opt/qb/bin/
+   /opt/qb/bin/script/mail.sh warranty
+    exit 3
+ fi
+
+mv -f /mnt/log/user.log /tmp/
+rm -rf /mnt/log/*.log   #20081210 Brian to free CF/DOM disk space.
+mv -f /tmp/user.log /mnt/log/
+
+#Available_Space=`df -h|grep mnt|grep -v "/mnt/"|awk '{print $4}'|sed -e "s/\n//"`
+#To remove the upg file
+rm -f /mnt/bak/upgrade.tgz
+
+[ -f /mnt/bak ] && rm -rf /mnt/bak
+
+[ ! -d /mnt/bak ] && mkdir /mnt/bak
+
+cp -f /mnt/script.pkg    /mnt/bak/
+cp -f /mnt/qbbin.pkg     /mnt/bak/
+cp -f /mnt/qbgui.pkg     /mnt/bak/
+cp -f /mnt/modules.pkg   /mnt/bak/
+cp -f /mnt/function.pkg  /mnt/bak/
+cp -f /mnt/conf/qbkey    /mnt/bak/
+cp -f /mnt/conf/clock    /mnt/bak/
+cp -f /mnt/conf/loc_time /mnt/bak/
+
+sync
+
+cp -f *.pkg    	/mnt 
+
+[ -f linux ] && cp -f linux /mnt
+
+sync
+
+[ ! -f /mnt/*.dom ] && cp -f *.dom /mnt 
+
+
+
+# decompress conf.pkg to /tmp/conf and then replace to /mnt/conf
+# we don't replace /mnt/afs/ config data 
+
+tar zxfC /mnt/conf.pkg /tmp >& /dev/null
+cp -f /tmp/conf/* /mnt/conf
+cp -f /mnt/bak/qbkey /mnt/conf
+cp -f /mnt/bak/clock /mnt/conf
+cp -f /mnt/bak/loc_time /mnt/conf
+
+#Use new config file to replace default config file
+rm -rf /tmp/xmltemplate
+tar zxfC /mnt/qbxml.pkg /tmp >& /dev/null
+rm -rf /mnt/qb/conf/set/default
+cp -a /tmp/xmltemplate/2.2.0.0000 /mnt/qb/conf/set/default
+
+cp -f /mnt/conf/pkginfo /mnt/conf/pkginfo.org
+cp -f pkginfo   /mnt/conf
+/usr/local/apache/qb/setuid/do_qbsyslog.pl #20080212 Brian need to create syslog config file again.
+New_Firmware_ver=`cat /mnt/conf/pkginfo|grep 'VERSION DETAIL'|awk '{print $4}'|sed -e "s/\n//"`
+#Update snmpd.con
+sed -i -e "s/VERSION DETAIL.*/VERSION DETAIL : $New_Firmware_ver/g" /mnt/conf/snmpd.con
+
+#sync && sync
+
+# to generate qb ssh rsa for center management system
+model=`grep MODEL /opt/qb/conf/registry|sed "s/MODEL //g"`
+if [ "$model" = "2820" ] || [ "$model" = "2620" ] || [ "$model" = "1000" ] || [ "$model" = "2000" ];then
+    if [ ! -f /mnt/conf/qbssh.bz2 ]; then
+        /usr/bin/ssh-keygen -t rsa -N "" -f /root/.ssh/id_rsa
+	cd /root/
+        tar cf /tmp/qbssh.tar .ssh
+        cd /tmp/
+        mcrypt qbssh.tar -p -k 42084021 >/dev/null 2>&1
+        mv /tmp/qbssh.tar.bz2.nc /mnt/conf/qbssh.bz2
+    fi
+fi
+
+# To add a support account since ver:0074
+LOGINCFG="/usr/local/apache/config/login.xml"
+grep username=\"cksupport\" $LOGINCFG > /dev/null 2>&1
+checksupport=$?
+if [ "$checksupport" != "0" ]
+then
+    sed -i -e '{s/<\/opt>//g}' $LOGINCFG
+    cat >> $LOGINCFG <<!
+  <user alive="system" lastupdate="system" online="system" password="2k6m6root321" privilege="1" sessionid="" username="cksupport" />
+</opt>
+!
+fi
+cp -f $LOGINCFG /mnt/qb/conf/
+sync && sync

@@ -1,0 +1,42 @@
+#!/bin/bash
+#set -x
+# Brian 20111213 Daily reset the 3G modem
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+
+ISPID=`grep daily_3greset=\".*\" $ACTIVEBASICXML|grep -v daily_3greset=\"\"|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"`
+for ispid in $ISPID
+do
+  time=`grep iid=\"$ispid\" $ACTIVEBASICXML|grep daily_3greset|sed -e "s/  <isp.*daily_3greset=\"//"|sed -e "s/\".*//"`
+  if [ $time -le 9 ];then
+      time=0$time
+  fi
+  timechk=`date +%H:%M|grep -c "$time:0"`
+  if [ "$timechk" = "1" ];then
+   device=`grep iid=\"$ispid\" $ACTIVEBASICXML|grep daily_3greset|sed -e "s/  <isp.*pppoeportdev=\"//"|sed -e "s/\".*//"`
+   case $device in
+    SIM* )
+         imei=`grep iid=\"$ispid\" $ACTIVEBASICXML|grep imei|sed -e "s/  <isp.*imei=\"//"|sed -e "s/\".*//"`
+         if [ -f /tmp/usbdev.tab ];then
+           device_3g=`cat /tmp/usbdev.tab |grep $imei|awk '{print $3}'`
+         else
+           device_3g=`cat /tmp/usbdev.tab.bak |grep $imei|awk '{print $3}'`
+         fi
+         case $device_3g in
+                ttyUSB* )
+                   /opt/qb/hsdpa/3gctrl Reset $device_3g
+                   echo $(date) "Daily reset 3G dongle $device!!!" >>/mnt/log/link.log
+                ;;
+                * )
+                   echo $(date) "Fail to get 3G device and stop to reset 3G dongle !!!" >>/mnt/log/link.log
+                ;;
+         esac
+         
+         ;;
+   ttyUSB* )
+         /opt/qb/hsdpa/3gctrl Reset $device
+         echo $(date) "Daily reset 3G dongle $device!!!" >>/mnt/log/link.log
+         ;;
+   esac
+  fi                                                     
+done
+    

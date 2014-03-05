@@ -1,0 +1,1 @@
+/opt/qb/qbwdt/xmlezio_tools/qbwc.sh

@@ -1,0 +1,370 @@
+#!/bin/bash
+#
+# SYSINIT VERSION 2.2.0.0006 
+#
+
+PATH=$PATH:/opt/qb/sbin:/opt/qb/bin
+
+export PATH
+
+QB_HOME_DIR=/opt/qb
+QBREG_FILE=$QB_HOME_DIR/registry
+EZIO_PRINT="/opt/qb/qbwdt/ezio -c 1 -t "
+EZIO_PRINT_DEFAULT="/opt/qb/qbwdt/ezio"
+NF_MODULE_DIR=/lib/modules/2.4.21+helpers/kernel/net/ipv4/netfilter
+PERL_MODULE_DIR=/usr/local/lib/perl5/5.6.0
+QB_BIN_DIR=$QB_HOME_DIR/bin
+QB_APP_DIR=$QB_HOME_DIR/apps
+QB_MODULE_DIR=$QB_HOME_DIR/modules
+QB_SCRIPT_DIR=$QB_HOME_DIR/bin/script
+
+# for Q-balancer command line interface
+QB_CLI_SYM_LINK=/etc/clipasswd
+QB_CLI_PASSWORD_FILE=/mnt/conf/password.cli
+
+#/opt/qb/bin/script/modules.ipt start ( not used yet )
+
+# setting up some box sensitive kernel params
+/opt/qb/bin/script/qbsysctl.sh
+
+# ---- iptables, tc, named ----------
+if [ -f /mnt/qbapps.pkg ];
+then
+	tar zxfC /mnt/qbapps.pkg $QB_HOME_DIR 
+	tar zxfC $QB_APP_DIR/libipt126.pkg	/usr/local/lib/
+	ln -s $QB_APP_DIR/iptables 		/usr/local/sbin/iptables
+	ln -s $QB_APP_DIR/iptables-save 	/usr/local/sbin/iptables-save
+	ln -s $QB_APP_DIR/iptables-restore 	/usr/local/sbin/iptables-restore
+	ln -s $QB_APP_DIR/tc 			/usr/local/sbin/tc
+	ln -s $QB_APP_DIR/named 		/usr/sbin/named
+fi
+
+sync
+
+# ---- QBalancer package --------
+tar zxfC /mnt/modules.pkg 	$QB_HOME_DIR
+tar zxfC /mnt/qbbin.pkg 	$QB_HOME_DIR
+tar zxfC /mnt/qbgui.pkg 	$QB_HOME_DIR
+tar zxfC /mnt/qbcli.pkg 	$QB_HOME_DIR
+tar zxfC /mnt/qbbrg.pkg 	$QB_HOME_DIR
+
+sync
+
+#echo "sysinit is called "
+$QB_BIN_DIR/flashled &
+
+# copy external perl modules into $PERL_MODULE_DIR
+cp -f $QB_MODULE_DIR/checker.pm $PERL_MODULE_DIR
+cp -f $QB_MODULE_DIR/checker.so $PERL_MODULE_DIR
+chmod 755 $PERL_MODULE_DIR/checker.pm
+chmod 755 $PERL_MODULE_DIR/checker.so
+
+$QB_SCRIPT_DIR/qbstart
+
+# ---- syslogd daemon ----------
+# 1. check if /etc/syslog.conf is the same as /mnt/conf/syslog.con
+#    if it is not, we guess /etc/syslog.conf is not a symbolic link to /mnt/conf/syslog.con
+#    we have to make sure content in the two files are totally the same
+#    so we copy /mnt/conf/syslog.con to /etc/syslog.conf
+
+diff /etc/syslog.conf /mnt/conf/syslog.con
+diffresult=$?
+if [[ $diffresult != '0' ]]
+then
+    ln -s -f /mnt/conf/syslog.con  /etc/syslog.conf
+fi
+
+# 2005-0608 Hammer
+#	This version of syslogd will replace the QB title with the engine name
+#	in the syslog messages.
+cp -af /opt/qb/bin/script/syslogd /opt/qb/sbin
+
+# ---- syslogd daemon ----------
+/opt/qb/sbin/klogd
+/opt/qb/sbin/syslogd
+
+
+#---- qbcli password symbolick link ----------------
+# 3. check if the symbolic link from /etc/clipasswd  to /mnt/conf/password.cli
+if [ ! -f $QB_CLI_PASSWORD_FILE ]
+then
+    echo 123 > $QB_CLI_PASSWORD_FILE
+    chmod 744 $QB_CLI_PASSWORD_FILE
+fi
+
+ln -s $QB_CLI_PASSWORD_FILE  $QB_CLI_SYM_LINK 
+
+# ---- bridge ----------
+/opt/qb/qbbrg/rc.init_brg
+
+
+#==========================================
+# 2.2.0 -> 2.1.8
+insmod -f $QB_MODULE_DIR/qbarp.o
+insmod -f $QB_MODULE_DIR/ipt_icmpid.o
+insmod -f $QB_MODULE_DIR/ip_conntrack_dns.o
+insmod -f $QB_MODULE_DIR/qbkf_timeout.o
+insmod -f $QB_MODULE_DIR/qbkflow.o #depending on qbkf_timeout.o
+insmod -f $QB_MODULE_DIR/ipt_gw.o
+insmod -f $QB_MODULE_DIR/ipt_BALANCE.o
+insmod -f $QB_MODULE_DIR/ipt_state.o
+insmod -f $QB_MODULE_DIR/ipt_iplimit.o
+insmod -f $QB_MODULE_DIR/ipt_ingw.o
+insmod -f $QB_MODULE_DIR/ipt_pfd.o
+insmod -f $QB_MODULE_DIR/ipt_qod.o
+insmod -f $QB_MODULE_DIR/wdt.o
+
+# for ctdirmark 041231
+CTDIR_ON=0 && CTDIR_ON=$(awk "/ENABLECTDIR/ {print \$2}"  $QBREG_FILE) 
+if [ $CTDIR_ON = '1' ] 
+then 
+    insmod -f $QB_MODULE_DIR/ipt_CTDIRMARK.o
+    insmod -f $QB_MODULE_DIR/ipt_ctdirmark.o
+fi
+
+# insmod -f /lib/modules/2.4.18/kernel/net/sched/sch_htb.o
+# !! CAUTION !! : qbfastwy.o MUST be installed AFTER the installation of qbkflow.o
+
+#
+# 2005-0401 Hammer
+#           Do not insert module 'qbfastwy.o' by default. Request from Jesse.
+#           This is for XRIO Evaluation.
+#
+LOADQBFASTWY=$(awk "/LOADQBFASTWY/ {print \$2}"  $QBREG_FILE) 
+if [ ! "x$LOADQBFASTWY" = "x0" ]; then
+	insmod -f $QB_MODULE_DIR/qbfastwy.o #depending on qbkflow.o
+fi
+
+#
+# PPTP & H.323 Module
+#
+# 2005-0401 Hammer
+#    Changed from default-disable to default-enable. (Hammer)
+# 2005-0415 Hammer
+#    Changed from default-enable to default-disable. (Hammer)
+# 2005-0705 Hammer
+#    The LOADPPTP in registry determines the boot-ability of pptp module
+#    by default. LOADPPTP is enabled for 1615, but disabled for other models.
+#
+LOADPPTP=$(awk "/^LOADPPTP/ {print \$2}"  $QBREG_FILE) 
+if [ "x$LOADPPTP" = "x1" ]; then
+	insmod -f  $NF_MODULE_DIR/ip_conntrack_proto_gre.o
+	insmod -f  $NF_MODULE_DIR/ip_conntrack_pptp.o
+	insmod -f  $NF_MODULE_DIR/ip_nat_proto_gre.o
+	insmod -f  $NF_MODULE_DIR/ip_nat_pptp.o
+fi
+		 
+insmod -f  $NF_MODULE_DIR/ip_conntrack_h323.o
+insmod -f  $NF_MODULE_DIR/ip_nat_h323.o
+
+cp -f $QB_MODULE_DIR/*.so	/usr/local/lib/iptables/
+
+cp $QB_SCRIPT_DIR/dns /etc/init.d
+chmod 777 /etc/init.d/dns
+
+modprobe imq numdevs=64
+
+hostname qb.gateway
+
+#======================================================================
+# disabling short state of bypass card
+# set bypass state to normal state 
+# bring up last few network interfaces for qbserver to get the last one
+/opt/qb/qbbrg/set_bpcard 0
+ifconfig eth6 up
+ifconfig eth7 up
+ifconfig eth8 up
+ifconfig eth9 up
+ifconfig eth10 up
+
+
+# ---- watchdog daemon ----------
+nice --20 $QB_BIN_DIR/watchdog &
+
+#--------- interface of some add-on modules
+MODULELIST="crond snmpd ntpd dhcpd pppoe"
+for module in $(echo $MODULELIST)
+do
+if [ -f /mnt/${module}.pkg ];
+then
+    tar zxfC /mnt/${module}.pkg /opt
+
+    sync
+
+    if [ -f /opt/${module}/rc.${module} ]
+    then
+        /opt/${module}/rc.${module}
+    fi
+fi
+done
+
+
+# ------- QBXML INTERFACE --------
+if [ -f /mnt/qbxml.pkg ];
+then
+	tar zxfC /mnt/qbxml.pkg /tmp
+	sync
+fi
+
+
+# ------- enable the writing privilege of Apache http upload
+chmod 777 /var/tmp
+chmod 777 /tmp
+
+
+#-------------------------------------------------------------------------------------------------------------------------------
+# AFS INTERFACE 
+#-------------------------------------------------------------------------------------------------------------------------------
+diff /opt/qb/bin/script/sprog  /mnt/conf/afsconf/sprog
+diffresult=$?
+if [[ $diffresult != '0' ]]
+then
+    cp -f /opt/qb/bin/script/sprog  /mnt/conf/afsconf/sprog
+fi
+
+EZIO_ON=0 && EZIO_ON=$(awk "/EZIOTYPE/ {print \$2}"  $QBREG_FILE) 
+
+HA_ON=0 && [ -f /mnt/afs.pkg ] && HA_ON=$(awk "/ENABLEHA/ {print \$2}"  $QBREG_FILE) &&  [ $HA_ON = '1' ] && tar zxfC /mnt/afs.pkg /usr && /usr/afs/rc.afs 
+
+[ $EZIO_ON = '1' ] && [ $HA_ON = '0' ] && ($EZIO_PRINT "No HA:<stand alone>"; sleep 10; $EZIO_PRINT_DEFAULT)&
+
+
+
+
+#-------------------------------------------------------------------------------------------------------------------------------
+#  start qbrunway -> then start qbserv ( must be launched after afsd )
+#-------------------------------------------------------------------------------------------------------------------------------
+$QB_BIN_DIR/qbrunway &
+
+#-------------------------------------------------------------------------
+# 2005-0525 Hammer
+#        * To fix the security weak of qbgui.
+#	 * apache was supposed to be initially started in rc3.d/S12apache,
+#	   which is run before this sysinit program.
+#	 * Since new modules (mod_*.so) is newly introduced in httpd.conf,
+#	   the S12apache is destined to fail because lack of module files.
+#	   i.e. apache is hereafter required to be (re)started here
+#	   in sysinit.
+#-------------------------------------------------------------------------
+cp -af /opt/qb/bin/script/apache/mod*.so /usr/local/apache/libexec
+
+CONF_FILE=/mnt/conf/httpd.con
+TMP_CONF_FILE=/mnt/httpd.con
+EACCESS_CONF_FILE=/opt/qb/bin/script/apache/httpd.conf-eaccess
+
+# Remove all the old explicit EAccess-related directives form httpd.conf.
+cat $CONF_FILE | sed -e "/EAccess/d" \
+	| sed -e "/eaccess_module/d" \
+	| sed -e "/mod_eaccess/d" > $TMP_CONF_FILE
+mv -f $TMP_CONF_FILE $CONF_FILE
+
+# Add the include-EAccess directive if not there.
+IS_EACCESS_INCLUDED=`grep "httpd\.conf-eaccess" $CONF_FILE`
+if [ -z "$IS_EACCESS_ENABLED" ]; then
+	echo "include \"$EACCESS_CONF_FILE\"" >> $CONF_FILE
+fi
+
+ln -s -f /mnt/conf/httpd.con /usr/local/apache/conf/httpd.conf
+/usr/local/apache/bin/apachectl restart
+
+# ---- httpd daemon ----------
+# 2. check if /usr/local/apache/conf/httpd.conf is the same as /mnt/conf/httpd.con
+#    if it is not, we guess /usr/local/apache/conf/httpd.conf is not a symbolic link to /mnt/conf/syslog.con
+#    we have to make sure content in the two files are totally the same
+#    so we copy /mnt/conf/httpd.con  to  /usr/local/apache/conf/httpd.conf
+#
+# diff /usr/local/apache/conf/httpd.conf /mnt/conf/httpd.con
+# diffresult=$?
+#
+# if [[ $diffresult != '0' ]]
+# then
+#     ln -s -f /mnt/conf/httpd.con  /usr/local/apache/conf/httpd.conf
+#     /usr/local/apache/bin/apachectl restart
+# fi
+#
+
+#-------------------------------------------------------------------------
+# 2005-0519 Hammer
+#        * To replace the /usr/lib/sendmail (link) with a hacked shell prog,
+#	   which will automatically replace string 'QBALANCER' with
+#	   the real engine name defined in 'registry'.
+#-------------------------------------------------------------------------
+rm -f /usr/lib/sendmail
+cp -af /opt/qb/bin/script/sendmail /usr/lib
+
+#-------------------------------------------------------------------------
+# 2005-0628 Hammer
+#        * (for XRIO evaluation)
+#	   Some hacking is embeded in "ip tunnel add ...".
+# 2005-0701 Hammer
+#        * (for XRIO evaluation)
+#	   Some hacking is embeded in "ifconfig mpv0 mtu 1500".
+#-------------------------------------------------------------------------
+PLATFORM=$(awk "/^PLATFORM/ {print \$2}"  $QBREG_FILE)
+case "$PLATFORM" in
+ 	*-XRIO-eval)
+ 	    mv -f /usr/local/sbin/ip /usr/local/sbin/ip.org
+ 	    cp -af /opt/qb/bin/script/ip /usr/local/sbin
+
+ 	    mv -f /sbin/ifconfig /sbin/ifconfig.org
+ 	    cp -af /opt/qb/bin/script/ifconfig /sbin
+ 	    ;;
+ 	*)
+ 	    ;;
+esac
+
+#-------------------------------------------------------------------------
+# 2005-0401 Hammer
+#        * Newly define a extended sysinit file ($EXTINIT_FILE),
+#          which is to be executed at the end of the default sysinit.
+#        * THIS FEATHRE IS RESERVED FOR QB-SUPPORT STAFF ONLY.
+#        * THIS WORK OF THIS FILE IS SITE-SPECIFIC.
+#-------------------------------------------------------------------------
+
+EXTINIT_FILE="/mnt/qb/conf/extinit"
+if [ -f $EXTINIT_FILE ]; then
+    chmod a+x $EXTINIT_FILE
+    . $EXTINIT_FILE
+
+else
+    cat > $EXTINIT_FILE <<!
+#!/bin/sh
+#
+# * THIS FILE IS RESERVED FOR QB-SUPPORT STAFF ONLY.
+# * DO NOT MODIFY THIS FILE UNLESS AUTHORIZED.
+# * THIS WORK OF THIS FILE IS SITE-SPECIFIC.
+#
+
+PATH=$PATH:/opt/qb/bin/script; export PATH
+
+#
+# ethtool ...
+#
+!
+
+fi
+
+#-------------------------------------------------------------------------
+# 2005-0908 Brian
+# * To exe. ethtool's config file.
+#-------------------------------------------------------------------------
+
+ETHSET="/mnt/qb/conf/ethset"
+if [ -f $ETHSET ]; then
+    chmod a+x $ETHSET
+    . $ETHSET
+fi
+
+#-------------------------------------------------------------------------------------------------------------------------------
+#  if ha is turned on , we have to switch into runlevel 4
+#-------------------------------------------------------------------------------------------------------------------------------
+MODELTYPE=$(awk "/MODEL/ {print \$2}"  $QBREG_FILE)  # 050204...nancy
+if [ $MODELTYPE = 'BL10800' ] ;then
+    [ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+else
+    [ $EZIO_ON = '1' ] && [ $HA_ON = '1' ] && (sleep 10 ; /sbin/init 4)
+fi
+
+sync
+
+

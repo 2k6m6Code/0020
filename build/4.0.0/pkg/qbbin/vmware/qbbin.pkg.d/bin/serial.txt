@@ -1,0 +1,482 @@
+serial = 62   Thu May 04 15:00:00 CST 2006 
+component= QBBIN.PKG 
+version=2.5.0.0031
+notes:
+1.Fix weight only can work 01~09
+------------------------------------------------
+serial = 61   Wed Jan 26 19:57:35 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0030
+notes:
+1.Enlarge Qbflow.csInterface[5] to [10]
+with ctdir
+------------------------------------------------
+serial = 60   Fri Jan 21 19:02:01 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0029
+notes:
+1. MAX_Gateway 100
+with ctdir
+------------------------------------------------
+serial = 59   Tue Jan 18 18:17:19 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0028
+notes:
+1. set HaAddress with netmask.
+------------------------------------------------
+serial = 58   Mon Jan 17 16:18:08 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0028
+notes:
+1. set HaAddress with netmask.
+------------------------------------------------
+serial = 57   Mon Jan 17 14:40:07 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0028
+notes:
+1. set HaAddress with netmask.
+------------------------------------------------
+serial = 55   Fri Jan 14 14:12:59 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0026
+notes:
+1. bug fix: set MAX_Gateway to 100.
+------------------------------------------------
+serial = 54   Fri Jan 14 13:42:11 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0026
+notes:
+1. bug fix: set MAX_Gateway to 100.
+------------------------------------------------
+serial = 53   Wed Jan 12 15:25:20 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0024
+notes:
+1. bug fix: ftp data port traced.
+2. recompile <xmlparser>.
+------------------------------------------------
+serial = 52   Wed Jan 12 15:11:43 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0025
+notes:
+1. bug fix: ftp data port traced.
+2. recompile <xmlparser>.
+with ctdirmark.
+------------------------------------------------
+serial = 51   Thu Jan  6 18:44:13 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0025
+notes:
+bug fix: ftp data port traced.
+with ctdirmark.
+------------------------------------------------
+serial = 50   Thu Jan  6 17:42:16 CST 2005 
+component= QBBIN.PKG 
+version=2.5.0.0024
+notes:
+bug fix: ftp data port traced.
+no ctdirmark.
+
+------------------------------------------------
+serial = 49   Fri Dec 31 15:14:16 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0023
+notes:
+no fwmark 0x4 setting, while inbound of OUTPUT.
+MAXISP to 100.
+no ctdirmark.
+
+------------------------------------------------
+serial = 48   Fri Dec 24 17:45:44 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0022
+notes:
+no fwmark 0x4 setting, while inbound of OUTPUT.
+ctdirmark.
+------------------------------------------------
+serial = 47   Thu Dec 23 22:13:19 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0021
+notes:
+enlarge ISP MAX from 50 to 100.
+ctdirmark.
+------------------------------------------------
+serial = 46   Thu Dec 23 19:46:14 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0021
+notes:
+enlarge ISP MAX from 50 to 100.
+ctdirmark.
+------------------------------------------------
+serial = 45   Fri Nov 12 17:17:16 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0020
+notes:
+ctdirmark.
+------------------------------------------------
+serial = 44   Wed Nov 10 23:07:24 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0020
+notes:
+redirect fix.
+might still bug: QoS missing.
+next release: ctdirmark 
+------------------------------------------------
+serial = 43   Tue Nov  9 21:54:55 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0020
+notes:
+central route fix.
+might still bug: QoS missing.
+next release: ctdirmark 
+------------------------------------------------
+serial = 42   Wed Oct 27 12:52:51 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0019
+notes:
+fix bug: QoS missing.
+next release: ctdirmark 
+------------------------------------------------
+serial = 42   Tue Oct 26 23:16:48 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0018
+notes:
+fix bug: any reply /24 will cover /32.
+next release: ctdirmark 
+------------------------------------------------
+serial = 42   Tue Oct 26 22:23:32 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0018
+notes:
+fix bug: any reply /24 will cover /32.
+next release: ctdirmark 
+------------------------------------------------
+serial = 42   Tue Oct 26 21:50:14 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0018
+notes:
+fix bug: any reply /24 will cover /32.
+next release: ctdirmark 
+------------------------------------------------
+serial = 41   Tue Oct 26 21:33:58 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0018
+notes:
+fix bug: any reply /24 will cover /32.
+next release: ctdirmark 
+------------------------------------------------
+serial = 40   Mon Oct 11 20:53:43 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0018
+notes:
+fix bug: any reply /24 will cover /32.
+next release: ctdirmark 
+------------------------------------------------
+serial = 39   Thu Oct  7 18:49:39 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0018
+notes:
+ctdirmark release
+------------------------------------------------
+serial = 38   Wed Oct  6 21:19:45 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0018
+notes:
+ctdirmark release
+------------------------------------------------
+serial = 37   Fri Aug 13 20:26:28 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0017
+notes:
+unshow mss & mtu warning, while read basic.xml in rate.cgi.
+------------------------------------------------
+serial = 36   Fri Jul  9 20:02:53 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0016
+notes:
+lengthen nat's port fields from 10 to 12.
+------------------------------------------------
+serial = 35   Fri Jul  9 17:31:47 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0016
+notes:
+lengthen nat's port fields from 10 to 12.
+------------------------------------------------
+serial = 34   Wed Jun 30 12:20:31 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0015
+notes:
+1.outbound imq bind with nic
+2.parse tcclass.xml to mangle IMQ
+------------------------------------------------
+serial = 33   Fri Jun 25 18:20:29 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0015
+notes:
+outbound imq bind with nic.
+------------------------------------------------
+serial = 32   Fri May 28 21:05:58 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0014
+notes:
+un-define un-released module:ctdirmark.
+------------------------------------------------
+serial = 31   Fri May 28 20:01:12 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0014
+notes:
+un-define un-released module:ctdirmark.
+------------------------------------------------
+serial = 30   Fri May 28 19:48:14 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0014
+notes:
+un-define un-released module:ctdirmark.
+------------------------------------------------
+serial = 29   Fri May 28 18:26:44 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0014
+notes:
+un-define un-released module:ctdirmark.
+------------------------------------------------
+serial = 28   Thu May 27 16:37:30 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0013
+notes:
+rename shell hook extr_cmd to postqb_isponly.
+add shell hook postqb_general---in qbinit(), configQB().
+------------------------------------------------
+serial = 27   Wed May 19 12:57:38 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0013
+notes:
+rename shell hook extr_cmd to postqb_isponly.
+add shell hook postqb_general.
+------------------------------------------------
+serial = 26   Tue May 18 15:15:58 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0012
+notes:
+fix HaAddress() sequence while ISP existed.
+------------------------------------------------
+serial = 25   Tue May  4 13:09:50 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0011
+notes:
+fix a leak problem(table 200)
+------------------------------------------------
+serial = 24   Fri Apr 30 16:09:37 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0010
+notes:
+User specified TTL
+Zone forwarding
+Fix a few buffer problem
+------------------------------------------------
+serial = 23   Fri Apr 30 15:59:30 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0010
+notes:
+User specified TTL
+Zone forwarding
+Fix a few buffer problem
+------------------------------------------------
+serial = 22   Fri Apr 30 12:42:39 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0010
+notes:
+User specified TTL
+Zone forwarding
+Fix a few buffer problem
+------------------------------------------------
+serial = 21   Tue Apr 27 18:35:18 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0010
+notes:
+User specified TTL
+Zone forwarding
+Fix a few buffer problem
+------------------------------------------------
+serial = 20   Tue Apr 27 17:12:59 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0010
+notes:
+User specified TTL
+Zone forwarding
+Fix a few buffer problem
+------------------------------------------------
+serial = 19   Tue Apr 20 14:56:42 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0009
+notes:
+nat match card on non bridge, match physdev on bridge
+single fix gateway handling
+------------------------------------------------
+serial = 18   Mon Apr 12 11:24:34 CST 2004 
+component= QBBIN.PKG 
+version=2.5.0.0008
+notes:
+nat match card re-enabled
+------------------------------------------------
+serial = 17   Tue Mar 30 19:01:37 CST 2004 
+component= QBBIN.PKG 
+1. match ingw argument change
+2. bridge check by dev instead of ispid
+3. handle NPAT (Network and PORT Address Translation)
+------------------------------------------------
+serial = 16   Thu Mar 18 21:00:30 CST 2004 
+component= QBBIN.PKG 
+add qroute.c buffer so ISP > 19 can be handled
+------------------------------------------------
+serial = 15   Wed Mar 17 14:11:38 CST 2004 
+component= QBBIN.PKG 
+time-based rule bug fix (flowmark inbound rule and imq, ingw order)
+------------------------------------------------
+serial = 14   Fri Mar 12 17:33:41 CST 2004 
+component= QBBIN.PKG 
+time-based rule bug fix (flowmark inbound rule and imq, ingw order)
+------------------------------------------------
+serial = 13   Wed Mar 10 19:07:43 CST 2004 
+component= QBBIN.PKG 
+Fix strstr error
+------------------------------------------------
+serial = 12   Wed Mar 10 14:34:47 CST 2004 
+component= QBBIN.PKG 
+check memory and save ps result
+------------------------------------------------
+serial = 11   Fri Mar  5 17:51:34 CST 2004 
+component= QBBIN.PKG 
+fix ip neigh problem
+------------------------------------------------
+serial = 10   Tue Mar  2 22:04:40 CST 2004 
+component= QBBIN.PKG 
+led doesn't work due to strcpy mistaken for strcmp
+------------------------------------------------
+serial = 9   Tue Mar  2 22:04:32 CST 2004 
+component= QBBIN.PKG 
+led doesn't work due to strcpy mistaken for strcmp
+------------------------------------------------
+serial = 8   Tue Mar  2 18:13:27 CST 2004 
+component= QBBIN.PKG 
+can differentiate led between boxes
+------------------------------------------------
+serial = 7   Tue Mar  2 18:13:11 CST 2004 
+component= QBBIN.PKG 
+can differentiate led between boxes
+------------------------------------------------
+serial = 6   Tue Feb 24 18:11:55 CST 2004 
+component= QBBIN.PKG 
+increase match buffer
+------------------------------------------------
+serial = 5   Mon Feb 23 17:23:59 CST 2004 
+component= QBBIN.PKG 
+move blackhole flowmark rules before inbound rules
+fix multiport and others reply overlapping issue
+------------------------------------------------
+serial = 4   Wed Feb 18 16:27:00 CST 2004 
+component= QBBIN.PKG 
+fix inbound index reset problem
+------------------------------------------------
+serial = 3   Wed Feb 18 12:11:28 CST 2004 
+component= QBBIN.PKG 
+Move inbound rule to front
+------------------------------------------------
+serial = 2   Thu Feb  5 13:36:38 CST 2004 
+component= QBBIN.PKG 
+Make sure no bridge when not given the option.
+Reorganized proute.C
+------------------------------------------------
+serial = 65   Fri Jan  2 15:57:32 CST 2004 
+component= QBBIN.PKG 
+2.5.0 pkg built for demo
+------------------------------------------------
+serial = 64   Fri Dec 19 15:26:30 CST 2003 
+component= QBBIN.PKG 
+version=2.2.0.0017
+
+notes
+
+1. fixed a bug that makes FTP, TFTP, PPTP, H.323 reply service to misbehave when selecting multiple timeframe.
+2. added inbound traffic support
+------------------------------------------------
+serial = 63   Thu Dec 18 12:33:29 CST 2003 
+component= QBBIN.PKG 
+version=2.2.0.0017
+
+notes
+
+1. fixed a bug that makes FTP, TFTP, PPTP, H.323 reply service to misbehave when selecting multiple timeframe.
+2. added inbound traffic support
+------------------------------------------------
+serial = 62   Wed Dec 17 19:12:30 CST 2003 
+component= QBBIN.PKG 
+version=2.2.0.0017
+
+notes
+
+1. fixed a bug that makes FTP, TFTP, PPTP, H.323 reply service to misbehave when selecting multiple timeframe.
+2. added inbound traffic support
+------------------------------------------------
+serial= 61   Fri Dec 12 11:48:51 CST 2003 
+component= QBBIN.PKG 
+version=2.2.0.0013
+
+notes
+
+1. fixed compilation problem for old kernels
+2. fix bswlt problem
+
+
+------------------------------------------------
+serial= 60   Fri Dec 12 11:48:46 CST 2003 
+component= QBBIN.PKG 
+version=2.2.0.0013
+
+notes
+
+1. fixed compilation problem for old kernels
+2. fix bswlt problem
+
+
+------------------------------------------------
+serial= 59   Thu Dec 11 18:59:17 CST 2003 
+component= QBBIN.PKG 
+version=2.2.0.0013
+
+notes
+
+1. fixed compilation problem for old kernels
+2. fix bswlt problem
+
+
+------------------------------------------------
+serial= 58   Thu Dec 11 18:58:46 CST 2003 
+component= QBBIN.PKG 
+version=2.2.0.0013
+
+notes
+
+1. fixed compilation problem for old kernels
+2. fix bswlt problem
+
+
+serial= 57   Thu Dec 11 18:55:19 CST 2003 
+component= QBBIN.PKG 
+version=2.2.0.0013
+
+notes
+
+1. fixed compilation problem for old kernels
+2. fix bswlt problem
+
+
+serial= 56   Thu Dec 11 18:37:28 CST 2003 
+component= QBBIN.PKG 
+version=2.2.0.0013
+
+notes
+
+1. fixed compilation problem for old kernels
+2. fix bswlt problem
+
+

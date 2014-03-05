@@ -1,0 +1,86 @@
+#!/bin/sh
+## DeanSoft Co., Ltd.
+## start services
+## startsvc MODEL HOST SERVICE_SYS
+
+PATH=$PATH:/sbin:/etc:/usr/sbin:/usr/etc
+MODEL=$1
+HOST=$2
+SVC=$3
+SFS=/usr/afs/conf/sfs
+SPROG=/usr/afs/conf/sprog
+TSCONF=/usr/afs/conf/tserver
+CHGVHOST=/usr/afs/chgvhost
+export HOST SVC
+
+case $SVC in
+A)	NNET=1 ;;
+B)	NNET=2 ;;
+esac
+export NNET
+
+
+echo -e "\n\rStart service system, now.\r" >/dev/console
+echo -e "Mount file systems ...\r" >/dev/console
+if [ -s $SFS ] ;then
+	cat $SFS|while read FS ;do
+		if [ -n "$FS" ] ;then
+			set $FS
+			if [ $# = 5 ] ;then
+			   if [ $1 = $SVC ] ;then
+				/usr/afs/bcflush $2
+				mount -t $4 -o $5 $2 $3
+				if [ ! $? = 0 ] ;then
+					fsck -t $4 -y $2
+					/usr/afs/bcflush $2
+					mount -t $4 -o $5 $2 $3
+					if [ ! $? = 0 ] ;then
+						echo -e "\n\rMount file system fail.\r" >/dev/console
+					fi
+				fi
+			   fi
+			fi
+		fi
+	done
+fi
+
+if [ $MODEL = AFS1000HS -o $MODEL = AFS1000DA ] ;then
+### AFS1000: not nessary to process network services
+: do nothing
+else
+	echo -e "\rStart network services (H${HOST}SVC${SVC})...\r" >/dev/console
+	/usr/afs/startnet H${HOST}SVC${SVC}
+	$CHGVHOST -e ${SVC}
+fi
+
+echo -e "Start service engine programs...\r" >/dev/console
+## 980311 Amos: close stdout,stderr
+exec 1>&-
+exec 2>&-
+exec 1>/dev/console
+exec 2>/dev/console
+SIFS=$IFS
+if [ -s $SPROG ] ;then
+	cat $SPROG|while read LINE ;do
+		if [ -n "$LINE" ] ;then
+			IFS=":"
+			set $LINE
+			if [ -n "$1" -a X"$1" = X$SVC ] ;then
+			   if [ X"$2" = X"init" -o X"$2" = X"respawn" ] ;then
+				STARTCMD=$4
+				if [ -n "$STARTCMD" ] ;then
+					IFS=$SIFS
+					set $STARTCMD
+					[ -n "$1" ] && [ -f "$1" -a -x "$1" ] && $*
+				fi
+			   fi
+			fi
+		fi
+	done
+fi
+/usr/afs/svcready $SVC
+echo -e "Service system Ready.\r" >/dev/console
+#/usr/afs/msgtserv '\n\r"Please re-login again."\n\r'
+if [ -f /usr/afs/userprog -a -x /usr/afs/userprog ] ;then
+	/usr/afs/userprog &
+fi

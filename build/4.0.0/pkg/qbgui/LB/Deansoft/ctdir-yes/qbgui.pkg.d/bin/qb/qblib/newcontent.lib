@@ -1,0 +1,420 @@
+###############################################################################################
+#                                           Pptpinit Management Console
+###############################################################################################
+sub showContent 
+{
+    my (%action)=@_;
+    my $content=XMLread($gPATH.'content.xml');
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    my $keyword=$content->{keyword}->[0]->{name};
+    
+    #********************************** Block Web Content ********************************************
+    #ADD keyword
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Block Web Content ]</td></tr>);
+    
+    print qq (<td class="body" valign="center" align="center" style="height: 50px; width: 230px">Block</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 105px">);
+    my $status=( $squid->{activex} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="activex"  $status >ActiveX);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 105px">);
+    my $status=( $squid->{cookies} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="cookies"  $status >Cookies);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 105px">);
+    my $status=( $squid->{javascript} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="javascript"  $status >JavaScript);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 105px">);
+    my $status=( $squid->{javaapplet} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="javaapplet"  $status >JavaApplet);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 105px">);
+    my $status=( $squid->{proxy} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="proxy"  $status >Proxy);
+    print qq (</td>);
+    #**********************************Prohibit Multi-thread Download ********************************************
+    #
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" >[ Prohibit Multi-thread Download ]</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body" valign="center" align="center" style="height: 50px; width: 230px">Prohibit Multi-thread Download</td>);
+    print qq (<td class="body" valign="center" align="left" style="height: 50px; width: 100px">); 
+    my $status=( $squid->{prohibitmulti} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="prohibitmulti"  $status >);
+    print qq (</td>);
+    print qq (<tr>);
+    
+    #********************************** Block Web Content ********************************************
+    #ADD keyword
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Block Content Keyword ]</td></tr>);
+    print qq (</table>);
+	
+	print qq (<table width="760" bgcolor="#336699" cellspacing="3" border="0" style="table-layout:fixed;word-break:break-all">);
+    #print qq (<table width="760" cellspacing="0" border="0">);    
+    # print qq (<tr>);
+    # print qq (<td class="body" align="center" style="height: 100px; width: 200px">Add Keyword);
+    # print qq (<br>);
+    # print qq (<br>);
+    # print qq (<input class="qbtext" name="keywordname" style="WIDTH: 150px" >\n);
+    # print qq (<br>);
+    # print qq (<br>);
+    # print qq (<input class="qb" type="button" value="Add" title="Add Keyword!" onClick="goSubmit('ADDKEYWORD')" style="width:auto");
+    # print qq (</td>);
+    # print qq (<td class="body" align="center" style="height: 100px; width: 150px">);
+    # print qq (</td>);
+    
+    #Keywordlist
+    # print qq (<td class="body" align="center" style="height: 100px; width: 200px"><br>Keyword);
+    # print qq (<br>);
+    # print qq (<br>);
+    # print qq (<select class="qbopt" name="keywordlist" size="5" multiple style="width:150">);
+    # foreach my $word ( @$keyword )
+    # {
+        # if ( $word->{keywordname} eq 'system' ) { next; }
+        # print qq (<option>$word->{keywordname}</optin>);
+    # }
+    # print qq (</select>);
+    # print qq (<br>);
+    # print qq (<br>);
+    # print qq (<input class="qb" type="button" value="Delete" title="Delete Keyword!" onClick="goSubmit('DELKEYWORD')" style="width:auto");
+    # print qq (</td></tr>);
+	
+	#############################################################################
+	my $kwref=XMLread($gPATH.'keyword.xml');
+    my $kwlist=$kwref->{keyword}->[0]->{name};
+	print qq (<tr bgcolor="#332211">);
+	print qq (<td class="body" align="center" width="250">Name</td><td class="body" align="center" width="250">Keyword list</td><td class="body" align="center" width="250">);
+	print qq (<a href="javascript:delkw()"><img border="0" title="Delete Checked Host(s)" src="image/del.gif"></a>);
+    print qq (<input type="checkbox" onclick="setAllCheckBoxValue('kwname', this.checked)" title="select or deselect all items"></td>);
+	print qq (</tr>);
+	my $lineCount=0;
+	foreach $kw (@$kwlist)
+	{
+		if ( $kw->{keywordname} eq "system") { next; }
+		my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+		my $showname=$kw->{keywordname};
+		$showname=~s/host-//g;
+		print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor">);
+		print qq (<td align="center" style="center: 0px; table-layout: fixed;  word-wrap: break-word;">$showname</td>);
+		print qq (<td align="center" style="center: 0px; table-layout: fixed;  word-wrap: break-word;">$kw->{keyword}</td>);
+		print qq (<td class="body" align="center"><input type="checkbox" name="kwname" value="$kw->{keywordname}"></td>);
+		print qq (</tr>);
+		$lineCount++;
+	}
+	#$gMSGPROMPT.=qq ($kwlist->{keywordname}\\n);
+	#############################################################################
+	print qq (<tr><td align="left">);
+	my $hostref=XMLread($gPATH.'host.xml');
+    my $hostlist=$hostref->{host};
+	print qq (<select class="qb" name="testlist" style="width:150">);
+	foreach my $item ( @$hostlist )
+    {
+        if ( $item->{hostname} eq "system" || $item->{hide} eq "1" ) { next; }
+        if ( $item->{hosttype} ne "weburl" ) { next; }
+		my $showname=$item->{hostname};
+        $showname=~s/host-//g;
+        print qq (<option value="$item->{hostname}">$showname</optin>);
+	}
+    print qq (</select>);
+	print qq (<input class="qb" type="button" value="Add" title="Add Keyword!" onClick="goSubmit('ADDKEYWORD')" style="width:auto");
+	print qq (</td><td></td><td></td></tr>);
+	#############################################################################
+}
+#showConsole
+
+
+#======================================================================================================================
+sub contentScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+                                                            
+    function checkAndSetidletime()
+    {
+        if ( !isValidPort(myform.idletime.value) ) 
+        { 
+            myform.idletime.value=""; 
+            alert("Time format Error");
+        }
+    }
+	function showview()
+	{
+		var other_set = document.getElementById('other_set');
+		if(other_set.style.display == 'none')other_set.style.display='';
+		else other_set.style.display='none';
+	}
+	function delkw()
+    {
+        myform.action.value='DEL';
+        myform.submit();
+    }
+    </script>
+SCRIPT
+}
+#contentScript
+
+
+#======================================================================================================================
+#maintainsquidgen( %action )
+sub maintainContent 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    my $content=XMLread($gPATH.'content.xml');
+    my $keyword=$content->{keyword}->[0]->{name};
+	my $kwref=XMLread($gPATH.'keyword.xml');
+    my $kwlist=$kwref->{keyword}->[0]->{name};
+    my @temparray;
+	my @temparray2;
+    my $IS_EVERYTHING_OK = 1;
+	my $exist=0;
+	
+    my $squidurl=XMLread($gPATH.'squidurl.xml');
+    my $exempt=$squidurl->{exempt}->[0]->{net};
+    my $TEMP_DIR="/usr/local/squid/share/errors/templates";
+    if ( $action{action}=~m/^ADDKEYWORD$/ )
+    {
+    	#if ($action{keywordname}=~m/$gBIG5/ )
+		if ($action{testlist}=~m/$gBIG5/ )
+    	{
+    	    $gMSGPROMPT.=qq (ERROR:KEYWORD Format Error\\n);
+    	    $IS_EVERYTHING_OK=0;
+    	}
+    	
+    	if ($IS_EVERYTHING_OK eq '1')                                        
+    	{
+            #my @namelist=split(/;/,$action{keywordname});
+			my $hostaddress;			
+			my $hostref=XMLread($gPATH.'host.xml');
+			my $hostlist=$hostref->{host};
+			foreach my $item ( @$hostlist )
+			{
+				if ( $item->{hostname} eq "system" || $item->{hide} eq "1" ) { next; }
+				if ( $item->{hosttype} ne "weburl" ) { next; }
+				if($action{testlist} eq $item->{hostname})
+				{
+					$hostaddress = $item->{hostaddress};
+					$newkw{keywordname}=$item->{hostname};
+					$newkw{keyword}=$item->{hostaddress};
+					foreach my $kw ( @$kwlist )
+					{
+						if ( $kw->{keywordname} eq $item->{hostname} )
+						{
+							$exist=1;
+							$kw=\%newkw;
+						}
+					}
+					if ( $exist eq '0' )
+					{
+						#delete($action{action});
+						push( @$kwlist, \%newkw); 
+						@$kwlist=sort byName @$kwlist;
+					}
+					XMLwrite($kwref, $gPATH."keyword.xml");
+				}
+			}
+			my @namelist=split(/,/,$hostaddress);
+			
+            foreach my $domain ( @$keyword )
+            {
+                push( @temparray2, $domain );
+            }
+            foreach my $name ( @namelist )
+            {
+                my $isfind="0";
+                foreach my $domain ( @temparray2 )
+                {
+                     if ( $domain->{keywordname} eq $name )
+					 { $isfind="1"; }
+                }
+                if ( $isfind eq "0" )
+                {
+                     my %newlist=( keywordname=>$name );
+                     push( @temparray2, \%newlist);
+                }
+                $content->{keyword}->[0]->{name}=\@temparray2;
+            }
+       }
+	   
+       LogUserAction( action=>'ADDCONTENTKEYWORD', keywordname=>$action{keywordname} );
+    }
+    elsif ( $action{action}=~m/^DELKEYWORD$/ )
+    {
+        foreach my $domain ( @$keyword )
+        {
+            if ( $domain->{keywordname} eq $action{keywordlist} ) { next; }
+            push( @temparray2, $domain );
+        }
+        $content->{keyword}->[0]->{name}=\@temparray2;
+        LogUserAction( action=>'DELCONTENTKEYWORD', keywordname=>$action{keywordlist} );
+    }
+	elsif ( $action{action}=~m/^DEL$/ )
+    {
+		my $delet=$action{kwname};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        my @temparray;
+        foreach my $kw ( @$kwlist )
+        {
+			if ( grep(/^$kw->{keywordname}$/, @$delet) ) 
+			{
+				my $kn = $kw->{keyword};
+				my @knn = split(/,/,$kn);
+				foreach my $domain ( @$keyword )
+				{
+					if ( grep(/^$domain->{keywordname}$/, @knn) ) { next; }
+					push( @temparray2, $domain );
+				}				
+				LogUserAction( action=>'DELCONTENTKEYWORD', keywordname=>$kw->{keywordname} ); 
+				next; 
+			}
+            push(@temparray, $kw); 
+        }
+        $kwref->{keyword}->[0]->{name}=\@temparray;
+		XMLwrite($kwref, $gPATH."keyword.xml");
+		$content->{keyword}->[0]->{name}=\@temparray2;
+		XMLwrite($content, $gPATH."content.xml");
+		
+    }
+    elsif ( $action{action}=~m/^SAVE$/ )
+    {
+		$squid->{activex}=$action{activex};
+		$squid->{javascript}=$action{javascript};
+		$squid->{javaapplet}=$action{javaapplet};
+		$squid->{cookies}=$action{cookies};
+		$squid->{proxy}=$action{proxy};
+		$squid->{prohibitmulti}=$action{prohibitmulti};
+	   
+		$squid->{isenable}=$action{isenable};
+		$squid->{schedule}=$action{schedule};
+    	$squid->{timehour1}=$action{timehour1};
+    	$squid->{timemin1}=$action{timemin1};
+    	$squid->{timehour2}=$action{timehour2};
+    	$squid->{timemin2}=$action{timemin2};
+    	$squid->{everyday}=$action{everyday};
+    	$squid->{sun}=$action{sun};
+    	$squid->{mon}=$action{mon};
+    	$squid->{tue}=$action{tue};
+    	$squid->{wed}=$action{wed};
+    	$squid->{thu}=$action{thu};
+    	$squid->{fri}=$action{fri};
+    	$squid->{sat}=$action{sat};
+		
+		open(DENY,">/usr/local/apache/qbconf/deny");
+    	print DENY qq ($action{denymessage});
+    	close(DENY);
+    	$action{denymessage} =~ s/{url}/\%U/g;
+    	$action{denymessage} =~ s/{category}/custom/g;
+    	runCommand(command=>'cp', params=>"-a $TEMP_DIR/DENIED $TEMP_DIR/ERR_ACCESS_DENIED");
+    	open(DENY,">>$TEMP_DIR/ERR_ACCESS_DENIED");
+    	print DENY qq ($action{denymessage});
+    	close(DENY);
+		
+		if ( $squid->{timehour1} < 0 || $squid->{timehour1} > 24 || $squid->{timehour2} < 0 || $squid->{timehour2} > 24)
+      	{
+      	    $gMSGPROMPT.=qq (ERROR : Time Format ERROR\\n);
+      	    return;
+      	}
+      	if ( $squid->{timemin1} < 0 || $squid->{timemin1} > 59 || $squid->{timemin2} < 0 || $squid->{timemin2} > 59)
+      	{
+      	    $gMSGPROMPT.=qq (ERROR : Time Format ERROR\\n);
+      	    return;
+      	}
+		
+		XMLwrite($squid, $gPATH."squidgen.xml");
+        
+        runCommand(command=>'/usr/local/squid/etc/squidstop', params=>'');
+        runCommand(command=>'echo', params=>"200 >/tmp/fifo.qbserv");
+        
+        LogUserAction( action=>'APPLYWEBFILTERING', isenable=>$action{isenable}, schedule=>$action{schedule}, timehour1=>$action{timehour1}, timemin1=>$action{timemin1}, timehour2=>$action{timehour2}, timemin2=>$action{timemin2}, everyday=>$action{everyday}, sun=>$action{sun}, mon=>$action{mon}, tue=>$action{tue}, wed=>$action{wed}, thu=>$action{thu}, fri=>$action{fri}, sat=>$action{sat} ); 
+		
+		runCommand(command=>'/usr/local/apache/qb/setuid/do_qbsquid.pl', params=>'');
+		if ( $squid->{isenable} eq "1" )
+		{
+			runCommand(command=>'killall', params=>'-9'.' '.'squid');
+			#runCommand(command=>'sleep', params=>'5');
+			#runCommand(command=>'/usr/local/squid/sbin/squid', params=>'');
+			#runCommand(command=>'/usr/local/squid/sbin/squid', params=>'-k'.' '.'reconfigure');
+		}
+       
+		LogUserAction( action=>'APPLYCONTENTFILTERING', activex=>$action{activex}, javascript=>$action{javascript}, javaapplet=>$action{javaapplet}, cookies=>$action{cookies}, proxy=>$action{proxy}, prohibitmulti=>$action{prohibitmulti} );
+    }
+    elsif ( $action{action}=~m/ADDPC$/ )
+    {
+        my $subnet=$action{iprange1}.'-'.$action{iprange2};
+        if ( !isValidIP($action{iprange1}) || !isValidIP($action{iprange2}) )
+        {
+            $gMSGPROMPT.=qq ( ERROR:IP Range Format Error\\n);
+            $IS_EVERYTHING_OK=0;
+        
+        }
+    	foreach my $net ( @$exempt )
+    	{
+    	    if ( $net->{ip} eq $subnet ) { next; }
+    	     push( @temparray, $net );
+    	}
+    	my %newlist= ( ip=>$subnet );
+    	push( @temparray, \%newlist);
+    	$squidurl->{exempt}->[0]->{net}=\@temparray;
+    	if ( $IS_EVERYTHING_OK eq '1' )
+    	{
+            XMLwrite($squidurl, $gPATH."squidurl.xml");
+            runCommand(command=>'/usr/local/apache/qb/setuid/do_qbsquidurl.pl', params=>'');
+        }
+       
+        LogUserAction( action=>'ADDPC', iprange1=>$action{iprange1}, iprange2=>$action{iprange2} );
+    }
+    elsif ( $action{action}=~m/DELPC$/ )
+    {
+    	foreach my $net ( @$exempt )
+    	{
+    	    if ( $net->{ip} eq $action{pclist} ) { next; }
+    	     push( @temparray, $net );
+    	}
+    	$squidurl->{exempt}->[0]->{net}=\@temparray;
+        XMLwrite($squidurl, $gPATH."squidurl.xml");
+        runCommand(command=>'/usr/local/apache/qb/setuid/do_qbsquidurl.pl', params=>'');
+        
+        LogUserAction( action=>'DELPC', iprange1=>$action{iprange1}, iprange2=>$action{iprange2}, pclist=>$action{pclist} );
+    }
+    if ( $squid->{isenable} eq "1" )
+    {
+       runCommand(command=>'/usr/local/squid/sbin/squid', params=>'-k'.' '.'reconfigure');
+    }
+    
+    XMLwrite($content, $gPATH."content.xml");
+    runCommand(command=>"/usr/local/squid/etc/delcontent.sh", params=>'');
+    runCommand(command=>"/usr/local/apache/qb/setuid/do_qbcontent.pl", params=>'');
+    
+    if ( $squid->{isenable} eq '1' )
+    {
+        runCommand(command=>"sleep", params=>'3');
+        runCommand(command=>"/usr/local/squid/etc/content.sh", params=>'');
+    }
+    
+    
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    qbSync();
+}
+#maintainContent
+#
+1

@@ -1,0 +1,60 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Outbound Pool Configuration</title>
+</head>
+<body>
+
+<h2>Outbound Pool Configuration</h2>
+<p>
+Pool可以選擇路徑的組合，以及在這些組合中使用的演算法，演算法可以依Last mile ，middle mile 及 End-to-End的狀況來分配線路，而分配線路也可以選擇以 connection，IP，或packet為不同的單位。
+<br>  
+當某個 Pool的線路都失敗時，可以選擇一個 Backup Pool來做第二個線路組合的路徑選擇
+</p>
+<p>
+各種的演算法介紹如下：
+</p>
+<ol>
+<li> 
+Bi-directional Sensitive Weighted Least Traffic(BSWLT) <!--1-->
+</li><p>
+每個 connection在選擇路徑時會依上傳下載兩個方向Last mile的可用頻寬來做最佳化做選擇。以下載方向的可用頻寬為主，也會同時考慮上傳頻寬剩餘值的影響。因為某些時候線路的下載方向很好但上傳方向卻被塞滿了，因此同時考慮可以避免誤判
+</p>
+<li>
+Fastest ISP Response Time <!--2-->
+</li><p>
+每個connection在選擇路徑時都會依當時每條線路到參考測試點的反應時間，選擇最快的來走。參考測試點的反應時間是利用使用者在Link Config.中填入的Target，依到Target的方向找到線路上的一個頻寬瓶頸點來做週期性的反應時間測試
+</p>
+<li> 
+Fastest Way By Destination(FWBD) <!--3-->
+</li>
+<p>
+每個connection在選擇路徑時會找到去它的目的地反應時間最快的線路，Q-balancer使用非常特殊的演算法能快速又省資源的來達成這個功能<br>
+<ul>
+<li>FWBD可用於有些網站只能接受特定線路IP的負載平衡，如學校單位去某些 Internet2 網站只能走某條線路，FWBD演算法可以找到 "唯一"能通的路 
+<li>FWBD演算法本身就是一種 Healthy Check，能避開斷線判斷的時間
+<li>目前 FWBD演算法會一律使用NAT的方式出去
+</ul>
+</p>
+<li>
+Weight Round-Robin by connection <!--4-->
+</li><p>
+每個connection在選擇路徑時依定義的權值輪詢做靜態的分配，這個方法在測試使用網路螞蟻軟體的下載速度加總上可以很快的感受到效果</p>
+<li> 
+Weight Round-Robin IP persistent <!--5-->
+</li><p>
+以不同IP為主依定義的權值輪詢做靜態的分配，在這個演算法下，在一段時間內從同一個Source IP到同一個 Destination IP的路由會保持在同一路徑 
+</p>
+<li>
+Weight Least Traffic by packet <!--6-->
+</li><p>
+以不同packet為主，依上傳(Egress)的可用頻寬來作權值分配，權值每30sec.更新一次，而把封包依此權值分配這每個路徑，這個演算法只開放給在 multi-path VPN，也就是兩端都是Q-balancer的Tunnel環境下運作，它可以聚合上傳的頻寬 
+</p>
+<li>
+Redirect to Transparent proxy <!--7-->
+</li><p>
+Redirect到一個可以做 Transparent Proxy的 Server，在企業作 Transparent Proxy才會用到
+</p>
+</ol>
+</body></html>

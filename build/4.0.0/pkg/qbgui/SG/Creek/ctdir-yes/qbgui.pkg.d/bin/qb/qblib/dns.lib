@@ -1,0 +1,1897 @@
+#######################################################################################################################
+#                                     DNS Config
+#######################################################################################################################
+
+#=====================================================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub listMX
+{
+    my ($domainname,$countryname)=@_;
+    my $dns=XMLread($gPATH.'dns.xml');
+    my $isplist=$dns->{isp};
+    
+    #********************************** Set Focus to ISP Template ********************************************
+    my $targetisp;
+    foreach my $isp ( @$isplist ) { if ( $isp->{ispnum} eq 'system') { $targetisp=$isp; last; } }
+
+    #********************************** Set Focus to Target Domain ********************************************
+    my $targetdomain;
+    my $ispdomain=$targetisp->{domain};
+    
+    if ( $countryname )
+    {
+        foreach my $domain ( @$ispdomain ) 
+        { 
+    	    if ( $domain->{d_name} eq $domainname && $domain->{countryname} eq $countryname ) 
+    	    { $targetdomain=$domain; }
+        }
+    }
+    else 
+    { foreach my $domain ( @$ispdomain ){if ( $domain->{d_name} eq $domainname ) { $targetdomain=$domain; }} }
+
+
+    #********************************** Parse MX record as priority hash
+    my @allDomainMX=split(/\;/, $targetdomain->{mx});
+    my %prihash;
+    foreach my $mxitem ( @allDomainMX ) { my ($host, $pri)=split(/:/, $mxitem); $prihash{$host}=$pri; }
+    
+
+    #********************************** List All Host as MX Candidate ********************************************
+    my $hostlist=$targetdomain->{host};
+    my @allHost; my %hosthash;
+    foreach my $host ( @$hostlist ) { if ( $host->{h_name} eq "system" ) { next; } $hosthash{$host->{h_name}}=1; }
+    @allHost=sort keys %hosthash;
+
+    print qq (<div class="divframe">);
+    print qq (<table width="100%" class="body">);
+    print qq (<tr><td colspan="2">Domain MX of $domainname</td></tr>);
+    print qq (<tr><td>Weight</td><td>Host</td></tr>);
+    my $lineCount=0;
+    foreach my $host ( @allHost )
+    {
+        my $priority=$prihash{$host};
+
+        #===================================================================      
+        # prepare display color
+
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor">);
+        print qq (<td align="center">);
+        print qq (<select class="qbopt" name="$host">);
+        for (my $pri=0; $pri<=100; $pri+=10) 
+        {
+            my $status=( $pri eq $priority ) ? ( 'selected' ) : ( '' ); 
+            print qq (<option value="$pri" $status >$pri</option>); 
+            
+            #if ( $pri eq '0' )
+            #{
+            #    my $status=( $pri eq '1' ) ? ( 'selected' ) : ( '' );
+            #    my $status1=( $pri eq '5' ) ? ( 'selected' ) : ( '' );
+            #    print qq (<option value="1" $status >1</option>);
+            #    print qq (<option value="5" $status1 >5</option>);
+            #}
+        } 
+        print qq (</select>);
+        print qq (</td>); 
+        print qq (<td>$host</td>);
+        print qq (</tr>);
+        $lineCount++;
+    }
+    print qq (<tr><td align="center"><input type="button" class="qb" value="OK" onClick="returnResult()" style="width:60"></td>);
+    print qq (<td align="center"><input type="button" class="qb" value="Cancel" onClick="returnCancel()" style="width:60"></td></tr>);
+    print qq (</table>);
+    print qq (</div>);
+}
+#listMX
+
+#=====================================================================================
+sub listMXScript
+{
+print  << "LISTMXSCRIPT";    
+    
+    <script language="javascript">
+        
+        var myform=window.document.forms[0];
+        
+        function returnResult() 
+        {
+            var domainMX='';
+            
+            for (var i=0; i < myform.elements.length; i++) 
+            { 
+                var value=myform.elements[i].value;
+                var name=myform.elements[i].name;
+                if (value != "OK" && value > 0 ) { domainMX+=name+":"+value+";"; }
+            }
+            window.returnValue=domainMX;
+            window.close();
+        }
+        
+        function returnCancel() 
+        {
+            window.close();
+        }
+        
+    </script>
+    
+LISTMXSCRIPT
+}
+#listMXScript
+
+
+#=====================================================================================================================
+sub listNS
+{
+    my ($domainname,$countryname)=@_;
+    my $dns=XMLread($gPATH.'dns.xml');
+    my $isplist=$dns->{isp};
+    
+    #********************************** Set Focus to ISP Template ********************************************
+    my $targetisp;
+    foreach my $isp ( @$isplist ) { if ( $isp->{ispnum} eq 'system') { $targetisp=$isp; last; } }
+
+    #********************************** Set Focus to Target Domain ********************************************
+    my $targetdomain;
+    my $ispdomain=$targetisp->{domain};
+    
+    if ( $countryname )
+    {
+        foreach my $domain ( @$ispdomain ) 
+        { 
+            if ( $domain->{d_name} eq $domainname && $domain->{countryname} eq $countryname ) 
+            { $targetdomain=$domain; } 
+	}
+    }
+    else { foreach my $domain ( @$ispdomain ){if ( $domain->{d_name} eq $domainname ){ $targetdomain=$domain; }}}
+
+
+    #********************************** Parse MX record as priority hash
+    my @allDomainNS=split(/\;/, $targetdomain->{ns});
+    my %prihash;
+    foreach my $mxitem ( @allDomainMX ) { my ($host, $pri)=split(/:/, $mxitem); $prihash{$host}=$pri; }
+    
+
+    #********************************** List All Host as NS Candidate ********************************************
+    my $hostlist=$targetdomain->{host};
+    my @allHost; 
+    foreach my $host ( @$hostlist ) 
+    { 
+        if ( $host->{h_name} eq "system" ) { next; } 
+        if ( grep(/^$host->{h_name}$/, @allHost) ) { next; }
+        push ( @allHost, $host->{h_name} );
+    }
+
+    print qq (<div class="divframe">);
+    print qq (<table width="100%" class="body">);
+    print qq (<tr><td colspan="2">Domain NS of $domainname</td></tr>);
+    print qq (<tr><td>Selected</td><td>Host</td></tr>);
+    my $lineCount=0;
+    foreach my $host ( @allHost ) 
+    { 
+        
+        my $status=( grep(/^$host$/, @allDomainNS) ) ? ('checked') : ('');
+
+        #===================================================================      
+        # prepare display color
+
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor">);
+        print qq (<td align="center"><input type="checkbox" name="$host" $status ></td>); 
+        print qq (<td>$host</td>);
+        print qq (</tr>);
+        $lineCount++;
+    }
+
+    print qq (<tr><td align="center"><input type="button" class="qb" value="OK" onClick="returnResult()" style="width:60"></td>);
+    print qq (<td align="center"><input type="button" class="qb" value="Cancel" onClick="returnCancel()" style="width:60"></td></tr>);
+    print qq (</table>);
+    print qq (</div>);
+}
+#listNS
+
+#=====================================================================================
+sub listNSScript
+{
+print  << "LISTNSSCRIPT";    
+    
+    <script language="javascript">
+        
+        var myform=window.document.forms[0];
+ 
+        function returnResult()
+        {
+            var domainNS='';
+ 
+            for (var i=0; i < myform.elements.length; i++)
+            {
+                if ( myform.elements[i].type == "checkbox" && myform.elements[i].checked ) { domainNS+=myform.elements[i].name+';'; }
+            }
+
+            window.returnValue=domainNS;
+            window.close();
+        }
+ 
+        function returnCancel()
+        {
+            window.close();
+        }
+ 
+    </script>
+    
+LISTNSSCRIPT
+}
+#listNSScript
+
+
+#==============================================================================================
+sub showDNS 
+{
+    my (%action)=@_;
+    my $dns=XMLread($gPATH.'dns.xml');
+    my $countryref=XMLread($gPATH.'country.xml');
+    my $countrynamelist=$countryref->{country};
+    my $isplist=$dns->{isp};
+ 
+    print qq (<table class="body" bgcolor="#336699" cellspacing="5" cellpadding="0" border="0">);
+    my %isphash=maintainBasic( action=>'GETNORMALISPNAMEHASH' );
+    my @ispidlist=sort keys %isphash;
+ 
+    #假如沒有任何已經設定的 ISP，就作個 ending 後結束
+    if ( @ispidlist==0 )
+    {
+        print qq (<td class="bigtitle"  align="center">);
+        print qq (NO WAN configured</td></tr>);
+        print qq (</table>);
+        return;
+    }
+ 
+    #********************************** Focus ISP ********************************************
+    if ( !$action{isp} ) { $action{isp}=$ispidlist[0]; }
+    my $targetisp;
+    foreach my $isp ( @$isplist ) { if ( $isp->{ispnum} eq $action{isp} ) { $targetisp=$isp;} }
+    if ( !defined($targetisp) ) { return; } # there must existed smallest iid(basic) in ispnum(dns) lists...nancy040910
+ 
+    print qq (<tr><td colspan="8" class="bigtitle">$qblang[235] ); # </td></tr>); 
+    print qq (<a href="javascript:qbShowHelp('dns')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+ 
+
+    #********************************** General Setting ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[236] ]</td></tr>);
+    print qq (<tr>);
+    print qq (<td align="left" >TTL:</td>);
+    print qq (<td colspan="3" align="left">);
+    print qq (<select class="qbopt" id="ttl" name="ttl" style="width:120" onChange="goSubmit('SETTTL')">);
+    foreach my $ttl ( 1..50 ) 
+    {
+        my $status=($dns->{ttl} eq $ttl ) ? ('selected') : ('');
+        print qq ( <option value="$ttl" $status >$ttl $qblang[1]</option>); 
+    }
+    print qq (</select></td>);
+
+    if ( $gENABLEFULLINBOUND )
+    {
+        print qq (<td align="left" >Mode:</td>);
+        my %modehash=('WRR'=>'Weighted Round Robin', 'WLT'=>'Weighted Least Traffic', 'BTK'=>'Bottleneck Monitor', 'FAILOVER'=>'Fail Over'); 
+        print qq (<td colspan="3" align="left">);
+        print qq (<select name="mode" onChange="goSubmit('CHANGEMODE')" class="qbopt" style="width:120">);
+        foreach my $mode ( keys %modehash )
+        {
+            my  $status=( $mode eq $dns->{mode} ) ? ("selected") : ("");
+            print qq (<option value="$mode" $status>$modehash{$mode}</option>);
+        }
+        print qq (</select>);
+        print qq (</td>);
+    }
+
+    print qq (</tr>);
+ 
+    #********************************** ISP Selection ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[237] ]</td></tr>);
+    print qq (<tr><td class="body" align="left">ISP: </td><td align="left">);
+    print qq (<select class="qbopt" id="isp" name="isp" onChange="goSubmit()" style="width:120">);
+    foreach my $isp ( sort num_sort @ispidlist ) 
+    {
+        my $status=($isp eq $action{isp} ) ? ('selected') : ('');
+        print qq (<option value="$isp" $status>$isphash{$isp} [ ISP $isp ] </option>);
+    }
+    print qq (</select>);     
+    print qq (</td>);
+ 
+    #********************************** Weight Selection ********************************************
+    if ( $gENABLEFULLINBOUND )
+    {
+        print qq (<td class="body" align="left">$qblang[180]: </td><td align="left">);
+        print qq (<select class="qbopt" name="weight" onChange="goSubmit('UPDATEISP')" style="width:120">);
+        foreach my $value ( 0..9 ) 
+        {
+            my $status=( $value eq $targetisp->{weight} ) ? ( 'selected' ) : ( '' );
+            my $show=( $value eq '0' ) ? ( 'Disabled' ) : ( $value );
+            print qq (<option value="$value" $status>$show</option>);
+        }
+        print qq (</select>);     
+        print qq (</td>);
+
+        #********************************** Priority Selection ********************************************
+        print qq (<td class="body" align="left">$qblang[152]: </td><td align="left">);
+        print qq (<select class="qbopt" name="priority" onChange="goSubmit('UPDATEISP')" style="width:120">);
+        foreach my $value ( 0..9 ) 
+        {
+            my $status=( $value eq $targetisp->{priority} ) ? ( 'selected' ) : ( '' );
+            my $show=( $value eq '0' ) ? ( 'Disabled' ) : ( $value );
+            print qq (<option value="$value" $status>$show</option>);
+        }
+        print qq (</select>);     
+        print qq (</td>);
+        print qq (</tr>);
+    }
+    else
+    {
+        print qq (<td class="body" align="left">On/Off: </td><td align="left">);
+        print qq (<select class="qbopt" name="weight" onChange="goSubmit('UPDATEISP')" style="width:120">);
+        foreach my $value ( 0..1 ) 
+        {
+            my $status=( $value eq $targetisp->{weight} ) ? ( 'selected' ) : ( '' );
+            my $show=( $value eq '1' ) ? 'On' : 'Off';
+            print qq (<option value="$value" $status>$show</option>);
+        }
+        print qq (</select>);     
+        print qq (</td>);
+        
+        #********************************** Priority Selection ********************************************
+        print qq (<td class="body" align="left">Priority: </td><td align="left">);
+        print qq (<select class="qbopt" name="priority" onChange="goSubmit('UPDATEISP')" style="width:120">);
+        foreach my $value ( 1..9 ) 
+        {
+            my $status=( $value eq $targetisp->{priority} ) ? ( 'selected' ) : ( '' );
+            my $show=( $value eq '0' ) ? ( 'Disabled' ) : ( $value );
+            print qq (<option value="$value" $status>$show</option>);
+        }
+        print qq (</select>);     
+        print qq (</td>);
+    }
+
+
+    #************************* Focus Domain ******************************************
+    # prepare list of all domains, then focus 
+    my $ispdomain=$targetisp->{domain};
+    my %domainhash; 
+    foreach my $domain ( @$ispdomain ) 
+    { 
+        if ( $domain->{d_name} eq 'system' ) { next; }
+        $domainhash{$domain->{d_name}}=1;
+    }
+
+    #If action ADDDOMAIN was taken, we have to change focus of $action{d_name} to $action{newdomain}
+    if ( $action{action}=~m/^ADDDOMAIN$/ ) { $action{d_name}=$action{newdomain}; }
+    
+    my @alldomains=keys %domainhash; 
+    if ( !$action{d_name} ) { $action{d_name}=$alldomains[0]; }
+    
+
+    my $targetdomain;
+    foreach my $domain ( @$ispdomain ) 
+    { 
+    	if ( $domain->{d_name} eq $action{d_name} && $domain->{countryname} eq $action{countryname} ) 
+    	{ $targetdomain=$domain; } 
+    }
+ 
+    #************************* Domain Selection *****************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[238] ]</td></tr>);
+    print qq (<tr>);
+    print qq (<td align="left">$qblang[239]:</td>);
+    print qq (<td align="left">);
+    print qq (<select class="qbopt" name="d_name" onChange="goSubmit()" style="width:120">);
+    foreach my $domain ( @alldomains )
+    {
+        my $status=( $domain eq $action{d_name} ) ? ( 'selected' ) : ('');
+        print qq (<option value="$domain" $status>$domain</option>);
+    }
+    print qq (</select></td>); 
+    print qq (<td align="left">$qblang[240]:</td>);
+    print qq (<td align="left"><input class="qbtext" type="text" name="domainip" value="$targetdomain->{ip}" style="width:120"></td>);
+    print qq (<td colspan="4" align="right">);
+    print qq (<input type="button"  class="qb" value="$qblang[111]" title="Add new Domain name" onClick="addNewDomain()" style="width:60">);
+    print qq (<input type="button"  class="qb" value="$qblang[165]" title="Delete This Domain" onClick="delThisDomain()" style="width:60">);
+    print qq (<input type="button"  class="qb" value="$qblang[58]" title="Update This Domain IP" onClick="updateDomainIP()" style="width:60">);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<input type="hidden" name="newdomain" value="">);
+    print qq (<input type="hidden" id="action_isp" name="action_isp" value="$action{isp}">);
+    print qq (<input type="hidden" id="action_d_name" name="action_isp" value="$action{d_name}">);
+ 
+
+    #********** Collect all host name into a hash, then transfer it into all host array
+    my $hostlist=$targetdomain->{host};
+    my %allHostHash;
+    my @allHost;
+    my @allDomainMX=split(/\;/, $targetdomain->{mx});
+    my @allDomainNS=split(/\;/, $targetdomain->{ns});
+
+    foreach my $host ( @$hostlist )
+    {
+        if ( $host->{h_name} eq "system" ) { next; }
+        $allHostHash{$host->{h_name}}=1;
+    }
+    $if_enablegslb;
+    foreach my $domain ( @$ispdomain )
+    {
+        if ( $domain->{d_name} eq 'system' ) { next; }
+        #if ( $domain->{d_name} eq $action{d_name} )
+        if ( $domain->{d_name} eq $action{d_name} && $domain->{enablegslb} eq '1' ) { $if_enablegslb='1';}
+    }
+
+    @allHost=keys %allHostHash;
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[241] ]</td></tr>);
+
+    #************************** Set Forwarding ***************** 
+    #my $forwardstatus=( $targetdomain->{forward} ) ? ('checked') : ('');
+    #print qq (<tr><td>Forward:</td><td><input name="forward" $forwardstatus type="checkbox" value="1" onClick="goSubmit('SETDOMAINFORWARD')"></td>);
+    print qq (<tr><td></td><td><input name="forward" type="hidden" value="1" onClick="goSubmit('SETDOMAINFORWARD')"></td>);
+
+    #************************** Choose Domain Level MX ***************** 
+    print qq (<td align="left">MX:</td><td>);
+    my $mxgslb;
+    # Gary 20130805 purpose to ignore when enable GSLB and no country name
+    if ( !$targetdomain->{countryname} && !$if_enablegslb )     # if disable GSLB and no country name
+    {
+        foreach my $mx ( @allDomainMX ) { $mxgslb.=$mx.';'; $domainMX.=qq($mx \n); }
+    }
+    elsif ( $targetdomain->{set} && $if_enablegslb )      # if enable GSLB and set=0
+    {
+        foreach my $mx ( @allDomainMX ) { $mxgslb.=$mx.';'; $domainMX.=qq($mx \n); }
+    }
+    #foreach my $mx ( @allDomainMX ) 
+    #{ 
+    #    $mxgslb.=$mx.';'; 
+    #    $domainMX.=qq($mx \n); 
+    #}
+    print qq (<textarea class="qbtext" readonly title="$domainMX" style="width:120;height:20">$domainMX</textarea>);
+    
+    print qq (<input type="hidden" name="mx" value="">);
+    print qq (<input type="hidden" name="mx_gslb" value=$mxgslb>);
+    print qq (</td>);
+
+    
+    #************************** Choose Domain Level NS  ***************** 
+    print qq (<td align="left">NS:</td><td>);
+    my $nsgslb;
+    # Gary 20130805 purpose to ignore when enable GSLB and no country name
+    if ( !$targetdomain->{countryname} &&  !$if_enablegslb )     # if disable GSLB and no country name
+    { 
+    foreach my $ns ( @allDomainNS ) { $nsgslb.=$ns.';'; $domainNS.=qq($ns \n); }
+    }
+    elsif ( $targetdomain->{set} && $if_enablegslb )      # if enable GSLB and have country name
+    { 
+    foreach my $ns ( @allDomainNS ) { $nsgslb.=$ns.';'; $domainNS.=qq($ns \n); }
+    }
+    
+    print qq (<textarea class="qbtext" readonly title="$domainNS" style="width:120;height:20">$domainNS</textarea>);
+    print qq (<input type="hidden" name="ns" value="">);
+    print qq (<input type="hidden" name="ns_gslb" value=$nsgslb>);
+    print qq (</td>);
+
+
+    #************************** Command Button to Set Domain MX and NS  ***************** 
+    print qq (<td colspan="2" align="right">);
+    print qq (<input type="button"  class="qb" value="Set MX" title="Set MX" onClick="getAndSetMX('$targetdomain->{d_name}','$action{countryname}')" style="width:60">);
+    #print qq (<input type="button"  class="qb" value="Set NS" title="Set NS" onClick="getAndSetNS('$targetdomain->{d_name}')" style="width:60">);
+    print qq (<input type="button"  class="qb" value="Set NS" title="Set NS" onClick="getAndSetNS('$targetdomain->{d_name}','$action{countryname}')" style="width:60">);
+    
+
+    #*********************** Host Information List of selected ISP.Domain ***************** 
+    print qq (<tr><td colspan="8" bgcolor="#332211" class="subtitle">[ $qblang[242] ]</td></tr>);
+    print qq (<tr>);
+    
+    #Gary ******GSLB********************************************************
+    #
+    ########################################################################
+
+    my $JustShowSingle=1;
+    my $temp1=0;        # if enablegslb temp1=1
+    my $gslb_status;
+    foreach my $country ( @$countrynamelist )
+    {
+	if ( $country->{countryname} eq 'system' || $country->{byGSLB} eq '0' ){ next; }
+    	my $temp=0;         # set
+	foreach my $domain ( @$ispdomain )
+	{
+	    if ( $domain->{d_name} eq 'system' ) { next; }
+	    if ( $domain->{d_name} eq $action{d_name} )
+	    {
+            	if ( $JustShowSingle )
+            	{
+		    $gslb_status=($domain->{enablegslb} eq '1')?('checked'):('');
+		    print qq (<td> Enable GSLB : );
+		    if ($gslb_status)
+		    {
+		    	print qq (<input type="checkbox" $gslb_status name="enablegslb" id="enablegslb" onClick="disabled_GSLB();" value='1' >);
+		    }
+		    else
+		    {
+		    	print qq (<input type="checkbox" $gslb_status name="enablegslb" id="enablegslb" onClick="enabled_GSLB();" value='0' >);
+		    }
+		    print qq (</td>);
+		    $JustShowSingle=0;
+		    if ( $domain->{enablegslb} )
+		    {
+			$temp1=1;
+		        print qq (<td colspan="2" align="left">by Country or host object : );
+		        print qq (<select class="qbopt" id="countryname" name="countryname" style="width:120" onChange="goSubmit('ADDCOUNTRY')">);
+	    		print qq ( <option > );
+	    		print qq ( </option>); 
+		    }
+		}
+	        if ( ($country->{countryname} eq $domain->{countryname}) && $domain->{set}) { $temp=1; }
+	    }
+	}
+	if ($temp && $action{d_name} && $temp1 )
+	{
+	    my $state=($country->{countryname} eq $action{countryname})?'selected':'';
+	    print qq ( <option value="$country->{countryname}" $state > );
+	    print qq ( $country->{countryname} * );
+	    print qq ( </option>); 
+	}
+	elsif ( $action{d_name} && $temp1 )
+	{
+	    my $state=($country->{countryname} eq $action{countryname})?'selected':'';
+	    print qq ( <option value="$country->{countryname}" $state > );
+	    print qq ( $country->{countryname} );
+	    print qq ( </option>); 
+	}
+    }
+    if ( $temp1 )
+    {
+	my $state=( $action{countryname} eq 'other' )?'selected':'';
+    print qq ( <option value="other" $state > );
+    print qq ( Other );
+    print qq ( </option>); 
+    }
+    print qq (</select></td>);
+    
+    
+#***************************************************************GSLB END
+
+# Gary
+    if ( $temp1 ) #if enablegslb     temp1=1 
+    {
+	print qq (<td colspan="1" align="left">); 
+	print qq (<input type="button" class="qb" value="View All Setup" onclick="viewall()" title="Prepare Multiple Empty Host Entries">);
+	print qq (</td>);
+    }
+    print qq (<td colspan="8" align="right">); #nancy
+    if ( $temp1 ) #if enablegslb     temp1=1 
+    {
+    print qq (<input type="button" class="qb" value="$qblang[115]" onclick="addMultiHostRec(6)" title="Prepare Multiple Empty Host Entries">);
+    print qq (<input type="button" class="qb" value="$qblang[57]" onclick="addHostRec(6)" title="Prepare Empty Host Entry" >);
+    print qq (<input type="button" class="qb" value="$qblang[58]" onclick="updateHost(6)" title="Update Host Info" >);
+    }
+    else
+    {
+    print qq (<input type="button" class="qb" value="$qblang[115]" onclick="addMultiHostRec(4)" title="Prepare Multiple Empty Host Entries">);
+    print qq (<input type="button" class="qb" value="$qblang[57]" onclick="addHostRec(4)" title="Prepare Empty Host Entry" >);
+    print qq (<input type="button" class="qb" value="$qblang[58]" onclick="updateHost(4)" title="Update Host Info" >);
+    }
+    print qq (<input type="button" class="qb" value="$qblang[116]" onClick="goSubmit()" title="Restore Original Host List" >);
+    print qq (</td></tr>);
+    my $selectedHostList=$action{hostlist};
+    
+    print qq (<tr><td colspan="8" align="center">);
+    
+    # Print Title first
+    # Print Host Content 
+    print qq (<div class="divframe">); # style="height:150".
+    print qq (<table id="hostList" width=100% cellspacing=0 border=0>);
+
+    # Print Title 
+    print qq (<thead><tr bgcolor="#332211" width="100%">);
+    print qq (<td width="20%">$qblang[243]</td>);
+    print qq (<td width="20%">$qblang[153]</td>);
+    print qq (<td width="20%">$qblang[152]</td>);
+    if ( $temp1 eq 1 )
+    {
+    print qq (<td width="20%">Port</td>);
+    }
+    if ( $temp1 eq 1 )
+    {
+    print qq (<td width="20%">Master</td>);
+    print qq (<td width="20%">Slave</td>);
+    print qq (<td><a href="javascript:delHostRec(6)"><image src="image/del.gif" title="Delete Selected Host Entries" border="0"></a>);
+    }
+    else
+    {
+    print qq (<td width="20%">Value</td>);
+    print qq (<td><a href="javascript:delHostRec(4)"><image src="image/del.gif" title="Delete Selected Host Entries" border="0"></a>);
+    }
+    print qq (<input type="checkbox" name="allhost" title="select or deselect all host(s)" onClick="setAllCheckBoxValue('host', this.checked)">);
+    print qq (</tr></thead>);
+
+    print qq (<tbody>);
+    my $lineCount=0;
+    foreach my $host ( sort sort_dns_host @$hostlist ) 
+    {
+        if ( $host->{h_name} eq 'system' ) { next; }
+        if ( $temp1 eq '1' && !$targetdomain->{set} ) { next; }
+        
+        print qq (<tr>); 
+        print qq (<td width="20%"><input type=text class="qbtext" value="$host->{h_name}" style="width:120"></td>);
+        print qq (<td width="20%">); 
+        print qq (<select class="qbopt" name="type" style="width:120">);
+        foreach my $type ('A','CNAME', 'MX', 'NS')
+        {
+            if ( $host->{system} eq  'system' ) { next; } ##??
+            my $status=($type eq $host->{type}) ? ('selected') :('');
+            print qq (<option $status value="$type">$type</option>);
+        }
+        print qq (</select></td>);
+
+        print qq (<td width="20%">);
+        print qq (<select class="qbopt" name="mxpriority" style="width:120">);
+        print qq (<option value="">N/A</option>);
+        foreach my $priority (10,20,30,40,50,60,70,80,90,100) ## add '' & 80 .
+        {
+            my $status=($priority eq $host->{priority}) ? ('selected') : ('');
+            print qq (<option $status value="$priority">$priority</option>);
+        }
+        print qq (</select></td>);
+
+	if ( $temp1 eq '1' )
+	{
+        print qq (<td width="20%"><input type=text class="qbtext" value="$host->{port}" style="width:60" maxlength="50"></td>);
+        }
+        print qq (<td width="20%"><input type=text class="qbtext" value="$host->{value}" style="width:150" maxlength="50"></td>);
+	if ( $temp1 eq '1' )
+	{
+        print qq (<td width="20%"><input type=text class="qbtext" value="$host->{value1}" style="width:150" maxlength="50"></td>);
+        }
+        print qq (<td><input type="checkbox" id="host" name="host"></td></tr>);
+
+        $lineCount++;
+    }
+
+    print qq (</tbody><tfoot>);
+    print qq (<input type="hidden" value="" name="dnshostinfo">);
+    print qq (</tfoot>);
+    print qq (</table></div>);
+
+    print qq (</td></tr>);
+    
+    print qq (</td></tr>);
+    
+    print qq (</table>);
+    if ( $gslb_status )
+    {
+    print qq (<tr><td align="left"><hr size=1><input type="button" class="qb" value="Update to all country" onclick="applytoCountry()" title="Records to apply to all country" ></td></tr>);
+    }
+}
+#showDNS
+
+#===================================================================================================
+sub dnsScript 
+{
+    print << "DNS_SCRIPT";
+ 
+    <script type="text/javascript" src="grid.js"></script>
+    <script language="javascript">
+    
+    var myform;
+
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function changeFocus(hostobj)
+    {
+        if (hostobj.cells[1].innerText=="A" || hostobj.cells[1].innerText=="NS") 
+            myform.focusedkey.value=hostobj.cells[0].innerText + hostobj.cells[1].innerText;
+        else
+            myform.focusedkey.value=hostobj.cells[0].innerText + hostobj.cells[1].innerText + hostobj.cells[3].innerText;
+
+        myform.h_name.value=hostobj.cells[0].innerText;
+
+        var targetType=0;
+        for(var i=0; i<myform.type.length;i++) { if (myform.type[i].value==hostobj.cells[1].innerText) {targetType=i; break;} }
+        myform.type.selectedIndex=targetType; 
+        
+        if ( hostobj.cells[2].innerText=="None" ) { myform.mxpriority.disabled=true; }
+        else
+        {
+            myform.mxpriority.disabled=false;
+            var priority=0;
+            for(var i=0; i<myform.mxpriority.length;i++) { if (myform.mxpriority[i].value==hostobj.cells[2].innerText) {priority=i; break;} }
+            myform.mxpriority.selectedIndex=priority; 
+        }
+        
+        myform.value.value=hostobj.cells[3].innerText;
+    }
+
+    function getAndSetMX(domainname,countryname)
+    {
+        var domainmx=qbListMX(domainname,countryname);
+        if ( typeof(domainmx)!='string' ) { return; }
+        myform.mx.value=domainmx;
+        goSubmit('SETDOMAINMX');
+    }
+
+    function getAndSetNS(domainname,countryname)
+    {
+        var domainns=qbListNS(domainname,countryname);
+        if ( typeof(domainns)!='string' ) { return; }
+        myform.ns.value=domainns;
+        goSubmit('SETDOMAINNS');
+    }
+
+    function changeType(type)
+    {
+        if (type=="MX") { myform.mxpriority.disabled=false; }
+        else { myform.mxpriority.disabled=true; }
+    }
+
+    function addNewDomain()
+    {
+        var newDomain='';
+        newDomain=qbPrompt("Input New Domain :");
+        if ( !newDomain ) { alert('Empty Domain String'); return; }
+        myform.newdomain.value=newDomain;
+        goSubmit('ADDDOMAIN');
+    }
+
+    function delThisDomain() { if ( qbConfirm(2, "Confirm Deletion?") == 1 ) goSubmit('DELETEDOMAIN'); }
+    
+    function delHosts() 
+    { 
+        if ( qbConfirm(2, "Confirm Deletion?") == 1 ) 
+        {
+            Del(); //edit visual editor.
+            goSubmit('DELETEHOSTS'); 
+        }
+    }
+    
+    function updateDomainIP()
+    {
+        var OK=true;
+        var msg='';
+        var ip=myform.domainip.value;
+
+        if ( !isValidIP(ip) )   { msg+="IP format Error"; OK=false; }
+        
+        if ( OK ) { goSubmit('UPDATEDOMAINIP'); }
+        else { alert(msg); return; }
+    }
+    
+    function checkHostIP(hostip)
+    {
+        if ( !hostip ) { return; }
+        if( !isValidIP(hostip) ) { alert('IP format Error'); }
+    }
+
+    function addMultiHostRec(mode)
+    {
+        var i;
+        var max_num=100;
+        var num=qbPrompt("Enter number of Host to add:");
+
+        if ((num=parseInt(num)) > max_num) num=max_num;
+    
+        for(i=0;i<num;i++) { addHostRec(mode); }
+    }  
+
+// table input.
+// nancy
+// Gary add slave 
+    function addHostRec(mode)
+    { 
+        var i,oTD,oDiv, j;
+        var oTR;
+
+        var oType0 = new Option("A","A");
+        var oType1 = new Option("NS","NS");
+        var oType2 = new Option("MX","MX");
+        var oType3 = new Option("CNAME","CNAME");
+
+        oTR = hostList.childNodes[1].insertRow();
+        oTR.align="center";
+
+        if ( mode == 6 ) // enable GSLB
+        {
+          for(i=0;i<mode;i++){   // Host, Type, Priority, Value.
+            oTD = oTR.insertCell(i);
+            if (i==1) { //type
+                oInput = document.createElement("SELECT"); 
+//              oInput.onChange=changeType(this.value);
+				// ( j<=2 ) purpose to hide CNAME option when used GSLB
+                for(j=0;j<=2;j++)   eval("oInput.options[j]=oType"+j);
+            } else if (i==2) { //priority
+                oInput = document.createElement("SELECT");
+                for(j=0;j<=10;j++)
+                    if (j==0)   oInput.options[j]=new Option('N/A',"");
+                    else        eval("oInput.options[j]=new Option("+j*10+","+j*10+")");
+            } else
+                oInput = document.createElement("INPUT");
+            oTD.appendChild(oInput);
+
+            if (i==0)
+            {
+                oInput.className="qbtext";
+                oInput.style.width="120";
+            }
+            if (i==1 || i==2)
+            {
+            	oInput.className="qbopt";
+                oInput.style.width="120";
+            }
+            if (i==3)
+            {
+                oInput.className="qbtext";
+                oInput.style.width="60";
+            }
+            if (i==4 || i==5)
+            {
+                oInput.className="qbtext";
+                oInput.style.width="150";
+            }
+          }
+      	}
+      	if ( mode == 4 )
+      	{
+     	  for(i=0;i<mode;i++){   // Host, Type, Priority, Value.
+     	  oTD = oTR.insertCell(i);
+     	  if (i==1) { //type
+     	      oInput = document.createElement("SELECT");
+     	      for(j=0;j<=3;j++)   eval("oInput.options[j]=oType"+j);
+     	  } else if (i==2) { //priority
+     	      oInput = document.createElement("SELECT");
+     	      for(j=0;j<=10;j++)
+     	          if (j==0)   oInput.options[j]=new Option('N/A',"");
+     	          else        eval("oInput.options[j]=new Option("+j*10+","+j*10+")");
+     	  } else
+     	      oInput = document.createElement("INPUT");
+     	  oTD.appendChild(oInput);
+     	  if (i==1 || i==2) oInput.className="qbopt";
+     	  else oInput.className="qbtext";
+     	  oInput.style.width="120"; 
+      	  }
+      	}
+        oTD = oTR.insertCell(mode);
+        var oBox = document.createElement("INPUT");
+        oBox.type = "checkbox";
+        oBox.name = "host";
+        oTD.appendChild(oBox);
+    }
+
+    function delHostRec(count)
+    {
+		for(var i=0;i<hostList.childNodes[1].rows.length;)
+		{
+			if(hostList.childNodes[1].rows[i].cells[count].firstChild.checked)
+				document.getElementById('hostList').childNodes[1].deleteRow(i);
+				//hostList.childNodes[1].rows[i].removeNode(1);
+			else 
+				i++;
+		}
+    }
+
+    // only Type:A need to match Value as IP format.
+    function applytoCountry()
+    { // A:Host, B:Type, C:Priority, D:Value.
+	var pass=true;
+	var data = "";
+	var i,j,stA,stB,stC,stD,stE,stF;
+	var oInputA,oInputB,oInputC,oIinputD,oIinputE,oIinputF;
+	var oTBody = hostList.childNodes[1];
+	
+	for(i=0;i<oTBody.rows.length;i++){
+//	alert(oTBody.rows.length);
+		oInputA = oTBody.rows[i].cells[0].firstChild;
+		oInputB = oTBody.rows[i].cells[1].firstChild;
+		oInputC = oTBody.rows[i].cells[2].firstChild;
+		oInputD = oTBody.rows[i].cells[3].firstChild;
+		oInputE = oTBody.rows[i].cells[4].firstChild;
+		oInputF = oTBody.rows[i].cells[5].firstChild;
+
+		stA = checkHost(oInputA.value);
+		
+		if(oInputB.value=="MX"){
+			stC = checkPriority(oInputC.value);
+			//oInputC.disabled=false;
+		} else{
+			stC = "ok";
+			//oInputC.disabled=true;
+			oInputC.value="";
+		}
+
+		if(oInputB.value=="A") // must exist ip value.
+		{
+			stD = (oInputD.value < 65537)?"ok":""; 
+			stE = checkValue(oInputE.value);
+			stF = checkValue(oInputF.value);
+		}
+		else
+		{
+		        stE = checkText(oInputE.value);
+		        stF = checkText(oInputF.value);
+		}
+			// stD = oInputD.value ? "ok":"empty";
+		
+		if(stA!="ok" || stC!="ok" || stE!="ok")
+			pass = false;
+		
+		oInputA.style.backgroundColor= (stA=="ok"?"":"#ff0000");
+//		oInputB.style.backgroundColor= (stB=="ok"?"":"#ff0000");
+		oInputC.style.backgroundColor= (stC=="ok"?"":"#ff0000");
+		oInputD.style.backgroundColor= (stD=="ok"?"":"#ff0000");
+		oInputE.style.backgroundColor= (stE=="ok"?"":"#ff0000");
+
+		if(!pass)continue;
+		
+		data += oInputA.value +","
+			+oInputB.value + ","
+			+oInputC.value + ","
+			+oInputD.value + ","
+			+oInputE.value + ","
+			+oInputF.value + ";";
+	}
+	if(pass)
+        {
+            if ( qbConfirm(2, "Data Check OK, Update them ?") == 1 ) 
+            {
+                dnsform.dnshostinfo.value= data;
+                goSubmit('APPLYTOCOUNTRY');
+            }
+	} 
+        else
+        {
+            alert("Data Check Failed !!");
+	}
+    }
+    // only Type:A need to match Value as IP format.
+    function updateHost(mode)
+    { // A:Host, B:Type, C:Priority, D:Master, E:Slave.
+    
+	var pass=true;
+	var data = "";
+	var i,j,stA,stB,stC,stD,stE,stF;
+	var oInputA,oInputB,oInputC,oIinputD,oIinputE,oIinputF;
+	var oTBody = hostList.childNodes[1];
+	
+	for(i=0;i<oTBody.rows.length;i++){
+//	alert(oTBody.rows.length);
+		oInputA = oTBody.rows[i].cells[0].firstChild;
+		oInputB = oTBody.rows[i].cells[1].firstChild;
+		oInputC = oTBody.rows[i].cells[2].firstChild;
+		oInputD = oTBody.rows[i].cells[3].firstChild;
+		if ( mode == 6 ){
+		oInputE = oTBody.rows[i].cells[4].firstChild;
+		oInputF = oTBody.rows[i].cells[5].firstChild;
+		}
+		
+		stA = checkHost(oInputA.value);
+		
+		if(oInputB.value=="MX"){
+			stA = "ok";
+			stC = checkPriority(oInputC.value);
+			//oInputC.disabled=false;
+		} else{
+			stC = "ok";
+			//oInputC.disabled=true;
+			oInputC.value="";
+		}
+
+		if(oInputB.value=="A" ) // must exist ip value.
+		{
+			if ( mode == 6 )
+			{
+			    stD = (oInputD.value < 65537)?"ok":""; 
+			    stE = checkValue(oInputE.value);
+			    stF = checkValue(oInputF.value);
+			}
+			else
+		    	    stD = checkValue(oInputD.value);
+		}
+		else
+		{
+			if ( mode == 6 )
+			{
+		            stE = checkText(oInputE.value);
+		            stF = checkText(oInputF.value);
+		        }
+		        else
+		            stD = checkText(oInputD.value);
+		}
+			// stD = oInputD.value ? "ok":"empty";
+		
+		if ( mode == 6 )
+		{
+		if(stA!="ok" || stC!="ok" || stD!="ok" || stE!="ok")
+			pass = false;
+		}
+		else
+		{
+		if(stA!="ok" || stC!="ok" || stD!="ok")
+			pass = false;
+		}
+		
+		
+		oInputA.style.backgroundColor= (stA=="ok"?"":"#ff0000");
+//		oInputB.style.backgroundColor= (stB=="ok"?"":"#ff0000");
+		oInputC.style.backgroundColor= (stC=="ok"?"":"#ff0000");
+		if ( oInputD.value == 0 ){
+		    oInputD.style.backgroundColor= "#888888";
+		    //alert(oInputA.value + "  Will use icmp check!!");
+		}
+		else
+		oInputD.style.backgroundColor= (stD=="ok"?"":"#ff0000");
+		if ( mode == 6 )
+		{
+		oInputE.style.backgroundColor= (stE=="ok"?"":"#ff0000");
+		//oInputF.style.backgroundColor= (stF=="ok"?"":"#ff0000");
+		oInputF.style.backgroundColor= "";
+		}
+		
+		if(!pass)continue;
+		
+		if ( mode == 6 )
+		{	
+		data += oInputA.value +","
+			+oInputB.value + ","
+			+oInputC.value + ","
+			+oInputD.value + ","
+			+oInputE.value + ","
+			+oInputF.value + ";";
+		}
+		else
+		{
+		data += oInputA.value +","
+			+oInputB.value + ","
+			+oInputC.value + ","
+			+oInputD.value + ";";
+		}
+	}
+	if(pass)
+        {
+            if ( qbConfirm(2, "Data Check OK, Update them ?") == 1 ) 
+            {
+                dnsform.dnshostinfo.value= data;
+                goSubmit('UPDATE');
+            }
+	} 
+        else
+        {
+            alert("Data Check Failed !!");
+	}
+    }
+
+    function checkHost(text){
+	if(text.match(/,|;/gi))	return "error";
+	
+	if(text=="")	return "empty";
+	else		return "ok";
+    }
+
+    function checkPriority(text){   // limited options.
+	if(text=="")    return "empty";
+	else            return "ok";
+    }
+
+    function checkValue(text){
+	if(text.match(/,|;/gi))	return "error";
+	
+	if(text=="")		return "empty"; //??
+	else if(isValidIP(text))return "ok";
+	else			return "error";
+    }
+    
+    function enabled_GSLB(){
+	myform.action.value='ON';
+	myform.submit();	
+    }
+    
+    function disabled_GSLB(){
+	myform.action.value='OFF';
+	myform.submit();
+    }	
+    
+    function viewall(natid)
+    {
+    	var nowisp=document.getElementById("action_isp").value;
+    	var now_d_name=document.getElementById("action_d_name").value;
+        var targetcgi='viewdns.cgi?isp='+nowisp+'&d_name='+now_d_name;
+        var strFeatures='dialogWidth=900px;dialogHeight=500px;center=yes;'
+        strFeatures+='scrollbars=no;border=thin;help=no;status=no;'
+        return window.showModalDialog(targetcgi, '', strFeatures);
+    }
+    
+    function checkText(text){
+	if(text.match(/,|;/gi))	return "error";
+	if(text=="")    return "empty";
+        return "ok";
+    }
+
+    </script>
+    
+DNS_SCRIPT
+
+}
+#dnsScript
+
+#===================================================================================================
+sub maintainDNS
+{ 
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $dns=XMLread($gPATH.'dns.xml');
+    my $isplist=$dns->{isp};
+    my $domainlist=$dns->{domain};
+    
+    my $countryref=XMLread($gPATH.'country.xml');
+    my $countrylist=$countryref->{country};
+
+#Gary test
+    if ( $action{action}=~m/^ON$/ )
+    {
+      foreach my $item ( @$countrylist )
+      {
+	if ( $item->{countryname} eq 'system' ){next;}
+        foreach my $isp ( @$isplist )
+        {
+            my $mydomainlist=$isp->{domain};
+            my $targetdomain;
+ 
+            foreach my $domain ( @$mydomainlist )
+            {
+                if ( $domain->{d_name} eq $action{d_name} ) {$targetdomain=$domain; last; }
+            }
+ 
+            $targetdomain->{enablegslb}='1';
+            
+            ################################################################
+            #
+            #foreach my $domain ( @$mydomainlist )
+            #{
+            #	if ( $domain->{d_name} eq 'system' ) {next;}
+            #    if ( $domain->{d_name} eq $action{d_name} && $domain->{countryname} eq $item->{countryname} ) { $targetdomain=$domain; last; }
+            #}
+            #$targetdomain->{enablegslb}='1';
+            #
+            ###############################################################
+        }
+      }
+      LogUserAction( action=>'Enabled_GSLB' );
+    }
+    elsif ( $action{action}=~m/^OFF$/ )
+    {
+      my %othercountry;
+      $othercountry->{countryname}='other';
+      foreach my $item ( @$countrylist,$othercountry )
+      {
+	if ( $item->{countryname} eq 'system' ){next;}
+        foreach my $isp ( @$isplist )
+        {
+            my $mydomainlist=$isp->{domain};
+            my $targetdomain;
+ 
+            foreach my $domain ( @$mydomainlist )
+            {
+                if ( $domain->{d_name} eq $action{d_name} ) { $targetdomain=$domain; last; }
+            }
+            $targetdomain->{enablegslb}='0';
+            $targetdomain->{set}='1';
+            
+            ############################################
+            #
+            #foreach my $domain ( @$mydomainlist )
+            #{
+            #	if ( $domain->{d_name} eq 'system' ) {next;}
+            #    if ( $domain->{d_name} eq $action{d_name} && $domain->{countryname} eq $item->{countryname} ) { $targetdomain=$domain; last;}
+            #}
+            #$targetdomain->{enablegslb}='0';
+            #
+            ############################################
+	    foreach my $isp ( @$isplist )
+            {
+                my @domainlist_after_del;
+                my $ispdomain=$isp->{domain};
+                foreach my $domain ( @$ispdomain ) 
+                { 
+                    if ( $domain->{countryname} ne $item->{countryname} ) { push ( @domainlist_after_del, $domain ); }
+                }
+                $isp->{domain}=\@domainlist_after_del;
+            }
+ 	}
+      }
+      LogUserAction( action=>'Disabled_GSLB' );
+    }
+    elsif ( $action{action}=~m/^UPDATE$/ )
+    {
+        
+        my @hostlist=split(/;/, $action{hostinfo});
+        my %hosthash;
+
+        #$gMSGPROMPT.=qq( Action : $action{enablegslb} \\n);
+        #------------------------------------------------------------------
+        # step 1. create a hostkey to host tuple hash
+        foreach my $hosttuple ( @hostlist )
+        {
+
+	    if ( $action{enablegslb} )
+	    {
+                my ($name, $type, $priority, $port, $value, $value1)=split(/,/, $hosttuple);
+                my $hostkey=$name.':'.$type;
+                if ( exists($hosthash{$hostkey}) )
+                {
+                    #$hosthash{$hostkey}.=':'.$priority.','.$value;
+                    #Gary test
+                    $hosthash{$hostkey}.=':'.$priority.','.$port.','.$value.','.$value1.','.$alive.','.$alive1;
+                }
+                else 
+                {  
+                    #$hosthash{$hostkey}=$priority.','.$value; 
+                    #Gary test
+                    $hosthash{$hostkey}=$priority.','.$port.','.$value.','.$value1.','.$alive.','.$alive1; 
+                }
+            }
+            else
+            {
+                my ($name, $type, $priority, $value)=split(/,/, $hosttuple);
+                my $hostkey=$name.':'.$type;
+                
+                if ( exists($hosthash{$hostkey}) )
+                {
+                    $hosthash{$hostkey}.=':'.$priority.','.$value;
+                }
+                else
+                {
+                    $hosthash{$hostkey}=$priority.','.$value;
+                }
+            }
+        }
+
+        #----------------------------------------------------------------
+        # step 2.
+        foreach my $isp ( @$isplist )
+        {
+            # Domain Level =========================================
+            #Focus to the domain of the selected ISP and Domain
+            my $domainlist=$isp->{domain};
+            my $targetdomain;
+ 
+            foreach my $domain ( @$domainlist )
+            {
+            	if ( $domain->{d_name} eq 'system' ) {next;}
+            	#$gMSGPROMPT.=qq( Action : $action{countryname} \\n);
+            	#$gMSGPROMPT.=qq( Domain : $domain->{countryname} \\n);
+            	
+                if ( $domain->{d_name} eq $action{d_name} && $domain->{countryname} eq $action{countryname} ) { $targetdomain=$domain; last;}
+            }
+ 
+            #If domain of not found, just return
+            if ( !$targetdomain )
+            {
+                $gMSGPROMPT.=qq( Domain $action{d_name} does not exist in $isp->{ispnum} \\n);
+                return;
+            }
+            
+        #Gary test GSLB ************************************************************
+        #
+        #    if ( $action{countryname} && $targetdomain->{enablegslb} )
+        #    {
+        #    	if ( $targetdomain->{countryname} ne $action{countryname} )
+        #    	{
+	#	    $targetdomain->{countryname}=$action{countryname};
+	#	}
+        #    }
+        #    
+	#***************************************************************************
+	
+	
+            #*************************************************************************
+            # Host Level
+            my $hostList=$targetdomain->{host};
+            my %hostTemplate;
+            my @newhostlist;
+            my %newhosthash;
+
+            foreach my $host ( @$hostList )
+            {
+                if ( $host->{h_name} eq 'system' )
+                {
+                    %hostTemplate=%$host;
+                    push(@newhostlist, \%hostTemplate);
+                    last;
+                }
+            }
+
+            #----------------------------------------------------------------
+            if ( $isp->{ispnum} ne $action{isp} )
+            {
+                foreach my $host ( @$hostList )
+                {
+                    my $hostkey=$host->{h_name}.':'.$host->{type};
+
+                    if ( exists($hosthash{$hostkey}) )
+                    {
+                        push(@newhostlist, $host);
+                        $newhosthash{$hostkey}=1;
+                    }
+                } #looping hostList
+            }
+ 
+            #----------------------------------------------------------------
+            foreach my $hostkey ( sort keys %hosthash )
+            {
+                if ( exists($newhosthash{$hostkey}) ) { next; }
+
+                my ($name, $type)=split(/:/, $hostkey);
+                my @allvalues=split(/:/,$hosthash{$hostkey});
+ 
+                foreach my $value ( @allvalues )
+                {
+                    my %newHost=%hostTemplate;
+                    $newHost{h_name}=$name;
+                    $newHost{type}=$type;
+                    
+                    if ( $action{enablegslb} )
+                    {
+                        ($newHost{priority}, $newHost{port}, $newHost{value}, $newHost{value1}) = split(/,/, $value);
+                        #Gary Server status 2013-0503
+                        $newHost{alive}=0;
+                        $newHost{alive1}=0;
+                    }
+                    else
+                    {
+                    	($newHost{priority}, $newHost{value}) = split(/,/, $value);
+                    }
+                    
+                    push( @newhostlist, \%newHost);
+
+                } #looping multi-value
+
+            }#looping hosthash key
+
+            $targetdomain->{host}=\@newhostlist;
+
+
+            #----------------------------------------------------------------
+            # step 3. 
+            my $oldMX=$targetdomain->{mx};
+            my $oldNS=$targetdomain->{ns};
+            my $newMX='';
+            my $newNS='';
+            foreach my $host ( sort sort_dns_host @newhostlist )
+            {
+                if ( $oldMX=~m/^$host->{h_name}:(\d+)/ )        { $newMX.=$host->{h_name}.':'.$1.';'; }
+                if ( $oldMX=~m/;$host->{h_name}:(\d+)/ )        { $newMX.=$host->{h_name}.':'.$1.';'; }
+
+                if ( $oldNS=~m/^$host->{h_name}$/ )              { $newNS.=$host->{h_name}.';'; }
+                if ( $oldNS=~m/^$host->{h_name};/ )              { $newNS.=$host->{h_name}.';'; }
+                if ( $oldNS=~m/;$host->{h_name};/ )             { $newNS.=$host->{h_name}.';'; }
+                if ( $oldNS=~m/;$host->{h_name}$/ )            { $newNS.=$host->{h_name}.';'; }
+                
+                LogUserAction( action=>'UPDATEHOST', h_name=>$host->{h_name} );
+            }
+
+            $newMX=~s/;$//g; $newNS=~s/;$//g;
+            
+            # if not any hostlist not use the country
+            # if hostlist has value use the country
+	    #if ( $#newhostlist )
+            if ( $action{hostinfo} eq '' ){ $targetdomain->{set}='0'; } 
+	    else{ $targetdomain->{set}='1'; }
+	    
+            $targetdomain->{mx}=$newMX;
+            $targetdomain->{ns}=$newNS;
+        }#looping isp list
+        
+        
+    }    
+    elsif ( $action{action}=~m/^APPLYTOCOUNTRY$/ )
+    {
+#    my $garytest_ns=$action{ns_gslb};
+#    $garytest_ns=~s/;$//g; 
+#$gMSGPROMPT.=qq( NS : $garytest_ns \\n);
+
+#    my $garytest_mx=$action{mx_gslb};
+#    $garytest_mx=~s/;$//g; 
+#$gMSGPROMPT.=qq( MX : $garytest_mx \\n);
+
+#$gMSGPROMPT.=qq( MX : $action{mx_gslb} \\n);
+#$gMSGPROMPT.=qq( NS : $action{ns_gslb} \\n);
+	my $countryref=XMLread($gPATH.'country.xml');
+	my $countrylist=$countryref->{country};
+	my %othercountry;
+	$othercountry->{countryname}='other';
+	
+	foreach my $item ( @$countrylist,$othercountry )
+	{
+	    if ( $item->{countryname} eq 'system' ){next;}
+    
+	    my $stopadd=0;
+            my $enablegslb;
+            my $ip;
+            foreach my $isp ( @$isplist )
+            {
+                my $domainlist=$isp->{domain};
+                foreach my $domain ( @$domainlist )
+                {
+            	    if ( $domain->{d_name} eq $action{d_name} )
+            	    {
+            	        $enablegslb=$domain->{enablegslb};
+            	        $ip=$domain->{ip};
+            	    }
+                    if ( $domain->{countryname} eq $item->{countryname} && $domain->{d_name} eq $action{d_name}){ $stopadd=1; }
+                }
+ 
+                my %host=(ip=>'', h_name=>'system', ttl=>'0', type=>'A');
+                my %newdomain=(ip=>$ip, countryname=>$item->{countryname}, d_name=>$action{d_name}, set=>'0', enablegslb=>$enablegslb, mx=>'mail', ns=>'dns', host=>[\%host]);
+                my $ispdomain=$isp->{domain};
+
+                if ( !$stopadd ) { push ( @$ispdomain, \%newdomain ); }
+            
+            }    
+	}
+        #$gMSGPROMPT.=qq( Action : $action{countryname} \\n);
+        my @hostlist=split(/;/, $action{hostinfo});
+        my %hosthash;
+
+        #------------------------------------------------------------------
+        # step 1. create a hostkey to host tuple hash
+        foreach my $hosttuple ( @hostlist )
+        {
+            if ( $action{enablegslb} )
+            {
+            ($name, $type, $priority, $port, $value, $value1)=split(/,/, $hosttuple);
+            }
+            else
+            {
+            ($name, $type, $priority, $value)=split(/,/, $hosttuple);
+            }
+            my $hostkey=$name.':'.$type;
+
+            if ( exists($hosthash{$hostkey}) )
+            {
+                #$hosthash{$hostkey}.=':'.$priority.','.$value;
+                #Gary test
+                if ( $action{enablegslb} )
+                {
+                $hosthash{$hostkey}.=':'.$priority.','.$port.','.$value.','.$value1.','.$alive.','.$alive1.','.$port;
+                }
+                else
+                {
+                $hosthash{$hostkey}.=':'.$priority.','.$value;
+                }
+            }
+            else 
+            { 
+                #$hosthash{$hostkey}=$priority.','.$value; 
+                #Gary test
+                if ( $action{enablegslb} )
+                {
+                $hosthash{$hostkey}=$priority.','.$port.','.$value.','.$value1.','.$alive.','.$alive1.','.$port; 
+                }
+                else
+                {
+                $hosthash{$hostkey}=$priority.','.$value;
+                }
+            }
+        }
+
+        #----------------------------------------------------------------
+        # step 2.
+        foreach my $isp ( @$isplist )
+        {
+            # Domain Level =========================================
+            #Focus to the domain of the selected ISP and Domain
+            my $domainlist=$isp->{domain};
+            my $targetdomain;
+ 
+ 	foreach my $domain ( @$domainlist )
+ 	{
+            if ( !$domain->{countryname} && $domain->{d_name} eq $action{d_name} ) 
+            { 
+            $domain->{set}='0';
+            #$gMSGPROMPT.=qq( Gary test no country , show set $domain->{set} \\n);
+            }
+ 	}
+            
+	foreach my $item ( @$countrylist,$othercountry )
+	{
+	    if ( $item->{countryname} eq 'system' ){next;}
+            foreach my $domain ( @$domainlist )
+            {
+            	# Gary ToDo
+            	if ( $domain->{d_name} eq 'system' ) {next;}
+            	#$gMSGPROMPT.=qq( ActionDomain : $action{d_name} \\n);
+            	#$gMSGPROMPT.=qq( DomainCountry : $domain->{countryname} \\n);
+            	
+                if ( $domain->{d_name} eq $action{d_name} && ( $domain->{countryname} eq $item->{countryname} || $domain->{countryname} eq $item ) ) { $targetdomain=$domain; last;}
+            }
+ 
+            #If domain of not found, just return
+            if ( !$targetdomain )
+            {
+                $gMSGPROMPT.=qq( Domain $action{d_name} does not exist in $isp->{ispnum} \\n);
+                return;
+            }
+ 
+	 
+            #*************************************************************************
+            # Host Level
+            my $hostList=$targetdomain->{host};
+            my %hostTemplate;
+            my @newhostlist;
+            my %newhosthash;
+
+            foreach my $host ( @$hostList )
+            {
+                if ( $host->{h_name} eq 'system' )
+                {
+                    %hostTemplate=%$host;
+                    push(@newhostlist, \%hostTemplate);
+                    last;
+                }
+            }
+
+            #----------------------------------------------------------------
+            if ( $isp->{ispnum} ne $action{isp} )
+            {
+                foreach my $host ( @$hostList )
+                {
+                    my $hostkey=$host->{h_name}.':'.$host->{type};
+
+                    if ( exists($hosthash{$hostkey}) )
+                    {
+                        push(@newhostlist, $host);
+                        $newhosthash{$hostkey}=1;
+                    }
+                } #looping hostList
+            }
+ 
+            #----------------------------------------------------------------
+            foreach my $hostkey ( sort keys %hosthash )
+            {
+                if ( exists($newhosthash{$hostkey}) ) { next; }
+
+                my ($name, $type)=split(/:/, $hostkey);
+                my @allvalues=split(/:/,$hosthash{$hostkey});
+ 
+                foreach my $value ( @allvalues )
+                {
+                    my %newHost=%hostTemplate;
+                    $newHost{h_name}=$name;
+                    $newHost{type}=$type;
+                    if ( $action{enablegslb} )
+                    {
+                    ($newHost{priority}, $newHost{port}, $newHost{value}, $newHost{value1}) = split(/,/, $value);
+                    #Gary Server status 2013-0503
+                    $newHost{alive}=0;
+                    $newHost{alive1}=0;
+                    }
+                    else
+                    {
+                    ($newHost{priority}, $newHost{value}) = split(/,/, $value);
+                    }
+                    push( @newhostlist, \%newHost);
+
+                } #looping multi-value
+
+            }#looping hosthash key
+
+            $targetdomain->{host}=\@newhostlist;
+
+
+            #----------------------------------------------------------------
+            # step 3. 
+            my $oldMX=$targetdomain->{mx};
+            my $oldNS=$targetdomain->{ns};
+            my $newMX='';
+            my $newNS='';
+            
+            #foreach my $host ( sort sort_dns_host @newhostlist )
+            #{
+            #    if ( $oldMX=~m/^$host->{h_name}:(\d+)/ )        { $newMX.=$host->{h_name}.':'.$1.';'; }
+            #    if ( $oldMX=~m/;$host->{h_name}:(\d+)/ )        { $newMX.=$host->{h_name}.':'.$1.';'; }
+            #    if ( $oldNS=~m/^$host->{h_name}$/ )              { $newNS.=$host->{h_name}.';'; }
+            #    if ( $oldNS=~m/^$host->{h_name};/ )              { $newNS.=$host->{h_name}.';'; }
+            #    if ( $oldNS=~m/;$host->{h_name};/ )             { $newNS.=$host->{h_name}.';'; }
+            #    if ( $oldNS=~m/;$host->{h_name}$/ )            { $newNS.=$host->{h_name}.';'; }
+            #    LogUserAction( action=>'UPDATEHOST', h_name=>$host->{h_name} );
+            #}
+
+	    $newMX=$action{mx_gslb};
+	    $newNS=$action{ns_gslb};
+            $newMX=~s/;$//g; 
+            $newNS=~s/;$//g;
+            
+	    if ( $#newhostlist )
+	    { 
+	        $targetdomain->{set}='1'; 
+	    }
+            $targetdomain->{mx}=$newMX;
+            $targetdomain->{ns}=$newNS;
+        }
+        }#looping isp list
+        
+    }
+    elsif ( $action{action}=~m/^ADDDOMAIN$/ )
+    {
+        if ( !$action{newdomain} ) { $gMSGPROMPT.=qq( $action{newdomain} is empty ); }
+        
+        foreach my $isp ( @$isplist ) 
+        {
+            my %host=(ip=>'', h_name=>'system', ttl=>'0', type=>'A'); 
+            my %newdomain=(ip=>'', d_name=>$action{newdomain}, mx=>'mail', ns=>'dns', host=>[\%host]);
+            my $ispdomain=$isp->{domain};
+            push ( @$ispdomain, \%newdomain );
+        }
+        
+        LogUserAction( action=>'ADDDOMAIN', d_name=>$action{newdomain} );
+    }
+    elsif ( $action{action}=~m/^ADDCOUNTRY$/ ) #Gary for GSLB add country
+    {
+#    $gMSGPROMPT.=qq(enableGLSB $action{enableglsb} );
+        if ( !$action{d_name} ) { $gMSGPROMPT.=qq( Domain is empty ); }
+        my $stopadd=0;
+        my $enablegslb;
+        my $ip;
+        foreach my $isp ( @$isplist )
+        {
+            my $domainlist=$isp->{domain};
+            foreach my $domain ( @$domainlist )
+            {
+            	if ( $domain->{d_name} eq $action{d_name} )
+            	{ 
+            	    $enablegslb=$domain->{enablegslb};
+            	    $ip=$domain->{ip};
+            	}
+                if ( $domain->{countryname} eq $action{countryname} && $domain->{d_name} eq $action{d_name}){ $stopadd=1; }
+            }
+ 
+            my %host=(ip=>'', h_name=>'system', ttl=>'0', type=>'A');
+            my %newdomain=(ip=>$ip, countryname=>$action{countryname}, d_name=>$action{d_name}, set=>'0', enablegslb=>$enablegslb, mx=>'mail', ns=>'dns', host=>[\%host]);
+            my $ispdomain=$isp->{domain};
+
+            if ( !$stopadd ) { push ( @$ispdomain, \%newdomain ); }
+        }
+ 
+    }
+    elsif ( $action{action}=~m/^DELETEDOMAIN$/ )
+    {
+        foreach my $isp ( @$isplist )
+        {
+            my @domainlist_after_del;
+            my $ispdomain=$isp->{domain};
+            foreach my $domain ( @$ispdomain ) 
+            { 
+                if ( $domain->{d_name} ne $action{d_name} ) { push ( @domainlist_after_del, $domain ); }
+            }
+            $isp->{domain}=\@domainlist_after_del;
+        }
+        
+        LogUserAction( action=>'DELDOMAIN', d_name=>$action{d_name} );
+    }
+    elsif ( $action{action}=~m/^UPDATEDOMAINIP$/ )
+    {
+        my $targetisp;
+        my $targetdomain;
+
+        #Set focus to the domain of the selected ISP and Domain
+        foreach my $isp ( @$isplist ) { if ( $isp->{ispnum} eq $action{isp} )  { $targetisp=$isp; last;} }
+        if ( !$targetisp ) { return; }
+
+        my $domainlist=$targetisp->{domain};
+        foreach my $domain ( @$domainlist )
+        {
+            if ( $domain->{d_name} eq $action{d_name} )
+            {
+                $targetdomain=$domain;
+		if ( !$targetdomain ) { return; }
+                $targetdomain->{ip}=$action{domainip};
+                #last;
+            }
+        }
+
+        #if ( !$targetdomain ) { return; }
+        #$targetdomain->{ip}=$action{domainip};
+ 
+        LogUserAction( action=>'UPDATEDOMAIN', d_name=>$action{d_name}, ip=>$action{domainip} );
+    }
+    elsif ( $action{action}=~m/^SETDOMAINFORWARD$/ )
+    {
+        foreach my $isp ( @$isplist ) 
+        {
+            my $targetdomain;
+            #Set focus to the selected domain
+            my $domainlist=$isp->{domain};
+            foreach my $domain ( @$domainlist ) { if ( $domain->{d_name} eq $action{d_name} ) { $targetdomain=$domain; last;} }
+            if ( !$targetdomain ) { return; }
+            $targetdomain->{forward}=$action{forward};
+        }
+    }
+    elsif ( $action{action}=~m/^SETDOMAINMX$/ )
+    {
+    	if ( $action{countryname} ne '' )
+    	{
+        foreach my $isp ( @$isplist ) 
+        {
+            my $targetdomain;
+            #Set focus to the selected domain
+            my $domainlist=$isp->{domain};
+            $action{mx}=~s/\;$//g;
+            foreach my $domain ( @$domainlist ) 
+            { 
+            	if ( $domain->{d_name} eq $action{d_name} && $domain->{countryname} eq $action{countryname} ) 
+            	{ 
+            		$targetdomain=$domain;
+            		$domain->{mx}=$action{mx};	
+            		#last;
+            	} 
+            }
+            if ( !$targetdomain ) { return; }
+            #$targetdomain->{mx}=$action{mx};
+        }
+        }
+        else
+        {
+            foreach my $isp ( @$isplist )
+            {
+            	my $targetdomain;
+            	my $domainlist=$isp->{domain};
+            	foreach my $domain ( @$domainlist ) { if ( $domain->{d_name} eq $action{d_name} ) { $targetdomain=$domain; last;} }
+            	if ( !$targetdomain ) { return; }
+            	$action{mx}=~s/\;$//g;
+            	$targetdomain->{mx}=$action{mx};
+            }
+        }
+    }
+    elsif ( $action{action}=~m/^SETDOMAINNS$/ )
+    {
+    	if ( $action{countryname} ne '' )
+    	{
+            foreach my $isp ( @$isplist ) 
+            {
+                my $targetdomain;
+                #Set focus to the selected domain
+                my $domainlist=$isp->{domain};
+                $action{ns}=~s/\;$//g;
+                foreach my $domain ( @$domainlist )
+                {
+            	    if ( ($domain->{d_name} eq $action{d_name}) && ($domain->{countryname} eq $action{countryname}) )
+            	    {
+            		$targetdomain=$domain;
+            		$domain->{ns}=$action{ns};
+            		#last;
+            	    }
+                }
+                if ( !$targetdomain ) { return; }
+                #$targetdomain->{ns}=$action{ns};
+            }
+        }
+        else
+        {
+            foreach my $isp ( @$isplist )
+            {
+            	my $targetdomain;
+            	my $domainlist=$isp->{domain};
+            	foreach my $domain ( @$domainlist ) { if ( $domain->{d_name} eq $action{d_name} ) { $targetdomain=$domain; last;} }
+            	if ( !$targetdomain ) { return; }
+            	$action{ns}=~s/\;$//g;
+            	$targetdomain->{ns}=$action{ns};
+            }
+        }
+    }
+    elsif ( $action{action}=~m/^UPDATEISP$/ )
+    {
+        #Set focus to the selected ISP
+        my $targetisp;
+        foreach my $isp ( @$isplist ) { if ( $isp->{ispnum} eq $action{isp} )  { $targetisp=$isp; last;} }
+        if ( !$targetisp ) { return; }
+
+        $targetisp->{weight}=$action{weight};
+        $targetisp->{priority}=$action{priority};
+    }
+    elsif ( $action{action}=~m/^SETTTL$/)
+    {
+        $dns->{ttl}=$action{ttl};
+    }
+    elsif ( $action{action}=~m/^CHANGEMODE$/) 
+    {
+        $dns->{mode}=$action{mode};
+    }
+    #ex:(  action=>'DELISP', isp=>''  )
+    elsif ( $action{action}=~m/^DELISP$/) 
+    {
+        my @isp_list_after_del;
+        foreach my $isp ( @$isplist ) 
+        {
+            if ( $isp->{ispnum} ne $action{isp} ) { push(@isp_list_after_del, $isp);}
+        }
+
+        $dns->{isp}=\@isp_list_after_del;
+    }
+    #ex:(  action=>'NEWISP', isp=>''  )
+    elsif ( $action{action}=~m/^NEWISP$/) 
+    {
+
+        if ( !$gENABLEFULLINBOUND ) { $dns->{mode}="FAILOVER"; }
+
+        my $template;
+        foreach my $isp ( @$isplist ) { if ( $isp->{ispnum} eq "system" ) { $template=$isp; last; } }
+        
+        my %newisp=%$template; $newisp{ispnum}=$action{isp};
+        my $domain=$template->{domain};
+        my @newdomains;
+        foreach my $domainitem ( @$domain )
+        {
+            my $host=$domainitem->{host};
+            my @newhosts;
+            foreach my $hostitem ( @$host )
+            {
+                my %newhost=%$hostitem;
+                push ( @newhosts, \%newhost );
+            }
+            my %newdomain=%$domainitem;
+            $newdomain{host}=\@newhosts;
+            push ( @newdomains, \%newdomain );
+        }
+
+        $newisp{domain}=\@newdomains;
+        push( @$isplist , \%newisp );
+    }
+    elsif ( $action{action}=~m/^REPORT$/ )
+    {
+        print qq (<fieldset>);
+        print qq (<legend><font class="subtitle">Multi-DNS Configuration</font></legend>);
+        print qq (<div class="reportdiv">);
+        print qq (Mode: $dns->{mode}<br>);
+        
+        foreach my $isp ( sort sort_dns_by_ispnum @$isplist ) 
+        {
+            if ( $isp->{ispnum} eq 'system' ) { next; }
+            foreach my $key ( keys %$isp ) { if ( $key eq "domain") { next; } print qq ( | $key:$isp->{$key} | ) }; 
+            print qq (<br>);
+            
+            my $domainlist=$isp->{domain};
+            foreach my $domain ( @$domainlist )
+            {
+                if ( $domain->{d_name} eq 'system' ) { next; }
+                foreach my $key ( keys %$domain ) { if ( $key eq "host") { next; } print qq ( | $key:$domain->{$key} | ) }; 
+                print qq (<br>);
+                
+                my $hostlist=$domain->{host};
+                foreach my $host ( @$hostlist ) 
+                { 
+                    if ( $host->{h_name} eq 'system' ) { next; }
+                    foreach my $key ( keys %$host ) { print qq ([ $key:$host->{$key} ]) }; 
+                    print qq (<br>);
+                }; 
+                
+                print qq (===========================================);
+            }
+
+            print qq (<hr size="1">);
+        }
+        
+        print qq (</fieldset>);
+    }
+
+    #------updating dns.xml------------------------ 
+    XMLwrite($dns, $gPATH."dns.xml");
+}
+#maintainDNS
+
+#================================================================================================
+sub sort_dns_by_ispnum 
+{
+    my $avalue=$a->{ispnum}; 
+    my $bvalue=$b->{ispnum}; 
+    int($avalue) <=> int($bvalue);
+}
+#sort_dns_by_ispnum
+
+#================================================================================================
+sub sort_dns_host 
+{
+    $a->{h_name} cmp $b->{h_name}; 
+}
+#sort_dns_host
+
+#
+1

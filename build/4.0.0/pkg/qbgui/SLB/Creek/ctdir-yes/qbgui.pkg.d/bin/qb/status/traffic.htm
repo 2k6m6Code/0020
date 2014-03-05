@@ -1,0 +1,41 @@
+<html>
+
+<head>
+
+<style>
+
+button.menu{
+	width:70;
+	height:18;
+	font:10px Verdana;
+	color:white;
+	background:#336699;	
+	border:1px solid black;
+	cursor:hand;
+}
+
+</style>
+
+<script type="text/javascript" src="../qb.js"></script>
+</head>
+
+<body scroll="no" style="margin:0" bgcolor="#336699">
+<table height="100%" width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr height="25"><td>
+
+<button class="menu" hidefocus="true" onclick="mainframe.location='rttraffic.cgi?page_now=1&ispnum=10&spool=ID';"     style="width:120">Real Time Traffic</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='autoquery.htm';"     style="width:200">Query by Defined Time Frame</button>
+<button class="menu" hidefocus="true" onclick="mainframe.location='manualquery.htm';"   style="width:200" >Query by Custom Time Frame</button>
+<!--button class="menu" hidefocus="true" onclick="mainframe.location='advrttraffic.htm';"  style="width:120">Advanced Real Time</button-->	
+<button class="menu" hidefocus="true" onclick="mainframe.location='rate_status.php';"      style="width:188">Total Volume Pie Chart</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='sessions_status_src.php';"      style="width:188">Sessions Pie Chart By Src IP</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='sessions_status_nat.php';"      style="width:188">Sessions Pie Chart By Nat IP</button>	
+<a href="javascript:qbShowHelp('traffic')"><image src="/image/help.gif" border="0" title="Help"></a>
+</td></tr>
+<tr><td>
+<iframe name="mainframe" src="rttraffic.cgi?page_now=1&ispnum=10&spool=ID" style="height:100%;width:100%" frameborder="0"></iframe>
+</td></tr>
+
+</body>
+
+</html>

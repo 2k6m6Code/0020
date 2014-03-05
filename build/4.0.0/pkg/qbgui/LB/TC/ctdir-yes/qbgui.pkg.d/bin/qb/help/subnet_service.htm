@@ -1,0 +1,28 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Subnet/Service</title>
+</head>
+<body>
+
+<h2>Subnet/Service</h2>
+<p>
+Here we group different subnet and its service. On the next section, we can then associate these with different policies. Before configuring in Policy Configuration, however, we need to first define Service Group and understand what it means by the "Any" service and "*" service.	To simplify configuration routines, "Any" and "*" are defined.</p> 
+<p>
+<ul>
+<li>All services: 0 ~ 65535.</li>
+<li>*  indicate selected services.</li> 
+<li><b>Any</b> indicate all services not otherwise specified.</li> 
+<li>If no services is selected, than <b>Any</b> means all services. </li>
+</ul>
+</p>
+<p> 
+Use [Add] and [Save] to maintain the entry , and use trashcan icon do delete a entry. 
+</p>
+<table> 
+
+<tr valign=top><td>Subnet :	</td><td>The field is used to set up internal subnet. It can either be a single host (e.g. 10.10.50.141/32) or a subnet (e.g. 10.10.50.0/24).</td></tr> 
+<tr valign=top><td width=100 class="light">Request(s) :</td><td class="light">	Specify request services.</td></tr> 
+<tr valign=top><td>Reply(s) :	</td><td>Specify reply services. </td></tr>
+</table>
+</body></html> 

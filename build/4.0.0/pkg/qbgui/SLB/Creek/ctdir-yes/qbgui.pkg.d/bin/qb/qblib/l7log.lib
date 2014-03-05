@@ -1,0 +1,761 @@
+###############################################################################################
+#                                           l7log Management Console
+###############################################################################################
+sub showl7log 
+{
+    my (%action)=@_;
+    my $l7log=XMLread($gPATH.'l7log.xml');
+    
+    my $first_used = '--';
+    my $first_Available = '--';
+    my $first_usedpa = '--';
+    my $second_used = '--';
+    my $second_Available = '--';
+    my $second_usedpa = '--';
+    my $first_name;
+    my $second_name;
+    
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="3" border="5" style="width: 92%;" >\n);
+=cut    
+    system("/usr/local/apache/qb/setuid/run /bin/df |grep log > /tmp/tmp_l7log");
+    open (FILE,"/tmp/tmp_l7log");
+    foreach my $test (<FILE>)
+    {
+       my @aa=split(/\s+/,$test);
+       if (grep(/tclog/,$test))
+       {
+           $first_name = $aa[0];
+           $first_used = $aa[2];
+           $first_Available = $aa[3];
+           $first_usedpa = $aa[4];
+       }elsif (grep(/log/,$test))
+       {
+           $second_name = $aa[0];
+           $second_used = $aa[2];
+           $second_Available = $aa[3];
+           $second_usedpa = $aa[4];
+       }
+    }
+    close(FILE);
+    
+    open (FF,"/opt/qb/registry");
+    my $first_limit=90;
+    my $second_limit=90;
+    foreach my $aa (<FF>)
+    {
+        if (grep(/LIMIT/,$aa))
+        {
+            ($yy,$first_limit,$second_limit)=split(/ /,$aa);      
+        }
+    }
+    close(FF);
+    print qq (<tr><td align="center" class="bigtitle" colspan="3">Storage Setting);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>); 
+    print qq (<tr><td style="vertical-align: top;"><table style="width:100%"></tr>);
+    #print qq (<td colspan="2" class="body"  valign="top" align="left" style="width:50%">);
+    #print qq (<a>Partition Two : </a>);
+    #print qq (</td>);
+    
+    print qq (<tr>);
+    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
+    print qq (<a> Available : $first_Available</a>);
+    print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
+    #print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:40%">);
+    #print qq (<a> Available : $second_Available</a>);
+    #print qq (</td>);
+    
+    print qq (<tr>);
+    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
+    print qq (<a> Used : $first_used</a>);
+    print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
+    #print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:40%">);
+    #print qq (<a> Used : $second_used</a>);
+    #print qq (</td>);
+    
+    print qq (<tr>);
+    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
+    print qq (<a> Used(%) : $first_usedpa</a>);
+    print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
+    #print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:40%">);
+    #print qq (<a> Used(%) : $second_usedpa</a>);
+    #print qq (</td>);
+    
+    print qq (<tr >);
+    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
+    print qq (<a> Limit : </a><input type="text" id="first" name="first" value="$first_limit" style="width:8%" maxlength="2" >%);
+    print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
+    #print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:40%">);
+    #print qq (<a> Limit : </a><input type="text" id="second" name="second" value="$second_limit" style="width:8%" maxlength="2">%);
+    #print qq (</td>);
+    
+    print qq (<tr>);
+    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="center" style="width:100%" align="center">);
+    #print qq (<input type="button" value="Format" onclick="format('tclog','CLEAR','$first_name');goSubmit('CLEAR');" >);
+    print qq (<input type="button" value="Clear Partition" onclick="format('tclog','FORMAT');goSubmit('FORMAT');" >);
+    print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
+    #print qq (</td>);
+    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="center" style="width:40%">);
+    #print qq (<input type="button" value="Format" onclick="format('log','CLEAR','$second_name');goSubmit('CLEAR');" >);
+    #print qq (<input type="button" value="Clear Partition" onclick="format('log','FORMAT');goSubmit('FORMAT');" >);
+    print qq (</td>);
+    print qq (<tr><td colspan="4" class="body"  valign="top" align="left" style="width:100%"><hr size="1"></td>);
+    print qq (<tr><td colspan="4" class="body"  valign="top" align="center" style="width:100%">);
+    print qq (<input type="button" value="Apply" onclick="goSubmit('CLEAR')" ></td>);
+    print qq (</table>);
+    
+    print qq (<tr><td align="center" class="bigtitle" colspan="3" onclick="table_display(this)"><a>System Log Configuration</a><img src="./image/down.png">); #</td></tr>);
+    print qq (<tr><td colspan="3"><hr size="1"></td></tr>); 
+    print qq (<tr><td align="left" class="bigtitle" colspan="3">Select / Deselect All );
+    print qq (<input type="checkbox" name="alll7" onClick="setAllCheckHashValue('system',this.checked);">);
+    print qq (</tr>);
+    print qq (<tr><td  style="vertical-align: top;"><table>);
+    print qq (</tr>);
+    
+    print qq (<tr>);
+    my $Server=$Traffic=$Proxy='';
+    my $syslog=XMLread($gINITPATH.'syslog.xml');
+    if ($syslog->{serverlog} eq '1'){$Server='checked';}
+    if ($syslog->{kernellog} eq '1'){$Traffic='checked';}
+    if ($syslog->{squidlog} eq '1'){$Proxy='checked';}
+    
+    foreach my $l7log ( "Server" , "Traffic" , "Proxy" ) 
+    {
+        my $status = '';
+        print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" >);
+        if ($l7log eq 'Server'){$status = $Server;}
+        if ($l7log eq 'Traffic'){$status = $Traffic;}
+        if ($l7log eq 'Proxy'){$status = $Proxy;}
+        print qq (<INPUT type="checkbox" name="$l7log" $status>);
+        print qq (</td>);
+        print qq (<td class="body"  valign="top" align="left" style="width:33%">$l7log</td>);
+    }
+    print qq (</table>);
+=cut 
+#-------------------------------------------------------------------------------------------------------------------------    
+    
+    print qq (<tr><td align="center" class="bigtitle" colspan="3" onclick="table_display(this)"><a>DoS Log Configuration</a><img src="./image/down.png"> ); #</td></tr>);
+    print qq (<tr><td colspan="3"><hr size="1"></td></tr>); 
+    print qq (<tr><td align="left" class="bigtitle" colspan="3">Select / Deselect All );
+    print qq (<input type="checkbox" name="alll7" onClick="setAllCheckHashValue('dos',this.checked);">);
+    print qq (</tr>);
+    print qq (<tr><td  style="vertical-align: top;"><table>);
+    print qq (</tr>);
+    
+    print qq (<tr>);
+    
+    my $Post='';
+    my $Flood='';
+    my $Connection='';
+    my $dosref=XMLread($gPATH.'newflood.xml');
+    my $delist=$dosref->{newflood};
+    foreach my $data (@$delist)
+    {
+        if ($data->{logset} eq 'true')
+        {
+            $Flood = 'checked';
+        }
+   }
+   
+    my $dosref=XMLread($gPATH.'newportscan.xml');
+    my $delist=$dosref->{newportscan};
+    foreach my $data (@$delist)
+    {
+        if ($data->{logset} eq 'true')
+        {
+            $Post = 'checked';
+        }
+   }
+   
+   my $dosref=XMLread($gPATH.'newdos.xml');
+   my $delist=$dosref->{newdos};
+   foreach my $data (@$delist)
+   {
+       if ($data->{logset} eq 'true')
+       {
+           $Connection = 'checked';
+       }
+   }
+   
+    foreach my $l7log ( "Post Scan" , "Flood" , "Connection Overflow" ) 
+    {
+        print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left">);
+        if ($l7log eq 'Post Scan'){$status = $Post;}
+        if ($l7log eq "Flood"){$status = $Flood;}
+        if ($l7log eq "Connection Overflow"){$status = $Connection;}
+        print qq (<INPUT type="checkbox" name="$l7log" $status>);
+        print qq (</td>);
+        print qq (<td class="body"  valign="top" align="left" style="width:33%">$l7log</td>);
+    }
+    
+    print qq (</table>);
+
+#-----------------------------------------------------------------------------------------------------------
+    
+    print qq (<tr><td align="center" class="bigtitle" colspan="3" onclick="table_display(this)"><a>Application</a><img src="./image/down.png">); #</td></tr>);
+    print qq (<a href="javascript:qbShowHelp('l7log')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    print qq (<tr><td colspan="3"><hr size="1"></td></tr>);
+
+    print qq (<tr><td align="left" class="bigtitle" colspan="3">Select / Deselect All );
+    print qq (<input type="checkbox" name="alll7" onClick="setAllCheckHashValue('All',this.checked);">);
+    print qq (</tr>);
+    #****************************************************************************************
+    print qq (<tr><td  style="vertical-align: top;"><table>);
+			print qq (<tr><td align="left" class="bigtitle" colspan="2" ><span id="L7IMlogTT" style="display:none;">[+] </span><span id="L7IMlogSS">[-] </span><span id="L7IMlog">IM :</span> ); #</td></tr>);
+			print qq (<input type="checkbox" name="l7_IM" onClick="setAllCheckHashValue('IM',this.checked);">);
+			print qq (</tr>);
+			$adkjh = 1;
+			foreach my $mode ( sort  keys %gL7IMHASH )
+			{
+			    if($adkjh%3==1){
+			        print qq (<tr>);
+			    }
+			    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left">);
+			    my $status=( $l7log->{$mode} ) ? ('checked') : (''); 
+		 	    print qq (<INPUT type="checkbox" name="$mode"  $status >); 
+			    print qq (</td>);
+			    print qq (<td class="body"  valign="top" align="left">);
+			    print qq ($gL7PROTOCOLHASH{$mode});
+			    print qq (</td>);
+			    if($adkjh%3==0){
+				print qq (</tr>);
+			    }
+			    $adkjh++;
+			}
+		        print qq (</tr>);
+			#print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+			#****************************************************************************************
+			print qq (<tr><td align="left" class="bigtitle" colspan="2"  ><span id="L7p2pLogTT" style="display:none;">[+] </span><span id="L7p2pLogSS">[-] </span><span id ="L7p2pLog">P2P : </span>); #</td></tr>);
+			print qq (<input type="checkbox" name="l7_P2P" onClick="setAllCheckHashValue('P2P',this.checked);">);
+			print qq (</tr>);
+			$adkjh = 1;
+			foreach my $mode ( sort  keys %gL7P2PHASH )
+			{
+			if($adkjh%3==1){
+			print qq (<tr>);
+			}
+			print qq (<td class="body L7p2pLog"  valign="top" align="left">);
+			my $status=( $l7log->{$mode} ) ? ('checked') : (''); 
+			print qq (<INPUT type="checkbox" name="$mode"  $status >); 
+			print qq (</td>);
+			print qq (<td class="body"  valign="top" align="left">);
+			print qq ($gL7PROTOCOLHASH{$mode});
+			print qq (</td>);
+			if($adkjh%3==0){
+			print qq (</tr>);
+			}
+			$adkjh++;
+			}
+			# print qq (</tr>);  
+			#print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+			#****************************************************************************************
+			print qq (<tr><td align="left" class="bigtitle" colspan="2"><span id="L7GAMElogTT" style="display:none;">[+] </span><span id="L7GAMElogSS">[-] </span><span id ="L7GAMElog">Game : </span>); #</td></tr>);
+			print qq (<input type="checkbox" name="l7_GAME" onClick="setAllCheckHashValue('GAME',this.checked);">);
+			print qq (</tr>);
+			$adkjh = 1;
+			foreach my $mode ( sort  keys %gL7GAMEHASH )
+			{
+			if($adkjh%3==1){
+			print qq (<tr>);
+			}
+			print qq (<td class="body L7GAMElog"  valign="top" align="left">);
+			my $status=( $l7log->{$mode} ) ? ('checked') : (''); 
+			print qq (<INPUT type="checkbox" name="$mode"  $status >); 
+			print qq (</td>);
+			print qq (<td class="body"  valign="top" align="left">);
+			print qq ($gL7PROTOCOLHASH{$mode});
+			print qq (</td>);
+			if($adkjh%3==0){
+			print qq (</tr>);
+			}
+			$adkjh++;
+			}
+			#****************************************************************************************
+			print qq (<tr><td align="left" class="bigtitle" colspan="2"><span id="L7VOIClogTT" style="display:none;">[+] </span><span id="L7VOIClogSS">[-] </span><span id="L7VOIClog">Voice : </span>); #</td></tr>);
+			print qq (<input type="checkbox" name="l7_VOICE" onClick="setAllCheckHashValue('VOICE',this.checked);">);
+			print qq (</tr>);
+			$adkjh= 1;
+			foreach my $mode ( sort  keys %gL7VOICEHASH )
+			{
+			if($adkjh%3==1){
+			print qq (<tr>);
+			}
+			print qq (<td class="body L7VOIClog"  valign="top" align="left">);
+			my $status=( $l7log->{$mode} ) ? ('checked') : (''); 
+			print qq (<INPUT type="checkbox" name="$mode"  $status >); 
+			print qq (</td>);
+			print qq (<td class="body"  valign="top" align="left">);
+			print qq ($gL7PROTOCOLHASH{$mode});
+			print qq (</td>);
+			
+			if($adkjh%3==0){
+			print qq (</tr>);
+			}
+			$adkjh++;
+			}
+			#****************************************************************************************
+			
+			print qq (<tr><td align="left" class="bigtitle" colspan="2"><span id="L7OTHERlogTT" style="display:none;">[+] </span><span id="L7OTHERlogSS">[-] </span><span id="L7OTHERlog">Others : </span>); #</td></tr>);
+			print qq (<input type="checkbox" name="l7_OTHER" onClick="setAllCheckHashValue('OTHER',this.checked);">);
+			print qq (</tr>);
+			$dsfs = 1;
+			foreach my $mode ( sort  keys %gL7OTHERHASH )
+			{
+			
+			if($dsfs %3==1){
+			print qq (<tr>);
+			}
+			print qq (<td class="body L7OTHERlog"  valign="top" align="left">);
+			my $status=( $l7log->{$mode} ) ? ('checked') : (''); 
+			print qq (<INPUT type="checkbox" name="$mode"  $status >); 
+			print qq (</td>);
+			print qq (<td class="body"  valign="top" align="left">);
+			print qq ($gL7PROTOCOLHASH{$mode});
+			print qq (</td>);
+			
+			
+			if($dsfs %3==0){
+			print qq (</tr>);
+			}
+			
+			$dsfs++
+			}
+	
+    print qq (</table></td>);
+	
+    print qq (</tr>);
+    print qq (<tr><td colspan="3"><hr size="1"></td></tr>);
+    #************************************ Command Button  ********************************************
+    print qq (<tr>);
+    print qq (<td colspan="3" align="center">);
+    print qq (<input class="qb" type="button" value="Save" title="Save All Parameters and apply now !" onClick="goSubmit('APPLY')" style="width:120">);
+    print qq (</td></tr>);
+ 
+    print qq (</table>);
+}
+#showConsole
+
+
+#======================================================================================================================
+sub l7logScript 
+{
+    print qq (<script language="javascript">);
+
+    print qq(var L7IM = new Array(););
+    print qq(var L7P2P = new Array(););
+    print qq(var L7GAME = new Array(););
+    print qq(var L7VOICE = new Array(););
+    print qq(var L7OTHER = new Array(););
+    print qq(var SYSTEM = new Array(););
+    print qq(var DOS = new Array(););
+
+    #foreach my $l7log ( sort keys %gL7IMHASH ) { print qq ( alert("$l7log"); ); print qq (L7IM.push("$l7log");); }
+    foreach my $l7log ( sort keys %gL7IMHASH ) { print qq (L7IM.push("$l7log");); }
+    foreach my $l7log ( sort keys %gL7P2PHASH ) { print qq (L7P2P.push("$l7log");); }
+    foreach my $l7log ( sort keys %gL7GAMEHASH ) { print qq (L7GAME.push("$l7log");); }
+    foreach my $l7log ( sort keys %gL7VOICEHASH ) { print qq (L7VOICE.push("$l7log");); }
+    foreach my $l7log ( sort keys %gL7OTHERHASH ) { print qq (L7OTHER.push("$l7log");); }
+    foreach my $l7log ( "Server" , "Traffic" , "Proxy" ) { print qq (SYSTEM.push("$l7log");); }
+    foreach my $l7log ( "Post Scan" , "Flood" , "Connection Overflow" ) { print qq (DOS.push("$l7log");); }
+    
+    print qq (</script>);    
+    
+    print << "SCRIPT";
+	<script type="text/javascript" src="qbjs/jquery.js"></script>
+    <script language="javascript">
+    
+    var myform; 
+    
+    function table_display(o)
+    {
+        var obj = new Object;
+        obj.setobj=\$(o).parent("tr").nextAll("tr").eq(2).children("td").children("table");
+        obj.setimg=\$(o).children("img");
+        obj.show=function(){
+            if (obj.setobj.attr("style") == "display: none;" || obj.setobj.attr("style") == "display:none")
+            {
+                obj.setobj.attr("style","display:block");
+                obj.setimg.attr("src","./image/down.png");
+            }
+            else
+            {
+                obj.setobj.attr("style","display:none");
+                obj.setimg.attr("src","./image/up.png");
+            }
+        }
+        obj.show();
+    }
+    
+    
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+        //switchl7logServerIP();   
+    }
+	
+    function format(oo,aa,bb)	
+    {
+        document.getElementById('path').value = '/mnt/' + oo + "," + bb;
+        document.getElementById('action').value = aa;
+    }
+    
+    function setAllCheckHashValue(Name,boolvalue) 
+    {
+       switch (Name)
+       {
+          case "All":
+               for(var i=0;i<L7IM.length;i++){document.getElementsByName(L7IM[i])[0].checked=boolvalue;}
+               for(var i=0;i<L7P2P.length;i++){document.getElementsByName(L7P2P[i])[0].checked=boolvalue;}
+               for(var i=0;i<L7GAME.length;i++){document.getElementsByName(L7GAME[i])[0].checked=boolvalue;}
+               for(var i=0;i<L7VOICE.length;i++){document.getElementsByName(L7VOICE[i])[0].checked=boolvalue;}
+               for(var i=0;i<L7OTHER.length;i++){document.getElementsByName(L7OTHER[i])[0].checked=boolvalue;}
+               break;
+          case "IM":
+               for(var i=0;i<L7IM.length;i++){document.getElementsByName(L7IM[i])[0].checked=boolvalue;}
+               break;
+          case "P2P":
+               for(var i=0;i<L7P2P.length;i++){document.getElementsByName(L7P2P[i])[0].checked=boolvalue;}
+               break;
+          case "GAME":
+               for(var i=0;i<L7GAME.length;i++){document.getElementsByName(L7GAME[i])[0].checked=boolvalue;}
+               break;
+          case "VOICE":
+               for(var i=0;i<L7VOICE.length;i++){document.getElementsByName(L7VOICE[i])[0].checked=boolvalue;}
+               break;
+          case "OTHER":
+               for(var i=0;i<L7OTHER.length;i++){document.getElementsByName(L7OTHER[i])[0].checked=boolvalue;}
+               break;
+          case "system":
+               for(var i=0;i<SYSTEM.length;i++){document.getElementsByName(SYSTEM[i])[0].checked=boolvalue;}
+               break;
+          case "dos":
+               for(var i=0;i<DOS.length;i++){document.getElementsByName(DOS[i])[0].checked=boolvalue;}
+               break;
+       }
+                                   
+    }
+	
+
+	//document.getElementById("L7IMlog").onclick=function(){displayDate()};
+	
+	\$(document).ready(function(){
+	  \$("td > span").click(function(){
+	  //alert(this.id+"SS");
+	  var ssid = "#"+this.id+"SS";
+	  \$(ssid).toggle();
+	  ssid = "#"+this.id+"TT";
+	  \$(ssid).toggle();
+	  var getclassid = "."+this.id;
+	  \$(getclassid).parent().toggle();
+	  
+	  });
+
+	  \$("#L7IMlog ~ :input").click(function(){
+	  \$(".L7IMlog").parent().show();
+	  \$("#L7IMlogSS").show();
+	  \$("#L7IMlogTT").hide();
+	  });
+
+	  \$("#L7p2pLog ~ :input").click(function(){
+	  \$(".L7p2pLog").parent().show();
+	  \$("#L7p2pLogSS").show();
+	  \$("#L7p2pLogTT").hide();
+	  });
+
+	  \$("#L7GAMElog ~ :input").click(function(){
+	  \$(".L7GAMElog").parent().show();
+	  \$("#L7GAMElogSS").show();
+	  \$("#L7GAMElogTT").hide();
+	  });
+
+	  \$("#L7VOIClog ~ :input").click(function(){
+	  \$(".L7VOIClog").parent().show();
+	  \$("#L7VOIClogSS").show();
+	  \$("#L7VOIClogTT").hide();
+	  });
+
+	  \$("#L7OTHERlog ~ :input").click(function(){
+	  \$(".L7OTHERlog").parent().show();
+	  \$("#L7OTHERlogSS").show();
+	  \$("#L7OTHERlogTT").hide();
+	  });
+	  \$('input[name="alll7"]').click(function(){
+	  \$("tr").show();
+	  \$("#L7IMlogSS").show();
+	  \$("#L7IMlogTT").hide();
+	  \$("#L7p2pLogSS").show();
+	  \$("#L7p2pLogTT").hide();
+	  \$("#L7GAMElogSS").show();
+	  \$("#L7GAMElogTT").hide();
+	  \$("#L7VOIClogSS").show();
+	  \$("#L7VOIClogTT").hide();
+	  \$("#L7OTHERlogSS").show();
+	  \$("#L7OTHERlogTT").hide();
+	  });
+	  
+	});
+	
+    </script>
+SCRIPT
+}
+#l7logScript
+
+#======================================================================================================================
+#maintainL7log( %action )
+sub maintainL7log 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $l7log=XMLread($gPATH.'l7log.xml');
+    
+    if ($action{action}=~m/^CLEAR$/)
+    {
+        my @data;
+        open(FILE,"/opt/qb/registry");
+        foreach my $tmp (<FILE>)
+        {
+            if (grep(/LIMIT/,$tmp)){next;}
+            push(@data,$tmp);
+        }
+        push(@data,"\#\#LIMIT $action{first} $action{second}");
+        close(FILE);
+        
+        open(FILE1,">/tmp/registry");
+        print FILE1 @data;
+        close(FILE1);
+        
+        system("/usr/local/apache/qb/setuid/run /bin/cp -a /tmp/registry /opt/qb/");
+        system("/usr/local/apache/qb/setuid/run /bin/cp -a /tmp/registry /mnt/conf/");
+        system("sync");
+        system("sync");
+        system("sync");
+    }elsif ($action{action}=~m/^FORMAT$/)
+    {
+        if (!$action{path}){return;}
+        $action{path} =~ s/,$//;
+        system("/usr/local/apache/qb/setuid/run /bin/rm -rf $action{path}*");
+        system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/analyser");
+        system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/squid");
+        system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/ispnet");
+        system("sync");
+        system("sync");
+        system("sync");   
+    }elsif ( $action{action}=~m/^APPLY$/ ) 
+    {
+        if ($action{post} ne '' || $action{flood} ne '' || $action{conn} ne '')
+        {
+           if ($action{flood} ne '')
+           {
+               my $dosref=XMLread($gPATH.'newflood.xml');
+               my $delist=$dosref->{newflood};
+               foreach my $data (@$delist)
+               {
+                   if($action{flood} eq '1')
+                   {
+                       $data->{logset}= 'true';
+                   }
+                   if($action{flood} eq '0')
+                   {
+                       $data->{logset}= 'false';
+                   }
+               }
+               XMLwrite($dosref, $gPATH."newflood.xml");
+           } 
+           
+           if ($action{post} ne '')
+           {
+               my $dosref=XMLread($gPATH.'newportscan.xml');
+               my $delist=$dosref->{newportscan};
+               foreach my $data (@$delist)
+               {
+                   if ($action{post} eq '1')
+                   {
+                       $data->{logset}= 'true';
+                   }
+                   
+                   if ($action{post} eq '0')
+                   {
+                       $data->{logset}= 'false';
+                   }
+               }
+               XMLwrite($dosref, $gPATH."newportscan.xml");
+           } 
+           
+           if ($action{conn} ne '')
+           {
+               my $dosref=XMLread($gPATH.'newdos.xml');
+               my $delist=$dosref->{newdos};
+               foreach my $data (@$delist)
+               {
+                   if ($action{conn} eq '1')
+                   {
+                       $data->{logset}= 'true';
+                   }
+                   
+                   if ($action{conn} eq '0')
+                   {
+                       $data->{logset}= 'false';
+                   }
+               }
+               XMLwrite($dosref, $gPATH."newdos.xml");
+           } 
+        }
+        
+        $l7log->{aim}=$action{aim};
+        $l7log->{aimwebcontent}=$action{aimwebcontent};
+        $l7log->{applejuice}=$action{applejuice};
+        $l7log->{ares}=$action{ares};
+        $l7log->{battlefield1942}=$action{battlefield1942};      
+        $l7log->{battlefield2}=$action{battlefield2};         
+        $l7log->{bgp}=$action{bgp};                  
+        $l7log->{biff}=$action{biff};                 
+        $l7log->{bittorrent}=$action{bittorrent};           
+        $l7log->{chikka}=$action{chikka};               
+        $l7log->{cimd}=$action{cimd};                 
+        $l7log->{ciscovpn}=$action{ciscovpn};             
+        $l7log->{citrix}=$action{citrix};               
+        #$l7log->{counterstrike-source}=$action{counterstrike-source}; 
+        $l7log->{counterstrike}=$action{counterstrike}; 
+        $l7log->{cvs}=$action{cvs};                  
+        #$l7log->{dayofdefeat-source}=$action{dayofdefeat-source};   
+        $l7log->{dayofdefeat}=$action{dayofdefeat};   
+        $l7log->{dhcp}=$action{dhcp};                 
+        $l7log->{directconnect}=$action{directconnect};        
+        $l7log->{dns}=$action{dns};                  
+        $l7log->{doom3}=$action{doom3};                
+        $l7log->{edonkey}=$action{edonkey};              
+        $l7log->{fasttrack}=$action{fasttrack};            
+        $l7log->{finger}=$action{finger};               
+        $l7log->{freenet}=$action{freenet};              
+        $l7log->{ftp}=$action{ftp};                  
+        $l7log->{gkrellm}=$action{gkrellm};              
+        $l7log->{gnucleuslan}=$action{gnucleuslan};          
+        $l7log->{gnutella}=$action{gnutella};             
+        $l7log->{goboogy}=$action{goboogy};              
+        $l7log->{gopher}=$action{gopher};               
+        $l7log->{h323}=$action{h323};                 
+        #$l7log->{halflife2-deathmatch}=$action{halflife2-deathmatch}; 
+        $l7log->{halflife2}=$action{halflife2}; 
+        $l7log->{hddtemp}=$action{hddtemp};              
+        $l7log->{hotline}=$action{hotline};              
+        #$l7log->{http-rtsp}=$action{http-rtsp};            
+        $l7log->{http}=$action{http};
+        $l7log->{ident}=$action{ident};                
+        $l7log->{imap}=$action{imap};                 
+        $l7log->{imesh}=$action{imesh};                
+        $l7log->{ipp}=$action{ipp};                  
+        $l7log->{irc}=$action{irc};                  
+        $l7log->{jabber}=$action{jabber};               
+        $l7log->{kugoo}=$action{kugoo};                
+        $l7log->{live365}=$action{live365};              
+        $l7log->{lpd}=$action{lpd};                  
+        $l7log->{mohaa}=$action{mohaa};                
+        #$l7log->{msn-filetransfer}=$action{msn-filetransfer};     
+        $l7log->{msnmessenger}=$action{msnmessenger};         
+        $l7log->{mute}=$action{mute};                 
+        $l7log->{napster}=$action{napster};              
+        $l7log->{nbns}=$action{nbns};                 
+        $l7log->{ncp}=$action{ncp};                  
+        $l7log->{netbios}=$action{netbios};              
+        $l7log->{nntp}=$action{nntp};                 
+        $l7log->{ntp}=$action{ntp};                  
+        $l7log->{openft}=$action{openft};               
+        $l7log->{pcanywhere}=$action{pcanywhere};           
+        $l7log->{poco}=$action{poco};                 
+        $l7log->{pop3}=$action{pop3};                 
+        $l7log->{qq}=$action{qq};                   
+        #$l7log->{quake-halflife}=$action{quake-halflife};       
+        $l7log->{quake}=$action{quake};       
+        $l7log->{quake1}=$action{quake1};               
+        $l7log->{radmin}=$action{radmin};               
+        $l7log->{rdp}=$action{rdp};                   
+        $l7log->{rlogin}=$action{rlogin};                
+        $l7log->{rtsp}=$action{rtsp};                  
+        $l7log->{shoutcast}=$action{shoutcast};             
+        $l7log->{sip}=$action{sip};                   
+        #$l7log->{skypeout}=$action{skypeout};              
+        #$l7log->{skypetoskype}=$action{skypetoskype};          
+        $l7log->{smb}=$action{smb};                   
+        $l7log->{smtp}=$action{smtp};                  
+        $l7log->{snmp}=$action{snmp};                  
+        $l7log->{socks}=$action{socks};                 
+        $l7log->{soribada}=$action{soribada};              
+        $l7log->{soulseek}=$action{soulseek};              
+        $l7log->{ssdp}=$action{ssdp};                  
+        $l7log->{ssh}=$action{ssh};                   
+        $l7log->{ssl}=$action{ssl};                   
+        $l7log->{stun}=$action{stun};                  
+        $l7log->{subspace}=$action{subspace};              
+        $l7log->{subversion}=$action{subversion};            
+        $l7log->{teamspeak}=$action{teamspeak};             
+        $l7log->{telnet}=$action{telnet};                
+        $l7log->{tesla}=$action{tesla};                 
+        $l7log->{tftp}=$action{tftp};                  
+        $l7log->{thecircle}=$action{thecircle};             
+        $l7log->{tls}=$action{tls};                   
+        $l7log->{tor}=$action{tor};                   
+        $l7log->{tsp}=$action{tsp};                   
+        $l7log->{uucp}=$action{uucp};                  
+        $l7log->{validcertssl}=$action{validcertssl};          
+        $l7log->{ventrilo}=$action{ventrilo};              
+        $l7log->{vnc}=$action{vnc};                   
+        $l7log->{whois}=$action{whois};                 
+        $l7log->{worldofwarcraft}=$action{worldofwarcraft};       
+        $l7log->{x11}=$action{x11};                   
+        $l7log->{xboxlive}=$action{xboxlive};              
+        $l7log->{xunlei}=$action{xunlei};                
+        $l7log->{yahoo}=$action{yahoo};                 
+        $l7log->{zmaap}=$action{zmaap};                 
+        #--------------------------------------------------------
+        $l7log->{audiogalaxy}=$action{audiogalaxy};           
+        #$l7log->{http-dap}=$action{http-dap};              
+        #$l7log->{http-freshdownload}=$action{http-freshdownload};    
+        #$l7log->{http-itunes}=$action{http-itunes};           
+        $l7log->{httpaudio}=$action{httpaudio};             
+        $l7log->{httpcachehit}=$action{httpcachehit};          
+        $l7log->{httpcachemiss}=$action{httpcachemiss};         
+        $l7log->{httpvideo}=$action{httpvideo};             
+        $l7log->{pressplay}=$action{pressplay};             
+        $l7log->{quicktime}=$action{quicktime};             
+        #$l7log->{snmp-mon}=$action{snmp-mon};              
+        #$l7log->{"snmp-trap"}=$action{"snmp-trap"};
+        
+        LogUserAction( action=>'SAVEL7LOG', aim=>$action{aim}, aimwebcontent=>$action{aimwebcontent}, applejuice=>$action{applejuice}, ares=>$action{ares}, audiogalaxy=>$action{audiogalaxy}, battlefield1942=>$action{battlefield1942}, battlefield2=>$action{battlefield2}, bgp=>$action{bgp}, biff=>$action{biff}, bittorrent=>$action{bittorrent}, chikka=>$action{chikka}, cimd=>$action{cimd}, ciscovpn=>$action{ciscovpn}, citrix=>$action{citrix}, counterstrike-source=>$action{counterstrike-source}, counterstrike=>$action{counterstrike}, cvs=>$action{cvs}, dayofdefeat-source=>$action{dayofdefeat-source}, dayofdefeat=>$action{dayofdefeat}, dhcp=>$action{dhcp}, directconnect=>$action{directconnect}, dns=>$action{dns}, doom3=>$action{doom3}, edonkey=>$action{edonkey}, fasttrack=>$action{fasttrack}, finger=>$action{finger}, freenet=>$action{freenet}, ftp=>$action{ftp}, gkrellm=>$action{gkrellm}, gnucleuslan=>$action{gnucleuslan}, gnutella=>$action{gnutella}, goboogy=>$action{goboogy}, gopher=>$action{gopher}, h323=>$action{h323}, halflife2-deathmatch=>$action{halflife2-deathmatch}, halflife2=>$action{halflife2}, hddtemp=>$action{hddtemp}, hotline=>$action{hotline}, http-rtsp=>$action{http-rtsp}, http=>$action{http}, httpaudio=>$action{httpaudio}, httpcachehit=>$action{httpcachehit}, httpcachemiss=>$action{httpcachemiss}, httpvideo=>$action{httpvideo}, ident=>$action{ident}, imap=>$action{imap}, imesh=>$action{imesh}, ipp=>$action{ipp}, irc=>$action{irc}, jabber=>$action{jabber}, kugoo=>$action{kugoo}, live365=>$action{live365}, lpd=>$action{lpd}, mohaa=>$action{mohaa}, msn-filetransfer=>$action{msn-filetransfer}, msnmessenger=>$action{msnmessenger}, mute=>$action{mute}, napster=>$action{napster}, nbns=>$action{nbns}, ncp=>$action{ncp}, netbios=>$action{netbios}, nntp=>$action{nntp}, ntp=>$action{ntp}, openft=>$action{openft}, pcanywhere=>$action{pcanywhere}, poco=>$action{poco}, pop3=>$action{pop3}, pressplay=>$action{pressplay}, qq=>$action{qq}, quake-halflife=>$action{quake-halflife}, quake=>$action{quake}, quake1=>$action{quake1}, quicktime=>$action{quicktime}, radmin=>$action{radmin}, rdp=>$action{rdp}, rlogin=>$action{rlogin}, rtsp=>$action{rtsp}, shoutcast=>$action{shoutcast}, sip=>$action{sip}, skypeout=>$action{skypeout}, skypetoskype=>$action{skypetoskype}, smb=>$action{smb}, smtp=>$action{smtp}, snmp=>$action{snmp}, socks=>$action{socks}, soribada=>$action{soribada}, soulseek=>$action{soulseek}, ssdp=>$action{ssdp}, ssh=>$action{ssh}, ssl=>$action{ssl}, stun=>$action{stun}, subspace=>$action{subspace}, subversion=>$action{subversion}, teamspeak=>$action{teamspeak}, telnet=>$action{telnet}, tesla=>$action{tesla}, tftp=>$action{tftp}, thecircle=>$action{thecircle}, tls=>$action{tls}, tor=>$action{tor}, tsp=>$action{tsp}, uucp=>$action{uucp}, validcertssl=>$action{validcertssl}, ventrilo=>$action{ventrilo}, vnc=>$action{vnc}, whois=>$action{whois}, worldofwarcraft=>$action{worldofwarcraft}, x11=>$action{x11}, xboxlive=>$action{xboxlive}, xunlei=>$action{xunlei}, yahoo=>$action{yahoo}, zmaap=>$action{zmaap} ); 
+    }
+    
+    #-------updating l7log.xml------------------------ 
+    XMLwrite($l7log, $gPATH."l7log.xml");
+    
+    
+    if ( $action{action}=~m/^APPLY$/ ) 
+    {
+        if ($action{ser} ne '' || $action{tra} ne '' || $action{pro} ne '')
+        {
+            my $syslog=XMLread($gINITPATH.'syslog.xml');
+            $syslog->{serverlog}=$action{ser};
+            $syslog->{kernellog}=$action{tra};
+            $syslog->{squidlog}=$action{pro};
+            XMLwrite($syslog,$gINITPATH."syslog.xml");
+            runCommand(command=>'do_qbsyslog.pl', params=>'');
+            runCommand(command=>'cp', params=>'-f '.$gINITPATH.'syslog.xml /mnt/qb/conf/syslog.xml');
+            qbSync();
+            runCommand(command=>'service', params=>'syslog restart');
+        }
+    }
+    #@dep
+    runCommand(command=>'do_qbl7log.pl', params=>'');
+
+}
+#maintainL7log
+#
+1

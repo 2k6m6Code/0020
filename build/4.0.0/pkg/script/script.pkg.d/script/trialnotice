@@ -1,0 +1,133 @@
+#!/bin/bash
+#set -x
+registered_date_sec=`cat /mnt/conf/dtstamp.dc`
+#warranty_time=`cat /tmp/init|grep Warranty|tail -n 1|awk '{print $2}'`
+#warranty_time_date=`date -d "1970-01-01 UTC $wrranty_time seconds"`
+
+if [ -f /mnt/conf/dtstamp.dc ]; then
+
+  # Registered Date is Not registered
+  if [ "$registered_date_sec" = "" ]; then
+
+    days=`uptime|grep day`
+    if [ "$days" != "" ];then
+        days=`uptime|awk '{print $3}'|sed s/,//g`
+        time=`uptime|awk '{print $5}'|sed s/,//g`
+    else
+        days="0"
+        time=`uptime|awk '{print $3}'|sed s/,//g`
+    fi
+    min=`echo $time|grep ':'`
+    if [ "$min" != "" ];then
+        hour=`echo $time|awk -F":" '{print $1}'`
+        min=`echo $time|awk -F":" '{print $2}'`
+    else
+        hour="0"
+        min=`echo $time`
+    fi
+
+    if [ ! -f /mnt/conf/timeup ]; then
+      let trialdays=29-$days
+      let trialhour=23-$hour
+      let trialmin=59-$min
+  
+      echo "$trialdays Day $trialhour Hour $trialmin Min"
+  
+      if [ "$trialdays" == "29" ];then
+        /opt/qb/bin/script/trialmail.sh 30
+        echo $(date) "Warranty will expire after 30 Days !!! Need to register qb.">>/mnt/log/bootlog
+      elif [ "$trialdays" == "13" ];then
+        /opt/qb/bin/script/trialmail.sh 14
+        echo $(date) "Warranty will expire after 14 Days !!! Need to register qb.">>/mnt/log/bootlog
+      elif [ "$trialdays" == "6" ];then
+        /opt/qb/bin/script/trialmail.sh 7
+        echo $(date) "Warranty will expire after 7 Days !!! Need to register qb.">>/mnt/log/bootlog
+      elif [ "$trialdays" == "1" ];then
+        /opt/qb/bin/script/trialmail.sh 2
+        echo $(date) "Warranty will expire after 2 Days !!! Need to register qb.">>/mnt/log/bootlog
+      elif [ "$trialdays" == "0" ];then
+        /opt/qb/bin/script/trialmail.sh 1
+        echo $(date) "Warranty will expire after 1 Days !!! Need to register qb.">>/mnt/log/bootlog
+      fi
+    else
+      let trialdays=6-$days
+      let trialhour=23-$hour
+      let trialmin=59-$min
+  
+      echo "$trialdays Day $trialhour Hour $trialmin Min"
+  
+      if [ "$trialdays" == "6" ];then
+        /opt/qb/bin/script/trialmail.sh 7
+        echo $(date) "Warranty will expire after 7 Days !!! Need to register qb.">>/mnt/log/bootlog
+      elif [ "$trialdays" == "1" ];then
+        /opt/qb/bin/script/trialmail.sh 2 
+        echo $(date) "Warranty will expire after 2 Days !!! Need to register qb.">>/mnt/log/bootlog
+      elif [ "$trialdays" == "0" ];then
+        /opt/qb/bin/script/trialmail.sh 1
+        echo $(date) "Warranty will expire after 1 Days !!! Need to register qb.">>/mnt/log/bootlog
+      fi
+    fi
+
+  # Registered Date is registered
+  else
+    warranty_time=`cat /tmp/init|grep Warranty|tail -n 1|awk '{print $2}'`
+    reg_warranty_time=`expr 365 \* 86400 + $registered_date_sec`
+    echo reg_warranty_time $reg_warranty_time
+
+    # Warranty Expiry
+    if [ "$warranty_time" != "" ]; then
+      warranty_time_date=`date -d "1970-01-01 UTC $warranty_time seconds"`
+      echo warranty_time $warranty_time
+      if [ "$reg_warranty_time" -gt "$warranty_time" ]; then
+        warranty_time_date=`date -d "1970-01-01 UTC $reg_warranty_time seconds"`
+      else
+        warranty_time_date=`date -d "1970-01-01 UTC $warranty_time seconds"`
+      fi
+    fi
+    echo warranty_time_date $warranty_time_date
+    
+    warranty_sec=`date -d "$warranty_time_date" +%s`
+    month_sec=`expr $warranty_sec - 86400 \* 30`
+    month_date=`date -d "1970-01-01 UTC $month_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+    real_date=`date |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+    
+    echo warranty_sec $warranty_sec
+    echo month_date $month_date
+    echo real_date $real_date
+    
+    two_weeks_sec=`expr $warranty_sec - 86400 \* 14`
+    two_weeks_date=`date -d "1970-01-01 UTC $two_weeks_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+    echo two_weeks_date $two_weeks_date
+    
+    week_sec=`expr $warranty_sec - 86400 \* 7`
+    week_date=`date -d "1970-01-01 UTC $week_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+    echo week_date $week_date
+    
+    two_days_sec=`expr $warranty_sec - 86400 \* 2`
+    two_days_date=`date -d "1970-01-01 UTC $two_days_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+    echo two_days_date $two_days_date
+    
+    day_sec=`expr $warranty_sec - 86400 \* 1`
+    day_date=`date -d "1970-01-01 UTC $day_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+    echo day_date $day_date
+    echo real_date $real_date
+    
+    if [ "$month_date" == "$real_date" ] ;then
+      /opt/qb/bin/script/trialmail.sh 30
+      echo $(date) "Warranty will expire after 30 Days !!! ">>/mnt/log/bootlog
+    elif [ "$two_weeks_date" == "$real_date" ] ;then
+      /opt/qb/bin/script/trialmail.sh 14
+      echo $(date) "Warranty will expire after 14 Days !!! ">>/mnt/log/bootlog
+    elif [ "$week_date" == "$real_date" ] ;then
+      /opt/qb/bin/script/trialmail.sh 7
+      echo $(date) "Warranty will expire after 7 Days !!! ">>/mnt/log/bootlog
+    elif [ "$two_days_date" == "$real_date" ] ;then
+      /opt/qb/bin/script/trialmail.sh 2
+      echo $(date) "Warranty will expire after 2 Days !!! ">>/mnt/log/bootlog
+    elif [ "$day_date" == "$real_date" ] ;then
+      /opt/qb/bin/script/trialmail.sh 1
+      echo $(date) "Warranty will expire after 1 Days !!! ">>/mnt/log/bootlog
+    fi
+  fi
+fi
+#echo $time

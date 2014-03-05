@@ -1,0 +1,329 @@
+###############################################################################################
+#                                           Pptpinit Management Console
+###############################################################################################
+sub showSquidgen 
+{
+    my (%action)=@_;
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    my $squidurl=XMLread($gPATH.'squidurl.xml');
+    my $exempt=$squidurl->{exempt}->[0]->{net};
+    my $DENY_MSG = "/usr/local/apache/qbconf/deny";
+    my $DENY = runCommand(command=>'cat', params=>$DENY_MSG);
+    
+    #********************************** Prohibit Multi-thread Download*******************************************
+    #print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Prohibit Multi-thread Download ]</td></tr>);
+    #********************************** ***************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 200px">Prohibit Multi-thread Download</td>);
+    #print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 120px">);
+    #my $status=( $squid->{prohibitmulti} ) ? ('checked') : ('');
+    #print qq (<INPUT type="checkbox" name="prohibitmulti"  $status >);
+    #print qq (</td></tr>);
+     
+    #********************************** Schedule to Block ********************************************
+    
+    print qq(<input type="hidden" id="orischedule" name="orischedule" value="$squid->{schedule}">);
+    
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Schedule to Block ]</td></tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 150px">);
+    my $status=( $squid->{schedule} ) ? ('') : ('checked');
+    $action{schedule} = ( $status eq 'checked' ) ? (0) : (1);
+    #print qq (<input type="radio" name="schedule" value="$squid->{schedule}" onclick="disable_schedule();" $status>Always Block);
+    print qq (<input type="radio" name="schedule" value="0" onclick="disable_schedule();" $status>Always Block);
+    #print qq (<input type="radio" name="schedule" value="0" $status>Always Block);
+    print qq (</td>);
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 150px">);
+    my $status=( $squid->{schedule} ) ? ('checked') : ('');
+    $action{schedule} = ( $status eq 'checked' ) ? (1) : (0);
+    #print qq (<input type="radio" name="schedule" value="$squid->{schedule}" onclick="enable_schedule();" $status>Block Form);
+    print qq (<input type="radio" name="schedule" value="1" onclick="enable_schedule();" $status>Block Form);
+    #print qq (<input type="radio" name="schedule" value="1"  $status>Block Form);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 500px">);
+    print qq (<input class="qbtext" name="timehour1" style="WIDTH: 50px" value="$squid->{timehour1}" >:);
+    print qq (<input class="qbtext" name="timemin1" style="WIDTH: 50px" value="$squid->{timemin1}" >&#32To&#32);
+    print qq (<input class="qbtext" name="timehour2" style="WIDTH: 50px" value="$squid->{timehour2}" >:);
+    print qq (<input class="qbtext" name="timemin2" style="WIDTH: 50px" value="$squid->{timemin2}" >&#32 (24-Hour Format e.g. 08:00 - 19:00));
+    print qq (</td>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 150px">);
+    my $status=( $squid->{everyday} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="everyday"  onClick="day_state();" $status >Everyday);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 500px">);
+    my $status=( $squid->{sun} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="sun"  $status > Sun&#32&#32);
+    my $status=( $squid->{mon} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="mon"  $status >Mon&#32&#32);
+    my $status=( $squid->{tue} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="tue"  $status >Tue&#32&#32);
+    my $status=( $squid->{wed} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="wed"  $status >Wed&#32&#32);
+    my $status=( $squid->{thu} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="thu"  $status >Thu&#32&#32);
+    my $status=( $squid->{fri} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="fri"  $status >Fri&#32&#32);
+    my $status=( $squid->{sat} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="sat"  $status >Sat&#32&#32);
+    print qq (</td></tr></table>);
+    
+    #********************************** Deny message ********************************************
+    print qq (<table>);
+    print qq (<tr><td colspan="8" bgcolor="#332211" width="760" align="left" class="subtitle">[ Denied Message ]</td></tr>);
+    print qq (<tr><td align="center" >);
+    print qq (<textarea class="qbtext" name="denymessage" style="width:400;height:80">$DENY</textarea>);
+    print qq (</td></tr>);
+    
+    #********************************** Exempt Computers ********************************************
+    
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Privileged Lists ]</td></tr>);
+    print qq (<table>);
+    print qq (<tr><td class="body" valign="center" align="center" style="height: 80px; width: 300px">Add Address Ranges\n); 
+    print qq (<br>From&nbsp);
+    print qq (<input class="qbtext" name="iprange1" style="WIDTH: 120px" onchange="iprangedep(this.value)" >);
+    print qq (<br>To&nbsp&nbsp&nbsp&nbsp&nbsp);
+    print qq (<input class="qbtext" name="iprange2" style="WIDTH: 120px" >);
+    print qq (<br>&nbsp&nbsp&nbsp&nbsp&nbsp);
+    print qq (<input class="qb" type="button" value="Add" title="Add Privilege Computers!" onClick="goSubmit('ADDPC')" style="width:auto">);
+    print qq (</td>);
+    print qq (<td></td>);
+    print qq (<td class="body" valign="center" align="center" style="height: 80px; width: 300px">Address List\n);
+    print qq (<select class="qbopt" name="pclist" size="5" multiple style="width:250">);
+    foreach my $net ( @$exempt )
+    {
+       if ( $net->{ip} eq 'system' ) { next; }
+       print qq (<option>$net->{ip}</optin>);
+    }
+    print qq (</select>\n);
+    print qq (<input class="qb" type="button" value="Delete" title="Delete Privileged Computers!" onClick="goSubmit('DELPC')" style="width:auto">);
+    print qq (</td></tr>);
+    print qq (</table>);
+=cut
+    print qq (<table>);
+    print qq (<tr><td colspan="8" bgcolor="#332211" width="760" align="left" class="subtitle">[ Denied Message ]</td></tr>);
+    print qq (<tr><td align="center" >);
+    print qq (<textarea class="qbtext" style="width:400;height:80">$DENY</textarea>);
+    print qq (</td></tr>);
+    print qq (</table>);
+=cut
+      
+}
+#showConsole
+
+
+#======================================================================================================================
+sub squidgenScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    myform=window.document.forms[0];
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+ 	checkschedule();
+    }
+                                                            
+    function checkAndSetidletime()
+    {
+        if ( !isValidPort(myform.idletime.value) ) 
+        { 
+            myform.idletime.value=""; 
+            alert("Time format Error");
+        }
+    }
+    
+    function enable_day()
+    {
+        myform.sun.disabled = false;
+        myform.mon.disabled = false;
+        myform.tue.disabled = false;
+        myform.wed.disabled = false;
+        myform.thu.disabled = false;
+        myform.fri.disabled = false;
+        myform.sat.disabled = false;
+    }
+    
+    function disable_day()
+    {
+        myform.sun.disabled = true;
+        myform.mon.disabled = true;
+        myform.tue.disabled = true;
+        myform.wed.disabled = true;
+        myform.thu.disabled = true;
+        myform.fri.disabled = true;
+        myform.sat.disabled = true;
+    }
+    
+    function enable_schedule()
+    {
+        myform.timehour1.disabled = false;
+        myform.timemin1.disabled = false;
+        myform.timehour2.disabled = false;
+        myform.timemin2.disabled = false;
+        myform.everyday.disabled = false;
+        if ( myform.everyday.checked == true )
+            disable_day();
+        else
+            enable_day();
+    }
+    
+    function disable_schedule()
+    {
+        myform.timehour1.disabled = true;
+        myform.timemin1.disabled = true;
+        myform.timehour2.disabled = true;
+        myform.timemin2.disabled = true;
+        myform.everyday.disabled = true;
+        disable_day();
+    }
+    
+    function day_state()
+    {
+        if ( myform.everyday.checked == true )
+            disable_day();
+        else 
+            enable_day();
+    }
+    
+    function checkschedule()
+    { 
+        var schedule=document.getElementById('orischedule');
+        if ( schedule.value == "0" )
+        {
+            disable_schedule();
+        }
+        else 
+        {
+            enable_schedule();
+            if ( myform.everyday.checked == true )
+                disable_day();
+        }
+    }
+    
+    function iprangedep(iprange1)
+    {
+        var iparray = iprange1.split('.');
+        var iprange2 = document.getElementById('iprange2');
+        
+        iprange2.value = iparray[0] + '.' + iparray[1] + '.' + iparray[2] + '.';
+    }
+    </script>
+SCRIPT
+}
+#squidgenScript
+
+
+#======================================================================================================================
+#maintainsquidgen( %action )
+sub maintainSquidgen 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    my $squidurl=XMLread($gPATH.'squidurl.xml');
+    #my $pxyinit=XMLread($gPATH.'pxyinit.xml');
+    my $exempt=$squidurl->{exempt}->[0]->{net};
+    my @temparray;
+    my $IS_EVERYTHING_OK=1;
+    my $TEMP_DIR="/usr/local/squid/share/errors/templates";
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+    	$squid->{isenable}=$action{isenable};
+    	$squid->{schedule}=$action{schedule};
+    	$squid->{timehour1}=$action{timehour1};
+    	$squid->{timemin1}=$action{timemin1};
+    	$squid->{timehour2}=$action{timehour2};
+    	$squid->{timemin2}=$action{timemin2};
+    	$squid->{everyday}=$action{everyday};
+    	$squid->{sun}=$action{sun};
+    	$squid->{mon}=$action{mon};
+    	$squid->{tue}=$action{tue};
+    	$squid->{wed}=$action{wed};
+    	$squid->{thu}=$action{thu};
+    	$squid->{fri}=$action{fri};
+    	$squid->{sat}=$action{sat};
+    	open(DENY,">/usr/local/apache/qbconf/deny");
+    	print DENY qq ($action{denymessage});
+    	close(DENY);
+    	$action{denymessage} =~ s/{url}/\%U/g;
+    	$action{denymessage} =~ s/{category}/custom/g;
+    	runCommand(command=>'cp', params=>"-a $TEMP_DIR/DENIED $TEMP_DIR/ERR_ACCESS_DENIED");
+    	open(DENY,">>$TEMP_DIR/ERR_ACCESS_DENIED");
+    	print DENY qq ($action{denymessage});
+    	close(DENY);
+    	
+      	if ( $squid->{timehour1} < 0 || $squid->{timehour1} > 24 || $squid->{timehour2} < 0 || $squid->{timehour2} > 24)
+      	{
+      	    $gMSGPROMPT.=qq (ERROR : Time Format ERROR\\n);
+      	    return;
+      	}
+      	if ( $squid->{timemin1} < 0 || $squid->{timemin1} > 59 || $squid->{timemin2} < 0 || $squid->{timemin2} > 59)
+      	{
+      	    $gMSGPROMPT.=qq (ERROR : Time Format ERROR\\n);
+      	    return;
+      	}
+    	#-------updating squidgen.xml------------------------ 
+        XMLwrite($squid, $gPATH."squidgen.xml");
+        
+        runCommand(command=>'/usr/local/squid/etc/squidstop', params=>'');
+        runCommand(command=>'echo', params=>"200 >/tmp/fifo.qbserv");
+        
+        LogUserAction( action=>'APPLYWEBFILTERING', isenable=>$action{isenable}, schedule=>$action{schedule}, timehour1=>$action{timehour1}, timemin1=>$action{timemin1}, timehour2=>$action{timehour2}, timemin2=>$action{timemin2}, everyday=>$action{everyday}, sun=>$action{sun}, mon=>$action{mon}, tue=>$action{tue}, wed=>$action{wed}, thu=>$action{thu}, fri=>$action{fri}, sat=>$action{sat} ); 
+    }
+    elsif ( $action{action}=~m/ADDPC$/ )
+    {
+        my $subnet=$action{iprange1}.'-'.$action{iprange2};
+        if ( !isValidIP($action{iprange1}) || !isValidIP($action{iprange2}) )
+        {
+            $gMSGPROMPT.=qq ( ERROR:IP Range Format Error\\n);
+            $IS_EVERYTHING_OK=0;
+        
+        }
+    	foreach my $net ( @$exempt )
+    	{
+    	    if ( $net->{ip} eq $subnet ) { next; }
+    	     push( @temparray, $net );
+    	}
+    	my %newlist= ( ip=>$subnet );
+    	push( @temparray, \%newlist);
+    	$squidurl->{exempt}->[0]->{net}=\@temparray;
+    	if ( $IS_EVERYTHING_OK eq '1' )
+    	{
+            XMLwrite($squidurl, $gPATH."squidurl.xml");
+            runCommand(command=>'/usr/local/apache/qb/setuid/do_qbsquidurl.pl', params=>'');
+        }
+       
+        LogUserAction( action=>'ADDPC', iprange1=>$action{iprange1}, iprange2=>$action{iprange2} );
+    }
+    elsif ( $action{action}=~m/DELPC$/ )
+    {
+    	foreach my $net ( @$exempt )
+    	{
+    	    if ( $net->{ip} eq $action{pclist} ) { next; }
+    	     push( @temparray, $net );
+    	}
+    	$squidurl->{exempt}->[0]->{net}=\@temparray;
+        XMLwrite($squidurl, $gPATH."squidurl.xml");
+        runCommand(command=>'/usr/local/apache/qb/setuid/do_qbsquidurl.pl', params=>'');
+        
+        LogUserAction( action=>'DELPC', iprange1=>$action{iprange1}, iprange2=>$action{iprange2}, pclist=>$action{pclist} );
+    }
+    if ( $squid->{isenable} eq "1" )
+    {
+       runCommand(command=>'/usr/local/squid/sbin/squid', params=>'-k'.' '.'reconfigure');
+    }
+    
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    qbSync();
+}
+#maintainPptpinit
+#
+1

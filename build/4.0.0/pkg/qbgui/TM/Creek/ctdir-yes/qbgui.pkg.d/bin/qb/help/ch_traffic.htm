@@ -1,0 +1,25 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Link Status</title><!--連線狀態-->
+</head>
+<body>
+
+<h2>Link Status</h2><!--連線狀態-->
+<ol>
+<li>Auto Refresh</li>
+<p>
+
+紀錄各ISP的In/Outbound 流量，每5分鐘紀錄一次，所以看到的流量值都是前5分鐘的，由於Q-Balancer紀錄空間有限，所以最多紀錄36 Hours，如果欲將Log檔輸出至另一部Server，可以參閱Administrative parameters 
+</p>
+<li>Manual Query</li>
+<p>
+可以依選擇時段來查詢ISP的歷史流量資料 
+</p>
+<li>Real Time Traffic</li>
+<p> 
+即時顯示各ISP的線路狀況，左邊表即時的流量，右邊代表累積的流量；如果顯示紅燈，則代表該線路被Q-Balancer經由Link Check 判斷為斷線  
+</p>
+</ol>
+</body></html>

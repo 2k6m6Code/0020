@@ -1,0 +1,42 @@
+#set -x
+
+#if ((ip & netmask) == subnet)
+
+IP=$1
+SUBNET=$2
+
+mask=`ipcalc -m $SUBNET|awk -F "=" '{print $2}'`
+
+MSK1=$(echo $mask | cut -d. -f1)
+SIP1=$(echo $IP | cut -d. -f1)
+SUB1=$(($MSK1 & $SIP1))
+DIFSUB1=$(echo $SUBNET | cut -d. -f1)
+if [ $SUB1 = $DIFSUB1 ];then
+ MSK2=$(echo $mask | cut -d. -f2)
+ SIP2=$(echo $IP | cut -d. -f2)
+ SUB2=$(($MSK2 & $SIP2))
+ DIFSUB2=$(echo $SUBNET | cut -d. -f2)
+ if [ $SUB2 = $DIFSUB2 ];then
+  MSK3=$(echo $mask | cut -d. -f3)
+  SIP3=$(echo $IP | cut -d. -f3)
+  SUB3=$(($MSK3 & $SIP3))
+  DIFSUB3=$(echo $SUBNET | cut -d. -f3)
+  if [ $SUB3 = $DIFSUB3 ];then
+   MSK4=$(echo $mask | cut -d. -f4)
+   SIP4=$(echo $IP | cut -d. -f4)
+   SUB4=$(($MSK4 & $SIP4))
+   DIFSUB4=$(echo $SUBNET | cut -d. -f4| cut -d/ -f1)
+   if [ $SUB4 = $DIFSUB4 ];then
+    echo "1"
+   else
+    echo "0"
+   fi
+  else
+   echo "0"
+  fi
+ else
+  echo "0"
+ fi
+else
+ echo "0"
+fi

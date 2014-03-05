@@ -1,0 +1,20 @@
+[lac L2TP] 
+lns = 41.87.224.28 
+redial = yes 
+autodial = yes 
+require chap = yes 
+name = test2 
+length bit = yes 
+ppp debug = no 
+pppoptfile = /etc/ppp/options.xl2tpd.L2TP 
+
+[lac L2TP1] 
+lns = 41.87.224.1 
+redial = yes 
+autodial = yes 
+require chap = yes 
+name = test2 
+length bit = yes 
+ppp debug = no 
+pppoptfile = /etc/ppp/options.xl2tpd.L2TP1 
+

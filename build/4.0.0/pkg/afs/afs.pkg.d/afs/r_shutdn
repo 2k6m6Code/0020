@@ -1,0 +1,6 @@
+#!/bin/sh
+## Dean Info.
+## shutdown primary server via UPS or rsh
+
+# echo message to terminal server's terminals
+#/usr/afs/msgtserv '\n\recho write all "Primary Server Fail! System transfer, please wait."\n\r' 

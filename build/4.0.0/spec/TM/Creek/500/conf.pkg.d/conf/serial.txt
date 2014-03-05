@@ -1,0 +1,4 @@
+[CONF.PKG] 
+version = 4.0.0 
+serial = 500
+[/CONF.PKG]

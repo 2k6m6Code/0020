@@ -1,0 +1,336 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml">
+<!--
+Last Modify 20031112 @ DeanSoft
+-->
+<head>
+<title>PolyLine02</title>
+<link rel="stylesheet" href="../gui.css" type="text/css">
+<style>
+v\:*{behavior:url(#default#vml)}
+</style>
+
+<script language="javascript" type="text/javascript" src="../qbjs/excanvas.min.js"></script>
+<script type="text/javascript" language="javascript" src="../qbjs/jquery.js"></script>
+<script type="text/javascript" language="javascript" src="../qbjs/jquery.flot.js"></script>
+<script type="text/javascript" language="javascript" src="../qbjs/jquery.flot.selection.js"></script>
+<script>
+
+//PolyMaster
+//PolyMaster.add()
+//PolyMaster.show()
+//PolyMaster.showmycard()
+//PolyMaster.chmode()
+//PolyMaster.clear()
+
+
+function polymaster(element_id,name){
+
+	var PA;
+	
+	if(!(PA=document.all[element_id]))
+		return null;
+	
+	while(PA.childNodes.length){
+		PA.firstChild.parentNode.removeChild(PA.firstChild);
+	}
+	
+	//definition
+	
+	this.name = name;
+	this.maxValue = 64;
+	this.unitIndex = 0;
+	this.cards = new Array();
+	this.today = new Date();
+	this.mode = 1;
+	this.count = 0;
+	this.obj = document.createElement("TABLE");
+	this.ispselobj = document.createElement("SELECT");
+	this.ispselobj.style.font = "10 Verdana";
+	this.ispselobj.style.background = "#336699";
+	this.ispselobj.style.color = "white";
+	//this.mycard = new polycard(this,0);		
+
+	PA.appendChild(this.obj);
+
+	PA = null;
+}
+
+
+
+polymaster.prototype.setTime = function setTime(yy,mm,dd,hh,mi){
+
+	this.today.setYear(parseInt(yy));
+	this.today.setMonth(parseInt(mm));
+	this.today.setDate(parseInt(dd));
+	this.today.setHours(parseInt(hh));
+	this.today.setMinutes(parseInt(mi));
+}
+
+//宣告 Unit 相關資料
+
+
+
+
+
+polymaster.prototype.add=function add(ispname,path,bound){
+/*alert(path);
+	if(this.cards.length <= this.count){
+		var PCARD = new polycard(this,1);
+		this.cards.push(PCARD);
+		if(this.mode)
+			PCARD.construct();
+		this.ispselobj.options.add(new Option(ispname,this.count));
+	}
+	else{
+		var PCARD = this.cards[this.count];
+		if(this.mode && !PCARD.mount)
+			PCARD.construct();
+		if(!this.mode && PCARD.mount)
+			PCARD.deconstruct();
+		this.ispselobj.options[this.count] = new Option(ispname,this.count);
+	}
+	PCARD.index = this.count;
+	PCARD.set(ispname,path,bound);
+	this.count++;
+	PCARD = ispname = polydata = path = null;
+	*/
+	var diviid1 = "#placeholder"+ispname;
+	var diviid2 = "#overview"+ispname;
+	$(diviid1).remove();
+	$(diviid2).remove();
+	$('#hischart').append('<div style="width:280px;height:280px;background-color:#FFFFFF;margin:1px;float: left;" onclick="writeConsole(this)" id="placeholder'+ispname+'"></div>');
+	$('#hischart').append('<div style="margin: 0 auto 10px;width:400px;height:50px;background-color:#FFFFFF;display: none;" id="overview'+ispname+'"></div>');
+	
+	var ts = new Date($('[name=to_yy]').val() , $('[name=to_mm]').val() , $('[name=to_dd]').val() , $('[name=to_hh]').val() , $('[name=to_min]').val() , 0, 0); 
+	//alert(ts);
+	//alert(ts.getTime());
+//return 0;
+	//var ts = Math.round((new Date()).getTime());
+	var sspath = path.split(",");
+var dwq = new Array();
+for(var ww=0 ;ww<sspath.length;ww++){
+dwq[ww]=new Array((ts-((sspath.length-ww)*300*1000))+28800000, parseInt(sspath[ww]/300));
+
+
+}
+if(ispname.search("-outbound")>0){
+var ttname = ispname.replace("-outbound","</b>-outbound");
+}else{
+var ttname = ispname.replace("-inbound","</b>-inbound");
+}
+var labelname = "<b>"+ttname+"-"+bound+"(KBits)";
+ var d = {label : labelname,data:dwq};
+    // first correct the timestamps - they are recorded as the daily
+    // midnights in UTC+0100, but Flot always displays dates in UTC
+    // so we have to add one hour to hit the midnights in the plot
+  //  for (var i = 0; i < d.length; ++i)
+ //     d[i][0] += 60 * 60 * 1000;
+
+    // helper for returning the weekends in a period
+    function weekendAreas(axes) {
+        var markings = [];
+        var d = new Date(axes.xaxis.min);
+        // go to the first Saturday
+        d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7))
+        d.setUTCSeconds(0);
+        d.setUTCMinutes(0);
+        d.setUTCHours(0);
+        var i = d.getTime();
+        do {
+            // when we don't set yaxis, the rectangle automatically
+            // extends to infinity upwards and downwards
+            markings.push({ xaxis: { from: i, to: i + 2 * 24 * 60 * 60 * 1000 } });
+            i += 7* 24 * 60 * 60 * 1000;
+        } while (i < axes.xaxis.max);
+
+        return markings;
+    }
+    
+    if(bound == "in"){
+    var options = {
+	series: {
+            lines: { show: true, lineWidth: 1 ,fill: true,fillColor: "#336699" },
+            shadowSize: 0
+        },
+	colors: [ "#0000FF"],
+	yaxis: { min: 0, autoscaleMargin: 0.001 },
+        xaxis: { mode: "time", tickLength: 5 },
+        
+        grid: { markings: weekendAreas
+ 
+          
+        	}
+    };
+    }else{
+	var options = {
+	series: {
+            lines: { show: true, lineWidth: 1 ,fill: true,fillColor: "#AFEEEE" },
+            shadowSize: 0
+        },
+	colors: [ "#48D1CC"],
+	yaxis: { min: 0, autoscaleMargin: 0.001 },
+        xaxis: { mode: "time", tickLength: 5 },
+        
+        grid: { markings: weekendAreas
+ 
+          
+        	}
+    };
+	}
+    
+    var plot = $.plot($(diviid1),[d],options);
+    
+    var overview = $.plot($(diviid2), [d], {
+        series: {
+            lines: { show: true, lineWidth: 1  },
+            shadowSize: 0
+        },
+	legend: {
+    show: 0},
+	colors: [ "#FF0000"],
+        xaxis: { ticks: [], mode: "time" },
+        yaxis: { ticks: [], min: 0, autoscaleMargin: 0.05 },
+        selection: { mode: "x" }
+    });
+
+    // now connect the two
+    
+    $(diviid1).bind("plotselected", function (event, ranges) {
+	//zooming min ranges 10 Minutes
+	if(ranges.xaxis.to - ranges.xaxis.from<600000){
+	alert("Min ranges 10 Minutes");
+	return 0;
+	}
+        // do the zooming
+        plot = $.plot($(diviid1), [d],
+                      $.extend(true, {}, options, {
+                          xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
+                      }));
+
+        // don't fire event on the overview to prevent eternal loop
+        overview.setSelection(ranges, true);
+    });
+    
+    $(diviid2).bind("plotselected", function (event, ranges) {
+        plot.setSelection(ranges);
+    });
+}
+
+polymaster.prototype.clear= function clear(){
+	this.count = 0;
+}
+
+function unitdataObj(range,width,minutes,text,value){
+	this.range      = range;	//點群數 (說明多少點為一區間單位)
+	this.nodewidth  = width;	//點間距
+	this.minwidth   = width;	//最小點間距 (for zoonin)
+ 	this.inoutsize  = width;	//縮放差距
+	this.base       = minutes;	//將單位換算為分鐘
+	this.text       = text;		//select 中的 text
+	this.value      = value;	//select 中的 value
+}
+polymaster.prototype.unitdata = new Array();
+polymaster.prototype.unitdata.push(new unitdataObj(12,5,5,'5 Minutes','mins'));
+polymaster.prototype.unitdata.push(new unitdataObj(12,5,60,'1 Hour','hours'));
+polymaster.prototype.unitdata.push(new unitdataObj(7,8,1440,'1 Day','days'));
+
+
+function writeConsole(content) {
+	var datearray = new Array();
+	datearray[0] = document.getElementsByName("from_yy")[0].value;
+	datearray[1] = document.getElementsByName("from_mm")[0].value;
+	datearray[2] = document.getElementsByName("from_dd")[0].value;
+	datearray[3] = document.getElementsByName("from_hh")[0].value;
+	datearray[4] = document.getElementsByName("from_min")[0].value;
+	datearray[5] = document.getElementsByName("to_yy")[0].value;
+	datearray[6] = document.getElementsByName("to_mm")[0].value;
+	datearray[7] = document.getElementsByName("to_dd")[0].value;
+	datearray[8] = document.getElementsByName("to_hh")[0].value;
+	datearray[9] = document.getElementsByName("to_min")[0].value;
+    consoleRef = window.open('manualquery2.htm'+'#'+content.id+","+datearray.toString(), 'myconsole', 'width=800 ,height=650,menubar=0 ,toolbar=0 ,status=0 ,resizable=1,scrollbars=1,location=0')
+
+    consoleRef.document.close()
+
+}
+</script>
+
+
+<body style="margin:0;text-align:center;" bgcolor="#336699" >
+
+
+    
+<div id="polyspace"></div>
+<script>pmaster = new polymaster("polyspace","pmaster");pmaster.chmode(0);</script>
+<iframe name="polyIF" src="" style="display:none"></iframe>	
+
+<form name="query" target="polyIF" action="mrtg.cgi"  style="margin: auto; width: 400px;">
+<table border="0" class="body" >
+
+<tr>
+<td></td><td>Year</td><td>Month</td><td>Date</td><td>Hour</td><td>Minute</td>
+</tr>
+
+<tr>
+<td>From</td>
+<td><select name="from_yy" class="qbopt" style="padding: inherit;"></select></td>
+<td><select name="from_mm" class="qbopt" style="padding: inherit;"></select></td>
+<td><select name="from_dd" class="qbopt" style="padding: inherit;"></select></td>
+<td><select name="from_hh" class="qbopt" style="padding: inherit;"></select></td>
+<td><select name="from_min" class="qbopt" style="padding: inherit;"></select></td>
+</tr>
+
+<tr>
+<td>To</td>
+<td><select name="to_yy" class="qbopt" style="padding: inherit;"></select></td>
+<td><select name="to_mm" class="qbopt" style="padding: inherit;"></select></td>
+<td><select name="to_dd" class="qbopt" style="padding: inherit;"></select></td>
+<td><select name="to_hh" class="qbopt" style="padding: inherit;"></select></td>
+<td><select name="to_min" class="qbopt" style="padding: inherit;"></select></td>
+</tr>
+<tr><td colspan="6" align="right"><button class="qb" style="width:100" onclick="pmaster.setTime(from_yy.value,from_mm.value,from_dd.value,from_hh.value,from_min.value);this.form.submit();">Query</button></td></tr>
+</table>
+<input type="hidden" name="action" value="query">
+</form>
+<div id="hischart" style="padding-left: 30px;"></div>
+    <!--<div id="placeholder" style="width:600px;height:300px;background-color:#FFFFFF;margin: auto;"></div> -->
+</body>
+</html>
+
+<script>
+
+today = new Date();
+
+fquery = document.forms['query'];
+
+//year
+for(i=0;i<2;i++){
+	fquery.from_yy.options.add(new Option(today.getFullYear()-i,today.getFullYear()-i));
+	fquery.to_yy.options.add(new Option(today.getFullYear()-i,today.getFullYear()-i));
+}
+//month
+for(i=0;i<12;i++){
+	fquery.from_mm.options.add(new Option(i+1,i));
+	fquery.to_mm.options.add(new Option(i+1,i));
+}
+//date
+for(i=1;i<=31;i++){
+	fquery.from_dd.options.add(new Option(i,i));
+	fquery.to_dd.options.add(new Option(i,i));
+}
+//hour
+for(i=0;i<24;i++){
+	fquery.from_hh.options.add(new Option(i,i));
+	fquery.to_hh.options.add(new Option(i,i));
+}
+//minute
+for(i=0;i<60;i+=5){
+	fquery.from_min.options.add(new Option(i,i));
+	fquery.to_min.options.add(new Option(i,i));
+}
+
+fquery.from_mm.value = fquery.to_mm.value = today.getMonth();
+fquery.from_dd.value = fquery.to_dd.value = today.getDate();
+fquery.from_hh.value = fquery.to_hh.value = today.getHours();
+fquery.from_min.value = fquery.to_min.value = 5*parseInt(today.getMinutes()/5);
+
+</script>

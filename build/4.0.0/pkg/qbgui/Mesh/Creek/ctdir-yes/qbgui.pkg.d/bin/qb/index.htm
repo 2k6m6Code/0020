@@ -1,0 +1,126 @@
+<!-- saved from url=(0022)http://internet.e-mail -->
+<html>
+<head>
+<title>Q-Balancer Configuration Wizard</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<!-- Fireworks 4.0  Dreamweaver 4.0 target.  Created Fri May 24 15:26:05 GMT+0800 (�Dx�D_?D�PCRE?!) 2003-->
+<link rel="stylesheet" href="gui.css" type="text/css">
+<script language="javascript">
+
+    function checkin() { window.document.loginform.submit();}
+
+    function logincheck() { if(event.keyCode==13) window.document.loginform.submit();}
+
+    function reportVersion(uiver, enginever, model, qbver, type, qbsn, qblibimg, qbfs)
+    {
+        var versioninfo='Q-Balancer Information:\n';
+        versioninfo+=qbver +'\n';
+        versioninfo+='Serial Number : '+ qbsn+'\n';
+        versioninfo+='User Interface Version : '+ uiver +'\n';
+        versioninfo+='Engine : '+ enginever +'\n';
+        versioninfo+='Filesystem : '+ qbfs +'\n';
+        versioninfo+='Library : '+ qblibimg ;
+        verinfo.title=versioninfo;
+        modelid.innerHTML=type+' '+model;
+    }
+	function setCookie(c_name,value)
+	{	
+	document.cookie=c_name + "=" + value;
+	}
+	window.onload=function() {  
+	var slang= document.getElementById("lang").value;
+	setCookie("locale",slang,1);
+	};  
+	function setlang(sss){
+	if(sss == "en_US"){
+	document.getElementById("LLid").innerHTML = "Language:";
+	document.getElementById("LLname").innerHTML = "User Name:";
+	document.getElementById("LLpass").innerHTML = "Password:";
+	}
+	if(sss == "zh_TW"){
+	document.getElementById("LLid").innerHTML = "語言:";
+	document.getElementById("LLname").innerHTML = "登入名稱:";
+	document.getElementById("LLpass").innerHTML = "密碼:";
+	}
+	if(sss == "fr_FR"){
+	document.getElementById("LLid").innerHTML = "Langue:";
+	document.getElementById("LLname").innerHTML = "Nom d'utilisateur:";
+	document.getElementById("LLpass").innerHTML = "Mot de passe:";
+	}
+	setCookie("locale",sss,1);
+	}
+	setCookie("locale","en_US");
+</script>
+</head>
+<body bgcolor="#336699" leftmargin="0" topmargin="0" link="#CCCCCC" vlink="#999999">
+<form name="loginform" method="post" action="index.cgi"> 
+<table border="0" cellpadding="0" cellspacing="0" width="760" align="center">
+  <!-- fwtable fwsrc="newhome.png" fwbase="Home.gif" fwstyle="Dreamweaver" fwdocid = "742308039" fwnested="0" -->
+  <tr>
+   <td><img src="image/spacer.gif" width="495" height="1" border="0"></td>
+   <td><img src="image/spacer.gif" width="265" height="1" border="0"></td>
+   <td><img src="image/spacer.gif" width="1" height="1" border="0"></td>
+  </tr>
+
+  <tr>
+   <td><img name="Home_r1_c1" src="image/Home_r1_c1.gif" width="495" height="53" border="0"></td>
+   <td><img name="Home_r1_c2" src="image/Home_r1_c2.gif" width="265" height="53" border="0"></td>
+   <td><img src="image/spacer.gif" width="1" height="53" border="0"></td>
+  </tr>
+  <tr>
+   <td width="495" height="241" rowspan="2" background="image/Home_r2_c1_2.gif"><div class="style2" id=modelid style="width: 270px;height:140px; margin-top:50px; margin-left:220px;"></div></td> 
+   <td style="vertical-align: top;"><img name="Home_r2_c2" src="image/Home_r2_c2.gif" width="265" height="149" border="0"></td>
+   <td><img src="image/spacer.gif" width="1" height="149" border="0"></td>
+  </tr>
+  <tr>
+    <td rowspan="2">
+<table width="260px" border="0" cellspacing="0" cellpadding="0" height="82" class="qb">
+		<tr bgcolor="#FFFFFF">
+			<td class="qb"><div id="LLid" style="width:100%;height:19px;color:#4A77A5;font-size: 14px; padding: 5px; font-weight: lighter;">Language:</div></td>
+			<td><select name="lang" id="lang" onchange="setlang(this.value)"><option value="en_US">English</option><option value="zh_TW">繁體中文</option><option value="fr_FR">Français</option></select></td>
+		</tr>
+		<tr> 
+          <td height="2"></td>
+          <td></td>
+        </tr>
+        <tr bgcolor="#FFFFFF"> 
+          <td class="qb"><div id="LLname" style="width:100%;height:19px;color:#4A77A5;font-size: 14px; padding: 5px; font-weight: lighter;">User Name:</div></td>
+          <td><input autocomplete="off" type="text" name="username" maxlength="18" style="width:115"></td>
+        </tr>
+        <tr> 
+          <td height="2"></td>
+          <td></td>
+        </tr>
+        <tr bgcolor="#FFFFFF"> 
+          <td class="qb"><div id="LLpass" style="width:100%;height:19px;color:#4A77A5;font-size: 14px; padding: 5px; font-weight: lighter;">Password:</div></td>
+          <td><input autocomplete="false" type="password" name="password"  maxlength="18" style="width:115"></td>
+        </tr>
+        <tr> 
+          <td align="right" colspan="2" > 
+            <input type="submit" name="Submit" value="Log In" class="qb" style="width:100%">
+          </td>
+        </tr>
+        <tr> 
+          <td colspan="2" class="qbCopy">
+            <br><img src="image/spacer.gif" width="7" height="1">Copyright(c) 2003-2014 Creek Co., Ltd.
+            <br><img src="image/spacer.gif" width="7" height="1">All Rights Reserved. - <a href="mailto:sales@creek.com.tw">Contact Us</a> -
+            <br><img src="image/spacer.gif" width="7" height="1"><span id=verinfo title="Querying ...">Version Information ...</span>
+            <br><img src="image/spacer.gif" width="7" height="1"><span>Best Resolution:1024x768</span>
+          </td>
+        </tr>
+      </table>
+    </td>
+   <td><img src="image/spacer.gif" width="1" height="92" border="0"></td>
+  </tr>
+  <tr>
+   <td><img name="Home_r4_c1" src="image/Home_r4_c1.gif" width="495" height="106" border="0"></td>
+   <td><img src="image/spacer.gif" width="1" height="106" border="0"></td>
+  </tr>
+</table>
+</form>
+<iframe name="changeimage" src="prelogin.cgi" style="display:none"></iframe>
+</body>
+</html>

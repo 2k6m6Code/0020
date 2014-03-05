@@ -1,0 +1,29 @@
+#!/bin/bash
+cat /tmp/user.log >> /mnt/log/user.log
+sync
+cat /dev/null > /tmp/user.log
+chown apache:apache /tmp/user.log   #if the user.log doesn't exist,system will create a file for root.
+
+squid_log_time=`grep cache_access_log /usr/local/squid/etc/squid.conf|sed -e "s/cache_access_log \/usr\/local\/squid\/var\/logs\///"|sed -e "s/\".*//"`
+cat /usr/local/squid/var/logs/$squid_log_time >> /mnt/tclog/squid/log/$squid_log_time
+sync
+cat /dev/null > /usr/local/squid/var/logs/$squid_log_time
+
+# 20130125 Luka keep-store-status-chart-log
+rsync -av /tmp/ispnet /mnt/log
+chmod 777 /mnt/log/ispnet/*
+rm -f /mnt/log/ispnet/last
+ddtime=`date +%s`
+ddtime30=$(expr "$ddtime" - 2592000)
+# echo $ddtime30
+for color in /mnt/log/ispnet/*
+
+    do
+    tmplogname=$(basename "$color")
+	if [ $tmplogname -lt $ddtime30 ];then
+	rm -f /mnt/log/ispnet/$tmplogname
+	fi
+    done
+sync
+
+

@@ -1,0 +1,357 @@
+#=============================================================================================
+sub showNewAppGroup
+{
+    my (%action)=@_;
+    my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};  
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Application Group);
+
+    print qq (<hr size=1>);
+    print qq (<table>);
+    print qq (<tr><td class="body" align="center" valign="top" style="height: 250px; width: 250px">);
+    print qq (Available Application);
+    print qq (<br>);
+    print qq (<select class="qbsopt" name="avaapp" id="avaapp" size="10" multiple style="width:200; height:200">);
+    # @$servicelist=sort { $a->{title} cmp $b->{title} } @$servicelist;
+    # foreach my $ser ( @$servicelist )
+    # {
+        # if ( $ser->{type} eq 'layer7' )
+        # {
+	    # my $detail = $ser->{port}[1]->{value};
+            # print qq (<option value="$ser->{title}" title="$detail" >$ser->{title}</optin>);
+            # #print qq (<option value=$ser->{title} >$ser->{title}</optin>);
+        # }
+    # }
+	find( { wanted => sub { push(@FileList, $_) }, no_chdir => 1 },'/usr/local/apache/qbconf/l7-object/' );
+	foreach my $service1 ( @FileList )
+    {
+        #if (!grep(/\.pat/,$service1) || !grep(/UD/,$service1)){next;}
+		if (!grep(/\.pat/,$service1)){next;}
+        $service1 =~ s/\/usr\/local\/apache\/qbconf\/l7-object\///g;
+        $service1 =~ s/_UD\.pat//g;
+		$service1 =~ s/\.pat//g;
+		print qq (<option value="$service1" title="$service1" >$service1</optin>);
+    }
+    print qq (</select>);
+    print qq (<input class="qb" type="button" align="center" style="width:80" value="Add New" onclick="l7object();">);
+    print qq (</td><td class="body" align="center" valign="center" style="height: 250px; width: 80px">);
+    print qq (<input class="qb" type="button" style="width:65" value="Add" onclick="addapp();">);
+    print qq (<br>);
+    print qq (<input class="qb" type="button" style="width:65" value="Remove" onclick="delapp();">);
+    print qq (</td>);
+    print qq (<td class="body" align="center" valign="top" style="height: 250px; width: 250px">);
+    print qq (Select Application);
+    print qq (<br>);
+    print qq (<select class="qbsopt" name="sltapp" id="sltapp" size="10" multiple style="width:200; height:200">);
+    my @sltlist=split(/,/, $action{applist});
+    foreach my $app ( @sltlist )
+    {
+        print qq (<option value=$app >$app</optin>);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">);
+    print qq (<hr size=1>);
+    print qq (<table>);
+
+    
+    #-------------------------------------------------------------------------------------------
+    #  appgroup: Name and Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input class="qbtext" name="appgroup_show" id="appgroup_show" style="WIDTH: 120px" value="$action{appgroup}" >);
+    print qq (<input type="hidden" class="qbtext" name="appgroup" id="appgroup" value="$action{appgroup}" >);
+    print qq (</td></tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Description :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<textarea class="qbtext" name="description" id="description" style="width:200;height:80" >$action{description}</textarea>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+    #-----------------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<hr size=1>);
+    print qq (</tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 580px">);
+    print qq (<input class="qb" type="button" value="Save" onclick="SaveAppGroup();">);
+	print qq (<input class="qb" type="button" value="Cancel" onclick="window.close();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+}
+#showappgroup
+
+
+#=============================================================================================
+
+sub scriptNewAppGroup
+{
+    print << "scriptNewappgroup";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; checkState(); }
+    
+    function l7object()
+    {
+    	//window.top.location.href="l7-object.cgi";
+		window.top.location.href="l7-edit.cgi?fromgroup=1";
+    }
+    
+    function addapp()
+    {
+        var avaapp = document.getElementById('avaapp');
+        var sltapp = document.getElementById('sltapp');
+        
+        for (var i = 0; i < avaapp.options.length; i++)
+        {
+            var exist = 0;
+              
+            if ( avaapp.options[i].selected == true )
+            {
+                var select_ser = avaapp.options[i].text; 
+                for (var j = 0; j < sltapp.options.length; j++)
+                {
+                    if (avaapp.options[i].text == sltapp.options[j].text)
+                        exist = 1;
+                }
+                var count=sltapp.options.length;
+                if (!exist)
+                {
+                    var newser = new Option (avaapp.options[i].text, avaapp.options[i].value);
+                    sltapp.options.add(newser);
+                }
+            }
+                
+        }
+        
+    }
+    function SaveAppGroup()
+    {
+        var appgroup_show = document.getElementById('appgroup_show').value;
+	var description=document.getElementById('description').value;
+        var sltapp = document.getElementById('sltapp');
+        var sltapplist = '';
+        
+        if (sltapp.options.length == 0)
+        {
+            alert('Must Select Application');
+            return;
+        }
+
+	if ( appgroup_show == '' )
+        {
+            alert('Application Name must be English or nember');
+            return;
+        }
+
+        var head = appgroup_show.charCodeAt('0');
+        if ( (head < 65 || head > 90) && (head < 97 || head >122) )
+        {
+            alert('Application Group Name must be English');
+            return;
+        }
+
+        for (i = 0; i < appgroup_show.length; i++)
+        {
+            var ch = appgroup_show.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+                alert('Application Group Name must be English');
+                return;
+            }
+        }
+
+	for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Application Group Description must be English ");
+               return;
+            }
+        }
+        
+        for (var i = 0; i < sltapp.options.length; i++)
+        {
+            sltapplist += sltapp.options[i].value + ',';
+        }
+        var listlen = sltapplist.length;
+        
+        myform.action.value = 'SAVE';
+        myform.appgroup.value = appgroup_show;
+        myform.applist.value = sltapplist.substring(0, listlen - 1);
+        myform.submit();
+    }
+    function delapp()
+    {
+        var sltapp = document.getElementById('sltapp');
+        
+        for (var i = sltapp.options.length - 1; i >= 0; i--)
+        {
+            if ( sltapp.options[i].selected == true )
+            {
+                sltapp.options.remove(i);
+            }
+                
+        }
+    
+    }
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var appgroup=document.getElementById('appgroup');
+        var appgroup_show=document.getElementById('appgroup_show');
+        
+        if ( appgroup.value != '' )
+            appgroup_show.disabled = true; 
+        
+        if ( action != '' )
+		{
+			//window.top.mainFrame.location.href="appgroup.cgi";
+			window.opener.location.replace('appgroup.cgi');
+			window.close();
+		}
+    }
+    </script>
+    
+scriptNewappgroup
+}
+#appgroupScript
+
+sub maintainAppGroup
+{
+    my (%action)=@_;
+    
+    my $appref=XMLread($gPATH.'appgroup.xml');
+    my $applist=$appref->{appgroup};
+    my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};
+    my $exist=0;
+    
+    #$action{appgroup}=~s/^\s*|\s*$//g;
+    $action{appgroup}=~s/\s//g;
+    
+    if ( !$action{action} ) { return; }
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+#=cut
+        foreach my $service ( @$servicelist )
+        {
+            if ( $service->{title} eq $action{appgroup} && $service->{type} ne 'layer7group' )
+            {
+                $gMSGPROMPT.=qq(Invalid Group Name\\n);
+                return;
+            }
+        }
+#=cut
+        foreach my $app ( @$applist )
+        {
+            if ( $app->{appgroup} eq $action{appgroup} )
+            {
+                $exist=1;
+                delete($action{action});
+                $app=\%action;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            delete($action{action});
+            push( @$applist, \%action); 
+            #runCommand(command=>'echo', params=>$action{sltapp}.' '.'>>/tmp/ser');
+        }
+        @$applist=sort { $a->{appgroup} cmp $b->{appgroup} } @$applist;
+		foreach my $itemsearch ( @$servicelist )     
+        {
+			if($itemsearch->{title} eq $action{appgroup} && $itemsearch->{type} eq 'layer7')
+			{
+				maintainService( action=>'DELSERVICE', group=>'layer7', service=>$action{appgroup});
+			}
+			if($itemsearch->{title} eq $action{appgroup} && $itemsearch->{type} eq 'layer7group')
+			{
+				maintainService( action=>'DELSERVICE', group=>'layer7group', service=>$action{appgroup});
+			}
+		}
+        #maintainService( action=>'DELSERVICE', group=>'layer7', service=>$action{appgroup});
+        
+        maintainService( action=>'NEWSERVICE', group=>'layer7group', newservice=>$action{appgroup});
+        my @applist=split(/,/, $action{applist});
+        foreach my $app ( @applist )
+        {
+            foreach my $item ( @$servicelist )     
+            {
+				if( $app eq $item->{title} )
+                {
+                    my $portlist=$item->{port};
+                    foreach my $port ( @$portlist ) 
+                    {
+                        if ( $port->{protocol} eq 'system' ) { next; }
+                        maintainService( action=>'ADDPORT', service=>$action{appgroup}, protocol=>$port->{protocol}, portvalue=>$port->{value});
+                    }
+                }
+            }
+			maintainService( action=>'ADDPORT', service=>$action{appgroup}, protocol=>$app, portvalue=>$app);
+        }
+        LogUserAction( action=>'SAVEAPPGROUP', appgroup=>$action{appgroup}, applist=>$action{applist} );
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{appgroupname};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        
+        my @temparray;
+        foreach my $item ( @$applist )
+        {
+            if ( grep(/^$item->{appgroup}$/, @$delet) ) { next; }
+            push(@temparray, $item); 
+        }
+        $appref->{appgroup}=\@temparray;
+        foreach my $item ( @$delet ) 
+        {
+            maintainService( action=>'DELSERVICE', group=>'layer7group', service=>$item);
+        }
+        LogUserAction( action=>'DELAPPGROUP', appgroup=>$action{appgroup} );
+    }
+	elsif ( $action{action}=~m/^DELETAPP$/ )
+    {
+		my $path='/usr/local/apache/qbconf/l7-object/';
+		my $delet=$action{appname};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+		foreach my $item ( @$delet ) 
+        {
+            system("/usr/local/apache/qb/setuid/run /bin/rm $path$item\.pat");
+			$item =~ s/_UD//g;
+			maintainService( action=>'DELSERVICE', group=>'layer7', service=>$item);
+        }
+    }
+    
+    #@$applist=sort byName @$applist;
+    XMLwrite($appref, $gPATH."appgroup.xml");
+}
+#
+1

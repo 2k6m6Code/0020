@@ -1,0 +1,14 @@
+#set -x
+ALLTABLES=`/sbin/ip rule|grep "from all fwmark"|grep -v "lookup 100"|awk '{print $7}'`
+Extra_IP_File=/usr/local/apache/active/extra_route_ip
+device=`cat $Extra_IP_File|grep DEV|awk '{print $3}'`
+ALLIPS=`cat $Extra_IP_File|grep -v DEV`
+
+for extra_ip in $ALLIPS
+do
+   for table_num in $ALLTABLES
+   do
+     ip route add $extra_ip dev $device table $table_num 2>/dev/null 
+   done
+     ip route add $extra_ip dev $device table 100 2>/dev/null 
+done

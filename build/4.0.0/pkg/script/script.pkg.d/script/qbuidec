@@ -1,0 +1,9 @@
+#!/bin/bash
+cd /usr/local/apache/
+# when taring, in /usr/local/apache directory
+rm -f /usr/local/apache/qbui.tar.bz2.nc
+tar xf /usr/local/apache/qbui.tar
+rm -f /usr/local/apache/qbui.tar 
+chmod -R 777 /usr/local/apache/qb
+chmod 4755 /usr/local/apache/qb/setuid/run
+chmod 4755 /usr/local/apache/qb/status/rate.cgi

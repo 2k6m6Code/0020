@@ -1,0 +1,23 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Static Routes Setting</title><!--靜態路由設定-->
+</head>
+<body>
+
+<h2>Static Routes Setting</h2><!--靜態路由設定-->
+<p>在這裡我們設定與Q-balancer相接連的網段</p>
+<p>
+<b>各項設定參數定義:</b>
+<table>
+<tr><td width=100 class="light">Enable :</td><td class="light">啟用這個Internal設定</td></tr> 
+<!--<tr><td rowspan=2 valign=top class="light">Related ISP :	</td><td class="light"><li> the IP address of the subnet is assigned by an ISP, some times the ISP will give you a discontinued segment of ip address.</td></tr>
+<tr><td class="light"><li>If we direct use the ip address assigned by an ISP as a gateway in the LAN , we must choose the ISP the ip address is related to.</td></tr>-->
+<tr><td>Subnet :</td><td>這Internal網段的Network Number 及使用 / 的netmask. </td></tr>
+<tr><td class="light">Interface :</td><td class="light">選擇LAN Port</td></tr>
+<tr><td valign=top>InterFace IP :</td><td>設定Q-Balancer的LAN Port的IP，也是內部網段的Default Gateway</td></tr>
+<tr><td class="light">Gateway :</td><td class="light">這個Gateway指的是連到內部其他網段的Gateway，通常適用于內部透過Firewall或是 L3 Switch進行獨立網段的Routing</td></tr> 
+</table>
+</p>
+</body></html>

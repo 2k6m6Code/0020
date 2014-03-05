@@ -1,0 +1,127 @@
+<html>
+<head>
+    <link rel="stylesheet" href="gui.css" type="text/css">
+<style>
+</style>
+
+<script src=qb.js></script>
+
+<script>
+
+function resizeMain(num){
+	
+	num = parseInt(num);
+
+	while(Main.rows.length <= num){
+		index = Main.rows.length;
+
+		TR = Main.insertRow();
+		TR.insertCell();
+		TR.insertCell();
+		TR.insertCell();
+		TR.insertCell();
+
+		TR.cells[0].innerHTML = "<input name='nt"+index+"' maxlength='18'  style='width:120' class='qbtext'>";
+	
+		tmp = "";
+		for(var i=0;i<parseInt(window.dialogArguments);i++)
+			tmp += "<option value='"+i+"'>PORT "+(i+1)+"</option>";	
+
+		TR.cells[1].innerHTML = "<select  name='if"+index+"' style='width:80' class='qbopt'>"+tmp+"</select>";
+		TR.cells[2].innerHTML = "<input type='radio' name='radio"+index+"' checked>" + "<input name='ip"+index+"' maxlength='15' style='width:105' class='qbtext'>";
+		TR.cells[3].innerHTML = "<input type='radio' name='radio"+index+"'>" + "<input name='gw"+index+"' maxlength='15' style='width:105' class='qbtext'>";
+	}
+
+	while(Main.rows.length > num+1){
+		Main.rows[Main.rows.length-1].removeNode(1);
+	}
+	
+	
+}
+
+
+function sendResult(){
+
+	var result = "";
+
+	for( var i=1; i < Main.rows.length; i++){
+
+                var network=eval("document.forms[0].nt"+i).value;
+		if( !network.length ){ i++; continue; }
+                
+                var interface=eval("document.forms[0].if"+i).value;
+    
+                var ip=eval("document.forms[0].ip"+i).value;
+                var checkip=eval("document.forms[0].radio"+i)[0].checked;
+
+                var gateway=eval("document.forms[0].gw"+i).value;
+                var checkgw=eval("document.forms[0].radio"+i)[1].checked;
+        
+
+		if( !isValidSubnet(network) ){
+			alert("Network Format Error : "+ network);
+			window.returnValue = "";
+			return;
+		}
+    
+		if( !isValidIP(ip) && checkip ){
+			alert("IP Format Error : " + ip);
+			window.returnValue = "";
+			return;
+		}
+
+		if( !isValidIP(gateway) && checkgw ){
+			alert("Gateway Format Error : " + gateway);
+			window.returnValue = "";
+			return;
+		}
+
+		result += network + ":";
+		result += interface + ":";
+		result += (checkip?ip:"")+":";
+		result += (checkgw?gateway:"")+";";
+	}
+
+	window.returnValue = result;
+	window.close();
+}
+
+function sendCancel(){
+	window.returnValue = '';
+	window.close();
+}
+
+window.returnValue = "";
+
+</script>
+
+</head>
+<body bgcolor="#336699" text="#ffffff" link="#000040" vlink="#400040" onload="resizeMain(10)">
+
+<div align="right" class="body">
+    How many subnets do you want to create:
+    <select onchange="resizeMain(this.value)" class="qbopt">
+            <option value='3'>3</option>
+            <option value='5'>5</option>
+            <option value='7'>7</option>
+            <option value='9'>9</option>
+            <option value='15'>15</option>
+            <option value='20'>20</option>
+            <option value='25'>25</option>
+    </select>
+</div>
+
+<div align="center">
+<form>
+    <table id="Main" border="0" class="body">
+        <tr align="center"><td>Network</td><td>Interface</td><td>IP</td><td>Gateway</td></tr>
+    </table>
+</form>
+
+    <button onclick="sendResult();" class="qb">Create</button>
+    <button onclick="sendCancel();" class="qb">Cancel</button>
+</div>
+
+</body>
+
+</html>

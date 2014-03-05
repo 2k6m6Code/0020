@@ -1,0 +1,3 @@
+#!/bin/bash
+UIPWD=$1
+echo "admin:$UIPWD" | /usr/sbin/chpasswd

@@ -1,0 +1,4271 @@
+########################################### ISPINFO ##############################################
+# operation methods on basic.xml 
+##################################################################################################
+sub showISPInfo 
+{
+    my ( %action )=@_;
+    my $targetISP=$action{iid};
+    my $ispref=XMLread($gPATH.'basic.xml'); 
+    my $isplist=$ispref->{isp};
+    my $minfo=XMLread($gINITPATH."module_3g.xml");
+    my $module_3gList=$minfo->{module_3g};
+    my $sortingKEY=$action{sortingkey};
+    my $showData; #Data to display on the User Interface
+    my @sortedISP;
+    my $target; 
+    my $visibility;
+    my $disability;
+  
+    # Set $target to focus on the Selected ISP, 
+    # if selected ISP is not configured yet, set focus to 'system' entry
+    # ----------------- Variable Initialization -----------------------------------------
+    foreach my $isp ( @$isplist ) {  if ( $isp->{iid} eq $targetISP ) { $target=$isp; last; } }
+    
+    # After certain ISP deleted, we can not focus on it any more, so we focus on the first existing entry.
+    if ( !($target->{iid}) ) { foreach my $isp ( @$isplist ) {  if ( $isp->{iid} ne 'system' && $isp->{isptype} ne 'tunnel' && $isp->{isptype} ne 'dtunnel' ) { $target=$isp; $targetISP=$isp->{iid}; last; } } }
+
+    #---------------------------------------------------------------
+    #Judge what Data to put into $showData to display in UI
+
+    %$showData=%$target;
+
+    # set default isp type to normal
+    if ( !$showData->{isptype} ) { $showData->{isptype}="normal" }
+    
+    if ( !$action{maintainResult} )
+    {
+        %$showData=%action;
+
+        $showData->{state}=( $action{action} eq 'NEWISP' ) ? ('NONE') : ('FORMATCHECK');
+
+        $showData->{subnet}=get_subnet($action{subnet});
+        if ( !($showData->{subnet}) ) 
+        { 
+            #$gMSGPROMPT.=qq(Subnet Format Error\\n);
+            $showData->{subnet}=$action{subnet}; 
+        }
+    }
+ 
+    # Display $showData in TABLE  
+    print qq (<table width="100%" cellspacing="0" border="0">\n);
+
+    #****************************************************************************************
+    # ISP selection
+    #******************************** List selection of ISPs ********************************
+    print qq (<tr><td class="bigtitle" colspan="3">Link Configuration ); # </td></tr>); 
+    my $helpname=( $showData->{isptype} eq "tunnel" ) ? ('mpv') : ('basic');
+    if ( $showData->{isptype} eq "dtunnel" ){$helpname=mpv;}
+    print qq (<a href="javascript:qbShowHelp('$helpname')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    print qq (<tr><td class="bigtitle" colspan="3"><hr size="1"></td></tr>); 
+    
+    print qq (<tr><td colspan="3">);
+    #---------------------------------------------------------------
+    # Print Title For Nomal ISP
+    print qq (<div class="divframe">);
+    print qq (<table bgcolor="#332211" cellspacing="0" width="100%" border="0"><tr>);
+    print qq (<td width="8%">$lanBasic{isp_id}</td>);
+    #print qq (<td width="10%">$lanBasic{enable}</td>);
+    print qq (<td width="8%">$lanBasic{interface}</td>);
+    print qq (<td width="8%">$lanBasic{name}</td>);
+    print qq (<td width="11%">$lanBasic{gateway}</td>);
+    print qq (<td width="15%">$lanBasic{system_ip}</td>);
+    print qq (<td width="15%">Healthcheck IP</td>);
+    #print qq (<td width="10%">$lanBasic{dsip}</td>);
+    print qq (<td width="15%">$lanBasic{subnet}</td>);
+    print qq (<td>$lanBasic{down_up}</td>);
+    #print qq (<td width="15%">$lanBasic{down_up}</td>);
+    print qq (</tr></table>);
+    print qq (</div>);
+
+    
+    #---------------------------------------------------------------
+    #print ISP content
+    print qq (<div class="divframe" style="height:120">);
+    print qq (<table id="ispinfo" border="0" cellspacing="0" width="100%">);
+    my $lineCount=0;
+    foreach my $isp ( @$isplist ) 
+    {
+        if ( $isp->{iid} eq 'system' ) { next; }
+
+        if ( $isp->{isptype} eq "tunnel" || $isp->{isptype} eq "ipsec" || $isp->{isptype} eq "dtunnel" ) { next; }
+
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$bgcolor" onmousedown="setISPid('$isp->{iid}')" onclick="selectedColor(this)" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+
+       if ( $isp->{isptype} eq "normal" )
+         {
+           print qq (<td width="8%">ISP$isp->{iid}</td>);
+         }
+      elsif ( $isp->{isptype} eq "pppoe" && !$isp->{flag_3g})
+         {
+            print qq (<td width="8%">PPPoE$isp->{iid}</td>);
+         }
+      elsif ( $isp->{isptype} eq "pppoe" && $isp->{flag_3g})
+         {
+            print qq (<td width="8%">USB3G$isp->{iid}</td>);
+         }
+      elsif ( $isp->{isptype} eq "dhcp" )
+         {
+            print qq (<td width="8%">DHCP$isp->{iid}</td>);
+         }
+      elsif ( $isp->{isptype} eq "pptp" )
+         {
+            print qq (<td width="8%">PPTP$isp->{iid}</td>);
+         }
+      elsif ( $isp->{isptype} eq "l2tp" )
+         {
+            print qq (<td width="8%">L2TP$isp->{iid}</td>);
+         }
+        
+        #my $onoff=($isp->{enabled}) ? $lanBasic{on} : $lanBasic{off};
+        #print qq (<td width="10%">$onoff</td>);
+        
+        my $linenum=$isp->{nic}; $linenum=~s/eth//;
+        my $PORT=( $linenum ne '-1' ) ? ( 'PORT '.++$linenum ) : ( 'None' );
+       if ( $isp->{isptype} eq "pppoe" || $isp->{isptype} eq "pptp" || $isp->{isptype} eq "l2tp" )
+         {
+           $linenum=$isp->{nic}; $linenum=~s/eth//;
+           $PORT=( $linenum ne '-1' ) ? ( 'PORT '.$linenum ) : ( 'None' );
+         }
+        print qq (<td width="8%">$PORT</td>);
+        
+        print qq (<td width="8%">$isp->{ispname}</td>);
+        
+        print qq (<td width="11%">$isp->{gateway}</td>);
+        
+        print qq (<td width="15%">$isp->{systemip}</td>);
+        
+        print qq (<td width="15%">$isp->{target}</td>);
+
+        #my $dsip=($isp->{dsip}) ? ("Yes") : ("No");
+        #print qq (<td width="10%">$dsip</td>);
+        
+        print qq (<td width="15%">$isp->{subnet}</td>);
+        
+        print qq (<td>$isp->{download}/$isp->{upload}</td>);
+        
+        print qq (</tr>);
+        
+        if ( $isp->{iid} eq $targetISP ) { print qq (<script>initSelect(ispinfo.rows[$lineCount])</script>); }    
+
+        $lineCount++;    
+    }
+    print qq (</table></div>);
+=cut    
+    #---------------------------------------------------------------
+    # Print Title For Tunnel
+    print qq (<div class="divframe">);
+    print qq (<table bgcolor="#332211" width="100%" border="0" cellspacing="0"><tr>);
+    print qq (<td width="8%"><a href="javascript:sortISPINFO('BYISP')" title="Sort by ISP ID" border="0">$lanBasic{mpv_id}</a></td>);
+    #print qq (<td width="5%">$lanBasic{enable}</td>);
+    print qq (<td width="10%">$lanBasic{interface}</td>);
+   # print qq (<td width="10%">$lanBasic{name}</td>);
+    print qq (<td width="10%"><a href="javascript:sortISPINFO('BYNAME')" title="Sort by ISP NAME" border="0">$lanBasic{name}</a></td>);
+    #print qq (<td width="9%"><span title="Tunnel Virtual Local IP">TVLI</span></td>);
+    #print qq (<td width="9%"><span title="Tunnel Virtual Remote IP">TVRI</span></td>);
+    print qq (<td width="9%"><a href="javascript:sortISPINFO('BYTVLI')" title="Sort by Tunnel Virtual Local IP" border="0" span title="Tunnel Virtual Local IP">TVLI</span></td>);
+    print qq (<td width="9%"><a href="javascript:sortISPINFO('BYTVRI')" title="Sort by Tunnel Virtual Remote IP" border="0" span title="Tunnel Virtual Remote IP">TVRI</span></td>);
+    #print qq (<td width="10%">Healthcheck IP</td>);
+    print qq (<td width="8%">HCIP</td>);
+    #print qq (<td width="10%"><span title="Tunnel Header Source IP">TESI</span></td>);
+    print qq (<td width="12%"><a href="javascript:sortISPINFO('BYLOCALIP')" title="Sort by Tunnel Header Source IP" border="0" span title="Tunnel Header Source IP">THSI</span></td>);
+    #print qq (<td width="10%"><span title="Tunnel Header Remote IP">$lanBasic{thdi}</span></td>);
+    print qq (<td width="14%"><a href="javascript:sortISPINFO('BYREMOTEIP')" title="Sort by Tunnel Header Remote IP" border="0" span title="Tunnel Header Remote IP">THRI</span></td>);
+    print qq (<td width="4%">THDN</td>);
+    print qq (<td>$lanBasic{down_up}</td>);
+    print qq (</tr></table>);
+    print qq (</div>);
+    
+    if      ( !$sortingKEY )                { $sortingKEY='BYISP'; }
+    if      ( $sortingKEY eq 'BYISP' )      { @sortedISP=sort ispinfo_sort_by_isp @$isplist; }
+    #if      ( $sortingKEY eq 'BYISP' )     { @sortedISP=sort sort_isp_by_id @$isplist; }
+    elsif   ( $sortingKEY eq 'BYTVLI' )     { @sortedISP=sort ispinfo_sort_by_mpvtvli @$isplist; }
+    elsif   ( $sortingKEY eq 'BYTVRI' )     { @sortedISP=sort ispinfo_sort_by_mpvtvri @$isplist; }
+    elsif   ( $sortingKEY eq 'BYLOCALIP' )  { @sortedISP=sort ispinfo_sort_by_mpvlocalip @$isplist; }
+    elsif   ( $sortingKEY eq 'BYREMOTEIP' ) { @sortedISP=sort ispinfo_sort_by_mpvremoteip @$isplist; }
+    elsif   ( $sortingKEY eq 'BYNAME' )     { @sortedISP=sort ispinfo_sort_by_name @$isplist; }
+    
+    #---------------------------------------------------------------
+    #print ISP content
+    print qq (<div class="divframe" style="height:100">);
+    print qq (<table id="tunnelinfo" border="0" cellspacing="0" width=100%>);
+    my $lineCount=0;
+
+    #foreach my $isp ( @$isplist ) 
+    foreach my $isp ( @sortedISP ) 
+    {
+        if ( $isp->{iid} eq 'system' ) { next; }
+
+        #if ( $isp->{isptype} ne "tunnel" && $isp->{isptype} ne "ipsec" && $isp->{isptype} ne "dtunnel" ) { next; }
+        if ( $isp->{isptype} ne "ipsec" ) { next; }
+
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$bgcolor" onmousedown="setISPid('$isp->{iid}')" onclick="selectedColor(this)" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+
+	# 2005-0707 Hammer
+        my $linenum=$isp->{nic}; $linenum=~s/mpv//;
+	$linenum = 0 + $linenum;
+        if ($isp->{isptype} eq "dtunnel")
+        {
+            print qq (<td width="8%">TMV $isp->{iid}</td>);
+        }else
+        {
+	if (    $linenum >= $gFIRSTBASETUNNEL
+	     && $linenum <= $gLASTBASETUNNEL) {
+            #2006/02/17 Brian Remove BASE tunnel
+            #print qq (<td width="10%">BASE $isp->{iid}</td>);
+            print qq (<td width="9%">MPV $isp->{iid}</td>);
+	} else {
+            print qq (<td width="9%">MPV $isp->{iid}</td>);
+	}
+        } 
+        #my $onoff=($isp->{enabled}) ? ("On") : ("Off");
+        #print qq (<td width="5%">$onoff</td>);
+        
+        print qq (<td width="10%">$isp->{nic}</td>);
+        
+        print qq (<td width="10%">$isp->{ispname}</td>);
+
+        print qq (<td width="10%">$isp->{systemip}</td>);
+
+        print qq (<td width="10%">$isp->{gateway}</td>);
+        
+        print qq (<td width="10%">$isp->{target}</td>);
+        
+        print qq (<td width="10%">$isp->{local}</td>);
+        
+        print qq (<td width="10%">$isp->{remote}</td>);
+        
+        print qq (<td width="5%">);
+        if ( $isp->{remotename} ne '' )
+        {
+            print qq (<img src="image/ddns.gif" width="13" height="13" span title="$isp->{remotename}">);
+        }
+        print qq (</td>);
+
+        print qq (<td>$isp->{download}/$isp->{upload}</td>);
+        print qq (</tr>);
+        
+        if ( $isp->{iid} eq $targetISP ) { print qq (<script>initSelect(tunnelinfo.rows[$lineCount])</script>); }    
+
+        $lineCount++;    
+    }
+    print qq (</table></div>);
+    print qq (</td></tr>);
+=cut
+
+
+    #=========================================================================================
+    print qq(<input type="hidden" name="isp" value="$targetISP">);
+
+    #========================================================================================
+    print qq(<input type="hidden" name="isptype" value="$showData->{isptype}">);
+    print qq(<input type="hidden" name="flag_3g" value="$showData->{flag_3g}">);
+
+    # 2005-0707 Hammer
+    print qq(<input type="hidden" name="basetunnel" value="0">);
+    
+    my $showISPtitle;
+    if ( $showData->{isptype} eq "normal" )
+    {
+        $showISPtitle=qq( [ ISP $targetISP ] );
+    }
+    elsif ( $showData->{isptype} eq "pppoe" && !$showData->{flag_3g} )
+    {
+        $showISPtitle=qq( [ PPPoE $targetISP ] );
+    }
+    elsif ( $showData->{isptype} eq "pppoe" && $showData->{flag_3g} )
+    {
+        $showISPtitle=qq( [ USB3G $targetISP ] );
+    }
+    elsif ( $showData->{isptype} eq "pptp" )
+    {
+        $showISPtitle=qq( [ PPTP $targetISP ] );
+    }
+    elsif ( $showData->{isptype} eq "l2tp" )
+    {
+        $showISPtitle=qq( [ L2TP $targetISP ] );
+    }
+    elsif ( $showData->{isptype} eq "dhcp" )
+    {
+        $showISPtitle=qq( [ DHCP $targetISP ] );
+    }
+    elsif ( $showData->{isptype} eq "tunnel" )
+    {
+	# 2005-0707 Hammer
+        my $linenum=$showData->{nic}; $linenum=~s/mpv//;
+	$linenum = 0 + $linenum;
+	if (    $linenum >= $gFIRSTBASETUNNEL
+	     && $linenum <= $gLASTBASETUNNEL) {
+
+            #$showISPtitle=qq( [ BASE $targetISP ] );
+            $showISPtitle=qq( [ MPV $targetISP ] );
+	} else {
+            $showISPtitle=qq( [ MPV $targetISP ] );
+	}
+    }
+    elsif ( $showData->{isptype} eq "ipsec" )
+    {
+        $showISPtitle=qq( [ IPSEC TUNNEL $targetISP ] );
+    }
+    elsif ( $showData->{isptype} eq "dtunnel" )
+    {
+        $showISPtitle=qq( [ TMV $targetISP ] );
+    }
+    print qq (<tr><td class="subtitle" align="center" colspan="3" bgcolor="gray">$showISPtitle</td></tr>); 
+    
+    #****************************************************************************************
+    #-->1: Enable Setting 
+    #****************************************************************************************
+    print qq (<tr><td class="body" align="center" colspan="3" bgcolor="#667788">);
+    my $check=( $showData->{enabled}==1 ) ? ('checked') : ('');
+    print qq (<input type="hidden" name="enabled"  $check value="1" onClick="goSubmit('ONOFF');">);
+    #print qq (<input type="radio" name="enabled"  $check value="1" onClick="goSubmit('ONOFF');">$lanBasic{on});
+
+    my $check=( $showData->{enabled}==0 ) ? ('checked') : (''); 
+    print qq (<input type="hidden" name="enabled"  $check value="0" onClick="goSubmit('ONOFF');">);  
+    #print qq (<input type="radio" name="enabled"  $check value="0" onClick="goSubmit('ONOFF');">$lanBasic{off});  
+    print qq (</td></tr>);  
+
+    #========================================================================================
+    #ISP property table
+    print qq (<tr><td valign="top" width="43%" align="left">);
+    print qq (<table width="100%" border=0>);
+    
+    if ( $showData->{isptype} eq "normal" || $showData->{isptype} eq "dhcp" )
+    {
+        #****************************************************************************************
+        #-->2:NIC number
+        #******************************** List selection of NICs ********************************
+        my @vlandev=editVlan(action=>'GETVLANDEVLIST');
+        my $ethnum=$showData->{nic}; $ethnum=~s/eth//;
+        print qq (<tr>);
+        print qq (<td class="body"  colspan="2" align="left" >$lanBasic{interface}: </td> );
+        print qq (<td class="body" align="left">);
+        print qq (<select class="qbopt" name="eth" style="width:120">);
+        foreach my $eth ( -1..$gNUMOFPORT-1-$gRESERVEDLANPORT,@vlandev ) 
+        {
+            $eth=~s/eth//; 
+            my $status=( $eth eq $ethnum ) ? ('selected'):('');
+            my $ethvalue=( $eth eq "-1" ) ? ('-1'):('eth'.$eth); 
+            my $tmpeth1=$eth;
+            my $portvalue=( $eth eq "-1" ) ? ('None') : ('PORT '.++$eth);
+            my $tmpeth2=$eth-1;
+            #20080222 Brian Fix a bug,when vlan id=10,20,...,UI will show portx.1 x.2 ...
+            $portvalue=( $tmpeth1 eq $tmpeth2 || $portvalue eq 'None') ? ($portvalue) : ($portvalue.'0'); 
+            print qq (<option $status value="$ethvalue">$portvalue</option>);
+        }
+        print qq (</select>);
+        print qq (<input type="hidden" name="orieth" value="$showData->{nic}">);
+        print qq (</td>);
+        print qq (</tr>);
+
+        print qq (<tr>);
+        print qq (<td class="body"  colspan="2" align="left" >NIC Speed: </td> );
+        print qq (<td class="body" align="left">);
+        print qq (<select class="qbopt" name="nic_speed" style="width:120">\n);
+        foreach my $types ( sort keys %gNIC_speed_hash ) 
+        {
+           my $status=( $types eq $showData->{nic_speed} ) ? ('selected'):('');
+           if ( !$showData->{nic_speed} && $types eq "Auto" ) { $status="selected"; }
+           my $showvalue=$gNIC_speed_hash{$types};
+           print qq (<option $status value="$types" title="$gNIC_speed_hash{$types}" >$showvalue</option>/n);
+        }
+        print qq (</select>);
+        print qq (</td>);
+        print qq (</tr>);
+    }
+   elsif ( $showData->{isptype} eq "pppoe")
+    {
+        #****************************************************************************************
+        #-->2:NIC number
+        #******************************** List selection of NICs ********************************
+        my @vlandev=editVlan(action=>'GETVLANDEVLIST');
+        my @moduledev=editModules(action=>'GETMODULESDEVLIST');
+        my $ethnum=$showData->{pppoeportdev}; $ethnum=~s/eth//;
+
+        #20091214 Brian To get wireless device number
+        my $deviceinfo=runCommand(command=>"ls", params=>'-al /dev/');
+        my @devicerecord=split(/\n/, $deviceinfo);
+        my $usbdeviceinfo=runCommand(command=>"cat", params=>'/tmp/usbdev.tab');
+        my @usbdevicerecord=split(/\n/, $usbdeviceinfo);
+        my @devicelist;
+        foreach my $record ( @devicerecord )
+        {
+            if ( grep(/ACM/, $record) )
+            {
+               #$record=~s/ttyACM/Modem/g;
+               my @modem=split(/\s+/, $record);
+               push ( @devicelist, $modem[9]);
+            }
+        }
+        foreach my $record ( @usbdevicerecord )
+        {
+               my @modem=split(/\s+/, $record);
+               push ( @devicelist, $modem[2]);
+        }
+
+        print qq (<tr>);
+        print qq (<td class="body"  colspan="2" align="left" >$lanBasic{interface}: </td> );
+        print qq (<td class="body" align="left">);
+        print qq (<select class="qbopt" name="eth" style="width:120">);
+        foreach my $eth ( -1..$gNUMOFPORT-1-$gRESERVEDLANPORT,@vlandev, @devicelist,sort @moduledev ) 
+        {
+            #Wireless Modem
+            if ($eth =~m/ttyACM/)
+            {
+               my $modemno=$eth;
+               $modemno=~s/ttyACM//;
+               my $showmodem=$eth;
+               $showmodem=~s/ttyACM/Modem/;
+               my $status=( $eth eq $showData->{pppoeportdev}) ? ('selected'):('');
+               my $portvalue=( $modemno eq "-1" ) ? ('None') : ('ACM Modem'.++$modemno);
+               print qq (<option $status value="$eth">$portvalue</option>);
+            }
+            elsif ($eth =~m/ttyUSB/)
+            {
+               my $modemno=$eth;
+               $modemno=~s/ttyUSB//;
+               my $showmodem=$eth;
+               $showmodem=~s/ttyUSB/USB Modem/;
+               my $status=( $eth eq $showData->{pppoeportdev}) ? ('selected'):('');
+               my $portvalue=( $modemno eq "-1" ) ? ('None') : ('USB Modem'.++$modemno);
+
+               foreach my $record ( @usbdevicerecord )
+               {
+                 if ( grep(/$eth/, $record) )
+                 {
+                    my @modem=split(/\s+/, $record);
+                    my $chkimei = editModules( action=>"CHKIMEINO", imei=>$modem[4] );
+                    if ( !$chkimei ){
+                    my @modem=split(/Information:/, $record);
+                    print qq (<option $status value="$eth" span title="$modem[1]">$portvalue</option>);
+                    }
+                 }
+               }
+            }
+            elsif ($eth =~m/SIM/)
+            {
+               my $simno=$eth; 
+               $simno=~s/SIM//;
+               my $status=( $eth eq $showData->{interface_name}) ? ('selected'):('');
+               my $moduleinfo = editModules( action=>"GETMODULEINFOBYNAME", interface_name=>$eth );
+               print qq (<option $status value="SIM$simno" span title="$moduleinfo">SIM $simno</option>);
+            }
+            else
+            {    
+               $eth=~s/eth//; 
+               my $status=( $eth eq $ethnum ) ? ('selected'):('');
+               my $ethvalue=( $eth eq "-1" ) ? ('-1'):('eth'.$eth);
+               my $tmpeth1=$eth;
+               my $portvalue=( $eth eq "-1" ) ? ('None') : ('PORT '.++$eth);
+               my $tmpeth2=$eth-1;
+            #20080222 Brian Fix a bug,when vlan id=10,20,...,UI will show portx.1 x.2 ...
+            $portvalue=( $tmpeth1 eq $tmpeth2 || $portvalue eq 'None') ? ($portvalue) : ($portvalue.'0'); 
+            print qq (<option $status value="$ethvalue">$portvalue</option>);
+            }
+        }
+        print qq (</select>);
+        print qq (<input type="hidden" name="orieth" value="$showData->{nic}">);
+        print qq (<input type="hidden" name="interface_name" value="$showData->{interface_name}">);
+        print qq (<input type="hidden" name="pppoeportdev" value="$showData->{pppoeportdev}">);
+        print qq (<input type="hidden" name="imei" value="$showData->{imei}">);
+
+#        if ( $showData->{flag_3g} )
+#        {
+#        print qq (  <a href="../3ginfo.cgi"><image src="image/info.jpg" border="0" title="3G Device Information"></a></td></tr>);
+#        }
+=cut
+        #print qq (<tr height="20" bgcolor="#334455" originalColor="#334455"><td class="body" width="150" align="left" >&#32R
+         print qq (<td class="body" width="100" align="left">);
+         print qq (<table width=100% border=0 cellpadding=0 cellspacing=0>);
+         print qq (<tr>);
+         print qq (<td width="22" height="10" background="../image/usage.gif"></td>);
+         print qq (<td width="8" height="10" background="../image/free.gif"></td>);
+         print qq (</table>);
+         print qq (</td>);
+         print qq (<td class="body" width="20" align="right">20 %</td></tr>);
+        #print qq (<td class="body" width="80" align="right">$ramdiskusage %</td></tr>);
+                                                                                
+=cut
+        print qq (</td>);
+        print qq (</tr>);
+        if ( !$showData->{flag_3g} )
+        {
+        print qq (<tr>);
+        print qq (<td class="body"  colspan="2" align="left" >NIC Speed: </td> );
+        print qq (<td class="body" align="left">);
+        print qq (<select class="qbopt" name="nic_speed" style="width:120">\n);
+        foreach my $types ( sort keys %gNIC_speed_hash ) 
+        {
+           my $status=( $types eq $showData->{nic_speed} ) ? ('selected'):('');
+           if ( !$showData->{nic_speed} && $types eq "Auto" ) { $status="selected"; }
+           my $showvalue=$gNIC_speed_hash{$types};
+           print qq (<option $status value="$types" title="$gNIC_speed_hash{$types}" >$showvalue</option>/n);
+        }
+        print qq (</select>);
+        print qq (</td>);
+        print qq (</tr>);
+        }
+
+      if ( $showData->{flag_3g} || $showData->{usbmodemtype})
+      {
+        print qq (<tr>);
+        print qq (<td class="body"  colspan="2" align="left" >Modem Model: </td> );
+        print qq (<td class="body" align="left">);
+        print qq (<select class="qbopt" name="usbmodemtype" onchange="goSubmit('SWITCHMODEM')" style="width:120">\n);
+        foreach my $types ( sort keys %gUSBmodem , -1 ) 
+        {
+           my $status=( $types eq $showData->{usbmodemtype} ) ? ('selected'):('');
+           my $showvalue=( $types eq "-1" ) ? ('None') : ($gUSBmodem{$types});
+           print qq (<option $status value="$types" title="$gUSBmodem{$types}" >$showvalue</option>/n);
+        }
+        print qq (</select>);
+        print qq (</td>);
+        print qq (</tr>);
+
+        print qq (<tr>);
+        print qq (<td class="body"  colspan="2" align="left" >Modem Action: </td> );
+        print qq (<td class="body" align="left">);
+        if ( $showData->{usbmodemtype} eq "H20" && $gTYPE eq "3G" )
+        {
+          print qq (<select class="qbopt" name="modemaction" onchange="goSubmit('MODEMACTION')" style="width:120">\n);
+          foreach my $actions ( sort keys %gModemAction , -1 ,Reset )
+          {
+           if ( $actions eq "None" )
+           {
+              print qq (<option $status value="$actions" title="Do nothing for the dongle" >$actions</option>/n);
+           }elsif ( $actions eq "Reset" )
+           {
+              my $showvalue="Reset this Modem";
+              print qq (<option $status value="$actions" title="Reset this Modem" >$showvalue</option>/n);
+           }else{
+              print qq (<option $status value="$actions" title="$gModemAction{$actions}" >$gModemAction{$actions}</option>/n);
+           }
+          }
+        }
+        else
+        {
+          print qq (<select class="qbopt" name="modemaction" onchange="goSubmit('MODEMRESET')" style="width:120">\n);
+          foreach my $actions ( -1 , Reset )
+          {
+           my $showvalue=( $actions eq "-1" ) ? ('None') : ('Reset this modem');
+           if ( $showvalue eq "None" )
+           {
+              print qq (<option $status value="$actions" title="Do nothing for the modem" >$showvalue</option>/n);
+           }else{
+           print qq (<option $status value="$actions" title="Reset this modem" >$showvalue</option>/n);
+           }
+          }
+        }
+        print qq (</select>);
+        print qq (</td>);
+        print qq (</tr>);
+
+        print qq (<tr>);
+        print qq (<td class="body"  colspan="2" align="left" title="Reset the 3G modem at which time everyday?" >Daily Reset: </td> );
+        print qq (<td class="body" align="left">);
+        print qq (<select class="qbopt" name="daily_3greset" style="width:120">\n);
+        print qq (<option value="" title="Disable this function" selected >Disabled</option>);
+        foreach my $time ( 0..23 )
+        {
+          my $showvalue= $time.':00';
+          my $status=( $time eq $showData->{daily_3greset} ) ? ('selected'):('');
+          print qq (<option $status value="$time" title="Reset this 3G modem at $showvalue everyday" >$showvalue</option>/n);
+        }
+        print qq (</select>);
+        print qq (</td>);
+        print qq (</tr>);
+
+        if ( $showData->{usbmodemtype} eq "H20" )
+        {
+          print qq (<tr>);
+          print qq (<td class="body"  colspan="2" align="left" >Mode: </td> );
+          print qq (<td class="body" align="left">);
+          print qq (<select class="qbopt" name="mode_2G3G" style="width:120">\n);
+          print qq (<option value="Auto" title="Auto Detect" selected >Auto</option>);
+          foreach my $actions ( sort keys %gmode_2G3G_hash )
+          {
+           my $showvalue=( $actions eq "-1" ) ? ('None') : ($gmode_2G3G_hash{$actions});
+           my $status=( $actions eq $showData->{mode_2G3G} ) ? ('selected'):('');
+           print qq (<option $status value="$actions" title="$mode_g2G3G_hash{$actions}" >$showvalue</option>/n);
+          }
+          print qq (</select>);
+          print qq (</td>);
+          print qq (</tr>);
+
+          print qq (<tr>);
+          print qq (<td class="body"  colspan="2" align="left" >Band: </td> );
+          print qq (<td class="body" align="left">);
+          print qq (<select class="qbopt" name="band_2G3G" style="width:120">\n);
+          print qq (<option value="Auto" title="Auto Detect" selected >Auto</option>);
+          foreach my $actions ( sort keys %gband_2G3G_hash )
+          {
+           my $showvalue=( $actions eq "-1" ) ? ('None') : ($gband_2G3G_hash{$actions});
+           my $status=( $actions eq $showData->{band_2G3G} ) ? ('selected'):('');
+           print qq (<option $status value="$actions" title="$gband_2G3G_hash{$actions}" >$showvalue</option>/n);
+          }
+          print qq (</select>);
+          print qq (</td>);
+          print qq (</tr>);
+        }
+
+        #****************************************************************************************
+        #-->Dial Number
+        #****************************************************************************************
+        print qq (<tr><td class="body" ></td><td class="body" span title="Dial Phone Number" align="left">Phone Num.: </td>);
+        print qq (<td class="body" ><input class="qbtext" type=text name="dial_num" style="WIDTH:120px" value="$showData->{dial_num}"> (e.g.*99#)\n);
+        print qq (<br></td></tr>);
+        #****************************************************************************************
+        #-->Access Point Name
+        #****************************************************************************************
+        print qq (<tr><td class="body" ></td><td class="body" span title="Access Point Name" align="left">APN: </td>);
+        if ( $showData->{apn_name} eq "null" )
+        {
+        print qq (<td class="body" ><input class="qbtext" type=text name="apn_name" style="WIDTH:120px" value=""> (e.g.internet)\n);
+        }else{
+        print qq (<td class="body" ><input class="qbtext" type=text name="apn_name" style="WIDTH:120px" value="$showData->{apn_name}"> (e.g.internet)\n);
+        }
+        print qq (<br></td></tr>);
+      }
+    }
+    elsif ( $showData->{isptype} eq "tunnel" || $showData->{isptype} eq "dtunnel" )
+    {
+        print qq (<input type="hidden" name="eth" value="$showData->{nic}">);
+    }
+
+    
+    #****************************************************************************************
+    #-->3:ISP name
+    #****************************************************************************************
+    print qq (<tr><td class="body" ></td><td class="body" align="left">$lanBasic{name}: </td>);
+    print qq (<td class="body" ><input class="qbtext" type=text maxlength="12" name="ispname" style="WIDTH:120px" value="$showData->{ispname}"> (e.g.Hinet)\n);
+    print qq (<br></td></tr>);
+    print qq (<input type="hidden" name="oriispname" value="$showData->{ispname}">);
+    
+
+    #****************************************************************************************
+    #-->4:Connetion Type
+    #****************************************************************************************
+    #先只支援 fixed ip 
+    print qq (<INPUT type="hidden" name="type" value="fixed" >);
+
+    if ($showData->{isptype} eq "normal") 
+    {
+        #****************************************************************************************
+        #-->5:Subnet
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body"  align="left" span title="Auto" >$lanBasic{subnet}: </td>);
+        print qq (<td class="body"  textcolor="#003366">);
+        print qq (<input class="qbtext" type="text" name="subnet" style="WIDTH:120px" value="$showData->{subnet}" onchange="document.getElementById('systemip').value = this.value.split('\.')[0]+'.'+this.value.split('\.')[1]+'.'+this.value.split('\.')[2]+'.';document.getElementById('gateway').value = this.value.split('\.')[0]+'.'+this.value.split('\.')[1]+'.'+this.value.split('\.')[2]+'.';"> (e.g.192.168.1.0/24)\n);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="orisubnet" value="$showData->{subnet}">);
+    }
+
+    if ( $showData->{isptype} eq "tunnel" || $showData->{isptype} eq "ipsec" || $showData->{isptype} eq "dtunnel" )
+    {
+        #****************************************************************************************
+        #-->6:Local IP
+        #****************************************************************************************
+        #print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left"   >Tunnel Header Source IP: </td>);
+        #print qq (<td class="body" >);
+        #print qq (<input class="qbtext" name="local" style="WIDTH: 120px" value="$showData->{local}" >\n);
+        #print qq (</td></tr>);
+        print qq (<input type="hidden" name="local" value="$showData->{local}">\n);
+        print qq (<input type="hidden" name="orilocal" value="$showData->{local}">\n);
+
+        $showData->{wanisp}=maintainBasic(action=>'GETISPNAME', systemip=>$showData->{local});
+        my $statuschoice=$showData->{wanisp};
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left"   >Tunnel Header Source IP: </td>);
+        print qq (<td class="body" >);
+        print qq (<select class="qbopt" name="wanisp" span title="$showData->{local}" style="width:120">\n);
+        my @WANISPNAME=maintainBasic(action=>'GETWANISPNAME');
+        my @WANIP=maintainBasic(action=>'GETWANIP');
+	foreach my $wan ( @WANISPNAME )
+        {
+            my $status=( $wan eq "$statuschoice" ) ? ('selected'):('');
+            my $value=( $wan eq "" ) ? (''):("$wan");
+            my $showip=maintainBasic(action=>'GETIP', ispname=>$value);
+            print qq (<option $status value="$value" span title="$showip">$value</option>\n);
+        }
+        print qq (</select></td>);
+        print qq (</tr>);
+        #$showData->{local}=maintainBasic(action=>'GETIP', ispname=>$showData->{wanisp});
+
+        #****************************************************************************************
+        #-->6:Remote IP
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left"   >Tunnel Header Remote IP: </td>);
+        print qq (<td class="body" >);
+        print qq (<input class="qbtext" name="remote" style="WIDTH: 120px" value="$showData->{remote}" >\n);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oriremote" value="$showData->{remote}">);
+
+        #****************************************************************************************
+        #-->6:Remote Domain name
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left"   >Tunnel Header Destination Name: </td>);
+        print qq (<td class="body" >);
+        print qq (<input class="qbtext" name="remotename" style="WIDTH: 120px" value="$showData->{remotename}" >\n);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oriremotename" value="$showData->{remotename}">);
+    }
+    
+    if ( $showData->{isptype} eq "tunnel")
+    {
+        #****************************************************************************************
+        #-->7:System IP
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left"   >Tunnel Virtual Local IP: </td>);
+        print qq (<td class="body" ><div id="systemipoffon">);
+        print qq (<input class="qbtext" name="systemip" style="WIDTH: 120px" value="$showData->{systemip}" onchange="document.getElementById('gateway').value = this.value.split('\.')[0]+'.'+this.value.split('\.')[1]+'.'+this.value.split('\.')[2]+'.';">\n);
+        print qq (</div>);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="orisystemip" value="$showData->{systemip}">);
+
+        #****************************************************************************************
+        #-->6:Gateway
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left"   >Tunnel Virtual Remote IP: </td>);
+        print qq (<td class="body" >);
+        print qq (<input class="qbtext" name="gateway" style="WIDTH: 120px" value="$showData->{gateway}" onchange="document.getElementById('target').value = this.value;">\n);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="origateway" value="$showData->{gateway}">);
+    }
+
+
+    if ( $showData->{isptype} eq "normal")
+    {
+        #****************************************************************************************
+        #-->6:Gateway
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left"   >$lanBasic{gateway}: </td>);
+        print qq (<td class="body" >);
+        print qq (<input class="qbtext" name="gateway" style="WIDTH: 120px" value="$showData->{gateway}" onchange="document.getElementById('target').value = this.value;">\n);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="origateway" value="$showData->{gateway}">);
+
+        
+        #****************************************************************************************
+        #-->7:System IP
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left"   >$lanBasic{system_ip}: </td>);
+        print qq (<td class="body" ><div id="systemipoffon">);
+        print qq (<input class="qbtext" name="systemip" style="WIDTH: 120px" value="$showData->{systemip}" >\n);
+        print qq (</div>);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="orisystemip" value="$showData->{systemip}">);
+        #****************************************************************************************
+        #-->7:Proxy IP
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left" span title="Parent Proxy IP"  >Proxy IP: </td>);
+        print qq (<td class="body" >);
+        print qq (<input class="qbtext" name="proxyname" style="WIDTH: 120px" value="$showData->{proxyname}" >\n);
+        print qq (</div>);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oriproxyname" value="$showData->{proxyname}">);
+        #****************************************************************************************
+        #-->7:Proxy Port
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left" span title="Parent Proxy Port"  >Proxy Port: </td>);
+        print qq (<td class="body" >);
+        print qq (<input class="qbtext" name="proxyport" style="WIDTH: 120px" value="$showData->{proxyport}" >\n);
+        print qq (</div>);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oriproxyport" value="$showData->{proxyport}">);
+    }
+
+   if ( $showData->{isptype} eq "pppoe" || $showData->{isptype} eq "dhcp" || $showData->{isptype} eq "pptp" || $showData->{isptype} eq "l2tp")
+    {
+        #****************************************************************************************
+        #-->5:Subnet
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body"  align="left" span title="Auto" >$lanBasic{subnet}: </td>);
+        print qq (<td class="body"  textcolor="#003366">);
+        print qq (<input class="qbtext" type="text" name="subnet" style="WIDTH:120px" readonly="readonly" value="$showData->{subnet}"> (e.g.192.168.1.0/24)\n);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="orisubnet" value="$showData->{subnet}">);
+        #****************************************************************************************
+        #-->6:Gateway
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left"  span title="Auto" >$lanBasic{gateway}: </td>);
+        print qq (<td class="body" >);
+        print qq (<input class="qbtext" name="gateway" style="WIDTH: 120px" value="$showData->{gateway}" readonly="readonly" >\n);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="origateway" value="$showData->{gateway}" disabled="disabled">);
+
+        
+        #****************************************************************************************
+        #-->7:System IP
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left" span title="Auto"  >$lanBasic{system_ip}: </td>);
+        print qq (<td class="body" >);
+        print qq (<input class="qbtext" name="systemip" style="WIDTH: 120px" value="$showData->{systemip}" readonly="readonly">\n);
+        print qq (</div>);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="orisystemip" value="$showData->{systemip}">);
+        
+
+        if ( $showData->{isptype} eq "pppoe")
+         {
+           #****************************************************************************************
+           #-->7:PPPoE's Portdev
+           #****************************************************************************************
+            print qq (<tr><td class="body" align="left"   ></td><td class="body" align="left" span title="PPPoE's NIC device(Auto)" >PPPoE NIC:</span></td>);
+            print qq (<td class="body" >);
+            print qq (<input type="text" name="pppoeportdev" class="qbtext" maxlength="5" value="$showData->{pppoeportdev}" style="width:120" readonly="readonly">);
+            print qq (</td></tr>);
+            print qq (<input type="hidden" name="oripppoeportdev" value="$showData->{pppoeportdev}">);
+           #****************************************************************************************
+           #-->8:Authentication Type
+           #****************************************************************************************
+            print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left" span title="Authentication Type"  >$lanBasic{auth}: </td>);
+            print qq (<td class="body" >);
+            print qq (<select class="qbopt" name="authentication" style="width:120">\n);
+            @AUTH=("CHAP/PAP", "CHAP", "PAP");
+            foreach my $auth ( @AUTH ) { print qq (<option value="$auth">$auth</option>\n); }
+            print qq (</select></td>);
+            print qq (</tr>);
+         }
+        if ( $showData->{isptype} eq "pptp" || $showData->{isptype} eq "l2tp" )
+         {
+           #****************************************************************************************
+           #-->PPTP/L2TP Server's IP
+           #****************************************************************************************
+           print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left" span title="Server's IP/Domain name"  >Server IP: </td>);
+        
+           print qq (<td class="body" >);
+           print qq (<input class="qbtext" name="pptpserver" style="WIDTH: 120px" value="$showData->{pptpserver}" >\n);
+           print qq (</div>);
+           print qq (</td></tr>);
+           print qq (<input type="hidden" name="oripptpserver" value="$showData->{pptpserver}">);
+        
+           #****************************************************************************************
+           #-->7:Wan ID
+           #****************************************************************************************
+            print qq (<tr><td class="body" align="left"   ></td><td class="body" align="left" span title="Wan ID(Dial ppp through which ISP link)" >Wan ID:</span></td>);
+            print qq (<td class="body" >);
+            print qq (<select class="qbopt" name="pppispid" style="width:120">\n);
+            my @iidList=maintainBasic(action=>'GETNORMALISPIIDLIST');
+
+            foreach my $ispid ( @iidList )
+            {
+               if ( $ispid eq $showData->{iid} ) { next; }
+               my $status=( $ispid eq "$showData->{pppispid}" ) ? ('selected'):('');
+               my $ISPNAME=maintainBasic(action=>'GETNAMEBYIID', iid=>$ispid );
+               my $showip=maintainBasic(action=>'GETIP', ispname=>$ISPNAME);
+               print qq (<option $status value="$ispid" span title="$showip" >$ISPNAME</option>\n);
+            }
+            
+            print qq (</select></td>);
+            print qq (</tr>);
+=cut                                     
+           #****************************************************************************************
+           #-->8:Authentication Type
+           #****************************************************************************************
+            print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left" span title="Authentication Type"  >$lanBasic{auth}: </td>);
+            print qq (<td class="body" >);
+            print qq (<select class="qbopt" name="authentication" style="width:120">\n);
+            @AUTH=("CHAP/PAP", "CHAP", "PAP");
+            foreach my $auth ( @AUTH ) { print qq (<option value="$auth">$auth</option>\n); }
+            print qq (</select></td>);
+            print qq (</tr>);
+=cut
+         }
+        if ( $showData->{isptype} ne "pptp" && $showData->{isptype} ne "l2tp" )
+        {
+           #****************************************************************************************
+           #-->9:Enable DDNS
+           #****************************************************************************************
+            my $statuschoice=$showData->{enableddns};
+            print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left" span title="Enable Dynamic DNS"  >Use DDNS: </td>);
+            print qq (<td class="body" >);
+            print qq (<select class="qbopt" name="enableddns" style="width:120">\n);
+            @ENDDNS=("No", "Yes", "Yes,and wildcard");
+            foreach my $enddns ( @ENDDNS )
+            {
+             my $status=( $enddns eq "$statuschoice" ) ? ('selected'):('');
+             print qq (<option $status value="$enddns">$enddns</option>\n);
+            }
+            print qq (</select></td>);
+            print qq (</tr>);
+            #****************************************************************************************
+            #-->7:Proxy IP
+            #****************************************************************************************
+            print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left" span title="Parent Proxy IP"  >Proxy IP: </td>);
+            print qq (<td class="body" >);
+            print qq (<input class="qbtext" name="proxyname" style="WIDTH: 120px" value="$showData->{proxyname}" >\n);
+            print qq (</div>);
+            print qq (</td></tr>);
+            print qq (<input type="hidden" name="oriproxyname" value="$showData->{proxyname}">);
+        #****************************************************************************************
+        #-->7:Proxy Port
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"  ></td><td class="body" align="left" span title="Parent Proxy Port"  >Proxy Port: </td>);
+        print qq (<td class="body" >);
+        print qq (<input class="qbtext" name="proxyport" style="WIDTH: 120px" value="$showData->{proxyport}" >\n);
+        print qq (</div>);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oriproxyport" value="$showData->{proxyport}">);
+       }          
+    }
+    
+    print qq (</table>);
+    print qq (</td>);
+
+    print qq (<td valign="top" width="40%" align="center">);
+    print qq (<table width="100%" border=0>);
+    #****************************************************************************************
+    #-->8: Config Status
+    #****************************************************************************************
+    print qq (<tr><td class="body"  align="left" >$lanBasic{state}: </td>);
+    print qq (<td class="body"  align="left" >$showData->{state}</td></tr>);  
+    
+    if ( $showData->{isptype} eq "pptp")
+    {
+           #****************************************************************************************
+           # Encryption
+           #****************************************************************************************
+           print qq (<tr><td class="body" align="left" span title="Encryption(MPPE)" >Encryption: <br>);
+           print qq (<td class="body" align="left">);
+           my $status=( $showData->{encrypt_mppe} ) ? ('checked') : (''); 
+           print qq (<input type="radio" name="encrypt_mppe" value="1" $status>On);   
+           my $status=( $showData->{encrypt_mppe} ) ? ('') : ('checked'); 
+           print qq (<input type="radio" name="encrypt_mppe" value="0" $status>Off);   
+           print qq (</td></tr>);
+
+           #****************************************************************************************
+           # Compression
+           #****************************************************************************************
+           print qq (<tr><td class="body" align="left" span title="Use Compression Algorithm" >Compression: <br>);
+           print qq (<td class="body" align="left">);
+           my $status=( $showData->{compression} ) ? ('checked') : (''); 
+           print qq (<input type="radio" name="compression" value="1" $status>On);   
+           my $status=( $showData->{compression} ) ? ('') : ('checked'); 
+           print qq (<input type="radio" name="compression" value="0" $status>Off);   
+           print qq (</td></tr>);
+           
+           
+           #****************************************************************************************
+           # Stateful/Stateless
+           #****************************************************************************************
+           print qq (<tr><td class="body" align="left" span title="Use Stateless/Stateful" >Stateless/Stateful: <br>);
+           print qq (<td class="body" align="left">);
+           my $status=( $showData->{stateless} ) ? ('checked') : (''); 
+           print qq (<input type="radio" name="stateless" value="1" $status>Stateless);   
+           my $status=( $showData->{stateless} ) ? ('') : ('checked'); 
+           print qq (<input type="radio" name="stateless" value="0" $status>Stateful);   
+           print qq (</td></tr>);
+
+
+    }
+    if ( $showData->{isptype} eq "normal" || $showData->{isptype} eq "pppoe" || $showData->{isptype} eq "dhcp" || $showData->{isptype} eq "pptp" || $showData->{isptype} eq "l2tp")
+    {
+        #****************************************************************************************
+        #-->7:Healthcheck IP
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"   ><span title="Check Target for Link Status" >Healthcheck IP:</span></td>);
+        print qq (<td class="body" >);
+        print qq (<input type="text" name="target" class="qbtext" maxlength="15" value="$showData->{target}" style="width:120">);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oritarget" value="$showData->{target}">);
+    }
+
+    if ( $showData->{isptype} eq "pppoe" )
+    {
+        #****************************************************************************************
+        #-->7:PPPoE's Login Name
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"   ><span title="PPPoE's Login Name" >$lanBasic{pppoe_name}:</span></td>);
+        print qq (<td class="body" >);
+        print qq (<input type="text" name="pppoename" class="qbtext" maxlength="100" value="$showData->{pppoename}" style="width:120">);
+        print qq (</td></tr>);
+
+        print qq (<input type="hidden" name="oripppoename" value="$showData->{pppoename}">);
+        #****************************************************************************************
+        #-->7:PPPoE's Password
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"   ><span title="PPPoE's Login Password" >$lanBasic{pppoe_passwd}:</span></td>);
+        print qq (<td class="body" >);
+        print qq (<input type="password" name="pppoepasswd" class="qbtext" maxlength="100" value="$showData->{pppoepasswd}" style="width:120">);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oripppoepasswd" value="$showData->{pppoepasswd}">);
+    }
+    if ( $showData->{isptype} eq "pptp" || $showData->{isptype} eq "l2tp" )
+    {
+        #****************************************************************************************
+        #-->7:PPTP/L2TP's Login Name
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"   ><span title="PPP Login Name" >Login Name:</span></td>);
+        print qq (<td class="body" >);
+        print qq (<input type="text" name="pppoename" class="qbtext" maxlength="100" value="$showData->{pppoename}" style="width:120">);
+        print qq (</td></tr>);
+
+        print qq (<input type="hidden" name="oripppoename" value="$showData->{pppoename}">);
+        #****************************************************************************************
+        #-->7:PPTP/L2TP's Password
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"   ><span title="PPP Login Password" >Login password:</span></td>);
+        print qq (<td class="body" >);
+        print qq (<input type="password" name="pppoepasswd" class="qbtext" maxlength="100" value="$showData->{pppoepasswd}" style="width:120">);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oripppoepasswd" value="$showData->{pppoepasswd}">);
+    }
+    if ( $showData->{isptype} eq "pppoe" || $showData->{isptype} eq "dhcp" )
+    {
+        #****************************************************************************************
+        #-->8:Orgination Menu
+        #****************************************************************************************
+        my $statuschoice=$showData->{ddnschoice};
+        print qq (<tr><td class="body" align="left"   ><span title="DDNS Orignation Menu" >DDNS organization:</span></td>);
+        print qq (<td class="body" >);
+        print qq (<select class="qbopt" name="ddnschoice" style="width:120">\n);
+        @ENDDNS=("none", "www.dyndns.org", "www.dslreports.com", "www.dnspark.com", "www.easydns.com", "www.namecheap.com", "www.zoneedit.com");
+        foreach my $enddns ( @ENDDNS )
+        {
+          my $status=( $enddns eq "$statuschoice" ) ? ('selected'):('');
+          my $value=( $enddns eq "none" ) ? ('none'):("$enddns");
+          print qq (<option $status value="$value">$value</option>\n);
+         }
+        print qq (</select></td>);
+        print qq (</tr>);
+        print qq (</td></tr>);
+        #****************************************************************************************
+        #-->7:DDNS's Login Name
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"   ><span title="DDNS's Login Name" >DDNS's Name:</span></td>);
+        print qq (<td class="body" >);
+        print qq (<input type="text" name="ddnsname" class="qbtext" maxlength="30" value="$showData->{ddnsname}" style="width:120">);
+        print qq (</td></tr>);
+
+        print qq (<input type="hidden" name="oriddnsname" value="$showData->{ddnsname}">);
+        #****************************************************************************************
+        #-->7:DDNS's Login Password
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"   ><span title="DDNS's Login Password" >DDNS's Password:</span></td>);
+        print qq (<td class="body" >);
+        print qq (<input type="password" name="ddnspasswd" class="qbtext" maxlength="30" value="$showData->{ddnspasswd}" style="width:120" onChange="document.getElementById('enableddns').value = 'Yes' ;">);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oriddnspasswd" value="$showData->{ddnspasswd}">);
+        #****************************************************************************************
+        #-->7:DDNS's Domain Name 
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left"   ><span title="DDNS Domain Name Example:your-1st.any.domain,your-2nd.any.domain,your-3rd.any.domain" >Domain Name:</span></td>);
+        print qq (<td class="body" >);
+        print qq (<input type="text" name="ddnsdomainname" class="qbtext" value="$showData->{ddnsdomainname}" style="width:120">);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oriddnsdomainname" value="$showData->{ddnsdomainname}">);
+    }
+ 
+    #if ( $showData->{isptype} eq "normal")
+    #{
+    #    #****************************************************************************************
+    #    # Drop Strange IP
+    #    #****************************************************************************************
+    #    print qq (<tr><td class="body" align="left" valign="top">Drop Strange IP:<br>);
+    #    #print qq (<input type="button" class="qb" name="DSIPDETECT" value="Auto Detect" disabled  onClick="goSubmit('DSIPDETECT')" style="width:100">);
+    #    print qq (</td>);   
+    #    print qq (<td class="body" align="left">);
+    #    my $status=( $showData->{dsip} ) ? ('checked') : (''); 
+    #    print qq (<input type="radio" name="dsip" value="1" $status>Yes);   
+    #    my $status=( $showData->{dsip} ) ? ('') : ('checked'); 
+    #    print qq (<input type="radio" name="dsip" value="0" $status>No);   
+    #    print qq (</td></tr>);
+    #}
+    
+    if ( $showData->{isptype} eq "tunnel")
+    {
+	#****************************************************************************************
+        # COMPRESSION
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left">Compression:<br>);
+        print qq (<td class="body" align="left">);
+        my $status=( $showData->{ipcom} ) ? ('checked') : ('');
+        print qq (<input type="radio" name="ipcom" value="1" $status>On);
+        my $status=( $showData->{ipcom} ) ? ('') : ('checked');
+        print qq (<input type="radio" name="ipcom" value="0" $status>Off);
+        print qq (</td></tr>);
+
+	#****************************************************************************************
+        # ENCRYPT
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left">Encryption:<br>);
+        print qq (<td class="body" align="left">);
+        my $status=( $showData->{enc} ) ? ('checked') : ('');
+        print qq (<input type="radio" name="enc" value="1" $status>On);
+        my $status=( $showData->{enc} ) ? ('') : ('checked');
+        print qq (<input type="radio" name="enc" value="0" $status>Off);
+        print qq (</td></tr>);
+
+        #****************************************************************************************
+        # ALGORITHM
+        #****************************************************************************************
+        my $statuschoice=$showData->{alg};
+        print qq (<tr><td class="body" align="left">Algorithm:<br>);
+        print qq (<td class="body" align="left">);
+        print qq (<select class="qbopt" name="algslt" style="width:180">\n);
+        @ALGORITHM=("none", "des", "3des", "aes 128", "aes 192", "aes 256");
+        foreach my $algo ( @ALGORITHM )
+        {
+          my $status=( $algo eq "$statuschoice" ) ? ('selected'):('');
+          my $value=( $algo eq "none" ) ? ('none'):("$algo");
+          print qq (<option $status value="$value">$value</option>\n);
+        }
+        print qq (</select></td>);
+        print qq (</tr>);        
+
+        #****************************************************************************************
+        # NAT Support
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left">NAT Support:<br>);
+        print qq (<td class="body" align="left">);
+        my $status=( $showData->{mpv_nat} ) ? ('checked') : ('');
+        print qq (<input type="radio" name="mpv_nat" value="1" $status>On);
+        my $status=( $showData->{mpv_nat} ) ? ('') : ('checked');
+        print qq (<input type="radio" name="mpv_nat" value="0" $status>Off );
+        print qq (<input type="hidden" name="mpv_nat_ip" value="">);
+        print qq ($showData->{mpv_nat_ip});
+        print qq (</td></tr>);
+
+	#****************************************************************************************
+        # MPV MTU
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left">MPV MTU:<br>);
+        print qq (<td class="body" align="left">);
+        #my $status=( $showData->{mtu} ) ? ('checked') : (''); 
+        my $status=( $showData->{mtu} eq "1" ) ? ('checked') : (''); 
+        print qq (<input type="radio" name="mtu" value="1" $status>On);   
+        #my $status=( $showData->{mtu} ) ? ('') : ('checked'); 
+        my $status=( $showData->{mtu} eq "0" ) ? ('checked') : (''); 
+        print qq (<input type="radio" name="mtu" value="0" $status>Off);   
+        my $status=( $showData->{mtu} ne "0" && $showData->{mtu} ne "1" ) ? ('checked') : (''); 
+        print qq (<input type="radio" name="mtu" value="$showData->{mtu}" $status>User Define);   
+        print qq (<input class="qbtext" type="text" maxlength="4" size="4" name="mtu_value" value="$showData->{mtu_value}">);
+        #my $status=( $showData->{mtu_def} ) ? ('checked') : (''); 
+        #print qq (<input type="radio" name="mtu_def" value="$showData->{mtu_def}" $status>User Defined);  
+        #print qq (<input class="qbtext" type="text" maxlength="4" size="4" name="mtu_value" value="$showData->{mtu_value}">);
+        print qq (</td></tr>);
+
+        #****************************************************************************************
+        # MPV MSS
+        #****************************************************************************************
+        print qq (<tr><td class="body" align="left">MPV MSS:<br>);
+        print qq (<td class="body" align="left">);
+        #my $status=( $showData->{mss} ) ? ('checked') : (''); 
+        my $status=( $showData->{mss} eq "1" ) ? ('checked') : (''); 
+        print qq (<input type="radio" name="mss" value="1" $status>On);   
+        #my $status=( $showData->{mss} ) ? ('') : ('checked'); 
+        my $status=( $showData->{mss} eq "0" ) ? ('checked') : (''); 
+        print qq (<input type="radio" name="mss" value="0" $status>Off);   
+        my $status=( $showData->{mss} ne "0" && $showData->{mss} ne "1" ) ? ('checked') : (''); 
+        print qq (<input type="radio" name="mss" value="$showData->{mss}" $status>User Define);   
+        print qq (<input class="qbtext" type="text" maxlength="4" size="4" name="mss_value" value="$showData->{mss_value}">);
+        #my $status=( $showData->{mss_def} ) ? ('checked') : (''); 
+        #print qq (<input type="radio" name="mss_def" value="$showData->{mss_def}" $status>User Defined);  
+        #print qq (<input class="qbtext" type="text" maxlength="4" size="4" name="mss_value" value="$showData->{mss_value}">);
+        print qq (</td></tr>);
+
+        #****************************************************************************************
+        #-->7:Healthcheck IP
+        #****************************************************************************************
+        #print qq (<tr><td class="body" align="left"   ><span title="Check Target for Link Status" >Healthcheck IP:</span></td>);
+        #print qq (<td class="body" >);
+        #print qq (<input type="text" name="target" class="qbtext" maxlength="15" value="$showData->{target}" style="width:120">);
+        #print qq (</td></tr>);
+        print qq (<input type="hidden" name="oritarget" value="$showData->{target}">);
+        print qq (<input type="hidden" name="target" value="$showData->{target}">);
+    }
+
+    #****************************************************************************************
+    #-->11:Download/Upload Speed
+    #****************************************************************************************
+    print qq (<tr><td class="body" align="left">);
+    print qq (<span title="Setting rate of Download/Upload" >$lanBasic{down_up}:</span>);
+    print qq (</td>);
+
+    my $bylist=( $showData->{download} && $showData->{upload} ) ? ('') : ('checked');
+    my $byhand=( $bylist eq 'checked' ) ? ('') : ('checked');
+   
+    #-->A by List 
+    print qq (<td class="body" align="left">);
+    print qq (<input type="radio" name="udmethod" value="bylist" $bylist>);
+    print qq (<select class="qbopt" name="downupspeed" style="width:180">\n);
+    if ($gBRAND eq "TC" )
+    {
+     if ( $gMODEL eq "2620" && $showData->{isptype} eq "tunnel" )
+     {
+      foreach my $rate ( "D512Kbit/U4096Kbit",sort @gDOWNUPRATE ) { print qq (<option value="$rate">$rate</option>\n); } 
+     }else
+     {
+      foreach my $rate ( "D4096Kbit/U512Kbit",sort @gDOWNUPRATE ) { print qq (<option value="$rate">$rate</option>\n); } 
+     }
+    }
+    else
+    {
+    foreach my $rate ( sort @gDOWNUPRATE ) { print qq (<option value="$rate">$rate</option>\n); } 
+    }
+    
+    print qq (</select></td>);
+    print qq (</tr>);
+    
+    #-->B by user keying in
+    print qq (<tr><td></td><td class="body">);
+    print qq (<input type="radio" name="udmethod"  value="byhand" $byhand>);
+    print qq (<input class="qbtext" type="text" maxlength="8" size="8" name="download" value="$showData->{download}">/);
+    print qq (<input class="qbtext" type="text" maxlength="8" size="8" name="upload" value="$showData->{upload}">(Kbit));
+    print qq (</td></tr>);
+    
+    
+    print qq (</table>);
+    print qq (</td>);
+    
+
+    # command button table
+    print qq (<td valign="top" align="right">);
+    
+    #****************************************************************************************
+    #   Submit button 
+    #****************************************************************************************
+    print qq (<table class="body">);
+    print qq (<tr><td><input type="button"  class="qb" name="NEW" value="$lanBasic{create}"  title="Create a New ISP Entry"   onClick="newISP();"  style="width:80"></td></tr>);
+    print qq (<tr><td><input type="button"  class="qb" name="DEL"       value="$lanBasic{delete}"      title="Delete this ISP Entry"                       onClick="delISP()"  style="width:80"></td></tr>);
+    print qq (<tr><td><input type="button"  class="qb" name="RESTORE"   value="$lanBasic{restore}"     title="Restore Original Information of This ISP"    onClick="goSubmit()" style="width:80"></td></tr>);
+    print qq (<tr><td><input type="button"  class="qb" name="SAVE"      value="$lanBasic{save}"        title="Save the latest Update"                      onClick="saveISP()" style="width:80"></td></tr>);
+    print qq (<tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr>);
+    if ( $showData->{flag_3g} )
+    {
+#        print qq (  <a href="../3gone.cgi?interface=$showData->{pppoeportdev}"><image src="image/info.jpg" border="0" title="3G Device Information"></a></td></tr>);
+         print qq (<tr><td><input type="button"  class="qb" name="SHOW3GINFO"      value="Show 3G info"  title="3G Device Information"  onClick="view3ginfo()" style="width:80"></td></tr>);
+    }
+    #print qq (<tr><td><input type="button"  class="qb" name="SAVEDIAL"  value="Save/Dial"        title="Get new IP and save the latest Update"             onClick="saveISP(1)" style="width:80"></td></tr>);
+    #20061003 Brian Close "Stop PPPoE Link"
+    #print qq (<tr><td><input type="button"  class="qb" name="STOP"  value="$lanBasic{stoppppoe}"  title="Stop PPPoE link " onClick="stopPPP()" style="width:80"></td></tr>);
+    print qq (</table>);
+
+    print qq (</td></tr>);
+    
+    #****************************************************************************************
+    print qq (</table>);
+    
+    # Very important : passing state value to javascirpt via hidden -------------------
+    print qq (<input type="hidden" name="state" value="$showData->{state}">);
+}
+#showISPInfo
+
+
+#======================================================================================================================
+sub basicScript 
+{
+    print << "BASIC_SCRIPT";
+ 
+  <script type="text/javascript" src="grid.js"></script>
+  <script language="javascript">
+    
+    var myform;
+    var state;
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0];
+        state=myform.state.value;
+        check_enabled_setting();
+    }
+
+     function sortISPINFO(key)
+    {
+        myform.sortingkey.value=key;
+        myform.submit();
+    }
+                                
+    function setISPid(ispid) 
+    { 
+        if ( ispid==myform.isp.value ) return;
+        myform.isp.value=ispid; 
+        myform.submit();
+    }
+
+    function view3ginfo()
+    {
+//        location.href="../3gone.cgi?interface="+document.getElementById("pppoeportdev").value;
+        var interface=document.getElementById("pppoeportdev").value;
+        var view3g="/3gone.cgi?interface="+interface;
+	var ip=document.getElementById("systemip").value;
+	
+	var url='http://'+ ip +':4000'+view3g;
+	window.open(url);
+    }
+    
+    function newISP()
+    {
+        var type=qbCreateISP(null, 'Which type of ISP to create ?');
+
+        switch (type)
+        {
+            case 1:
+                myform.isptype.value="normal";
+                break;
+            case 2:
+                myform.isptype.value="tunnel"; 
+                break;
+            case 3:
+                myform.isptype.value="iwan"; 
+            case 4:
+                return;
+            case 5:
+		//
+		// 2005-0707 Hammer
+		//     New site-to-site "Base-Tunnel" (XRIO, Jesse).
+		//     "Base-Tunnel" is really "tunnel" but MTU = 1420.
+		//
+                myform.basetunnel.value="1"; 
+                myform.isptype.value="tunnel"; 
+                break;
+            case 6:
+                // 2005-0921 Brian
+                // PPPoE
+                myform.isptype.value="pppoe";
+                break;
+            case 7:
+                // 2006-0207 Brian
+                // DHCP
+                myform.isptype.value="dhcp";
+                break;
+            case 8:
+                // 2008-0801 Brian
+                // PPTP
+                myform.isptype.value="pptp";
+                break;
+            case 9:
+                myform.isptype.value="ipsec";
+                break;
+            case 10:
+                myform.isptype.value="pppoe";
+                myform.flag_3g.value="1";
+                break;
+            case 11:
+                // 20110209 Brian L2TP
+                myform.isptype.value="l2tp";
+                break;
+            case 12:
+                // 20110209 Brian DMV
+                myform.isptype.value="dtunnel";
+                break;
+        }
+
+        goSubmit('NEWISP');
+    }
+
+    function delISP()
+    {
+        if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )   goSubmit('DELISP'); 
+    }
+    function stopPPP()
+    {
+        if ( qbConfirm(2, 'PPPoE Link Deletion ?') == 1 )   goSubmit('DELPPP'); 
+    }
+    
+    function saveISP()
+    {
+        //20061003 Brian modify user's privilege.
+        var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to Save it'); return;}
+
+        var msg='';
+        var okToGo=true;
+        var isUpdated=true;
+        var systemIP=myform.systemip.value; var orisystemIP=myform.orisystemip.value;
+        var gateway=myform.gateway.value;   var origateway=myform.origateway.value;
+        var ispname=myform.ispname.value;   var oriispname=myform.oriispname.value;
+        var target=myform.target.value;     var oritarget=myform.oritarget.value;
+        var namePattern;
+
+        if ( myform.isptype.value == "normal" )
+        {
+            var eth=myform.eth.value;           var orieth=myform.orieth.value;
+            var subnet=myform.subnet.value;     var orisubnet=myform.orisubnet.value;
+
+            if ( !isUpdated )           { msg+="Nothing Changed\\n"; okToGo=false; }
+            if ( eth=='-1' )            { msg+="Interface Must be Assigned\\n"; okToGo=false; }
+            if ( !checkSubnet(subnet) ) { msg+="Subnet Format Error\\n"; okToGo=false; }
+            if (myform.proxyport.value)
+            { 
+             if ( !isValidPort(myform.proxyport.value) ){myform.proxyport.value="";msg+="Proxy Port format Error\\n";okToGo=false;}
+            }                                  
+        }
+
+        if ( myform.isptype.value == "pppoe" )
+        {
+            var eth=myform.eth.value;           var orieth=myform.orieth.value;
+            var subnet=myform.subnet.value;     var orisubnet=myform.orisubnet.value;
+            var pppoename=myform.pppoename.value;     var oripppoename=myform.oripppoename.value;
+            var pppoepasswd=myform.pppoepasswd.value;     var oripppoepasswd=myform.oripppoepasswd.value;
+            var pppoeportdev=myform.pppoeportdev.value;     var oripppoeportdev=myform.oripppoeportdev.value;
+            var ddnsname=myform.ddnsname.value;     var oriddnsname=myform.oriddnsname.value;
+            var ddnspasswd=myform.ddnspasswd.value;     var oriddnspasswd=myform.oriddnspasswd.value;
+            var ddnsdomainname=myform.ddnsdomainname.value;     var oriddnsdomainname=myform.oriddnsdomainname.value;
+            var enableddns=myform.enableddns.value;
+            if ( enableddns != 'No' && !ddnsdomainname ) { msg+="Domain Name can not be empty\\n"; okToGo=false; }
+
+            if ( !isUpdated )           { msg+="Nothing Changed\\n"; okToGo=false; }
+            if ( eth=='-1' )            { msg+="Interface Must be Assigned\\n"; okToGo=false; }
+            if ( checkSubnet(subnet) ) { msg+=""; okToGo=true; } 
+            if ( systemIP==gateway )    { msg+=""; okToGo=true; }
+            if ( !ispname )                 { msg+="ISP Name can not be empty\\n"; okToGo=false; }
+            if ( !isValidIP(target) )       { msg+="Healthcheck IP Format Error\\n"; okToGo=true; }
+            if (myform.proxyport.value)
+            { 
+             if ( !isValidPort(myform.proxyport.value) ){myform.proxyport.value="";msg+="Proxy Port format Error\\n";okToGo=false;}
+            }
+            if ( myform.flag_3g.value == "1" )     
+            {                             
+             var usbmodemtype=myform.usbmodemtype.value;
+             if (eth.search('USB')!="-1")
+             {
+              if ( !usbmodemtype )       { msg+="Need to select the model of usb modem\\n"; okToGo=false; }
+             }
+            }                                                                                                                                               
+        }
+
+        if ( myform.isptype.value == "pptp" || myform.isptype.value == "l2tp" )
+        {
+            //var eth=myform.eth.value;           var orieth=myform.orieth.value;
+            var subnet=myform.subnet.value;     var orisubnet=myform.orisubnet.value;
+            var pppoename=myform.pppoename.value;     var oripppoename=myform.oripppoename.value;
+            var pppoepasswd=myform.pppoepasswd.value;     var oripppoepasswd=myform.oripppoepasswd.value;
+
+
+            if ( !isUpdated )           { msg+="Nothing Changed\\n"; okToGo=false; }
+            if ( checkSubnet(subnet) ) { msg+=""; okToGo=true; } 
+            if ( systemIP==gateway )    { msg+=""; okToGo=true; }
+            if ( !ispname )                 { msg+="ISP Name can not be empty\\n"; okToGo=false; }
+            if ( !isValidIP(target) )       { msg+="Healthcheck IP Format Error\\n"; okToGo=true; }
+        }
+
+        if ( myform.isptype.value == "dhcp" )
+        {
+            var eth=myform.eth.value;           var orieth=myform.orieth.value;
+            var subnet=myform.subnet.value;     var orisubnet=myform.orisubnet.value;
+            var enableddns=myform.enableddns.value;
+            if ( enableddns != 'No' && !ddnsdomainname ) { msg+="Domain Name can not be empty\\n"; okToGo=false; }
+
+
+            if ( !isUpdated )           { msg+="Nothing Changed\\n"; okToGo=false; }
+            if ( eth=='-1' )            { msg+="Interface Must be Assigned\\n"; okToGo=false; }
+            if ( checkSubnet(subnet) ) { msg+=""; okToGo=true; } 
+            if ( systemIP==gateway )    { msg+=""; okToGo=true; }
+            if ( !ispname )                 { msg+="ISP Name can not be empty\\n"; okToGo=false; }
+            if ( !isValidIP(target) )       { msg+="Target IP Format Error\\n"; okToGo=true; }
+            if (myform.proxyport.value)
+            { 
+             if ( !isValidPort(myform.proxyport.value) ){myform.proxyport.value="";msg+="Proxy Port format Error\\n";okToGo=false;}
+            }                                  
+        }
+
+        if ( myform.isptype.value == "tunnel" )
+        {
+            //var local=myform.local.value;       var orilocal=myform.orilocal.value;
+            var remote=myform.remote.value;     var oriremote=myform.oriremote;
+            var remotename=myform.remotename.value;     var oriremotename=myform.oriremotename; 
+            var mtu_value=myform.mtu_value.value; 
+            var mss_value=myform.mss_value.value;
+
+           //if ( remote==local )        { msg+="Local and Remote IP must be different\\n"; okToGo=false; }
+           //if ( !isValidIP(local) )    { msg+="Local IP Format Error\\n"; okToGo=false; }
+            if ( mtu_value>='1500' )    { msg+="Error MTU value\\n"; okToGo=false; }
+            if ( mss_value>='1500' )    { msg+="Error MSS value\\n"; okToGo=false; }
+            if ( remote != '' && !isValidIP(remote) )   { msg+="Remote IP Format Error\\n"; okToGo=false; alert(msg); return; }
+        }
+        if ( myform.isptype.value != "pppoe" && myform.isptype.value != "dhcp" &&  myform.isptype.value != "pptp" &&  myform.isptype.value != "l2tp")
+        {
+            if ( !ispname )                 { msg+="ISP Name can not be empty\\n"; okToGo=false; }
+            if ( systemIP==gateway )        { msg+="Gateway and System IP must be different\\n"; okToGo=false; }
+            if ( !isValidIP(systemIP) )     { msg+="System IP Format Error\\n"; okToGo=false; }
+            if ( !isValidIP(gateway) )      { msg+="Gateway IP Format Error\\n"; okToGo=false; }
+            if ( !isValidIP(target) )       { msg+="Healthcheck IP Format Error\\n"; okToGo=true; }
+        }
+        if ( !okToGo )              { alert(msg); }
+        if ( myform.isptype.value == "pppoe" || myform.isptype.value == "dhcp" ||  myform.isptype.value == "pptp" ||  myform.isptype.value == "l2tp" )
+        {
+            if ( qbConfirm(2, 'Get New IP ?') == 1 )
+            {goSubmit('SAVEANDDIAL');}
+            //if ( okToGo )               {  goSubmit('SAVE'); }
+            else
+            {goSubmit('SAVE');}
+        }
+        else
+        {goSubmit('SAVEANDDIAL');}
+        
+    }
+
+ 
+    function check_enabled_setting()
+    {
+        if(myform.enabled[0].checked)
+        {
+            for(var i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=false; }
+            if ( myform.isptype.value == "pppoe" || myform.isptype.value == "dhcp")
+            {
+               myform.gateway.disabled=true;
+               myform.subnet.disabled=true;
+               myform.systemip.disabled=true;
+               myform.pppoeportdev.disabled=true;
+            }
+            if ( myform.isptype.value == "pptp" || myform.isptype.value == "l2tp")
+            {
+               myform.gateway.disabled=true;
+               myform.subnet.disabled=true;
+               myform.systemip.disabled=true;
+            }
+            state_to_show_command_button();
+        }
+        else
+        {
+            for(var i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=false; }
+
+            myform.enabled[0].disabled=false;
+            myform.enabled[1].disabled=false;
+            
+            myform.isp.disabled=false; 
+            myform.isptype.disabled=false;
+            myform.action.disabled=false;
+//            if ( myform.isptype.value == "pppoe" || myform.isptype.value == "dhcp" || myform.isptype.value == "pptp")
+//            {
+//               myform.gateway.disabled=true;
+//               myform.subnet.disabled=true;
+//               myform.systemip.disabled=true;
+//            }
+//            if ( myform.isptype.value == "pppoe" )
+//            {
+//               myform.pppoeportdev.disabled=true;
+//            }
+
+	    // 2005-0707 Hammer
+            myform.basetunnel.disabled=false;
+
+            if(state=='NONE')
+            {
+                myform.enabled[0].disabled=true;
+                myform.enabled[1].disabled=true;
+            }
+
+        }
+        
+        myform.NEW.disabled=false;
+        myform.DEL.disabled=false;
+    }
+    
+    function state_to_show_command_button()
+    {
+        for(var i=0;i<myform.elements.length;i++) 
+        {
+            if(myform.elements[i].type=='button') { myform.elements[i].disabled=true; }
+        }    
+        if ( myform.isptype.value == "pppoe" || myform.isptype.value == "pptp" || myform.isptype.value == "l2tp")
+        {
+            switch(state) 
+            { 
+                case 'FORMATCHECK':
+                    myform.NEW.disabled=false; 
+                    myform.SAVE.disabled=false; 
+                    myform.DEL.disabled=false; 
+                    myform.RESTORE.disabled=false; 
+                    myform.STOP.disabled=true; 
+                break;
+                case 'FORMATOK':
+                    myform.NEW.disabled=false; 
+                    myform.DEL.disabled=false; 
+                    myform.RESTORE.disabled=false; 
+                    myform.SAVE.disabled=false; 
+                    myform.STOP.disabled=true; 
+                    if(myform.DSIPDETECT) myform.DSIPDETECT.disabled=false;
+                break;
+                case 'HEALTHYOK':
+                    myform.SAVE.disabled=false; 
+                    myform.STOP.disabled=true; 
+                    myform.RESTORE.disabled=false; 
+                    if(myform.DSIPDETECT) myform.DSIPDETECT.disabled=false;
+                    myform.DEL.disabled=false;
+                break; 
+           }
+        }
+        if ( myform.isptype.value != "pppoe" || myform.isptype.value != "pptp" || myform.isptype.value != "l2tp")
+        {
+            switch(state) 
+            { 
+                case 'FORMATCHECK':
+                    myform.NEW.disabled=false; 
+                    myform.SAVE.disabled=false; 
+                    myform.DEL.disabled=false; 
+                    myform.RESTORE.disabled=false; 
+                    myform.STOP.disabled=true; 
+                break;
+                case 'FORMATOK':
+                    myform.NEW.disabled=false; 
+                    myform.DEL.disabled=false; 
+                    myform.RESTORE.disabled=false; 
+                    myform.SAVE.disabled=false; 
+                    myform.STOP.disabled=true; 
+                    if(myform.DSIPDETECT) myform.DSIPDETECT.disabled=false;
+                break;
+                case 'HEALTHYOK':
+                    myform.SAVE.disabled=false; 
+                    myform.STOP.disabled=true; 
+                    myform.RESTORE.disabled=false; 
+                    if(myform.DSIPDETECT) myform.DSIPDETECT.disabled=false;
+                    myform.DEL.disabled=false;
+                break; 
+            }
+        }
+    }
+    </script>
+
+BASIC_SCRIPT
+}
+#basicScript
+
+#======================================================================================================================
+sub maintainBasic 
+{
+    my (%action)=@_;
+
+    if ( !$action{action} ) { return; }
+    
+    # my $xbasetunnel = $action{basetunnel};
+    # print qq(basetunnel = [$xbasetunnel]<BR>);
+
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    my $target;
+    my @available_iplist;
+    
+    #--- move the pointer $target to the isp we want to deal with ...
+    foreach my $item ( @$isplist ) {  if ( $item->{iid} eq $action{iid} ) { $target=$item; last; } }
+
+    #----- set undefined fields of %action to EMPTY --------------------
+
+    foreach my $item (keys %action ) {
+
+	#
+        # 2005-0707 Hammer
+        #    Don't do this to the field "basetunnel".
+        #    "basetunnel" is not defined in basic.xml,
+	#    but it's used in $action.
+	#
+
+        if ( $item eq "basetunnel" ) { next; }
+	if ( !defined($action{$item}) ) { $action{$item} =''; }
+    }
+
+    if ( $action{action} eq "GETSTATE" ) 
+    {
+        return $target->{state};
+    }
+    elsif ( $action{action}=~m/^IFNICUSED$/ ) 
+    {
+        foreach my $isp ( @$isplist ) 
+        {
+            if ( $isp->{iid} eq 'system' ) { next; }
+            if ( $isp->{nic} eq $action{nic} ) { return $isp->{iid}; }
+        }
+        return 0;
+    }
+    elsif ( $action{action}=~m/^ALIASSUBNET1$/ ) 
+    {
+        foreach my $isp ( @$isplist ) 
+        {
+            if ( $isp->{iid} eq $action{iid} && $isp->{alias_enabled} ) { return $isp->{alias_subnet1} }
+        }
+        return 0;
+    }
+    elsif ( $action{action}=~m/^ALIASSUBNET2$/ ) 
+    {
+        foreach my $isp ( @$isplist ) 
+        {
+            if ( $isp->{iid} eq $action{iid} && $isp->{alias_enabled} ) { return $isp->{alias_subnet2} }
+        }
+        return 0;
+    }
+    elsif ( $action{action} eq "GETNORMALISPIIDLIST" ) 
+    {
+        my %isplisthash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} ne 'system' && $item->{isptype} ne 'tunnel' ) { $isplisthash{"$item->{iid}"}=1; } 
+        }
+
+        return sort num_sort keys %isplisthash;
+    }
+    elsif ( $action{action} eq "GETTUNNELISPIDLIST" )
+    {
+        my %isplisthash;
+        foreach my $item ( @$isplist )
+        {
+            if( $item->{isptype} eq 'tunnel' || $item->{isptype} eq 'dtunnel' ) { $isplisthash{"$item->{iid}"}=1; }
+        }
+
+        return sort num_sort keys %isplisthash;
+    }
+    #Brian 2006/09/15 for measure speed tools
+    elsif ( $action{action} eq "GETTUNNELSYSTEMIPLIST" )
+    {
+        my %isplisthash;
+        foreach my $item ( @$isplist )
+        {
+            if( $item->{iid} ne 'system' && $item->{isptype} eq 'tunnel' ) { $isplisthash{"$item->{systemip}"}=1; }
+        }
+
+        return sort num_sort keys %isplisthash;
+    }
+    elsif ( $action{action} eq "GETWANIP" )
+    {
+        my @wanip;
+        foreach my $item ( @$isplist )
+        {
+            if( $item->{iid} eq 'system' )  { next; }
+            if( $item->{isptype} ne 'tunnel' && $item->{isptype} ne 'ipsec' )
+            {
+                push( @wanip, $item->{systemip} );
+            }
+        }
+        return @wanip;
+    }
+    elsif ( $action{action} eq "GETWANISPNAME" )
+    {
+        my @ispname;
+
+        foreach my $item ( @$isplist )
+        {
+            if( $item->{iid} eq 'system' )  { next; }
+            if( $item->{isptype} ne 'tunnel' && $item->{isptype} ne 'ipsec' && $item->{isptype} ne 'dtunnel' )
+            {
+                push( @ispname, $item->{ispname} );
+            }
+        }
+        return @ispname;
+    }
+    elsif ( $action{action} eq "GETISPNAME" )
+    {
+        foreach my $item ( @$isplist )
+        {
+             if( $item->{systemip} eq $action{systemip} ){ return $item->{ispname}; }
+        }
+    }
+    elsif ( $action{action} eq "GETIPBYIID" )
+    {
+        foreach my $item ( @$isplist )
+        {
+             if( $item->{iid} eq $action{iid} ){ return $item->{systemip}; }
+        }
+    }
+    elsif ( $action{action} eq "GETGWBYIID" )
+    {
+        foreach my $item ( @$isplist )
+        {
+             if( $item->{iid} eq $action{iid} ){ return $item->{gateway}; }
+        }
+    }
+    elsif ( $action{action} eq "GETNAMEBYIID" )
+    {
+        foreach my $item ( @$isplist )
+        {
+             if( $item->{iid} eq $action{iid} ){ return $item->{ispname}; }
+        }
+    }
+    elsif ( $action{action} eq "GETIP" )
+    {
+        foreach my $item ( @$isplist )
+        {
+             if( $item->{ispname} eq $action{ispname} ){ return $item->{systemip}; }
+        }
+
+    }
+
+    #Brian 2006/09/15 for measure speed tools
+    elsif ( $action{action} eq "GETTUNNELGATEWAYLIST" )
+    {
+        my %isplisthash;
+        foreach my $item ( @$isplist )
+        {
+            if( $item->{iid} ne 'system' && $item->{isptype} eq 'tunnel' ) { $isplisthash{"$item->{gateway}"}=1; }
+        }
+
+        return sort num_sort keys %isplisthash;
+    }
+
+    #Brian 2006/09/15 for measure speed tools
+    elsif ( $action{action} eq "GETNORMALSYSTEMIPLIST" )
+    {
+        my %isplisthash;
+        foreach my $item ( @$isplist )
+        {
+            if( $item->{iid} ne 'system' && $item->{isptype} ne 'tunnel' ) { $isplisthash{"$item->{systemip}"}=1; }
+        }
+
+        return sort num_sort keys %isplisthash;
+    }
+
+    elsif ( $action{action} eq "GETIIDLIST" ) 
+    {
+        my %isplisthash;
+        foreach my $item ( @$isplist ) { if( $item->{iid} ne 'system' ) { $isplisthash{"$item->{iid}"}=1; } }
+        return sort num_sort keys %isplisthash;
+    }
+    elsif ( $action{action} eq "GETGOODIIDLIST" ) 
+    {
+        my %isplisthash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' ) { next; }
+            if( !($item->{state}=~m/^HEALTHYOK$|^FORMATOK$/) ) { next; }
+            $isplisthash{"$item->{iid}"}=1; 
+        }
+        return sort keys %isplisthash;
+    }
+    elsif ( $action{action} eq "GETGOODNORMALIIDLIST" ) 
+    {
+        my %isplisthash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' || $item->{isptype} eq 'tunnel' || $item->{isptype} eq 'ipsec' ||  $item->{isptype} eq 'dtunnel') { next; }
+            if( !($item->{state}=~m/^HEALTHYOK$|^FORMATOK$/) ) { next; }
+            $isplisthash{"$item->{iid}"}=1; 
+        }
+        return sort keys %isplisthash;
+    }
+    elsif ( $action{action} eq "GETGWNICHASH" )
+    {
+        my %gwnichash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            $gwnichash{"$item->{gateway}"}="$item->{nic}"; 
+        }
+        
+        return %gwnichash;
+    }
+    elsif ( $action{action} eq "GETISPNICHASH" )
+    {
+        my %ispnichash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            $ispnichash{"$item->{iid}"}="$item->{nic}"; 
+        }
+        return %ispnichash;
+    }
+    elsif ( $action{action} eq "GETALIVEIIDLIST"  )     
+    {
+        my %isplisthash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} ne 'system' && $item->{alive} && $item->{enabled} ) 
+            { 
+                $isplisthash{"$item->{iid}"}=1; 
+            } 
+        }
+        return sort keys( %isplisthash );
+    }
+    elsif ( $action{action} eq "GETACTIVEALIVEIIDLIST"  )     
+    {
+        my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+        my $isplist=$ispref->{isp};
+        my %isplisthash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} ne 'system' && $item->{alive} && $item->{enabled} ) 
+            { 
+                $isplisthash{"$item->{iid}"}=1; 
+            } 
+        }
+        return sort keys( %isplisthash );
+    }
+    #for mpv list show status
+    elsif ( $action{action} eq "GETALIVEBYIID" )
+    {
+        my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+        my $isplist=$ispref->{isp};
+        my %isplisthash;
+        foreach my $item ( @$isplist )
+        {
+            if ( $item->{iid} eq $action{iid} && $item->{ispname} eq $action{ispname} )
+            {
+                return $item->{alive};
+            }
+        }
+        return '0';
+    }
+    elsif ( $action{action} eq "GETACTIVEISPINFO"  )
+    {
+        my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+        my $isplist=$ispref->{isp};
+        foreach my $item ( @$isplist )
+        {
+            if( $item->{iid} eq $action{iid} )
+            {
+                return $item;
+            }
+        }
+    }
+    elsif ( $action{action} eq "GETISPINFO"  )
+    {
+        foreach my $item ( @$isplist )
+        {
+            if( $item->{iid} eq $action{iid} )
+            {
+                return $item;
+            }
+        }
+    }
+    elsif ( $action{action} eq "getIspSubnets" )
+    {
+        my @ispsubnets;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            push(@ispsubnets, $item->{subnet}); 
+        }
+        
+        return @ispsubnets;
+    }
+    elsif ( $action{action} eq "GETISPSUBNETHASH" )
+    {
+        my %ispsubnethash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            $ispsubnethash{"$item->{iid}"}="$item->{subnet}"; 
+        }
+        
+        return %ispsubnethash;
+    }
+    elsif ( $action{action} eq "GETISPNAMEHASH" )
+    {
+        my %isphash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            $isphash{"$item->{iid}"}="$item->{ispname}"; 
+        }
+        
+        return %isphash;
+    }
+    elsif ( $action{action} eq "GETNORMALISPNAMEHASH" )
+    {
+        my %isphash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system'  || $item->{isptype} eq 'tunnel' )  { next; }
+            $isphash{"$item->{iid}"}="$item->{ispname}"; 
+        }
+        
+        return %isphash;
+    }
+    elsif ( $action{action} eq "GETGOODNORMALISPNAMEHASH" )
+    {
+        my %isphash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system'  || $item->{isptype} eq 'tunnel' )  { next; }
+            if( !($item->{state}=~m/^HEALTHYOK$|^FORMATOK$/) ) { next; }
+            $isphash{"$item->{iid}"}="$item->{ispname}"; 
+        }
+        
+        return %isphash;
+    }
+    elsif ( $action{action} eq "GETACTIVEISPRATEHASH" )
+    {
+        my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+        my $isplist=$ispref->{isp};
+        my %isphash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            $isphash{"$item->{iid}"}=$item->{download}.':'.$item->{upload}; 
+        }
+        
+        return %isphash;
+    }
+    elsif ( $action{action} eq "GETACTIVEISPNAMEHASH" )
+    {
+        my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+        my $isplist=$ispref->{isp};
+        my %isphash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            $isphash{"$item->{iid}"}="$item->{ispname}"; 
+        }
+        
+        return %isphash;
+    }
+    elsif ( $action{action} eq "GETALLISPNIC" )
+    {
+        my %interface;
+        my $nicstr;
+        
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' || $item->{nic}==-1 )  { next; }
+            $interface{$item->{nic}}=1; 
+        }
+        
+        foreach my $nic ( keys %interface ) { $nicstr.=" ".$nic; }
+        
+        return $nicstr;
+    }
+    elsif ( $action{action} eq "GETACTIVEALLISPNIC" )
+    {
+        my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+        my $isplist=$ispref->{isp};
+        
+        my %interface;
+        my $nicstr;
+        
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' || $item->{nic}==-1 )  { next; }
+            $interface{$item->{nic}}=1; 
+        }
+        
+        foreach my $nic ( keys %interface ) { $nicstr.=" ".$nic; }
+        
+        return $nicstr;
+    }
+    elsif ( $action{action} eq "GETISPGWHASH" )
+    {
+        my %isphash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            $isphash{"$item->{iid}"}="$item->{gateway}"; 
+        }
+        
+        return %isphash;
+    }
+    elsif ( $action{action} eq "GETACTIVEISPNICHASH" )
+    {
+        my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+        my $isplist=$ispref->{isp};
+        my %nichash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            $nichash{"$item->{iid}"}="$item->{nic}"; 
+        }
+        
+        return %nichash;
+    }
+    elsif ( $action{action} eq "GETACTIVEISPGWHASH" )
+    {
+        my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+        my $isplist=$ispref->{isp};
+        my %isphash;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            $isphash{"$item->{iid}"}="$item->{gateway}"; 
+        }
+        
+        return %isphash;
+    }
+    elsif ( $action{action} eq "GETALLISPSUBNET" )
+    {
+        my %subnet;
+        foreach my $item ( @$isplist ) 
+        { 
+            if( $item->{iid} eq 'system' )  { next; }
+            if( !$item->{subnet} ) { next; }
+            $subnet{$item->{subnet}}=1; 
+        }
+        
+        return keys %subnet;
+    }
+    elsif ( $action{action} eq "GETISPGATEWAY" ) 
+    {
+        return $target->{gateway};
+    }
+    elsif ( $action{action} eq "GETISPSUBNET" ) 
+    {
+        return $target->{subnet}; 
+    }
+    elsif ( $action{action} eq "GETISPNIC" ) 
+    {
+        return $target->{nic}; 
+    }
+    elsif ( $action{action} eq "GETBELONGIID" ) 
+    {
+        my $resultiid='';
+
+        foreach my $item ( @$isplist ) 
+        {
+            if ( $item->{iid} eq 'system' ) { next; }
+            
+            my $result=subnet_belong_check( $action{subnet}, $item->{subnet} ); 
+            
+            if ( $result == 1 || $result==3 ) { $resultiid=$item->{iid}; last; } 
+        }
+
+        return $resultiid;
+    }
+    elsif ( $action{action} eq "ALLISPREADY" )
+    {
+        my $okStatus=1;
+        foreach  my $isp ( @$isplist )
+        {
+            if ( $isp->{iid} eq 'system' ) { next; }
+            if ( $isp->{state}=~m/^FORMATCHECK$/ ) 
+            { 
+                $okStatus=0;
+                $gMSGPROMPT.=qq(WAN $isp->{iid} is NOT Configured OK\\n);
+            }
+        }
+
+        return $okStatus;
+    }
+    elsif ( $action{action} eq "DSIPDETECT" ) 
+    {
+        my $dsip_result=&callPserver( action=>'DSIPDETECT' );
+        if ( $dsip_result==-1 ) { $gMSGPROMPT.=qq (DSIP Detection Time Out\\n); }
+        if ( $dsip_result==0 ) { $gMSGPROMPT.=qq (DSIP detection Failed\\n); }
+        else { $gMSGPROMPT.=qq (DSIP detection Completed\\n); }               
+           #底層測完後，已經自動更新 basic.xml 中各家 isp 的 DSIP 值了
+        #作完 Routing Table 的 update，就 retrun 以免舊的 dsip 資料又寫回去
+        #dep:
+        maintainRtable( action=>'DSIPUPDATE' );
+        $gMSGPROMPT.=qq (Routing Tables Updated Ok\\n);
+        return 1;
+    }  
+    elsif ( $action{action} eq "ONOFF" ) 
+    {
+        $target->{enabled}=$action{enabled};
+    }
+    elsif ( $action{action} eq "CHKUPPER" )
+    {
+        my %newisp;
+        my $totalmpvisp=0;
+        my $totalnormalisp=0;
+        my $totalpptp=0;
+        my $totall2tp=0;
+        my $total3gisp=0;
+
+        foreach my $isp ( @$isplist )
+        {
+            if ($isp->{iid}  eq 'system')
+            {
+                %newisp=%$isp;
+            }
+            else
+            {
+                if ( $isp->{isptype} eq "tunnel" )          { $totalmpv++; }
+                elsif ( $isp->{isptype} eq "normal" )       { $totalnormal++; }
+                elsif ( $isp->{isptype} eq "pppoe" )
+                {
+                  if ($isp->{pppoeportdev} =~m/ttyACM/ || $isp->{pppoeportdev} =~m/ttyUSB/ && $total3gisp <=$gMAX3GISP)
+                  {
+                    $total3gisp++;
+                    $gMAXNORMALISP++;
+                  }
+                  $totalnormal++;
+                }
+                elsif ( $isp->{isptype} eq "pptp" )       { $totalpptp++; }
+                elsif ( $isp->{isptype} eq "l2tp" )       { $totall2tp++; }
+                elsif ( $isp->{isptype} eq "dhcp" )       { $totalnormal++; }
+            }
+        }
+
+        #=====================================================================
+        # judge if normal isp is overflow
+        if ( $gMAXNORMALISP  && $totalnormal > $gMAXNORMALISP )
+        {
+            $gMSGPROMPT.=qq( $totalnormal Upper bound of Normal ISP is $gMAXNORMALISP \\n);
+            return 0;
+        }
+        #=====================================================================
+        # judge if pppoe isp is overflow
+        if ( $gMAXNORMALISP  && $totalnormal > $gMAXNORMALISP )
+        {
+            $gMSGPROMPT.=qq( Upper bound of PPPoE ISP is $gMAXNORMALISP \\n);
+            return 0;
+        }
+        #=====================================================================
+        # judge if pptp isp is overflow
+        if ( $gMAXPPTPISP  && $totalpptp > $gMAXPPTPISP )
+        {
+            $gMSGPROMPT.=qq( Upper bound of PPTP ISP is $gMAXPPTPISP \\n);
+            return 0;
+        }
+        #=====================================================================
+        # judge if l2tp isp is overflow
+        if ( $gMAXL2TPISP  && $totall2tp > $gMAXL2TPISP )
+        {
+            $gMSGPROMPT.=qq( Upper bound of L2TP ISP is $gMAXL2TPISP \\n);
+            return 0;
+        }
+        #=====================================================================
+        # judge if dhcp isp is overflow
+        if ( $gMAXNORMALISP  && $totalnormal > $gMAXNORMALISP )
+        {
+            $gMSGPROMPT.=qq( Upper bound of DHCP ISP is $gMAXNORMALISP \\n);
+            return 0;
+        }
+        #=====================================================================
+        # judge if mpv isp is overflow
+        if ( $gMAXMPVISP  && $totalmpv > $gMAXMPVISP )
+        {
+            $gMSGPROMPT.=qq( Upper bound of Tunnel ISP is $gMAXMPVISP \\n);
+            return 0;
+        }
+    }
+    elsif ( $action{action} eq "NEWISP" ) 
+    {
+        my %newisp;
+        my %iidList;
+        my %ethList;
+        my $newmpv;
+        my $totalmpvisp=0;
+        my $totalnormalisp=0;
+        my $totalpptp=0;
+        my $totall2tp=0;
+        my $total3gisp=0;
+
+        foreach my $isp ( @$isplist ) 
+        { 
+            if ($isp->{iid}  eq 'system') 
+            { 
+                %newisp=%$isp; 
+            } 
+            else 
+            { 
+                $iidList{$isp->{iid}}=1; 
+                $ethList{$isp->{nic}}=1;
+
+                if ( $isp->{isptype} eq "tunnel" )     	    { $totalmpv++; }
+                elsif ( $isp->{isptype} eq "normal" )       { $totalnormal++; }
+                #elsif ( $isp->{isptype} eq "pppoe" )       { $totalnormal++; }
+                elsif ( $isp->{isptype} eq "pppoe" )
+                {
+                  if ( $action{flag_3g} eq "1" || $isp->{pppoeportdev} =~m/ttyACM/ || $isp->{pppoeportdev} =~m/ttyUSB/ && $total3gisp <=$gMAX3GISP)
+                  {
+                    $total3gisp++; 
+                    $gMAXNORMALISP++;
+                  }
+                  $totalnormal++;
+                }
+                elsif ( $isp->{isptype} eq "pptp" )       { $totalpptp++; }
+                elsif ( $isp->{isptype} eq "l2tp" )       { $totall2tp++; }
+                elsif ( $isp->{isptype} eq "dhcp" )       { $totalnormal++; }
+            }
+        }
+        
+        #=====================================================================
+        # judge if normal isp is overflow
+        if ( $gMAXNORMALISP  && $totalnormal >= $gMAXNORMALISP && $action{isptype} eq "normal")
+        {
+            $gMSGPROMPT.=qq( Upper bound of Normal ISP is $gMAXNORMALISP \\n);
+            return 0; 
+        }
+        #=====================================================================
+        # judge if pppoe isp is overflow
+        if ( $gMAXNORMALISP  && $totalnormal >= $gMAXNORMALISP && $action{isptype} eq "pppoe")
+        {
+            $gMSGPROMPT.=qq( Upper bound of PPPoE ISP is $gMAXNORMALISP \\n);
+            return 0; 
+        }
+        #=====================================================================
+        # judge if pptp isp is overflow
+        if ( $gMAXPPTPISP  && $totalpptp >= $gMAXPPTPISP && $action{isptype} eq "pptp")
+        {
+            $gMSGPROMPT.=qq( Upper bound of PPTP ISP is $gMAXPPTPISP \\n);
+            return 0; 
+        }
+        #=====================================================================
+        # judge if l2tp isp is overflow
+        if ( $gMAXL2TPISP  && $totall2tp >= $gMAXL2TPISP && $action{isptype} eq "l2tp")
+        {
+            $gMSGPROMPT.=qq( Upper bound of L2TP ISP is $gMAXL2TPISP \\n);
+            return 0; 
+        }
+        #=====================================================================
+        # judge if dhcp isp is overflow
+        if ( $gMAXNORMALISP  && $totalnormal >= $gMAXNORMALISP && $action{isptype} eq "dhcp")
+        {
+            $gMSGPROMPT.=qq( Upper bound of DHCP ISP is $gMAXNORMALISP \\n);
+            return 0; 
+        }
+        #=====================================================================
+        # judge if mpv isp is overflow
+        if ( $gMAXMPVISP  && $totalmpv >= $gMAXMPVISP && $action{isptype} eq "tunnel" )
+        {
+            $gMSGPROMPT.=qq( Upper bound of Tunnel ISP is $gMAXMPVISP \\n);
+            return 0; 
+        }
+        
+
+        foreach my $iid ( 1..$gMAXISP ) { if ( !exists($iidList{$iid}) )       { $gNEWISPID=$iid; last; } }
+
+	# 2005-0707 Hammer
+	if ( $action{basetunnel} eq "1" ) {
+	    #
+	    # This is a new "Base-Tunnel".
+	    # The interface name of the base-tunnels is supposed to begins
+	    # from mpv200, mpv201, mpv202, ... , mpv399.
+	    # Sorry ! It's hard-coded for emergency.
+	    #
+            foreach my $mpv ( $gFIRSTBASETUNNEL .. $gLASTBASETUNNEL ) {
+		if ( !exists($ethList{'mpv'.$mpv}) ) {
+		    $newmpv='mpv'.$mpv; last;
+		}
+	    }
+
+	} else {
+	    # This is a new "MPV".
+            foreach my $mpv ( 0..$gMAXISP ) {
+		if ( !exists($ethList{'mpv'.$mpv}) ) {
+		    $newmpv='mpv'.$mpv; last;
+		}
+	    }
+	}
+
+        if ( !$gNEWISPID ) 
+        {
+            $gMSGPROMPT.=qq( Upper bound of ISP is $gMAXISP \\n);
+            return 0; 
+        }
+
+        $newisp{iid}=$gNEWISPID;
+
+        $newisp{nic}=( $action{isptype} eq "tunnel" ) ? ($newmpv) : ('-1');
+
+        # give a default ispname 
+        $newisp{ispname}='ISP'.$gNEWISPID;
+        $newisp{state}="FORMATCHECK";
+        $newisp{enabled}="1";
+        $newisp{isptype}=$action{isptype};
+        $newisp{flag_3g}=$action{flag_3g};
+        $newisp{apn_name}="internet";
+        $newisp{dial_num}="*99#";
+        if ( $action{isptype} eq "tunnel" ) { $newisp{mtu}=$newisp{mss}=1; }
+        push( @$isplist, \%newisp);
+    
+        #將插入新一筆ISP的@$isplist重新排序
+        @$isplist=sort sort_isp_by_id @$isplist;
+            
+        ###########################################################################################
+        #以下處理 NEWISP 的 DEPENDENCY 問題
+        
+        #@dep1
+        ###########################################################################################
+        #1. zoneconfig.xml 新增此 ISP 的 DMZ entry 
+        if ( $action{isptype} eq 'normal' ) { maintainZone( action=>"ADDISPOFDMZ", dmzid=>$gNEWISPID ); }
+        if ( $action{isptype} eq 'pppoe' ) { maintainZone( action=>"ADDISPOFDMZ", dmzid=>$gNEWISPID ); }
+        if ( $action{isptype} eq 'pptp' ) { maintainZone( action=>"ADDISPOFDMZ", dmzid=>$gNEWISPID ); }
+        if ( $action{isptype} eq 'l2tp' ) { maintainZone( action=>"ADDISPOFDMZ", dmzid=>$gNEWISPID ); }
+        if ( $action{isptype} eq 'dhcp' ) { maintainZone( action=>"ADDISPOFDMZ", dmzid=>$gNEWISPID ); }
+        ##20100622 Add a record for MPV bridge
+        if ( $action{isptype} eq 'tunnel' ) { maintainZone( action=>"ADDISPOFDMZ", dmzid=>$gNEWISPID ); }
+        
+        #@dep2
+        ###########################################################################################
+        #2. dns.xml 新增此 ISP 的 DNS entry 
+        if ( $action{isptype} eq 'normal' ) { maintainDNS(  action=>'NEWISP', isp=>$gNEWISPID  ); }
+        if ( $action{isptype} eq 'pppoe' ) { maintainDNS(  action=>'NEWISP', isp=>$gNEWISPID  ); }
+        if ( $action{isptype} eq 'pptp' ) { maintainDNS(  action=>'NEWISP', isp=>$gNEWISPID  ); }
+        if ( $action{isptype} eq 'l2tp' ) { maintainDNS(  action=>'NEWISP', isp=>$gNEWISPID  ); }
+        if ( $action{isptype} eq 'dhcp' ) { maintainDNS(  action=>'NEWISP', isp=>$gNEWISPID  ); }
+
+        #@dep3
+        ###########################################################################################
+        # ipbank.xml Create ip entries for added ISP 
+        if ( $action{isptype} eq 'normal' ) { maintainIPBank(action=>'createisp', isp=>$gNEWISPID); }
+        if ( $action{isptype} eq 'pppoe' ) { maintainIPBank(action=>'createisp', isp=>$gNEWISPID); }
+        if ( $action{isptype} eq 'pptp' ) { maintainIPBank(action=>'createisp', isp=>$gNEWISPID); }
+        if ( $action{isptype} eq 'l2tp' ) { maintainIPBank(action=>'createisp', isp=>$gNEWISPID); }
+        if ( $action{isptype} eq 'dhcp' ) { maintainIPBank(action=>'createisp', isp=>$gNEWISPID); }
+        if ( $action{isptype} eq 'tunnel' ) { maintainIPBank(action=>'createisp', isp=>$gNEWISPID); }
+
+        #@dep4
+        # tcclass.xml - Create area entry for this imq
+	# old qos
+        #maintainTC(action=>'CREATEISP', isp=>$gNEWISPID); # no this action!! nancy041014
+    }
+    elsif ( $action{action} eq "SAVEANDDIAL" ) 
+    {
+        my $IS_EVERYTHING_OK=1;
+        my $IS_SUBNET_CHANGED=0; 
+        
+        my $oldip = $target->{systemip};
+        
+        #**************************************************************************************
+        #   防止user輸入英文字母及數字及 _ 以外的字元
+        if ( $action{ispname}!~/.{3,12}/ || $action{ispname}=~m/$gBIG5/ || $action{ispname}=~m/\s+/ ) 
+        { 
+            $gMSGPROMPT.=qq (ERROR:ISPNAME is a MUST or Format Error\\n); 
+            $IS_EVERYTHING_OK=0;
+        }
+        if ($action{nic} =~m/ttyACM/ || $action{nic} =~m/ttyUSB/ || $action{nic} =~m/SIM/ )
+        {
+            my $total3gisp=0;
+
+           foreach my $isp ( @$isplist ) 
+           { 
+            if ($isp->{pppoeportdev} =~m/ttyACM/ || $isp->{pppoeportdev} =~m/ttyUSB/)
+            {
+                $total3gisp++;
+            }
+           }
+           if ( $total3gisp > $gMAX3GISP ) 
+           { 
+                $gMSGPROMPT.=qq (ERROR:Upper bound of 3G ISP is $gMAX3GISP\\n); 
+                $IS_EVERYTHING_OK=0;
+           }
+        }
+        #  To transform the domain name into IP format
+        if ( $action{proxyname}=~m/[A-Za-z]/ )
+        {
+            my $IP=runCommand(command=>'/opt/qb/bin/script/ns ', params=>$action{proxyname});
+            $IP=~s/\n//g;
+            if ( $IP eq "" )
+            {
+               $gMSGPROMPT.=qq (ERROR:Its fail to transform the proxy name into IP format.\\n);
+            }
+            $action{proxyip}=$IP;
+            $action{enableproxy}=1;
+            $IS_EVERYTHING_OK=1;
+        }
+        if ( $action{proxyname}!~m/[A-Za-z]/ )
+        {
+           $action{proxyip}=$action{proxyname};
+           $action{enableproxy}=1;
+        }
+                                                        
+                                                                                    
+        if ( $action{isptype} eq "normal"||$action{isptype} eq "pppoe"||$action{isptype} eq "dhcp" ||$action{isptype} eq "pptp" || $action{isptype} eq "l2tp")
+        {
+            #check if selected PORT has been used as DHCP PORT
+            #$checkport=runCommand(command=>'grep ', params=>$action{nic}.' '.'/usr/local/apache/qbconf/basic.xml');
+            #if ($action{isptype} eq "dhcp" && $checkport ne "")
+            #{
+            #    my $port=$action{nic}; $port=~s/eth//; $port++;
+            #    $gMSGPROMPT.=qq (Not Available:Port$port has already been assigned as DHCP or Normal ISP port\\n);
+            #    $gMSGPROMPT.=qq (Please use another port or setup DHCP before Normal ISP on the same port\\n);
+            #    $IS_EVERYTHING_OK=0;
+            #}
+
+            #check select port or not
+            if ($action{isptype} eq "pppoe" && $action{nic} eq '-1')
+            {
+                $gMSGPROMPT.=qq (Interface must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+
+            #check name/password
+            #if ($action{isptype} eq "pppoe" && $action{pppoename} eq "")
+            #{
+            #    $gMSGPROMPT.=qq (PPPoE's name must be Assigned\\n);
+            #    $IS_EVERYTHING_OK=0;
+            #}
+            #if ($action{isptype} eq "pppoe" && $action{pppoepasswd} eq "")
+            #{
+            #    $gMSGPROMPT.=qq (PPPoE's password must be Assigned\\n);
+            #    $IS_EVERYTHING_OK=0;
+            #}
+            if ($action{isptype} eq "pptp" && $action{pppoename} eq "")
+            {
+                $gMSGPROMPT.=qq (PPTP's name must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+            if ($action{isptype} eq "pptp" && $action{pppoepasswd} eq "")
+            {
+                $gMSGPROMPT.=qq (PPTP's password must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+            if ($action{isptype} eq "l2tp" && $action{pppoename} eq "")
+            {
+                $gMSGPROMPT.=qq (L2TP's name must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+            if ($action{isptype} eq "l2tp" && $action{pppoepasswd} eq "")
+            {
+                $gMSGPROMPT.=qq (L2TP's password must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+
+           #if ($action{isptype} eq "pppoe" && $action{nic} ne '-1' && $action{pppoename} ne "" && $action{pppoepasswd} ne "")
+           if ($action{isptype} eq "pppoe" && $action{nic} ne '-1')
+           {
+             if ($action{pppoepasswd} eq ""){$action{pppoepasswd}="null";} 
+             my $xname=$action{pppoename};
+             my $xpasswd=$action{pppoepasswd};
+             #Brian 20061225 fix a passwd bug,if the last word is "&"
+             $xpasswd="\'$xpasswd\'";
+             my $xnic=$action{nic};
+             my $linenum=$action{iid};
+             my $config="/etc/ppp/pppoe.conf";
+             my $imei;
+             my $device_3g;
+
+             #Establish PPPoE Link
+             if ($xnic =~m/ttyACM/ || $xnic =~m/ttyUSB/ || $xnic =~m/SIM/)
+             {
+               runCommand(command=>'rm ', params=>'-f /tmp/ppplog/.info');
+               if (!$action{apn_name}){$action{apn_name}="null";}
+               if (!$action{pppoename}){$action{pppoename}="username";}
+               if (!$action{pppoepasswd}){$action{pppoepasswd}="password";}
+               if (!$action{mode_2G3G}){$action{mode_2G3G}="Auto";}
+               if (!$action{band_2G3G}){$action{band_2G3G}="Auto";}
+               if ($xnic =~m/SIM/)
+               {
+                 $imei = editModules( action=>"GETIMEINOBYNAME", interface_name=>$xnic );
+                 $device_3g=runCommand(command=>'cat ', params=>qq(/tmp/usbdev.tab \|grep $imei\|awk \'\{print \$3\}\') );
+                 $device_3g=~s/\n//g; 
+                 runCommand(command=>'/usr/bin/wvdialsetup ', params=>$action{ispname}.' '.$device_3g.' '.$action{apn_name}.' '.$action{iid}.' '.$action{dial_num}.' '.$action{pppoename}.' '.$action{pppoepasswd}.' '.$action{mode_2G3G}.' '.$action{band_2G3G});
+               }else
+               {
+               runCommand(command=>'/usr/bin/wvdialsetup ', params=>$action{ispname}.' '.$xnic.' '.$action{apn_name}.' '.$action{iid}.' '.$action{dial_num}.' '.$action{pppoename}.' '.$action{pppoepasswd}.' '.$action{mode_2G3G}.' '.$action{band_2G3G});
+               }
+               
+               #kill old process
+               my $wvdialprocess=runCommand(command=>"/sbin/pidof", params=>'wvdial');
+               my @processrecord=split(/ /, $wvdialprocess);
+               foreach my $processid ( @processrecord )
+               {
+                 
+                 my $processinfo=runCommand(command=>'ps ', params=>qq(-ef \|grep $processid ));
+                 if ( grep(/$action{ispname}/, $processinfo) )
+                 {
+                   runCommand(command=>'/usr/bin/kill ', params=>'-15 '.$processid);
+                   runCommand(command=>'sleep', params=>'1');
+                   runCommand(command=>'/usr/bin/killall ', params=>'-9 3greconnect');
+                 }
+               }
+
+               #create new links
+               my $pid = fork();
+               if (!defined($pid))
+               {
+                  print ("Fork process failured!\n");
+                  exit();
+               }
+               if ($pid) 
+               {
+                  # This is the child process.
+                   my $child = fork;
+                   die "Can't fork: $!" unless      defined($child);
+                   exit(0) if $child; # parent dies;
+                   POSIX::setsid(); # become session leader(daemon)
+                   open(STDIN,"</dev/null");
+                   open(STDOUT,">/dev/null");
+                   open(STDERR, '>&STDOUT');
+                   umask(0); # forget file mode creation mask
+=cut
+                   if ( $action{usbmodemtype} eq "H20" )
+                   {
+                     runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$xnic.' Setmode\&');
+                     runCommand(command=>'sleep', params=>'20');
+                     runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$xnic.' Setmode\&');
+                   }
+                   else
+                   {
+                     #runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$xnic.' Username = '.$action{pppoename}.' Password = '.$action{pppoepasswd}.' Init\&');
+                     #runCommand(command=>'sleep', params=>'20');
+                     #runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$xnic.' Username = '.$action{pppoename}.' Password = '.$action{pppoepasswd});
+                     runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$xnic.' Init\&');
+                     runCommand(command=>'sleep', params=>'20');
+                     runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$xnic);
+                   }
+=cut
+               if ($xnic =~m/SIM/)
+               {
+                     runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$device_3g.' Setmode\&');
+                     runCommand(command=>'sleep', params=>'20');
+                     runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$device_3g.' Setmode\&');
+               }else{
+                     runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$xnic.' Setmode\&');
+                     runCommand(command=>'sleep', params=>'20');
+                     runCommand(command=>'/usr/bin/wvdial ', params=>'-C /etc/wvdial.'.$xnic.' Setmode\&');
+               }
+                   exit();
+               }
+               else
+               {
+                   # This is the parent process.
+                     #runCommand(command=>'sleep', params=>'30');
+                     #kill INT => $pid;
+                     #$SIG{CHLD}='IGNORE';
+                     #print ("exit parent!\n");
+               } 
+               runCommand(command=>'sleep', params=>'40');
+             }
+             else
+             {           
+               #runCommand(command=>'/usr/sbin/pppoe-setup ', params=>$xname.' '.$xnic.' '.$xpasswd);
+               runCommand(command=>'/usr/sbin/pppoe-setup ', params=>$xname.' '.$xnic.' '.$xpasswd.' '.$action{ispname}.' '.$action{iid});
+               runCommand(command=>'cp ', params=>'-af '.$config.' '.$config.$linenum);
+               runCommand(command=>'rm ', params=>'-f /tmp/ppplog/.info');
+               #20091216 Brian to fix : PPPoE Can't get new IP,if the nic was changed from the GUI.
+               runCommand(command=>'/usr/sbin/pppoe-stop ', params=>$config.$linenum);
+               #runCommand(command=>'rm ', params=>'-f /var/run/pppoe.conf'.$action{iid}.'*');
+               #runCommand(command=>'rm ', params=>'-f /var/run/pppoe.conf'.$action{iid}.'-pppoe.pid');
+               #runCommand(command=>'rm ', params=>'-f /var/run/pppoe.conf'.$action{iid}.'-pppoe.pid.pppd');
+               #runCommand(command=>'rm ', params=>'-f /var/run/pppoe.conf'.$action{iid}.'-pppoe.pid.pppoe');
+               #runCommand(command=>'rm ', params=>'-f /var/run/pppoe.conf'.$action{iid}.'-pppoe.pid.start');
+               #runCommand(command=>'/usr/sbin/pppoe-connect ', params=>$xnic.' '.$xname.' '.$config.$linenum.' > /tmp/pppoetmp &');
+               runCommand(command=>'touch ', params=>'/tmp/dialflag');
+               runCommand(command=>'/usr/sbin/pppoe-start ', params=>$xnic.' '.$xname.' '.$config.$linenum);
+               #runCommand(command=>'/usr/sbin/pppoe-ping', params=>'');
+               runCommand(command=>'sleep', params=>'12');
+               runCommand(command=>'rm ', params=>'-f /tmp/dialflag');
+             }
+             #Get PPPoE Link's info
+             #my $xmlsystemip= runCommand(command=>'/usr/sbin/pppoe-awk ', params=>$config.$linenum);
+             #my $xmlgateway= runCommand(command=>'/usr/sbin/pppoe-awk1 ', params=>$config.$linenum);
+             #my $xmlpppnic= runCommand(command=>'/usr/sbin/pppoe-awk2 ', params=>$config.$linenum);
+             #$xmlsystemip=~s/\n//g;
+             #$xmlpppnic=~s/\n//g;
+             my $xmlsystemip= runCommand(command=>'grep ', params=>'Local:'.' '.'/tmp/ppplog/.info');
+             my $xmlgateway= runCommand(command=>'grep ', params=>'Remote:'.' '.'/tmp/ppplog/.info');
+             my $xmlpppnic= runCommand(command=>'grep ', params=>'Device:'.' '.'/tmp/ppplog/.info');
+             $xmlsystemip=~s/Local: //g;
+             $xmlsystemip=~s/\n//g;
+             $xmlpppnic=~s/Device: //g;
+             $xmlpppnic=~s/\n//g;
+
+            #check use DDNS or not 
+            if ($action{enableddns} eq "Yes" || $action{enableddns} eq "Yes,and wildcard")
+            {
+               $wildcard="no";
+                 if ($action{enableddns} eq "Yes,and wildcard")
+                 {
+                    $wildcard="yes";
+                 }  
+                  my $login=$action{ddnsname};
+                  my $password=$action{ddnspasswd};
+                  my $domain=$action{ddnsdomainname};
+                  if($action{ddnschoice} eq "www.dyndns.org")
+                  {
+                       $protocol="dyndns2";
+                       $server="members.dyndns.org";
+                  }
+                  if($action{ddnschoice} eq "www.dslreports.com")
+                  {
+                       $protocol="dslreports1";
+                       $server="members.dslreports.com";
+                  }
+                  if($action{ddnschoice} eq "www.dnspark.com")
+                  {
+                       $protocol="dnspark";
+                       $server="www.dnspark.com";
+                  }
+                  if($action{ddnschoice} eq "www.easydns.com")
+                  {
+                       $protocol="easydns";
+                       $server="members.easydns.com";
+                  }
+                  if($action{ddnschoice} eq "www.namecheap.com")
+                  {
+                       $protocol="namecheap";
+                       $server="dynamicdns.park-your-domain.com";
+                  }
+                  if($action{ddnschoice} eq "www.zoneedit.com")
+                  {
+                       $protocol="zoneedit1";
+                       $server="www.zoneedit.com";
+                  }
+                  runCommand(command=>'/usr/sbin/ddnscfg ', params=>$login.' '.$password.' '.$wildcard.' '.$protocol.' '.$server.' '.$domain.' '.$xmlpppnic);
+               }
+             #If establish PPPoE link fail,assign a fake ip and gateway.
+             if ( $xmlsystemip eq ""){
+             $gMSGPROMPT.=qq (Fail to establish PPPoE link ,and assign some fake ISP info.\\nPlease check username/password or physical hardware to fix it.\\n);
+             $add=1;
+               do {
+                   $xmlsystemip="0.0.0.$add";
+                   $checksys=runCommand(command=>'grep ', params=>$xmlsystemip.' '.'/usr/local/apache/qbconf/basic.xml');
+                   $add=$add+1;
+                   }while ( $checksys ne "");
+             } 
+             $xmlgateway=~s/Remote: //g;
+             $xmlgateway=~s/\n//g;
+             $xmlsubnet=$xmlsystemip."/32";
+             if ( $xmlgateway eq ""){
+             $dec=254;
+               do {
+                   $xmlgateway="0.0.0.$dec";
+                   $checkgw=runCommand(command=>'grep ', params=>$xmlgateway.' '.'/usr/local/apache/qbconf/basic.xml');
+                   $dec=$dec-1;
+                   }while ( $checkgw ne "");
+             } 
+
+             #Reflash systemip gateway subnet nic
+             $action{systemip}=$xmlsystemip;
+             $action{gateway}=$xmlgateway;
+             $action{subnet}=$xmlsubnet;
+             if ($action{nic} =~m/SIM/)
+             {
+              $action{pppoeportdev}=$device_3g;
+              $action{interface_name}=$action{nic};
+              $action{imei}=$imei;
+             }else{
+              $action{pppoeportdev}=$action{nic};
+              $action{interface_name}="";
+              $action{imei}="";
+             }
+             if ( $xmlpppnic ne ""){
+             $action{nic}=$xmlpppnic;
+             }
+             if ( $xmlpppnic eq ""){
+             #$nicadd=0;
+             #  do {
+             #      $xmlpppnic="ppp$nicadd";
+             #      $checknic=runCommand(command=>'grep ', params=>$xmlpppnic.' '.'/usr/local/apache/qbconf/basic.xml');
+             #      $nicadd=$nicadd+1;
+             #      }while ( $checknic ne "");
+             ##$action{nic}=ppp.$linenum;
+             #$action{nic}=$xmlpppnic;
+             my $pppnicnum=$action{iid}-1;
+             $xmlpppnic="ppp$pppnicnum";
+             $action{nic}=$xmlpppnic;
+             }
+             if (!$action{target})
+             {
+                 $action{target}=$xmlgateway;
+             }
+             #$tmpiid=$action{iid};
+             #$tmp1="iid=\"$tmpiid\"";
+             #foreach my $isp ( @$isplist ) 
+             #{
+             #    if ( $isp->{iid} eq $action{iid})
+             #     {
+             #       my $line=runCommand(command=>'grep ', params=>'-n iid=\"'.$tmpiid.'\" /usr/local/apache/qbconf/basic.xml');
+             #       $linenum=0+$line;
+             #       runCommand(command=>'/usr/sbin/pppoe-sed ', params=>$linenum.' '.$xmlgateway);
+             #       runCommand(command=>'/usr/sbin/pppoe-sed1 ', params=>$linenum.' '.$xmlsystemip);
+             #       runCommand(command=>'/usr/sbin/pppoe-sed2 ', params=>$xnic.' '.$xmlsystemip);
+
+                    #runCommand(command=>'/usr/sbin/pppoe-sed ', params=>$linenum.' '.$xmlgateway.' '.$xmlsystemip.' '.$xmlsubnet.' > /tmp/bb ');
+                    #runCommand(command=>'/usr/sbin/pppoe-sed ', params=>qq ($linenum  $xmlsystemip  $xmlsystemip  $xmlsubnet));
+                    
+             #  }
+             # }
+              #my %modifyisp;
+              #$modifyisp{iid}=$action{iid};
+
+              # give a default ispname 
+              #$modifyisp{ispname}='ISP'.$gNEWISPID;
+              #$modifyisp{state}="FORMATCHECK";
+              #$modifyisp{enabled}="1";
+              #$modifyisp{systemip}=$xmlsystem;
+              #$modifyisp{gateway}=$xmlgateway;
+              #$modifyisp{isptype}=$action{isptype};
+              #if ( $action{isptype} eq "tunnel" ) { $newisp{mtu}=$newisp{mss}=1; }
+              #push( @$isplist, \%modifyisp);
+    
+              #print qq (<td>IP&Peer:$result2$result3 </td>);
+              #print qq (<td>NIC:$xnic </td>);
+              #print qq (<td>Systemip:$action{systemip} </td>);
+           }
+           if ($action{isptype} eq "pptp" || $action{isptype} eq "l2tp" && $action{pppoename} ne "" && $action{pppoepasswd} ne "")
+           {
+              
+             if ($action{pppoepasswd} eq ""){$action{pppoepasswd}="null";} 
+             my $xname=$action{pppoename};
+             my $xpasswd=$action{pppoepasswd};
+             #Brian 20061225 fix a passwd bug,if the last word is "&"
+             $xpasswd="\'$xpasswd\'";
+             my $xnic=$action{nic};
+             my $linenum=$action{iid};
+             my $config="/tmp/ppplog/";
+             my $pptproutegw;
+             if ($action{isptype} eq "pptp")
+             {
+              #Establish PPTP Link
+              if ($action{encrypt_mppe} && $action{compression} && $action{stateless})
+              {
+                 runCommand(command=>'/usr/sbin/pptpsetup ', params=>'--create '.$action{ispname}.' --ispid '.$action{iid}.' --server '.$action{pptpserver}.' --username '.$xname.' --password '.$xpasswd.' --stateless --compress');
+              }
+              elsif ($action{encrypt_mppe} && $action{compression} && !$action{stateless})
+              {
+                 runCommand(command=>'/usr/sbin/pptpsetup ', params=>'--create '.$action{ispname}.' --ispid '.$action{iid}.' --server '.$action{pptpserver}.' --username '.$xname.' --password '.$xpasswd.' --encrypt --compress');
+              }
+              elsif ($action{encrypt_mppe} && !$action{compression} && !$action{stateless})
+              {
+                 runCommand(command=>'/usr/sbin/pptpsetup ', params=>'--create '.$action{ispname}.' --ispid '.$action{iid}.' --server '.$action{pptpserver}.' --username '.$xname.' --password '.$xpasswd.' --encrypt');
+              }
+              elsif ($action{encrypt_mppe} && !$action{compression} && $action{stateless})
+              {
+                 runCommand(command=>'/usr/sbin/pptpsetup ', params=>'--create '.$action{ispname}.' --ispid '.$action{iid}.' --server '.$action{pptpserver}.' --username '.$xname.' --password '.$xpasswd.' --stateless');
+              }
+              elsif (!$action{encrypt_mppe} && $action{compression} && $action{stateless})
+              {
+                 runCommand(command=>'/usr/sbin/pptpsetup ', params=>'--create '.$action{ispname}.' --ispid '.$action{iid}.' --server '.$action{pptpserver}.' --username '.$xname.' --password '.$xpasswd.' --compress');
+              }
+              elsif (!$action{encrypt_mppe} && $action{compression} && !$action{stateless})
+              {
+                 runCommand(command=>'/usr/sbin/pptpsetup ', params=>'--create '.$action{ispname}.' --ispid '.$action{iid}.' --server '.$action{pptpserver}.' --username '.$xname.' --password '.$xpasswd.' --compress');
+              }
+              else
+              {
+                 runCommand(command=>'/usr/sbin/pptpsetup ', params=>'--create '.$action{ispname}.' --ispid '.$action{iid}.' --server '.$action{pptpserver}.' --username '.$xname.' --password '.$xpasswd);
+              }
+             }else
+             {
+                runCommand(command=>'/opt/qb/xl2tp/l2tpsetup ', params=>'--create '.$action{ispname}.' --ispid '.$action{iid}.' --server '.$action{pptpserver}.' --username '.$xname.' --password '.$xpasswd);
+             }
+             #Brian 20080919 To specify Wan link
+             my $mark='0x'.dec2hex(1000+$action{pppispid});
+             foreach my $isp ( @$isplist ) {  if ( $isp->{iid} eq $action{pppispid} ) { $pptproutegw=$isp->{gateway}; last; } }
+             #runCommand(command=>'/usr/local/sbin/iptables ', params=>' -t mangle -A OUTPUT -d '.$action{pptpserver}.' -j MARK --set-mark '.$mark);
+             runCommand(command=>'/sbin/ip ', params=>' route add '.$action{pptpserver}.' via '.$pptproutegw.' table 254');
+             #/usr/local/sbin/iptables -t mangle -A OUTPUT -p tcp -d 139.175.55.210/32 -j MARK --set-mark 0x3F2
+             #/sbin/ip route add 218.211.253.70 via 218.211.253.254 table 254
+
+             if ($action{isptype} eq "pptp")
+             {
+             runCommand(command=>'/usr/sbin/poff ', params=>$action{ispname});
+             runCommand(command=>'/usr/sbin/pon ', params=>$action{ispname});
+             runCommand(command=>'sleep', params=>'15'); #20081014 Need to wait more time
+             #runCommand(command=>'/usr/sbin/pptpreconnect ', params=>$action{pppispid});
+             }elsif ($action{isptype} eq "l2tp" && $action{systemip} eq "" ) #Add a new link
+             {
+                runCommand(command=>'/opt/qb/xl2tp/configxl2tp.pl', params=>qq ($action{ispname} $action{pptpserver} $action{pppoename}));
+                runCommand(command=>'chmod ', params=>'0606 /var/run/xl2tpd/l2tp-control');
+                runCommand(command=>'echo ', params=>'\'d '.$action{ispname}.'\' >/var/run/xl2tpd/l2tp-control');
+                runCommand(command=>'sleep', params=>'3'); #Need to wait
+                runCommand(command=>'service', params=>'xl2tpd restart');
+                runCommand(command=>'chmod ', params=>'0606 /var/run/xl2tpd/l2tp-control');
+                runCommand(command=>'chown ', params=>'root:root /var/run/xl2tpd/l2tp-control');
+                runCommand(command=>'sleep', params=>'10'); #Need to wait
+             }elsif ($action{isptype} eq "l2tp" && $action{systemip} ne "" ) #Get new IP for old link
+             {
+                runCommand(command=>'/opt/qb/xl2tp/configxl2tp.pl', params=>'');
+                runCommand(command=>'chmod ', params=>'0606 /var/run/xl2tpd/l2tp-control');
+                runCommand(command=>'echo ', params=>'\'d '.$action{ispname}.'\' >/var/run/xl2tpd/l2tp-control');
+                runCommand(command=>'sleep', params=>'3'); #Need to wait
+                runCommand(command=>'service', params=>'xl2tpd restart');
+             } 
+
+             #Get PPTP Link's info
+             my $xmlsystemip= runCommand(command=>'grep ', params=>'Local '.$config.$action{ispname}.'.info');
+             my $xmlgateway= runCommand(command=>'grep ', params=>'Remote '.$config.$action{ispname}.'.info');
+             my $xmlpppnic= runCommand(command=>'grep ', params=>'Device '.$config.$action{ispname}.'.info');
+             $xmlsystemip=~s/Local: //g;
+             $xmlsystemip=~s/\n//g;
+             $xmlpppnic=~s/Device: //g;
+             $xmlpppnic=~s/\n//g;
+
+             #If establish PPPoE link fail,assign a fake ip and gateway.
+             if ( $xmlsystemip eq ""){
+             $gMSGPROMPT.=qq (Fail to establish $action{isptype} link ,and assign some fake ISP info.\\n);
+             $gMSGPROMPT.=qq (QB will try to reconnect the link continuously,no need to get new IP again.\\n);
+             $add=1;
+               do {
+                   $xmlsystemip="0.0.0.$add";
+                   $checksys=runCommand(command=>'grep ', params=>$xmlsystemip.' '.'/usr/local/apache/qbconf/basic.xml');
+                   $add=$add+1;
+                   }while ( $checksys ne "");
+             } 
+             $xmlgateway=~s/Remote: //g;
+             $xmlgateway=~s/\n//g;
+             $xmlsubnet=$xmlsystemip."/32";
+             if ( $xmlgateway eq ""){
+             $dec=254;
+               do {
+                   $xmlgateway="0.0.0.$dec";
+                   $checkgw=runCommand(command=>'grep ', params=>$xmlgateway.' '.'/usr/local/apache/qbconf/basic.xml');
+                   $dec=$dec-1;
+                   }while ( $checkgw ne "");
+             } 
+
+             #Reflash systemip gateway subnet nic
+             $action{systemip}=$xmlsystemip;
+             $action{gateway}=$xmlgateway;
+             $action{subnet}=$xmlsubnet;
+             $action{pppoeportdev}=$action{nic};
+             if ( $xmlpppnic ne ""){
+             $action{nic}=$xmlpppnic;
+             }
+             if ( $xmlpppnic eq ""){
+             #  $nicadd=0;
+             #  do {
+             #      $xmlpppnic="ppp$nicadd";
+             #      $checknic=runCommand(command=>'grep ', params=>$xmlpppnic.' '.'/usr/local/apache/qbconf/basic.xml');
+             #      $nicadd=$nicadd+1;
+             #      }while ( $checknic ne "");
+             ##$action{nic}=ppp.$linenum;
+             #$action{nic}=$xmlpppnic;
+             my $pppnicnum=$action{iid}-1;
+             $xmlpppnic="ppp$pppnicnum";
+             $action{nic}=$xmlpppnic;
+             }
+             if (!$action{target})
+             {
+                 $action{target}=$xmlgateway;
+             }
+           }
+           #if ($action{isptype} eq "dhcp" && $checkport eq "")
+           if ($action{isptype} eq "dhcp")
+           {
+             my $cnic=$action{nic};
+             my $xmlsystemip;
+             my $xmlgateway;
+             #my $config="/etc/sysconfig/network-scripts/ifcfg-$cnic";
+
+             #Establish DHCP Link
+             #runCommand(command=>'/bin/sed ', params=>'-e '.'s/BOOTPROTO=.*/BOOTPROTO=dhcp/g'.' /etc/sysconfig/network-scripts/ifcfg-'.$cnic.' >/tmp/dhcp');
+             #runCommand(command=>'cp ', params=>'-af /tmp/dhcp '.$config);
+             runCommand(command=>'/sbin/dhcpkill ', params=>$cnic);
+             runCommand(command=>'sleep', params=>'3');
+             runCommand(command=>'touch ', params=>'/tmp/dhcpdialflag');
+             my $getipresult=runCommand(command=>'/sbin/dhcpcd ', params=>$cnic);
+             #runCommand(command=>'/sbin/dhcpreconnect ', params=>$cnic);
+             runCommand(command=>'sleep', params=>'12');
+             runCommand(command=>'rm ', params=>'-f /tmp/dhcpdialflag');
+
+             if ($getipresult eq "Fail to get ip from dhcp server")
+             {
+              $xmlsystemip= "";
+              $xmlgateway= "";
+             }else{
+              #Get DHCP Link's info
+              #cat /etc/dhcpc/dhcpcd-eth0.6.info|grep IPADDR|awk -F "=" '{print $2}'
+              $xmlsystemip=runCommand(command=>'cat ', params=>qq(/etc/dhcpc/dhcpcd-$cnic.info \|grep IPADDR\|awk -F \"\=\" \'\{print \$2\}\') );
+              #$xmlsystemip= runCommand(command=>'/sbin/dhcp-awk ', params=>$cnic);
+              $xmlgateway=runCommand(command=>'cat ', params=>qq(/etc/dhcpc/dhcpcd-$cnic.info \|grep GATEWAY\|awk -F \"\=\" \'\{print \$2\}\') );
+              #$xmlgateway= runCommand(command=>'/sbin/dhcp-awk1 ', params=>$cnic);
+              #$xmlsystemip=~s/172.31.*//g;
+              $xmlsystemip=~s/ //g;
+              $xmlsystemip=~s/\n//g;
+             }
+
+            #check use DDNS or not 
+            if ($action{enableddns} eq "Yes" || $action{enableddns} eq "Yes,and wildcard")
+            {
+               $wildcard="no";
+                 if ($action{enableddns} eq "Yes,and wildcard")
+                 {
+                    $wildcard="yes";
+                 }  
+                  my $login=$action{ddnsname};
+                  my $password=$action{ddnspasswd};
+                  my $domain=$action{ddnsdomainname};
+                  if($action{ddnschoice} eq "www.dyndns.org")
+                  {
+                       $protocol="dyndns2";
+                       $server="members.dyndns.org";
+                  }
+                  if($action{ddnschoice} eq "www.dslreports.com")
+                  {
+                       $protocol="dslreports1";
+                       $server="members.dslreports.com";
+                  }
+                  if($action{ddnschoice} eq "www.dnspark.com")
+                  {
+                       $protocol="dnspark";
+                       $server="www.dnspark.com";
+                  }
+                  if($action{ddnschoice} eq "www.easydns.com")
+                  {
+                       $protocol="easydns";
+                       $server="members.easydns.com";
+                  }
+                  if($action{ddnschoice} eq "www.namecheap.com")
+                  {
+                       $protocol="namecheap";
+                       $server="dynamicdns.park-your-domain.com";
+                  }
+                  if($action{ddnschoice} eq "www.zoneedit.com")
+                  {
+                       $protocol="zoneedit1";
+                       $server="www.zoneedit.com";
+                  }
+                  runCommand(command=>'/usr/sbin/ddnscfg ', params=>$login.' '.$password.' '.$wildcard.' '.$protocol.' '.$server.' '.$domain.' '.$cnic);
+               }
+
+             #If establish DHCP link fail,assign a fake ip and gateway.
+             if ( $xmlsystemip eq ""){
+             $gMSGPROMPT.=qq (Fail to establish DHCP link ,and assign some fake ISP info.\\n);
+             $add=1;
+               do {
+                   $xmlsystemip="0.0.0.$add";
+                   $checksys=runCommand(command=>'grep ', params=>$xmlsystemip.' '.'/usr/local/apache/qbconf/basic.xml');
+                   $add=$add+1;
+                   }while ( $checksys ne "");
+             } 
+             $xmlgateway=~s/\n//g;
+             $xmlsubnet=$xmlsystemip."/32";
+             if ( $xmlgateway eq ""){
+             $dec=254;
+               do {
+                   $xmlgateway="0.0.0.$dec";
+                   $checkgw=runCommand(command=>'grep ', params=>$xmlgateway.' '.'/usr/local/apache/qbconf/basic.xml');
+                   $dec=$dec-1;
+                   }while ( $checkgw ne "");
+             }
+ 
+             #Reflash systemip gateway subnet nic
+             #runCommand(command=>'/etc/dhcpc/dhcpcd.exe1 ', params=>$cnic.' '.$xmlsystemip.' '.$xmlgateway);
+             $action{systemip}=$xmlsystemip;
+             $action{gateway}=$xmlgateway;
+             $action{subnet}=$xmlsubnet;
+             #runCommand(command=>'/bin/sed ', params=>'-e '.'s/BOOTPROTO=.*/BOOTPROTO=static/g'.' /etc/sysconfig/network-scripts/ifcfg-'.$cnic.' >/tmp/dhcp');
+             #runCommand(command=>'cp ', params=>'-af /tmp/dhcp '.$config);
+             #runCommand(command=>'rm ', params=>'-rf /tmp/dhcp');
+             if (!$action{target})
+             {
+                 $action{target}=$xmlgateway;
+             }
+           } 
+
+           if ($action{isptype} ne "pptp" && $action{isptype} ne "l2tp")
+           {
+            #check if selected PORT has been used as LAN PORT
+            if ( $action{nic} eq '-1' )    
+            {
+                $gMSGPROMPT.=qq (Interface must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+            
+            #check if selected PORT has been used as LAN PORT
+            if ( maintainZone( action=>"IFNICUSED", nic=>$action{nic} ) )    
+            {
+                my $port=$action{nic}; $port=~s/eth//; $port++;
+                $gMSGPROMPT.=qq (Not Available:PORT $port has already been assigned as LAN PORT\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+           } 
+        }
+        
+        #**************************************************************************************
+        #check if this ISP name conflicts with other ISP
+        foreach my $isp ( @$isplist ) 
+        {
+            if ( $isp->{iid} eq $action{iid} || $isp->{ispname} ne $action{ispname} ) { next; }
+            $gMSGPROMPT.=qq (ERROR:$action{ispname} has been used by ISP$isp->{iid}\\n);  
+            $IS_EVERYTHING_OK=0;
+            last;
+        }
+
+        #**************************************************************************************
+        #check if this NIC speed conflicts with NIC speed
+        if ( $action{nic_speed} ne "" )
+        {
+          foreach my $isp ( @$isplist ) 
+          {
+            if ( $isp->{iid} eq $action{iid} || $isp->{nic} ne $action{nic} || !$isp->{nic_speed} ) { next; }
+            if ( $isp->{nic_speed} ne $action{nic_speed} )
+            {
+             $gMSGPROMPT.=qq (Warning:$action{ispname}'s nic speed conflicts with ISP$isp->{iid} $isp->{ispname}\\n);  
+            }
+          }
+        }
+        
+        #**************************************************************************************
+        if ( $action{type} eq 'fixed' && $action{isptype} ne 'pppoe' && $action{isptype} ne 'dhcp' && $action{isptype} ne 'pptp' && $action{isptype} ne 'l2tp') 
+        {
+            if ( !isValidIP($action{systemip}) ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR:System IP Format Error\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+
+            if ( !isValidIP($action{gateway}) ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR:Gateway IP Format Error\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+
+            if ( $action{isptype} eq "normal" )
+            {
+
+                if ( isSubnetIP($action{systemip}, $action{subnet}) <=0  )    
+                { 
+                    $gMSGPROMPT.=qq ( Warning:System IP is not in the range of $action{subnet}\\n);
+                    #$IS_EVERYTHING_OK=0;
+                }
+
+                if ( isSubnetUsableIP($action{gateway}, $action{subnet}) <= 0 )    
+                { 
+                    $gMSGPROMPT.=qq ( Warning:Gateway IP is not in the range of $action{subnet}\\n);
+                    #$IS_EVERYTHING_OK=0;
+                }
+
+                my @dmz=maintainIPBank(from=>'isp'.$action{iid}.'dmz', action=>'read');
+                if ( grep(/^$action{gateway}$/, @dmz) )
+                {
+                    $gMSGPROMPT.=qq ( Warning:Gateway IP has already been registered as transparent IP \\n);
+                }
+
+                my @public=maintainIPBank(from=>'isp'.$action{iid}.'public', action=>'read');
+                if ( grep(/^$action{gateway}$/, @public) )
+                {
+                    $gMSGPROMPT.=qq ( ERROR:Gateway IP has already been registered as public IP \\n);
+                    $IS_EVERYTHING_OK=0;
+                }
+
+                if ( grep(/^$action{systemip}$/, @dmz) )
+                {
+                    $gMSGPROMPT.=qq ( Warning:System IP has already been registered as transparent IP \\n);
+                }
+    
+                #=====================================================================================
+                # Check if the format of subnet is OK
+                $action{subnet}=get_subnet( $action{subnet} );
+                if ( !$action{subnet} ) 
+                {
+                    $gMSGPROMPT.=qq (ERROR : Subnet Format ERROR\\n);  
+                    $IS_EVERYTHING_OK=0; 
+                }
+                # Check if the subnet conflicts with other ISP
+                else 
+                {
+                    foreach my $isp ( @$isplist ) 
+                    {
+                        if ( $isp->{iid} eq $action{iid} || subnet_belong_check( $action{subnet}, $isp->{subnet} ) <=0 ) { next; }
+                        $gMSGPROMPT.=qq (ERROR : Subnet overlaps with $isp->{ispname} [ ISP$isp->{iid} ] \\n);  
+                        $IS_EVERYTHING_OK=0;
+                    }    
+                }
+                
+                # Decide the flag of IS_SUBNET_CHANGED
+                $IS_SUBNET_CHANGED=( $target->{subnet} eq $action{subnet} ) ? ( 0 ):( 1 );    
+            }
+
+            
+            if ( $action{isptype} eq "tunnel")
+            {
+                #=====================================================================================
+	       $action{local}=maintainBasic(action=>'GETIP', ispname=>$action{wanisp});
+               if ($action{remotename} ne "")
+               {
+                $dnsip=runCommand(command=>'/opt/qb/bin/script/ns ', params=>$action{remotename});
+                $dnsip=~s/\n//g;
+                $action{remote}=$dnsip;
+                 if ($dnsip eq "")
+                 {
+                    $gMSGPROMPT.=qq ( ERROR : Can't get the domain name's IP\\n );
+                    $IS_EVERYTHING_OK=0;
+                 }
+               }
+
+               if ( $action{mpv_nat} eq "1" )
+               {
+                 my $mpv_nat_ip=runCommand(command=>'/sbin/wget ', params=>'--bind-address='.$showData->{local}.' -O - -q icanhazip.com --timeout=10');
+                 $mpv_nat_ip=~s/\n//g;
+                 #wget -O - -q icanhazip.com --bind-address=192.168.1.110 --timeout=10
+                 $action{mpv_nat_ip}=$mpv_nat_ip;
+               }
+
+                # Check if systemip and gateway conflict with each other
+                if ( $action{local} eq $action{remote} ) 
+                {
+                    $gMSGPROMPT.=qq ( ERROR : Local IP and Remote IP can not be the same\\n );
+                    $IS_EVERYTHING_OK=0;
+                }
+            }
+
+            #=====================================================================================
+            # Check if systemip and gateway conflict with each other 
+            if ( $action{gateway} eq $action{systemip} ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR : Gateway and Systemip can not be the same\\n );
+                $IS_EVERYTHING_OK=0;
+            }
+
+
+            #=====================================================================================
+            # Check if format of target is right
+            if ( !isValidIP($action{target}) ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR:Healthcheck IP Format Error\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+        }
+        
+
+        #**************************************************************************************
+        # Important Check Point
+        # if ERROR FOUND...Do Nothing but return 0  
+
+        if ( !$IS_EVERYTHING_OK ) { return 0; }
+
+        # if Everything is OK, keep going ... 
+        #**************************************************************************************
+        
+        #@dep1:
+        # Inform involved XML that the subnet of target ISP is changed
+        # Then Push them to check related Dependency
+        if ( $IS_SUBNET_CHANGED )
+        {
+            maintainDMZreg(action=>'SUBNETCHANGED', isp=>$action{iid}, newsubnet=>$action{subnet}, oldsubnet=>$target->{subnet} );
+            maintainDMZ(action=>'SUBNETCHANGED', isp=>$action{iid}, newsubnet=>$action{subnet});
+            maintainVS(action=>'SUBNETCHANGED', isp=>$action{iid}, newsubnet=>$action{subnet});
+        }
+
+        #@dep3: ipneigh for DMZ Gateway Proxy
+        #if DMZ is On and Gateway is changed, change Gateway proxy
+        #**************************************************************************************
+        my $dmzstatus=maintainZone( action=>"GETDMZSTATUS", isp=>$action{iid} );
+        if ( $dmzstatus && $target->{gateway} ne $action{gateway} ) 
+        {
+            my $dmzzonenic=maintainZone( action=>"GETDMZNIC", isp=>$action{iid} );
+            maintainIPneigh( action=>"DEL", ip=>$target->{gateway}, nic=>$dmzzonenic, isp=>$target->{iid} );
+            maintainIPneigh( action=>"ADD", ip=>$action{gateway}, nic=>$dmzzonenic, isp=>$action{iid} );
+        }
+        ##20100622 Add a record for MPV bridge
+        if ( !$dmzstatus && $action{isptype} eq 'tunnel' ) { maintainZone( action=>"ADDISPOFDMZ", dmzid=>$action{iid} ); }
+
+        #@dep4: update ipneigh for DMZ IP Proxy of ISP $action{iid}
+        #**************************************************************************************
+        if ( $target->{nic} ne $action{nic} )
+        {
+            maintainIPneigh( action=>"MOVEPORT", isp=>$action{iid}, nic=>$action{nic} );
+        }
+
+        #@dep5: update ipaddr for system IP and VS IP of ISP $action{iid}
+        #**************************************************************************************
+        my %dmzip_of_this_isp=maintainDMZreg(isp=>$action{iid}, action=>"GETDMZIPHASH");
+        my @vsIP=maintainIPBank(from=>'isp'.$action{iid}.'public', action=>'read');
+        my $isVSIP=( grep(/$target->{systemip}/, @vsIP) ) ? 1 : 0;
+        if ( !$isVSIP || exists($dmzip_of_this_isp{$target->{systemip}}) ) 
+        { 
+            maintainIPaddress( action=>"DEL", ip=>$target->{systemip}, nic=>$target->{nic}, isp=>$target->{iid} ); 
+        }
+
+        if ( !exists($dmzip_of_this_isp{$action{systemip}}) )
+        {
+            maintainIPaddress( action=>"ADD", ip=>$action{systemip}, nic=>$action{nic}, isp=>$action{iid} );
+        }
+
+        if ( $target->{nic} ne $action{nic} )
+        {
+            maintainIPaddress( action=>"MOVEPORT", isp=>$action{iid}, nic=>$action{nic} );
+        }
+
+        #@dep6: update subnet field of ISP $action{iid} in dns.xml
+        #**************************************************************************************
+        maintainDNS(action=>'UPDATEISPSUBNET', isp=>$action{iid}, subnet=>$action{subnet});
+        
+        if ( $action{type} eq 'fixed') 
+        { 
+            #@dep7: ipbank
+            #************************************************************************************** 
+            #如果已經有 systemip 且有異動的話 
+            #move back old systemip from isp$action{iid}system to isp$action{iid} in ipbank.xml
+            #then move new systemip form isp$action{iid} to isp$action{iid}system 
+            #
+            if ( $target->{systemip} && $target->{systemip} ne $action{systemip} ) 
+            {
+                #maintain ip transaction in ipbank.xml
+                maintainIPBank(from=>'isp'.$action{iid}.'system', action=>'remove', ipset=>["$target->{systemip}"]);
+                maintainIPBank(to=>'isp'.$action{iid}.'system', action=>'append', ipset=>["$action{systemip}"]); 
+            }
+            #如果本來沒有 systemip
+            elsif ( !$target->{systemip} ) 
+            {
+                maintainIPBank(to=>"isp$action{iid}system", action=>'append', ipset=>["$action{systemip}"] );
+            }
+        }
+            
+        #6.perpare download and upload fields of %action ----
+        #************************************************************************************** 
+        if ( $action{udmethod} eq "byhand" ) 
+        {
+            if ( $action{download}!~m/^\d{2,8}$/  ||  $action{upload}!~m/^\d{2,8}$/ ) 
+            {
+                $gMSGPROMPT.=qq ( Warning: Download or Upload Format ERROR or EMPTY \\n);
+            }
+        } 
+        elsif ( $action{udmethod} eq "bylist" ) 
+        {
+            $action{downupspeed}=~s/U|D|Kbit//g;
+            ( $action{download}, $action{upload} )=split( /\//, $action{downupspeed} );  
+        }
+        
+        #7.copy all the values of fields in $target  from  %action except broadcasting
+        # 這段是真正將介面中 ISP 資料更新到 temp 所指的 ISP 資料的碼
+        # 因為 $target->{broadcast} 不應該在 SAVE 時被更動，而且 $action{broadcast} 也不存在
+        foreach my $item (keys(%$target)) { if ( $item ne "broadcast") { $target->{$item}= $action{$item}; } }
+        $target->{target}=$action{target};
+        $target->{isptype}=$action{isptype};
+        
+        # new attribures in new version xml
+        if ( $action{isptype} eq "tunnel" ) 
+        { 
+            $target->{dsip}='0'; 
+            $target->{local}=$action{local};
+            #$target->{remote}=$action{remote};
+	    $target->{remote}=($action{remote} eq "" ) ? ("0.255.0.".$action{iid}) : ($action{remote});
+	    #if ( $target->{remote} eq '' ) 
+	    #{
+	    #    $target->{remote}="0.255.0.".$action{iid};
+	    #    $target->{dmpv}="1";
+	    #}
+            $target->{mss}=$action{mss};
+            $target->{mtu}=$action{mtu};
+            if ( $action{mtu_value} ne "" ){$target->{mtu}=$action{mtu_value}};
+            if ( $action{mss_value} ne "" ){$target->{mss}=$action{mss_value}};
+            $target->{mtu_value}=$action{mtu_value};
+            $target->{mss_value}=$action{mss_value};
+            #$target->{mtu_def}=$action{mtu_def};
+            #$target->{mss_def}=$action{mss_def};
+	    #$target->{enc}=$action{enc};
+	    $target->{enc}=($action{ipcom}) ? "1" : $action{enc};
+	    $target->{ipcom}=$action{ipcom};
+            $target->{mpv_nat}=$action{mpv_nat};
+            $target->{mpv_nat_ip}=$action{mpv_nat_ip};
+            if ( $target->{enc} )
+            {
+                if ( $action{algslt} eq "none" ) { $action{algslt} = "aes 128"; }
+                $target->{alg}=$action{algslt};
+            }
+            else
+            {
+                $target->{alg}=$action{alg};
+		$target->{ipcom}='0';
+            }
+            $target->{target}=$action{gateway};
+
+        }
+        if ( $action{isptype} eq "pptp" ) 
+        { 
+            $target->{pptpserver}=$action{pptpserver};
+            $target->{pppispid}=$action{pppispid};
+            $target->{encrypt_mppe}=$action{encrypt_mppe};
+            $target->{compression}=$action{compression};
+            $target->{stateful}=$action{stateful};
+            $target->{stateless}=$action{stateless};
+        }
+        if ( $action{isptype} eq "l2tp" ) 
+        { 
+            $target->{pptpserver}=$action{pptpserver};
+            $target->{pppispid}=$action{pppispid};
+        }
+        if ( $action{isptype} eq "normal" || $action{isptype} eq "dhcp" || $action{isptype} eq "pppoe" ) 
+        { 
+            $target->{nic_speed}=$action{nic_speed};
+        }
+        if ( $action{isptype} eq "pppoe" ) 
+        { 
+            $target->{usbmodemtype}=$action{usbmodemtype};
+            $target->{mode_2G3G}=$action{mode_2G3G};
+            $target->{band_2G3G}=$action{band_2G3G};
+            $target->{daily_3greset}=$action{daily_3greset};
+            $target->{flag_3g}=$action{flag_3g};
+            if ( $action{apn_name} eq "" )
+            {
+            $target->{apn_name}="null";
+            }else{
+            $target->{apn_name}=$action{apn_name};
+            }
+            $target->{dial_num}=$action{dial_num};
+            $target->{interface_name}=$action{interface_name};
+            $target->{imei}=$action{imei};
+        }
+        #$target->{target}=$action{target};
+        #$target->{isptype}=$action{isptype};
+
+        
+        #8. transfer state of isp$action{iid} to FORMATOK 
+        $target->{state}='FORMATOK';
+
+        XMLwrite($ispref, $gPATH."basic.xml");
+        #---------------------------------------------------
+	# to delet old bind ip and update tunnel local ip
+        #--------------------------------------------------
+        if ( $oldip ne '' )
+        {
+            if ( $oldip ne $action{systemip} )
+            {
+                my $oldvip = $action{iid}.'J'.$oldip;
+                maintainVS(action=>'UPDATEVSIP', focusedvip=>$oldvip, viptoappend=>$action{systemip}, isp_of_vip=>$action{iid});
+                foreach my $isp ( @$isplist )
+                {
+                    if ( $isp->{local} eq $oldip )
+                    {
+                        $isp->{local} = $action{systemip};
+                    }
+                }
+            }
+        }
+        else
+        {
+            maintainVS(action=>'APPENDVSIP', isp_of_vip=>$action{iid} ,viptoappend=>$action{systemip});
+            my @service = ("maintain", "ping", "ssh");
+            my @rservers = ("localhost", "system");
+            maintainVS(action=>'NEW', viewpoint=>'lvs', service=>\@service, isp=>$action{iid}, vip=>$action{systemip}, rservers=>\@rservers);
+        }
+=cut
+        if ( $action{isptype} eq 'pppoe')
+        {
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{local} eq $oldip )
+                {
+                    $isp->{local} = $action{systemip};
+                }
+            }
+        }
+=cut
+    }
+    elsif ( $action{action} eq "SAVE" )
+    {
+        my $IS_EVERYTHING_OK=1;
+        my $IS_SUBNET_CHANGED=0; 
+        
+        #**************************************************************************************
+        #   防止user輸入英文字母及數字及 _ 以外的字元
+        if ( $action{ispname}!~/.{3,12}/ || $action{ispname}=~m/$gBIG5/ || $action{ispname}=~m/\s+/ ) 
+        { 
+            $gMSGPROMPT.=qq (ERROR:ISPNAME is a MUST or Format Error\\n); 
+            $IS_EVERYTHING_OK=0;
+        }
+        if ($action{nic} =~m/ttyACM/ || $action{nic} =~m/ttyUSB/ || $action{nic} =~m/SIM/)
+        {
+            my $total3gisp=0;
+
+           foreach my $isp ( @$isplist )
+           {
+            if ($isp->{pppoeportdev} =~m/ttyACM/ || $isp->{pppoeportdev} =~m/ttyUSB/)
+            {
+                $total3gisp++;
+            }
+           }
+           if ( $total3gisp > $gMAX3GISP )
+           {
+                $gMSGPROMPT.=qq (ERROR:Upper bound of 3G ISP is $gMAX3GISP\\n);
+                $IS_EVERYTHING_OK=0;
+           }
+        }
+        #  To transform the domain name into IP format
+        if ( $action{proxyname}=~m/[A-Za-z]/ )
+        {
+            my $IP=runCommand(command=>'/opt/qb/bin/script/ns ', params=>$action{proxyname});
+            $IP=~s/\n//g;
+            if ( $IP eq "" )
+            {
+               $gMSGPROMPT.=qq (ERROR:Its fail to transform the proxy name into IP format.\\n);
+            }
+            $action{proxyip}=$IP;
+            $action{enableproxy}=1;
+            $IS_EVERYTHING_OK=1;
+        }
+        if ( $action{proxyname}!~m/[A-Za-z]/ )
+        {
+           $action{proxyip}=$action{proxyname};
+           $action{enableproxy}=1;
+        }
+        #20090702 To prevent null isp info make update fail.
+        if ($action{systemip} eq "")
+        {
+            $gMSGPROMPT.=qq (systemip must be Assigned\\n);
+            $gMSGPROMPT.=qq (gateway must be Assigned\\n);
+            $gMSGPROMPT.=qq (subnet must be Assigned\\n);
+            $IS_EVERYTHING_OK=0;
+        }
+                                                                                    
+        if ( $action{isptype} eq "normal"||$action{isptype} eq "pppoe"||$action{isptype} eq "dhcp" ||$action{isptype} eq "pptp"||$action{isptype} eq "l2tp")
+        {
+
+            #check select port or not
+            if ($action{isptype} eq "pppoe" && $action{nic} eq '-1')
+            {
+                $gMSGPROMPT.=qq (Interface must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+
+            #check name/password
+            #if ($action{isptype} eq "pppoe" && $action{pppoename} eq "")
+            #{
+            #    $gMSGPROMPT.=qq (PPPoE's name must be Assigned\\n);
+            #    $IS_EVERYTHING_OK=0;
+            #}
+            #if ($action{isptype} eq "pppoe" && $action{pppoepasswd} eq "")
+            #{
+            #    $gMSGPROMPT.=qq (PPPoE's password must be Assigned\\n);
+            #    $IS_EVERYTHING_OK=0;
+            #}
+            if ($action{isptype} eq "pptp" && $action{pppoename} eq "")
+            {
+                $gMSGPROMPT.=qq (PPTP's name must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+            if ($action{isptype} eq "pptp" && $action{pppoepasswd} eq "")
+            {
+                $gMSGPROMPT.=qq (PPTP's password must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+            if ($action{isptype} eq "l2tp" && $action{pppoename} eq "")
+            {
+                $gMSGPROMPT.=qq (L2TP's name must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+            if ($action{isptype} eq "l2tp" && $action{pppoepasswd} eq "")
+            {
+                $gMSGPROMPT.=qq (L2TP's password must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+
+           #if ($action{isptype} eq "pppoe" && $action{nic} ne '-1' && $action{pppoename} ne "" && $action{pppoepasswd} ne "")
+           if ($action{isptype} eq "pppoe" && $action{nic} ne '-1' )
+           {
+              
+             if ($action{pppoepasswd} eq ""){$action{pppoepasswd}="null";} 
+             my $xname=$action{pppoename};
+             my $xpasswd=$action{pppoepasswd};
+             #Brian 20061225 fix a passwd bug,if the last word is "&"
+             $xpasswd="\'$xpasswd\'";
+             my $xnic=$action{nic};
+             my $linenum=$action{iid};
+             my $config="/etc/ppp/pppoe.conf";
+
+             if ($action{nic} =~m/SIM/)
+             {
+              $action{interface_name}=$action{nic};
+             }else{
+              $action{pppoeportdev}=$action{nic};
+             }
+
+             foreach my $isp ( @$isplist ) 
+             {
+                 if ( $isp->{iid} eq $action{iid})
+                  {
+                     $action{nic}=$isp->{nic};
+                  }
+              }
+            #check use DDNS or not 
+            if ($action{enableddns} eq "Yes" || $action{enableddns} eq "Yes,and wildcard")
+            {
+               $wildcard="no";
+                 if ($action{enableddns} eq "Yes,and wildcard")
+                 {
+                    $wildcard="yes";
+                 }  
+                  my $login=$action{ddnsname};
+                  my $password=$action{ddnspasswd};
+                  my $domain=$action{ddnsdomainname};
+                  if($action{ddnschoice} eq "www.dyndns.org")
+                  {
+                       $protocol="dyndns2";
+                       $server="members.dyndns.org";
+                  }
+                  if($action{ddnschoice} eq "www.dslreports.com")
+                  {
+                       $protocol="dslreports1";
+                       $server="members.dslreports.com";
+                  }
+                  if($action{ddnschoice} eq "www.dnspark.com")
+                  {
+                       $protocol="dnspark";
+                       $server="www.dnspark.com";
+                  }
+                  if($action{ddnschoice} eq "www.easydns.com")
+                  {
+                       $protocol="easydns";
+                       $server="members.easydns.com";
+                  }
+                  if($action{ddnschoice} eq "www.namecheap.com")
+                  {
+                       $protocol="namecheap";
+                       $server="dynamicdns.park-your-domain.com";
+                  }
+                  if($action{ddnschoice} eq "www.zoneedit.com")
+                  {
+                       $protocol="zoneedit1";
+                       $server="www.zoneedit.com";
+                  }
+                  #runCommand(command=>'/usr/sbin/ddnscfg ', params=>$login.' '.$password.' '.$wildcard.' '.$protocol.' '.$server.' '.$domain.' '.$xmlpppnic);
+                  #20090910 $xmlpppnic is null here
+                  runCommand(command=>'/usr/sbin/ddnscfg ', params=>$login.' '.$password.' '.$wildcard.' '.$protocol.' '.$server.' '.$domain.' '.$action{nic});
+               }
+
+           }
+           if ($action{isptype} eq "pptp" || $action{isptype} eq "l2tp" && $action{pppoename} ne "" && $action{pppoepasswd} ne "")
+           {
+             $action{pppoeportdev}=$action{nic};
+
+             foreach my $isp ( @$isplist ) 
+             {
+                 if ( $isp->{iid} eq $action{iid})
+                  {
+                     $action{nic}=$isp->{nic};
+                  }
+              }
+           }
+
+           #if ($action{isptype} eq "dhcp" && $checkport eq "")
+           if ($action{isptype} eq "dhcp")
+           {
+            #check use DDNS or not 
+            if ($action{enableddns} eq "Yes" || $action{enableddns} eq "Yes,and wildcard")
+            {
+               $wildcard="no";
+                 if ($action{enableddns} eq "Yes,and wildcard")
+                 {
+                    $wildcard="yes";
+                 }  
+                  my $login=$action{ddnsname};
+                  my $password=$action{ddnspasswd};
+                  my $domain=$action{ddnsdomainname};
+                  if($action{ddnschoice} eq "www.dyndns.org")
+                  {
+                       $protocol="dyndns2";
+                       $server="members.dyndns.org";
+                  }
+                  if($action{ddnschoice} eq "www.dslreports.com")
+                  {
+                       $protocol="dslreports1";
+                       $server="members.dslreports.com";
+                  }
+                  if($action{ddnschoice} eq "www.dnspark.com")
+                  {
+                       $protocol="dnspark";
+                       $server="www.dnspark.com";
+                  }
+                  if($action{ddnschoice} eq "www.easydns.com")
+                  {
+                       $protocol="easydns";
+                       $server="members.easydns.com";
+                  }
+                  if($action{ddnschoice} eq "www.namecheap.com")
+                  {
+                       $protocol="namecheap";
+                       $server="dynamicdns.park-your-domain.com";
+                  }
+                  if($action{ddnschoice} eq "www.zoneedit.com")
+                  {
+                       $protocol="zoneedit1";
+                       $server="www.zoneedit.com";
+                  }
+                  runCommand(command=>'/usr/sbin/ddnscfg ', params=>$login.' '.$password.' '.$wildcard.' '.$protocol.' '.$server.' '.$domain.' '.$cnic);
+               }
+           } 
+           #if ($action{isptype} ne "pptp" && $action{isptype} ne "pppoe" )
+           if ($action{isptype} ne "pptp" && $action{isptype} ne "l2tp" )
+           {
+            #check if selected PORT has been used as LAN PORT
+            if ( $action{nic} eq '-1' )    
+            {
+                $gMSGPROMPT.=qq (Interface must be Assigned\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+            
+            #check if selected PORT has been used as LAN PORT
+            if ( maintainZone( action=>"IFNICUSED", nic=>$action{nic} ) )    
+            {
+                my $port=$action{nic}; $port=~s/eth//; $port++;
+                $gMSGPROMPT.=qq (Not Available:PORT $port has already been assigned as LAN PORT\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+           } 
+        }
+        
+        #**************************************************************************************
+        #check if this ISP name conflicts with other ISP
+        foreach my $isp ( @$isplist ) 
+        {
+            if ( $isp->{iid} eq $action{iid} || $isp->{ispname} ne $action{ispname} ) { next; }
+            $gMSGPROMPT.=qq (ERROR:$action{ispname} has been used by ISP$isp->{iid}\\n);  
+            $IS_EVERYTHING_OK=0;
+            last;
+        }
+
+        #**************************************************************************************
+        #check if this NIC speed conflicts with NIC speed
+        if ( $action{nic_speed} ne "" )
+        {
+          foreach my $isp ( @$isplist ) 
+          {
+            if ( $isp->{iid} eq $action{iid} || $isp->{nic} ne $action{nic} || !$isp->{nic_speed} ) { next; }
+            if ( $isp->{nic_speed} ne $action{nic_speed} )
+            {
+             $gMSGPROMPT.=qq (ERROR:$action{ispname}'s nic speed conflicts with ISP$isp->{iid} $isp->{ispname}\\n);  
+             $IS_EVERYTHING_OK=0;
+             last;
+            }
+          }
+        }
+        
+        #**************************************************************************************
+        if ( $action{type} eq 'fixed' && $action{isptype} ne 'pppoe' && $action{isptype} ne 'dhcp' && $action{isptype} ne 'pptp' && $action{isptype} ne 'l2tp') 
+        {
+            if ( !isValidIP($action{systemip}) ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR:System IP Format Error\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+
+            if ( !isValidIP($action{gateway}) ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR:Gateway IP Format Error\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+
+            if ( $action{isptype} eq "normal" )
+            {
+
+                if ( isSubnetIP($action{systemip}, $action{subnet}) <=0  )    
+                { 
+                    $gMSGPROMPT.=qq ( Warning:System IP is not in the range of $action{subnet}\\n);
+                    #$IS_EVERYTHING_OK=0;
+                }
+
+                if ( isSubnetUsableIP($action{gateway}, $action{subnet}) <= 0 )    
+                { 
+                    $gMSGPROMPT.=qq ( Warning:Gateway IP is not in the range of $action{subnet}\\n);
+                    #$IS_EVERYTHING_OK=0;
+                }
+
+                my @dmz=maintainIPBank(from=>'isp'.$action{iid}.'dmz', action=>'read');
+                if ( grep(/^$action{gateway}$/, @dmz) )
+                {
+                    $gMSGPROMPT.=qq ( Warning:Gateway IP has already been registered as transparent IP \\n);
+                }
+
+                my @public=maintainIPBank(from=>'isp'.$action{iid}.'public', action=>'read');
+                if ( grep(/^$action{gateway}$/, @public) )
+                {
+                    $gMSGPROMPT.=qq ( ERROR:Gateway IP has already been registered as public IP \\n);
+                    $IS_EVERYTHING_OK=0;
+                }
+
+                if ( grep(/^$action{systemip}$/, @dmz) )
+                {
+                    $gMSGPROMPT.=qq ( Warning:System IP has already been registered as transparent IP \\n);
+                }
+    
+                #=====================================================================================
+                # Check if the format of subnet is OK
+                $action{subnet}=get_subnet( $action{subnet} );
+                if ( !$action{subnet} ) 
+                {
+                    $gMSGPROMPT.=qq (ERROR : Subnet Format ERROR\\n);  
+                    $IS_EVERYTHING_OK=0; 
+                }
+                # Check if the subnet conflicts with other ISP
+                else 
+                {
+                    foreach my $isp ( @$isplist ) 
+                    {
+                        if ( $isp->{iid} eq $action{iid} || subnet_belong_check( $action{subnet}, $isp->{subnet} ) <=0 ) { next; }
+                        $gMSGPROMPT.=qq (ERROR : Subnet overlaps with $isp->{ispname} [ ISP$isp->{iid} ] \\n);  
+                        $IS_EVERYTHING_OK=0;
+                    }    
+                }
+                
+                # Decide the flag of IS_SUBNET_CHANGED
+                $IS_SUBNET_CHANGED=( $target->{subnet} eq $action{subnet} ) ? ( 0 ):( 1 );    
+            }
+
+            
+            if ( $action{isptype} eq "tunnel")
+            {
+                #=====================================================================================
+	       $action{local}=maintainBasic(action=>'GETIP', ispname=>$action{wanisp});
+               if ($action{remotename} ne "")
+               {
+                $dnsip=runCommand(command=>'/opt/qb/bin/script/ns ', params=>$action{remotename});
+                $dnsip=~s/\n//g;
+                $action{remote}=$dnsip;
+                 if ($dnsip eq "")
+                 {
+                    $gMSGPROMPT.=qq ( ERROR : Can't get the domain name's IP\\n );
+                    $IS_EVERYTHING_OK=0;
+                 }
+               }
+
+               if ( $action{mpv_nat} eq "1" )
+               {
+                 my $mpv_nat_ip=runCommand(command=>'/sbin/wget ', params=>'--bind-address='.$showData->{local}.' -O - -q icanhazip.com --timeout=10');
+                 $mpv_nat_ip=~s/\n//g;
+                 #wget -O - -q icanhazip.com --bind-address=192.168.1.110 --timeout=10
+                 $action{mpv_nat_ip}=$mpv_nat_ip;
+               }
+
+                # Check if systemip and gateway conflict with each other
+                if ( $action{local} eq $action{remote} ) 
+                {
+                    $gMSGPROMPT.=qq ( ERROR : Local IP and Remote IP can not be the same\\n );
+                    $IS_EVERYTHING_OK=0;
+                }
+            }
+
+            #=====================================================================================
+            # Check if systemip and gateway conflict with each other 
+            if ( $action{gateway} eq $action{systemip} ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR : Gateway and Systemip can not be the same\\n );
+                $IS_EVERYTHING_OK=0;
+            }
+
+
+            #=====================================================================================
+            # Check if format of target is right
+            if ( !isValidIP($action{target}) ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR:Healthcheck IP Format Error\\n);
+                $IS_EVERYTHING_OK=0;
+            }
+        }
+        
+
+        #**************************************************************************************
+        # Important Check Point
+        # if ERROR FOUND...Do Nothing but return 0  
+
+        if ( !$IS_EVERYTHING_OK ) { return 0; }
+
+        # if Everything is OK, keep going ... 
+        #**************************************************************************************
+        
+        #@dep1:
+        # Inform involved XML that the subnet of target ISP is changed
+        # Then Push them to check related Dependency
+        if ( $IS_SUBNET_CHANGED )
+        {
+            maintainDMZreg(action=>'SUBNETCHANGED', isp=>$action{iid}, newsubnet=>$action{subnet}, oldsubnet=>$target->{subnet} );
+            maintainDMZ(action=>'SUBNETCHANGED', isp=>$action{iid}, newsubnet=>$action{subnet});
+            maintainVS(action=>'SUBNETCHANGED', isp=>$action{iid}, newsubnet=>$action{subnet});
+        }
+
+        #@dep3: ipneigh for DMZ Gateway Proxy
+        #if DMZ is On and Gateway is changed, change Gateway proxy
+        #**************************************************************************************
+        my $dmzstatus=maintainZone( action=>"GETDMZSTATUS", isp=>$action{iid} );
+        if ( $dmzstatus && $target->{gateway} ne $action{gateway} ) 
+        {
+            my $dmzzonenic=maintainZone( action=>"GETDMZNIC", isp=>$action{iid} );
+            maintainIPneigh( action=>"DEL", ip=>$target->{gateway}, nic=>$dmzzonenic, isp=>$target->{iid} );
+            maintainIPneigh( action=>"ADD", ip=>$action{gateway}, nic=>$dmzzonenic, isp=>$action{iid} );
+        }
+
+        #@dep4: update ipneigh for DMZ IP Proxy of ISP $action{iid}
+        #**************************************************************************************
+        if ( $target->{nic} ne $action{nic} )
+        {
+            maintainIPneigh( action=>"MOVEPORT", isp=>$action{iid}, nic=>$action{nic} );
+        }
+
+        #@dep5: update ipaddr for system IP and VS IP of ISP $action{iid}
+        #**************************************************************************************
+        my %dmzip_of_this_isp=maintainDMZreg(isp=>$action{iid}, action=>"GETDMZIPHASH");
+        my @vsIP=maintainIPBank(from=>'isp'.$action{iid}.'public', action=>'read');
+        my $isVSIP=( grep(/$target->{systemip}/, @vsIP) ) ? 1 : 0;
+        if ( !$isVSIP || exists($dmzip_of_this_isp{$target->{systemip}}) ) 
+        { 
+            maintainIPaddress( action=>"DEL", ip=>$target->{systemip}, nic=>$target->{nic}, isp=>$target->{iid} ); 
+        }
+
+        if ( !exists($dmzip_of_this_isp{$action{systemip}}) )
+        {
+            maintainIPaddress( action=>"ADD", ip=>$action{systemip}, nic=>$action{nic}, isp=>$action{iid} );
+        }
+
+        if ( $target->{nic} ne $action{nic} )
+        {
+            maintainIPaddress( action=>"MOVEPORT", isp=>$action{iid}, nic=>$action{nic} );
+        }
+
+        #@dep6: update subnet field of ISP $action{iid} in dns.xml
+        #**************************************************************************************
+        maintainDNS(action=>'UPDATEISPSUBNET', isp=>$action{iid}, subnet=>$action{subnet});
+        
+        if ( $action{type} eq 'fixed') 
+        { 
+            #@dep7: ipbank
+            #************************************************************************************** 
+            #如果已經有 systemip 且有異動的話 
+            #move back old systemip from isp$action{iid}system to isp$action{iid} in ipbank.xml
+            #then move new systemip form isp$action{iid} to isp$action{iid}system 
+            #
+            if ( $target->{systemip} && $target->{systemip} ne $action{systemip} ) 
+            {
+                #maintain ip transaction in ipbank.xml
+                maintainIPBank(from=>'isp'.$action{iid}.'system', action=>'remove', ipset=>["$target->{systemip}"]);
+                maintainIPBank(to=>'isp'.$action{iid}.'system', action=>'append', ipset=>["$action{systemip}"]); 
+            }
+            #如果本來沒有 systemip
+            elsif ( !$target->{systemip} ) 
+            {
+                maintainIPBank(to=>"isp$action{iid}system", action=>'append', ipset=>["$action{systemip}"] );
+            }
+        }
+            
+        #6.perpare download and upload fields of %action ----
+        #************************************************************************************** 
+        if ( $action{udmethod} eq "byhand" ) 
+        {
+            if ( $action{download}!~m/^\d{2,8}$/  ||  $action{upload}!~m/^\d{2,8}$/ ) 
+            {
+                $gMSGPROMPT.=qq ( Warning: Download or Upload Format ERROR or EMPTY \\n);
+            }
+        } 
+        elsif ( $action{udmethod} eq "bylist" ) 
+        {
+            $action{downupspeed}=~s/U|D|Kbit//g;
+            ( $action{download}, $action{upload} )=split( /\//, $action{downupspeed} );  
+        }
+        
+        #7.copy all the values of fields in $target  from  %action except broadcasting
+        # 這段是真正將介面中 ISP 資料更新到 temp 所指的 ISP 資料的碼
+        # 因為 $target->{broadcast} 不應該在 SAVE 時被更動，而且 $action{broadcast} 也不存在
+        foreach my $item (keys(%$target)) { if ( $item ne "broadcast") { $target->{$item}= $action{$item}; } }
+        $target->{target}=$action{target};
+        $target->{isptype}=$action{isptype};
+        
+        # new attribures in new version xml
+        if ( $action{isptype} eq "tunnel" ) 
+        { 
+            $target->{dsip}='0'; 
+            $target->{local}=$action{local};
+            #$target->{remote}=$action{remote};
+	    $target->{remote}=($action{remote} eq "" ) ? ("0.255.0.".$action{iid}) : ($action{remote});
+	    #if ( $target->{remote} eq '' ) 
+	    #{
+	    #    $target->{remote}="0.255.0.".$action{iid};
+	    #    $target->{dmpv}="1";
+	    #}
+            $target->{mss}=$action{mss};
+            $target->{mtu}=$action{mtu};
+            if ( $action{mtu_value} ne "" ){$target->{mtu}=$action{mtu_value}};
+            if ( $action{mss_value} ne "" ){$target->{mss}=$action{mss_value}};
+            $target->{mtu_value}=$action{mtu_value};
+            $target->{mss_value}=$action{mss_value};
+	    $target->{ipcom}=$action{ipcom};
+	    $target->{enc}=($action{ipcom}) ? "1" : $action{enc};
+            $target->{mpv_nat}=$action{mpv_nat};
+            $target->{mpv_nat_ip}=$action{mpv_nat_ip};
+	    if ( $target->{enc} )
+            {
+                if ( $action{algslt} eq "none" ) { $action{algslt} = "aes 128"; }
+                $target->{alg}=$action{algslt};
+            }
+            else
+            {
+                $target->{alg}=$action{alg};
+		$target->{ipcom}='0';
+            }
+	    $target->{target}=$action{gateway};
+            
+        }
+        if ( $action{isptype} eq "pptp" ) 
+        { 
+            $target->{pptpserver}=$action{pptpserver};
+            $target->{pppispid}=$action{pppispid};
+            $target->{encrypt_mppe}=$action{encrypt_mppe};
+            $target->{compression}=$action{compression};
+            $target->{stateful}=$action{stateful};
+            $target->{stateless}=$action{stateless};
+        }
+        if ( $action{isptype} eq "l2tp" ) 
+        { 
+            $target->{pptpserver}=$action{pptpserver};
+            $target->{pppispid}=$action{pppispid};
+        }
+        if ( $action{isptype} eq "normal" || $action{isptype} eq "dhcp" || $action{isptype} eq "pppoe" ) 
+        { 
+            $target->{nic_speed}=$action{nic_speed};
+        }
+        if ( $action{isptype} eq "pppoe" ) 
+        { 
+            $target->{usbmodemtype}=$action{usbmodemtype};
+            $target->{mode_2G3G}=$action{mode_2G3G};
+            $target->{band_2G3G}=$action{band_2G3G};
+            $target->{daily_3greset}=$action{daily_3greset};
+            $target->{flag_3g}=$action{flag_3g};
+            if ( $action{apn_name} eq "" )
+            {
+            $target->{apn_name}="null";
+            }else{
+            $target->{apn_name}=$action{apn_name};
+            }
+            $target->{dial_num}=$action{dial_num};
+        }
+        #$target->{target}=$action{target};
+        #$target->{isptype}=$action{isptype};
+
+        
+        #8. transfer state of isp$action{iid} to FORMATOK 
+        $target->{state}='FORMATOK';
+      
+    }
+    elsif ( $action{action} eq "SWITCHMODEM" && $action{usbmodemtype} ne "-1" ) 
+    {
+        runCommand(command=>'/opt/qb/hsdpa/detectusb', params=>$action{usbmodemtype});
+        return;
+    }
+    elsif ( $action{action} eq "MODEMACTION" ) 
+    {
+        if ( $action{modemaction} eq "Reset" )
+        {
+        runCommand(command=>'/opt/qb/hsdpa/3gctrl', params=>$action{modemaction}.' '.$action{pppoeportdev});
+        }
+        else
+        {
+        runCommand(command=>'/opt/qb/hsdpa/3gctrl', params=>$action{modemaction});
+        }
+    }
+    elsif ( $action{action} eq "MODEMRESET" ) 
+    {
+
+        #kill old process
+        my $wvdialprocess=runCommand(command=>"/sbin/pidof", params=>'wvdial');
+        my @processrecord=split(/ /, $wvdialprocess);
+        foreach my $processid ( @processrecord )
+        {
+          my $processinfo=runCommand(command=>'ps ', params=>qq(-ef \|grep $processid ));
+          if ( grep(/$action{ispname}/, $processinfo) )
+          {
+             runCommand(command=>'/usr/bin/kill ', params=>'-15 '.$processid);
+             runCommand(command=>'sleep', params=>'1');
+          }
+        }
+        runCommand(command=>'/opt/qb/hsdpa/3gctrl', params=>$action{modemaction}.' '.$action{pppoeportdev});
+    }
+    elsif ( $action{action} eq "DELISP" ) 
+    {
+        if ( !$action{iid} ) { $gMSGPROMPT.=qq (Note: no ISP could be deleted); return;}
+        
+        #@dep1
+        ###########################################################################################
+        #1:ipbank.xml:clear ip bank of focused ISP in ipbank.xml
+        maintainIPBank(action=>'delisp', isp=>$action{iid});
+        
+        #@dep2
+        ###########################################################################################
+        #2:dmzreg.xml:  clear all DMZ zone hosts of $action{iid} in dmzreg.xml  
+        maintainDMZreg(action=>'CLEAR', isp=>$action{iid});
+        
+        #@dep3
+        ###########################################################################################
+        #3:ipneigh.xml:  clear ipneigh entries of $target->{subnet} in ipneigh.xml  
+        maintainIPneigh( action=>'CLEAR', isp=>$action{iid} );
+        
+        #@dep4
+        ###########################################################################################
+        #4:ipaddr.xml:  clear ipaddress entries of $target->{subnet} in ipaddr.xml  
+        maintainIPaddress(  action=>'CLEAR', isp=>$action{iid}  );
+        
+        #@dep5
+        ###########################################################################################
+        #5:subnet.xml:CLEAR ALL DMZ SUBNET Belonging to this ISP *********
+        maintainDMZ( action=>"MARKDMZSUBNETOFISP", isp=>$action{iid} );
+        
+        #@dep6
+        ###########################################################################################
+        #6:lvs.xml:  MARK lvs set with the Vertual IP of isp$action{iid} in lvs.xml as DIRTY  
+        maintainVS( action=>'MARKVSERVERS', isp=>"$action{iid}" );
+        
+        #@dep7 
+        ###########################################################################################
+        #7.interrt.xml 移除這個 ISP 所有的 interroute entries
+        maintainInterrt( action=>"CLEAR", isp=>$action{iid} );
+        
+        #@dep8
+        ###########################################################################################
+        #8. overview.xml 將此 ISP 的 DMZ 刪除 
+        maintainZone( action=>"DELISPOFDMZ", dmzid=>$action{iid} );
+        
+        #@dep9
+        ###########################################################################################
+        #9. rtable.xml 將此 ISP 的 DMZ 刪除 
+        maintainRtable( action=>"DELISP", isp=>$action{iid} );
+        
+        #@dep10
+        ###########################################################################################
+        #10. dns.xml 刪除 ISP 的 DNS entry 
+        maintainDNS( action=>'DELISP', isp=>$action{iid}  );
+        
+        #最後，將這一個 ISP 從 basic 中移除
+        my @Newisparray;
+        foreach my $isp ( @$isplist) { if ( $isp->{iid} ne $action{iid} ) { push ( @newisparray, $isp); } }
+        $ispref->{isp}=\@newisparray;
+      
+        #@dep 11 
+        ###########################################################################################
+        #11. delete bind ip 
+        if ( $action{isptype} ne 'tunnel' ) 
+        {
+            my @iparray = maintainVS(action=>'GETBINDIPS', isp=>$action{iid});
+            maintainVS(action=>'DELETEPUBLICIP', publiciptodel=>\@iparray);
+        }
+    }
+    elsif ( $action{action} eq "REPORT" )
+    {
+        print qq (<fieldset><legend><font class="subtitle">ISP Information</font></legend>);
+        print qq (<div class="reportdiv">);
+        foreach my $isp ( @$isplist ) 
+        {
+            if ( $isp->{iid} eq 'system' ) { next; }
+            foreach my $key ( keys %$isp ) { print qq ( [ $key:$isp->{$key} ] );  } 
+            print qq (<hr size="1">);
+        }
+        print qq (</fieldset>);
+    } 
+    elsif ( $action{action} eq "DELPPP" )
+    {
+        
+        my $config="/etc/ppp/pppoe.conf";
+        my $linenum=$action{iid};
+        runCommand(command=>'/usr/sbin/pppoe-stop', params=>' '.$config.$linenum);
+        
+    } 
+    
+    #--------updating basic.xml------------------------ 
+    XMLwrite($ispref, $gPATH."basic.xml");
+    
+    #@dep
+    if ( $action{action} eq 'SAVE' ) { maintainRtable(action=>'NEWISP', isp=>$action{iid}); }   
+    if ( $action{action} eq 'SAVEANDDIAL' ) { maintainRtable(action=>'NEWISP', isp=>$action{iid}); }   
+    #@dep
+    #if ( $action{action}=~m/^NEWISP$|^DELISP$|^SAVE$|^SAVEANDDIAL/ ) 
+    if ( $action{action}=~m/^DELISP$|^SAVE$|^SAVEANDDIAL/ ) 
+    { 
+        maintainService( action=>'ISPUPDATED' );
+        maintainFwmark( action=>'ISPUPDATED' ); 
+        #remove this function, it make save isp slow 
+        #maintainProute( action=>'UPDATEQBROUTE' );
+        maintainRtable( action=>"DSIPUPDATE" );
+    }
+    
+    #new function to update proute.xml
+    if ( $action{action}=~m/^SAVE$|SAVEANDDIAL/ )
+    {
+        maintainProute( action=>'ADDQBROUTE', type=>'ISP', isp=>$action{iid}, ip=>$action{systemip});
+        LogUserAction( action=>'SAVEISP', iid=>$action{iid}, ispname=>$action{ispname} );
+    }
+    if ( $action{action}=~m/^DELISP$/ )
+    {
+        maintainProute( action=>'DELQBROUTE', isp=>$action{iid});
+        LogUserAction( action=>'DELISP', iid=>$action{iid}, ispname=>$action{ispname} );
+    }
+=cut    
+    #@dep server mapping and ip binding
+    if ( $action{action} =~ m/^SAVE$|^SAVEANDDIAL/ && $action{isptype} ne 'tunnel' && $action{isptype} ne 'ipsec' )
+    {
+        maintainVS(action=>'APPENDVSIP', isp_of_vip=>$action{iid} ,viptoappend=>$action{systemip});
+        my @service = ("maintain", "ping", "ssh");
+        my @rservers = ("localhost", "system");
+        maintainVS(action=>'NEW', viewpoint=>'lvs', service=>\@service, isp=>$action{iid}, vip=>$action{systemip}, rservers=>\@rservers);
+    }
+=cut
+    
+    #@dep:
+    if ( $action{action}!~m/^GET/ )
+    {
+        maintainIniroute(action=>'JUDGEDIRTYVALUEOFPOLICY');
+    }
+
+    # * Important return value. this is a MUST
+    return 1;
+}
+#maintainBasic
+
+#================================================================================================
+sub sort_isp_by_id 
+{
+    my $avalue=$a->{iid}; 
+    my $bvalue=$b->{iid};  
+    int($avalue) <=> int($bvalue);
+}
+#sort_isp_by_id
+#================================================================================================
+sub ispinfo_sort_by_isp
+{
+    my @afields=split(/\.|\//,$a->{vip});
+    my @bfields=split(/\.|\//,$b->{vip});
+    foreach my $index ( 0..3 )
+    {
+         $avalue=$afields[$index];
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+
+    if ( $a->{isp} == $b->{isp} )
+    {
+        if ( $avalue == $bvalue )
+        {
+            return $a->{service} cmp  $b->{service};
+        }
+        else
+        {
+            $avalue <=> $bvalue;
+        }
+    }
+    else
+    {
+        $a->{isp} <=> $b->{isp};
+    }
+}
+#sub ispinfo_sort_by_isp
+
+#================================================================================================
+sub ispinfo_sort_by_mpvtvli
+{
+    my @afields=split(/\.|\//,$a->{systemip});
+    my @bfields=split(/\.|\//,$b->{systemip});
+    foreach my $index ( 0..3 )
+    {
+         $avalue=$afields[$index];
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+        $avalue <=> $bvalue;
+}
+#ispinfo_sort_by_mpvtvli
+
+#================================================================================================
+sub ispinfo_sort_by_mpvtvri
+{
+    my @afields=split(/\.|\//,$a->{gateway});
+    my @bfields=split(/\.|\//,$b->{gateway});
+    foreach my $index ( 0..3 )
+    {
+         $avalue=$afields[$index];
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+        $avalue <=> $bvalue;
+}
+#ispinfo_sort_by_mpvtvri
+
+#================================================================================================
+sub ispinfo_sort_by_mpvremoteip
+{
+    my @afields=split(/\.|\//,$a->{remote});
+    my @bfields=split(/\.|\//,$b->{remote});
+    foreach my $index ( 0..3 )
+    {
+         $avalue=$afields[$index];
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+        $avalue <=> $bvalue;
+}
+#ispinfo_sort_by_mpvremoteip
+
+#================================================================================================
+sub ispinfo_sort_by_mpvlocalip
+{
+    my @afields=split(/\.|\//,$a->{local});
+    my @bfields=split(/\.|\//,$b->{local});
+    foreach my $index ( 0..3 )
+    {
+         $avalue=$afields[$index];
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+        $avalue <=> $bvalue;
+}
+#ispinfo_sort_by_mpvlocaleip
+
+#================================================================================================
+sub ispinfo_sort_by_name
+{
+    if ( $a->{ispname} ne $b->{ispname} )
+    {
+        return $a->{ispname} cmp $b->{ispname};
+    }
+}
+#ispinfo_sort_by_name
+
+#
+1

@@ -1,0 +1,1787 @@
+##############################################################################################
+#                                  Routing Table Config 
+##############################################################################################
+#showRtable( $table_num )
+sub showRtable 
+{
+    # Initializing Variables
+    my $table_num=shift;
+    my $rtable  = XMLread($gPATH.'rtable.xml');
+    my $ispinfo = XMLread($gPATH.'basic.xml' );
+    my @rtablelist=maintainRtable( action=>'GETTABLELIST' );
+    my $temptables=$rtable->{table};
+    my @sortedTables=sort sort_table_by_id @$temptables;
+    my $target;
+    my $allpath;
+    my $allisp=$ispinfo->{isp};
+    my $backup_table;
+    my $measure_time;
+  
+    if (!$table_num ) { $table_num=$rtablelist[0]; }
+    
+    foreach my $table ( @$temptables ) { if ( $table->{table_num} eq $table_num ) { $target=$table; last; } }
+
+    print qq (<table width="100%" cellspacing="0" border="0">);
+    print qq (<tr><td class="bigtitle" colspan="3">$qblang[171] ); #</td></tr>);
+    print qq (<a href="javascript:qbShowHelp('rtable')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    print qq (<tr><td align="center" colspan="3"><hr size="1"></td></tr>);
+    print qq (<tr><td class="body"  align="center" colspan="3" width="100%">);
+
+    #-----  Selection list of routing tables --------------------------------------------------
+    # Print Title first
+    # print qq (<div class="divframe">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    # print qq (<td width="8%">Pool ID</td>);
+    # print qq (<td width="20%">Link Info.</td>);
+    # print qq (<td width="10%">Backup Pool</td>);
+    # print qq (<td width="10%">By Packet</td>);
+    # print qq (<td width="12%">By Connection</td>);
+    # print qq (<td width="15%">Balance Mode</td>);
+    # print qq (<td width="15%">Pool Name</td>);
+    # print qq (<td width="5%">Edit</td>);
+    # print qq (<td><a href="javascript:deleteTables()"><image src="image/del.gif" title="Delete Selected Pools" border="0"></a>);
+    # print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('tablestodel', this.checked)">);
+    # print qq (</td>);
+    # print qq (</tr></table>);
+    # print qq (</div>);
+
+    # Print Summary Lists of Routing Tables
+    print qq (<div class="divframe" style="height:160">);
+    print qq (<table  id="rtableList" width="100%"><thead><tr  style="background-color:#332211";><th width="8%">$qblang[172]</th><th width="20%">$qblang[173]</th><th width="10%">$qblang[174]</th><th width="10%">$qblang[175]</th><th width="12%">$qblang[176]</th><th width="15%">$qblang[177]</th><th width="15%">$qblang[178]</th><th width="5%">$qblang[25]</th><th><a href="javascript:deleteTables()"><img border="0" title="Delete Selected Pools" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('tablestodel', this.checked)" title="select or deselect all items"></th></tr></thead>);
+    my $lineCount=1;
+    foreach my $table ( @sortedTables )
+    {
+        if ( $table->{table_num} eq 'system' )   { next; }
+        if ( $table->{table_num} eq $gBALANCE )  { next; }
+        if ( $table->{table_num} >= $gALLPATH  ) { next; }
+
+        # Collect Table Info.
+        my $byPacket=($table->{equalize} ) ? ( 'Yes' ):( 'No' );
+        my $aggregate=( $table->{aggregate} || $table->{mode}=~m/^FRTT$|^BSWLT$|^DSWLT$|^USWLT$|^FAST$/  ) ? ( 'Yes' ):( 'No' );
+        my $balancemode=($table->{mode}) ? ($table->{mode}) : ('WRR');
+        if ($table->{mode1} eq 'TB' && $table->{mode} eq 'WLC')
+        {
+            $balancemode='TB';
+        }
+        
+        #===================================================================      
+        # prepare display color
+        my $bgcolor=my $originalColor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        my $showBackup=( $table->{backup_table} ) ? ( $table->{backup_table} ) : ('N/A');
+        my $showNote=( $table->{note} ) ? ( $table->{note} ) : ('N/A');
+        my $allPaths=$table->{path};
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="8%">$table->{table_num}</td>);
+        print qq (<td width="20%">);
+
+        if ( $table->{numpath} > 0 ) 
+        {
+            my $firstpath=$allPaths->[0];
+            my $pathcontent='';
+            $firstpath=qq(ISP$firstpath->{isp} [weight:$firstpath->{weight}]);
+            $firstpath.=( $table->{numpath} > 1 ) ? (' ...') : ('');
+            foreach my $path ( @$allPaths ) { $pathcontent.= qq (ISP$path->{isp} [weight:$path->{weight}]\n); }
+            print qq ( <span title="$pathcontent">$firstpath</span> );
+        }
+        elsif ( $table->{mode} eq "REDIRECT" )
+        {
+            print qq (Redirect: $table->{redirect});
+        }
+        else 
+        { 
+            print qq (NONE); 
+        }
+
+        print qq (</td>);
+        
+        print qq (<td width="10%">$showBackup</td>);
+        print qq (<td width="10%">$byPacket</td>);
+        print qq (<td width="12%">$aggregate</td>);
+        print qq (<td width="15%">$balancemode</td>);
+        print qq (<td width="15%">$showNote</td>);
+        print qq (<td width="5%"><a href="javascript:selectRtable('$table->{table_num}');selectedColor(rtableList.rows[$lineCount])"><image src="image/edit.gif" title="Edit Pool properties" border="0"></a></td>);
+        print qq (<td><input type="checkbox" name="tablestodel" value="$table->{table_num}"></td>);
+        print qq (</tr>);
+        if ( $table->{table_num} eq $table_num ) { print qq (<script>initSelect(rtableList.rows[$lineCount]);</script>); }
+        $lineCount++;
+    }
+    print qq (</table></div></td></tr>);
+
+    print qq (<input type="hidden" name="focused_rtable" value="$table_num">);
+
+
+    print qq (<tr>);
+    print qq (<td bgcolor="#223344" class="subtitle" colspan="3" align="center">);
+    print qq ([ Pool $table_num ]);
+    print qq (</td></tr>);
+
+    # read information into variables
+    # decide which  balance Mode this is table is    
+    
+    my $byPacketStatus=($target->{equalize} ) ? ( 'checked' ):( '' );
+    my $aggregateStatus=( $target->{aggregate} ) ? ( 'checked' ):( '' );
+    my $vtlcStatus=( $target->{vtlc} ) ? ( 'checked' ):( '' );
+    my $balanceMode=($target->{mode}) ? ($target->{mode}) : ('WRR');
+
+    if ( $balanceMode eq "WRR" && $target->{aggregate} ) { $balanceMode="WRR_AGGREGATE"; }
+    if ( $balanceMode eq "WLC" && $target->{equalize}  ) { $balanceMode="WRR_EQUALIZE";  }
+    if ( $balanceMode eq "WLT" && $target->{equalize}  ) { $balanceMode="WLT_EQUALIZE";  }
+    if ( $balanceMode eq "BTK" && $target->{equalize}  ) { $balanceMode="BTK_EQUALIZE"; }
+    #20110411
+    if ( $balanceMode eq "BBL" && $target->{equalize}  ) { $balanceMode="WRR_LATENCY";  }
+    if ( $balanceMode eq "BBLP" && $target->{equalize}  ) { $balanceMode="WRR_LCY_PKT";  }
+    if ( $target->{mode1} eq "TB" && $target->{mode} eq "WLC"){$balanceMode="TB";}
+    
+    print qq (<table width="100%">);
+    print qq (<tr><td width="60%" align="left">);
+    print qq (<font class="subtitle">$qblang[179]</font><br>); 
+    print qq (<select name="mode" id="mode" class="qbopt" size='6' style="width:280" onChange="switchSomeOption()">);
+    #foreach my $mode ( sort keys %gMODEHASH_v2 )
+    foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
+    {   
+        my $status=($balanceMode eq $mode ) ? ( 'selected' ):( '' );
+        print qq (<option value="$mode" $status>$gMODEHASH_v2{$mode}</option>);
+    }
+    print qq (</select><br>);
+    print qq (<span class="body">Proxy:</span><input type="text" class="qbtext" name="redirect" value="$target->{redirect}" maxlength="15" style="width:240"  onBlur="if(!isValidIP(this.value)) this.value='';">);
+    print qq (</td>);
+    
+    print qq (<input type="hidden" name="equalize" value="">);
+    print qq (<input type="hidden" name="aggregate" value="">);
+    print qq (<input type="hidden" name="wltegress" value="">);
+=cut    
+    #-------- Information Table of Backup_table and Note -------------------
+    print qq (<td align="right">);
+    print qq (<fieldset class="fieldset">);
+    print qq (<legend class="subtitle">Option</legend>);
+    print qq (<table width="100%">);
+    $backup_table=$target->{backup_table};
+    print qq (<tr>);
+    print qq (<td class="body" align="left">$qblang[174] </td>);
+    print qq (<td class="body" align="left">);
+    print qq (<select class="qbopt" name="backup_table" style="width:80">);
+
+    my $status=( $backup_table ) ? ( '' )  : ( 'selected' );
+    print qq (<option $status value="" >NONE</option>); 
+    foreach my $table ( sort num_sort @rtablelist ) 
+    {     
+        if ( $table >= $gBALANCE ) { last; }
+        my $status=($table eq $backup_table ) ? ( 'selected' ) : ( '' ); 
+        my $showtable=presentTable($table);; 
+        #20080410 Brian Redirect doesn't support backup pool
+        #if ( $balanceMode eq "REDIRECT" ){print qq (<option $status value="$table"></option>\n);}
+        #else { print qq (<option $status value="$table">$showtable</option>\n);}                   
+        print qq (<option $status value="$table">$showtable</option>\n);              
+    }
+    print qq (</select></td>);
+    print qq (</tr>);
+
+    #print qq (<tr><td  class="body"  align="left" textcolor="#003366">);
+    #print qq (<textarea class="qbtext" name="tablenote" style="width:200;height:80">[ Pool Name: ] \n $target->{note}</textarea>);
+    #print qq (</td>);
+    #print qq (</tr>);
+    print qq (<tr><td  class="body"  align="left" textcolor="#003366">Pool Name </td>);
+    print qq (<td class="body" class="body" align="left">);
+    print qq (<textarea class="qbtext" name="tablenote" style="width:160;height:40">$target->{note}</textarea>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+    #---------- end Information Table -------------------
+=cut
+
+    #----------------- Latency --------------------------
+    my $radio1,$radio2,$radio3,$radio4;
+    my $status1,$status2;
+    foreach my $latency1 ( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, )
+    {
+       if( $target->{tolerance_latency} eq $latency1 )
+       {
+           $status1 = ( $target->{tolerance_latency} eq $latency1 ) ? ( 'OK' ) : ( '' );
+       }
+    }
+    foreach my $latency1 ( 25, 50, 75, 100, 125, 150, 175, 200, )
+    {
+       if( $target->{latency_diff} eq $latency1 )
+       {
+           $status2 = ( $target->{latency_diff} eq $latency1 ) ? ( 'OK' ) : ( '' );
+       }
+    }
+       $radio1 = ( $status1 eq ('OK') ) ? ( 'checked' ) : ( '' );
+       $radio2 = ( $status1 eq ('OK') ) ? ( '' ) : ( 'checked' );
+       $radio3 = ( $status2 eq ('OK') ) ? ( 'checked' ) : ( '' );
+       $radio4 = ( $status2 eq ('OK') ) ? ( '' ) : ( 'checked' );
+
+#    if ( $target->{tolerance_latency} eq '' ) { $target->{tolerance_latency} = '400' }
+#    if ( $target->{latency_diff} eq '' ) { $target->{latency_diff} = '50' }
+    my $display_bbl = ($balanceMode eq "BBL") ? 'block' : 'none';
+    print qq (<td align="left">);
+    print qq (<fieldset class="fieldsetb" id="bbl_field" style="width:360px;display:$display_bbl">);
+    #print qq (<legend class="subtitle">Latency :</legend>);
+    print qq (<legend class="subtitle">Eliminate Link From Pool</legend>);
+    print qq (<input type="hidden" name="level" value="1">);
+    print qq (<hr size="1">);
+    print qq (<table width="100%">);
+    print qq (<tr><td class="body" width="auto">When Latency</td>);
+    print qq (<td class="body" align="left" width="auto">&#62</td>);
+    print qq (<td class="body" width="auto" align="right">);
+
+###Gary -----When Latency---------------------------------------------------------------------------
+    my $user_value1,$user_value2;
+    if( ($target->{tolerance_latency} ne '') && ($target->{tolerance_latency} ne '50') && ($target->{tolerance_latency} ne '100') 
+    	&& ($target->{tolerance_latency} ne '150') &&($target->{tolerance_latency} ne '200') && ($target->{tolerance_latency} ne '250') && ($target->{tolerance_latency} ne '300') 
+	&& ($target->{tolerance_latency} ne '350') &&($target->{tolerance_latency} ne '400') && ($target->{tolerance_latency} ne '450') && ($target->{tolerance_latency} ne '500'))
+    {
+    	$user_value1=$target->{tolerance_latency};
+    }
+
+    print qq (<input type="radio" name="bbl_pool" value="latency" $radio1>);
+    print qq (<select class="qbopt" name="tolerance_latency" id="tolerance_latency" style="width:70" >);
+    foreach my $latency ('', 50, 100, 150, 200, 250, 300, 350, 400, 450, 500 )
+    {
+       my $status = ( $target->{tolerance_latency} eq $latency ) ? ( 'selected' ) : ( '' );
+   
+       print qq (<option $status value="$latency">$latency ms</option>\n);
+    }
+       
+    print qq (</select>);
+    print qq (</td>);
+    print qq (<td class="body" width="auto" border="0"></td>);
+    print qq (<td><input type="radio" name="bbl_pool" value="latency_hand" $radio2>);
+    print qq (<input type="text" class="qbtext" name="latency_hand" style="width:50" value="$user_value1">\n</td>);
+    
+
+###-----------When latency difference-----------------------------------------------------------------------
+
+	 if( ($target->{latency_diff} ne '') && ($target->{latency_diff} ne '25') && ($target->{latency_diff} ne '50') 
+    	&& ($target->{latency_diff} ne '75') &&($target->{latency_diff} ne '100') && ($target->{latency_diff} ne '125') && ($target->{latency_diff} ne '150') 
+	&& ($target->{latency_diff} ne '175') &&($target->{latency_diff} ne '200') )
+    {
+    	$user_value2=$target->{latency_diff};
+    }
+
+    print qq (<tr><td class="body" width="auto">When latency difference</td>);
+    print qq (<td class="body" align="left" width="auto">&#62</td>);
+    print qq (<td align="right" class="body" width="auto">);
+ 
+    print qq (<input type="radio" name="bbl_pool2" value="latency" $radio3>);
+    print qq (<select class="qbopt" name="latency_diff" id="latency_diff" style="width:70" >\n);
+    foreach my $latency ( '', 25, 50, 75, 100, 125, 150, 175, 200 )
+    {
+       my $status = ( $target->{latency_diff} eq $latency ) ? ( 'selected' ) : ( '' );
+       print qq (<option $status value="$latency">$latency ms</option>\n);
+    }
+    print qq (</select></td>);
+    print qq (<td class="body" width="auto" border="0"></td>);
+    print qq (<td><input type="radio" name="bbl_pool2" value="latency_hand2" $radio4>);
+    print qq (<input type="text" class="qbtext" name="latency_hand2" style="width:50" value="$user_value2">\n</td>);
+    print qq (<td><table width="10" border="0"></table></td>);
+    print qq (</tr></table>);
+    print qq (<td><table width="1" border="0"></table></td>);
+    print qq (<td>);
+
+########################-------------New HC for Algorithms-------------######################## Brian
+#    if ( $target->{tolerance_latency} eq '' ) { $target->{tolerance_latency} = '400' }
+#    if ( $target->{latency_diff} eq '' ) { $target->{latency_diff} = '50' }
+
+    my $display_newhc = ($balanceMode eq "WRR") ? 'block' : 'none';
+    print qq (<td align="left">);
+    print qq (<fieldset class="fieldsetb" id="bblp_field" style="width:360px;display:$display_newhc">);
+    print qq (<legend class="subtitle">Eliminate Link From Pool</legend>);
+    print qq (<input type="hidden" name="level" value="1">);
+    print qq (<hr size="1">);
+    print qq (<table width="100%">);
+
+###----------When latency tolerance-------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body" align="left">);
+    #my $latency_tolerance_check=( $target->{enable_latency_tolerance}==1 ) ? ('checked') : ('');
+    my $status=( $target->{enable_latency_tolerance} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" $status id="enable_latency_tolerance" name="enable_latency_tolerance">);
+    print qq (when latency &#62</td>);
+
+    print qq (<td><input type="text" class="qbtext" maxlength="4" name="latency_tolerance" style="width:40" value="$target->{latency_tolerance}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">ms keep in</td>);
+    print qq (<td><input type="text" class="qbtext" name="latency_tolerance_keeptime" style="width:40" value="$target->{latency_tolerance_keeptime}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">secs</td>);
+    print qq (</tr>);
+###-----------When latency difference-----------------------------------------------------------------------
+    print qq (<tr id="latency_difference">);
+    print qq (<td class="body" align="left">);
+    my $status=( $target->{enable_latency_difference} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" $status id="enable_latency_difference" name="enable_latency_difference">);
+    print qq (latency difference &#62</td>);
+
+    print qq (<td><input type="text" class="qbtext" maxlength="4" name="latency_difference" style="width:40" value="$target->{latency_difference}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">ms keep in</td>);
+    print qq (<td><input type="text" class="qbtext" name="latency_difference_keeptime" style="width:40" value="$target->{latency_difference_keeptime}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">secs</td>);
+    print qq (</tr>);
+###-----------When packet loss rate-------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body" align="left">);
+    my $status=( $target->{enable_pktloss_rate} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" $status id="enable_pktloss_rate" name="enable_pktloss_rate">);
+    print qq (packet loss rate &#62</td>);
+    
+    print qq (<td><input type="text" class="qbtext" maxlength="3" id="pktloss_rate" name="pktloss_rate" style="width:40" value="$target->{pktloss_rate}" onChange="CheckPktlossRate()"></td>);
+    print qq (<td class="body" align="left">% keep in</td>);
+    print qq (<td><input type="text" class="qbtext" name="pktloss_rate_keeptime" style="width:40" value="$target->{pktloss_rate_keeptime}" onChange="CheckNumber(this.value)"></td>);
+    print qq (<td class="body" align="left">secs</td>);
+    print qq (</tr>);
+
+    print qq (</table>);
+    print qq (<td>);
+
+#------------------------------------------------------------------------------------------------------------
+    # BTK Measure Setup 20060919 Brian 
+      my $display_btk = ($balanceMode eq "BTK") ? 'block' : 'none';
+      print qq (<fieldset class="fieldset" id="btk_field" style="display:$display_btk">);
+      print qq (<legend class="subtitle">Available Bandwidth Measure</legend>);
+      #my $status=( $target->{level}==1 ) ? ( 'checked' ) : (''); print qq (<input type="radio" name="level" $status value="1" span title="Interference duration=Long , Bandwidth fluctuations=Small.">Level 1);
+      #$status=( $target->{level}==2 ) ? ( 'checked' ) : (''); print qq (<input type="radio" name="level" $status value="2" span title="Interference duration=Middle , Bandwidth fluctuations=Medium.">Level 2);
+      #$status=( $target->{level}==3 ) ? ( 'checked' ) : (''); print qq (<input type="radio" name="level" $status value="3" span title="Interference duration=Short , Bandwidth fluctuations=Huge.">Level 3);
+      print qq (<input type="hidden" name="level" value="1">);
+      print qq (<hr size="1">Bandwidth Measure Time:);
+    
+      print qq (<select class="qbopt" name="measure_time" id="measure_time" style="width:60">\n);
+      $measure_time=$target->{measure_time};
+      foreach my $measure ( 10 ,20 ,30 ,60 ,300 ,600 ,1200 ,1800 ,3600 )
+      {
+        my $status=( $measure eq "$measure_time" ) ? ('selected'):('');
+        if ( $measure <= 60 ){print qq (<option $status value="$measure">$measure secs</option>\n);}
+        else{
+        my $showtime=$measure/60;
+        print qq (<option $status value="$measure">$showtime mins</option>\n);}
+      }
+      print qq (</select>);
+     print qq (</fieldset>);
+     print qq (</td>);
+#=cut
+    #-------- Information Table of Backup_table and Note -------------------
+    print qq (<td align="right">);
+    print qq (<fieldset class="fieldsetb">);
+    print qq (<legend class="subtitle">Option</legend>);
+    print qq (<table width="100%">);
+    $backup_table=$target->{backup_table};
+    print qq (<tr>);
+    print qq (<td class="body" align="left">$qblang[174] </td>);
+    print qq (<td class="body" align="left">);
+    print qq (<select class="qbopt" name="backup_table" style="width:80">);
+
+    my $status=( $backup_table ) ? ( '' )  : ( 'selected' );
+    print qq (<option $status value="" >NONE</option>); 
+    foreach my $table ( sort num_sort @rtablelist ) 
+    {     
+        if ( $table >= $gBALANCE ) { last; }
+        my $status=($table eq $backup_table ) ? ( 'selected' ) : ( '' ); 
+        my $showtable=presentTable($table);; 
+        #20080410 Brian Redirect doesn't support backup pool
+        #if ( $balanceMode eq "REDIRECT" ){print qq (<option $status value="$table"></option>\n);}
+        #else { print qq (<option $status value="$table">$showtable</option>\n);}                   
+        print qq (<option $status value="$table">$showtable</option>\n);              
+    }
+    print qq (</select></td>);
+    print qq (</tr>);
+
+    #print qq (<tr><td  class="body"  align="left" textcolor="#003366">);
+    #print qq (<textarea class="qbtext" name="tablenote" style="width:200;height:80">[ Pool Name: ] \n $target->{note}</textarea>);
+    #print qq (</td>);
+    #print qq (</tr>);
+    print qq (<tr><td  class="body"  align="left" textcolor="#003366">$qblang[178] </td>);
+    print qq (<td class="body" class="body" align="left">);
+    print qq (<textarea class="qbtext" name="tablenote" style="width:160;height:40">$target->{note}</textarea>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+    print qq (<td><table width="300" border="0"></table></td>);
+    #---------- end Information Table -------------------
+
+#=cut
+    print qq (</table>);
+    
+    print qq (<tr><td class="body"  align="center" colspan="3" width="100%">);
+    print qq (<table class="body" width="100%">);
+    print qq (<tr><td width="95%">); #20080220 Brian To modify "+/S" button become "Add/Save".
+    
+    if ( $target->{dirty} ) { print qq (<table><tr><td class="body" colspan="9" bgcolor="#558888" align="center"><font color="#ff0000">This Table Is Obsolete</font></td></tr></table>\n); }
+    
+    # Print Path Title first
+    # print qq (<div class="divframe">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0">);
+    #**************************************************************************************************************
+    #for printing format
+    # my @titlelist=('Enable' ,'Weight', 'ISP ID', 'Name', 'Enable', 'DSIP', 'Interface', 'Gateway');
+    # print qq (<tr>);
+    # foreach my $title ( @titlelist ) { print qq (<td class="body" align="center" width="10%">$title</td>); }
+    # print qq (</tr>);
+    # print qq (</table>);
+    # print qq (</div>);
+    
+    #=======================================================================================================  
+    $allpath=$target->{path};
+    
+    print qq (<div class="divframe" style="height:100">);
+    print qq (<table bgcolor="#112233" width="100%" border="0"><thead><tr bgcolor="#332211"><th width="10%" align="center" class="body">$qblang[64]</th><th width="10%" align="center" class="body">$qblang[180]</th><th width="10%" align="center" class="body">$qblang[56]</th><th width="10%" align="center" class="body">$qblang[29]</th><th width="10%" align="center" class="body">$qblang[26]</th><th width="10%" align="center" class="body">$qblang[181]</th><th width="10%" align="center" class="body">$qblang[28]</th><th width="10%" align="center" class="body">$qblang[30]</th></tr></thead><tr>);
+    my $lineCount=0;
+    foreach my $isp ( @$allisp ) 
+    { 
+        my $path;
+        if ( $isp->{iid} eq 'system' ) { next; }
+        #找出屬於該 $isp 的 path
+        foreach my $item ( @$allpath ) { if ( $item->{isp} == $isp->{iid} ) { $path=$item; last;} }
+    
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        my $originalColor=$bgcolor;
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+        my $status='';
+        if ( !($isp->{state}=~m/^FORMATOK$|^HEALTHYOK$/ ) ) { next; }
+        if ( $path->{weight} ) { $status="checked"; }
+        else { $status=''; }
+        
+        print qq (<td align="center" width="10%"><input type="checkbox" name="select$isp->{iid}" onClick="switch_weight('$isp->{iid}')" $status></td>);
+
+        my $status=( $path->{weight} ) ? ( '' ) : ( 'disabled' );
+        print qq (<td align="center" width="10%"><select class="qbopt" name="weight$isp->{iid}" $status>);
+        #foreach my $weight (0..99) 
+        foreach my $weight (0..20) 
+        { 
+            my $status=( $weight==$path->{weight}) ? ('selected') : ('');
+            print qq (<option $status value="$weight">$weight</option>); 
+        }
+        print qq (</select></td>);
+  
+        print qq (<td align="center" width="10%">ISP $isp->{iid}</td>);   
+        
+        print qq (<td align="center" width="10%">$isp->{ispname}</td>); 
+        
+        my $enable=( $isp->{enabled} ) ? ( $qblang[64] ) : ( $qblang[103] );
+        print qq (<td align="center" width="10%">$enable</td>);
+    
+        my $dsip=( $isp->{dsip}  ) ? ('Yes') : ('No');
+        print qq (<td align="center" width="10%">$dsip</td>);
+        
+        my $interface=$isp->{nic}; 
+
+        if ( $interface!~m/mpv/ && $interface!~m/tmv/ )
+        {
+            $interface=~s/eth//g; $interface++; $interface='PORT '.$interface;
+        }
+
+        print qq (<td align="center" width="10%">$interface</td>);
+        
+        print qq (<td align="center" width="10%">$isp->{gateway}</td></tr>);
+
+        print qq (<input type="hidden" name="dsip$isp->{iid}" value="$isp->{dsip}">);
+      
+        print qq (<input type="hidden" name="subnet$isp->{iid}" value="$isp->{subnet}">);
+
+        $lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+  
+    # Command Table
+    print qq (<td align="right" valign="bottom"><table>);
+    print qq (<tr><td><input type="button" name="ADD" class="qb" value="$qblang[57]" title="Create a New Routing Table Entry" onclick="goSubmit('CREATETABLE')" style="width: 100%;"></td></tr>);
+    print qq (<tr><td><input type="button"  name="SAVE" class="qb" value="$qblang[54]" title="Save Updated Table Information" onClick="ok_to_update()" style="width: 100%;"></td></tr>);
+    print qq (</table></td></tr>);
+    
+    print qq (</table>);
+}
+#showRtable
+ 
+#=======================================================================================================   
+sub rtable_script
+{
+    print << "RTABLE_SCRIPT";
+
+    <script type="text/javascript" src="grid.js"></script>
+    <script language="javascript">
+    
+    var myform;
+    var editrtab=null;
+    
+    function cgi_dep_onload()
+    {
+        myform=window.document.forms[0];
+        disableFuncButton();
+        switchSomeOption();
+    }
+    
+    function deleteTables() { if( qbConfirm(2, 'Confirm Deletion ?') == 1 ) { goSubmit('DELETETABLES'); } }
+
+    function switchSomeOption()
+    {
+        //var mode=myform.mode.value;
+        var mode = document.getElementById('mode').value;
+        var tolerance = document.getElementById('tolerance_latency');
+        var latency_diff = document.getElementById('latency_diff');
+        var measure_time = document.getElementById('measure_time');
+        var btk_field = document.getElementById('btk_field');
+        var bbl_field = document.getElementById('bbl_field');
+        var bblp_field = document.getElementById('bblp_field');
+        var latency_difference = document.getElementById('latency_difference');
+        
+        myform.wltegress.value=( mode=="WLT_EQUALIZE" || mode=="USWLT" )  ? 1 : 0;
+        if (mode == 'BSWLT')
+        {
+            myform.wltegress.value = 2; //Brian 20140128 DSWLT=0,USWLT=1,BSWLT=2.
+        }   
+        myform.equalize.value=( mode=="WLT_EQUALIZE" || mode=="BTK_EQUALIZE" || mode=="WRR_EQUALIZE" || mode=="WRR_LATENCY" || mode=="WRR_LCY_PKT") ? 1 : 0;
+        
+        myform.aggregate.value=( mode=="WRR_AGGREGATE" ) ? 1 : 0;
+        if (mode == 'WRR_LATENCY')
+        {
+            tolerance.disabled = false;    
+            latency_diff.disabled = false;
+            bbl_field.style.display = 'block';
+            bblp_field.style.display = 'none';
+        }
+        else if (mode == 'WRR_LCY_PKT')
+        {
+            bbl_field.style.display = 'none';
+            bblp_field.style.display = 'block';
+            latency_difference.style.display = '';
+        }
+        else if (mode == 'USWLT' || mode == 'DSWLT' || mode == 'BSWLT')
+        {
+            bbl_field.style.display = 'none';
+            bblp_field.style.display = 'block';
+            latency_difference.style.display = 'none';
+        }
+        else
+        {
+            tolerance.disabled = true;    
+            latency_diff.disabled = true;
+            bbl_field.style.display = 'none';
+            bblp_field.style.display = 'none';
+        }
+        
+        if (mode == 'BTK_EQUALIZE') 
+        {
+            measure_time.disabled = false;
+            btk_field.style.display = 'block';
+        }
+        else
+        {
+            measure_time.disabled = true;
+            btk_field.style.display = 'none';
+        }
+
+        if ( mode=="REDIRECT" )
+        {
+            //myform.redirect.disabled=true;
+            enableAllISP();
+            myform.redirect.disabled=false;
+            //disableAllISP();
+        }
+        else
+        {
+            myform.redirect.disabled=true;
+            enableAllISP();
+        }
+    }
+
+    function disableFuncButton()
+    {
+        if ( rtableList.rows.length == 0 )   { myform.SAVE.disabled=true; }
+
+        if (parseInt(myform.focused_rtable.value) >= 50) { for(var i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; } }
+
+        myform.ADD.disabled=false;
+        myform.focused_rtable.disabled=false;
+        myform.action.disabled=false;
+    }
+
+    function CheckPktlossRate()
+    {
+        var pktloss_rate = document.getElementById('pktloss_rate').value;
+        if (isNaN(pktloss_rate))
+        { 
+          myform.pktloss_rate.value="";
+          alert('Please enter the number between 1~99 !!!');
+          return; 
+        }
+        if ( pktloss_rate >99 )
+        { 
+          myform.pktloss_rate.value="";
+          alert('Max packet loss rate is 99 % !!!'); 
+        }
+    }
+        
+    function CheckNumber(check)
+    {
+        if (isNaN(check))
+        { 
+          alert('Please enter the number !!!');
+        }
+    }
+    
+    function selectRtable(table)
+    {
+        if (table==myform.focused_rtable.value) { return; }
+        myform.focused_rtable.value=table;
+        goSubmit('');
+    }
+
+    function disableAllISP()
+    {
+        for ( var i=0; i < myform.elements.length; i++ )
+        {
+            var ctrlobj=myform.elements[i];
+            
+            if ( ctrlobj.name ) 
+            {
+                if (ctrlobj.name.slice(0,6)=="weight") 
+                {
+                    ctrlobj.disabled=true;
+                }
+        
+                if (ctrlobj.name.slice(0,6)=="select" )
+                {
+                    ctrlobj.checked=false;
+                    ctrlobj.disabled=true;
+                }
+            }
+        }
+    }
+        
+    function enableAllISP()
+    {
+        for ( var i=0; i < myform.elements.length; i++ )
+        {
+            var ctrlobj=myform.elements[i];
+
+            if ( ctrlobj.name ) 
+            {
+                if (ctrlobj.name.slice(0,6)=="select" ) 
+                { 
+                    ctrlobj.disabled=false; 
+                    ctrlobj.checked=true; 
+                }
+            }
+        }
+
+        for ( var i=0; i < myform.elements.length; i++ )
+        {
+            var ctrlobj=myform.elements[i];
+            
+            if ( ctrlobj.name ) 
+            {
+                if (ctrlobj.name.slice(0,6)=="weight") 
+                {
+                    var tabid;
+
+                    ctrlobj.disabled=false;
+
+                    if ( ctrlobj.value == 0 )
+                    {
+                        if (ctrlobj.name.match(/weight(.*)/) != null) { tabid=(parseInt(RegExp.\$1)); }
+                        var selobj=eval("document.forms[0].select"+tabid);
+                        selobj.checked=false;
+                        ctrlobj.disabled=true;
+                    }
+                }
+            }
+        }
+        
+    }
+
+    function switch_weight(isp)
+    {
+        var sel=eval("document.rtableform.select"+isp);
+        var weight=eval("document.rtableform.weight"+isp);
+        
+        if (!sel) { return; }
+        if(!sel.checked)
+        {
+            if(!sel.disabled) { weight.selectedIndex=0; }
+            weight.disabled=true;
+        }
+        else 
+        {  
+            if ( weight.selectedIndex <=0 ) { weight.selectedIndex=1;}
+            weight.disabled=false; 
+        }
+    }
+    
+    function ok_to_update() 
+    { 
+       //20061003 Brian modify user's privilege.
+       var privilege=getcookie('privilege');
+       if(privilege!=1) {alert('You do not have Privilege to Save it'); return;}
+       goSubmit('SAVE'); 
+    }
+
+   </script>
+
+RTABLE_SCRIPT
+
+}
+#rtable_script
+
+#=======================================================================================================  
+sub maintainRtable 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    
+    my $rtables = XMLread($gPATH.'rtable.xml');
+    my $temptables=$rtables->{table};
+    my @temp_tables_array;
+    my %temptablehash;
+    my $temp;
+ 
+    foreach my $table ( @$temptables ) { if ( $table->{table_num} eq $action{focused_rtable} ) { $temp=$table; last; } } 
+
+    #*************** ReadOnly method
+    if( $action{action} eq 'GETTABLELIST') 
+    {
+        foreach my $table ( @$temptables ) 
+        {
+            if ( $table->{table_num} eq 'system' ) { next; }
+            $temptablehash{ $table->{table_num} }=1;  
+        }
+        return sort num_sort keys %temptablehash;
+    }
+    elsif( $action{action} eq 'GETREDIRECTLIST') 
+    {
+        foreach my $table ( @$temptables ) 
+        {
+            #if ( $table->{table_num} eq 'system' ) { next; }
+            if ( $table->{mode} ne 'REDIRECT' ) { next; }
+            $temptablehash{ $table->{table_num} }=1;  
+        }
+        return sort num_sort keys %temptablehash;
+    }
+    #Brian 2009-1117 Measure Tunnel Speed by Pool
+    elsif( $action{action} eq 'GETBYPACKETSTABLEIDLIST') 
+    {
+        foreach my $table ( @$temptables ) 
+        {
+            #if ( $table->{table_num} eq 'system' ) { next; }
+            if ( !$table->{equalize}) { next; }
+            $temptablehash{ $table->{table_num} }=1;  
+        }
+        return sort num_sort keys %temptablehash;
+    }
+    elsif( $action{action} eq 'GETPOOLTABLES' )
+    {
+        my @tables;
+        foreach my $table ( @$temptables ) 
+        {
+            if ( $table->{table_num} eq $action{focused_rtable} )
+            {
+                my $pathlist = $table->{path};
+                foreach my $path ( @$pathlist )
+                {
+                    push(@tables, ($path->{isp} + 100));
+                }
+            }
+        }
+        return @tables;
+    }
+    #luke get all pool
+    elsif( $action{action} eq 'GETALLPOOL') 
+    {
+        foreach my $table ( @$temptables ) 
+        {
+            if ( $table->{table_num} eq 'system' ) { next; }
+            if ( $table->{table_num} > 52 || $table->{table_num} == 30 ) { next; }
+            $temptablehash{ $table->{table_num} }=1;  
+        }
+        return sort num_sort keys %temptablehash;
+    }
+    elsif( $action{action} eq 'GETPOOLNOTE') 
+    {
+        foreach my $table ( @$temptables ) 
+        {
+            if ( $table->{table_num} eq 'system' ) { next; }
+            if ( $table->{table_num} eq $action{poolnum} ) { return $table->{note}; }
+        }
+    }
+    #ex:maintainRtable( action=>'GETTABLEPATHIDS', table=>"")
+    elsif( $action{action} eq 'GETTABLEPATHIDS' )
+    {
+        my @pathidlist;
+    
+        # if table number is RRG , then we return the path ids of table 100 ( safe table )  
+        if ( $action{table} eq '200' ) { $action{table}='100'; }
+
+        foreach my $table ( @$temptables )
+        {
+            if ( $table->{table_num} ne $action{table} ) { next; }
+            
+            my $allpaths=$table->{path};
+            
+            foreach my $path ( @$allpaths ) 
+            {
+                if ( $path->{weight} <= 0 ) { next; }
+                push(@pathidlist, $path->{isp});
+            }
+
+            last;
+        }
+
+        return sort num_sort @pathidlist;
+    }
+    ## Gary #################################################################
+    #get table_num
+    #ex:maintainRtable( action=>'GETTABLENUM', isp=>"")
+    elsif( $action{action} eq 'GETTABLENUM' )
+    {
+        my @pathidlist;
+   	my $table_num; 
+        foreach my $table ( @$temptables )
+        {
+            if ( $table->{table_num} eq 'system' ) { next; }
+            if ( $table->{mode} eq '' ) { next; }
+            my $allpaths=$table->{path};
+            foreach my $path ( @$allpaths ) 
+            {
+                if ( $path->{dsip} ne ""  ) { next; }
+                if ( $path->{isp} eq $action{isp} ) { $table_num=$table_num.','.$table->{table_num}; }
+            }
+        }
+        return $table_num ;
+    }
+    
+    #get the same poor's isp
+    elsif( $action{action} eq 'GETPOOLISP' )
+    {
+        my @tables;
+        foreach my $table ( @$temptables ) 
+        {
+            if ( $table->{table_num} eq $action{table_num} )
+            {
+                my $pathlist = $table->{path};
+                foreach my $path ( @$pathlist )
+                {
+                    push(@tables, ($path->{isp}));
+                }
+            }
+        }
+        return @tables;
+    }
+    ######################################################################
+    elsif( $action{action} eq 'GETPOLICYUSABLETABLEIDS' ) 
+    {
+        #===========================================================================================================
+        # This is a batch version of GETAPPLICABLETABLEIDS, by running GETAPPLICATLETABLEIDS in batch way 
+        #ex:maintainRtable( action=>"GETPOLICYUSABLETABLEIDS", viewpoint=>"dmz|nat|lvs", source2isp=>\%source2isp )
+        my %POLICY_USABLE_TABLES;
+
+        my $iniroute=XMLread($gPATH."iniroute.xml");
+        my $classes=$iniroute->{$action{viewpoint}}->[0]->{class};
+        
+        #===========================================================================================================
+        # prepare 1. we have to get belong isp for all mappings just if and only if  viewpoint is 'lvs' 
+        my %BELONGISPFORALLMAPPINGS;
+        if ( $action{viewpoint} eq 'lvs' ) { %BELONGISPFORALLMAPPINGS=maintainVS(action=>'GETBELONGISPFORALLMAPPINGS'); }
+    
+        #===========================================================================================================
+        # prepare 2. we have to get mapping of source to isp 
+        # $source2isp will be a hash pointer pointing to a hash mapping source to isp  
+        my $source2isp;
+        if ( $action{viewpoint} eq 'nat' ) { $source2isp=$action{source2isp}; }
+
+        foreach my $class ( @$classes ) 
+        {
+            #碰到系統保留的那一筆就免了
+            if ( $class->{service} eq 'system' ) { next; }
+
+            # form the policy key to get value of usable table IDs
+            my $KEYOFCLASS='';
+            if ( $action{viewpoint} eq 'lvs' )
+            {
+                $KEYOFCLASS=$class->{source}.':'.$class->{service}.':'.$class->{direction}.':'.$class->{destination}.':'.'none'.':'.$class->{table};
+            }
+            else
+            {
+                $KEYOFCLASS=$class->{source}.':'.$class->{service}.':'.$class->{direction}.':'.$class->{destination}.':'.$class->{method}.':'.$class->{table};
+            }
+            
+            if ( exists( $POLICY_USABLE_TABLES{$KEYOFCLASS} ) ) { next; }
+            
+            #=====================================================================
+            # initialize $POLICY_USABLE_TABLES{$KEYOFCLASS} with empty array [];
+            $POLICY_USABLE_TABLES{$KEYOFCLASS}=[];
+
+            if ( $action{viewpoint}=~m/^dmz$|^nat$/ ) 
+            {
+                my @accept_tables;
+
+                #===========================================================================================================
+                # Automatically correction for 2 conditions
+                # 1. We just do this for testing usable tables, we will not really write this correction into iniroute.xml
+                # 2. NAT source is of ISP public IP, and direction is set to "s", we should disable NAT, and then deal with it as DMZ
+                # 3. DMZ source  and service is a reply one, we should disable NAT 
+
+                if ( $viewpoint=~m/^nat$|^dmz$/ )
+                {
+                    my $ispid=$source2isp->{$class->{source}}; 
+                    if ( $ispid ) { $class->{isp}=$ispid; }
+                }
+
+                if ( $viewpoint=~m/^nat$/ && $class->{direction} eq 's' && $class->{isp}=~m/^\d+/ ) 
+                { 
+                    #========================================================================================================
+                    # if this NAT source is within ISP public IP range and service is set to "others", we should disable NAT, and deal with it as DMZ 
+                    $class->{method}='none';
+                    $class->{sip}=[];
+                }
+                elsif ( $viewpoint=~m/^dmz$/ && ($class->{direction} eq 's') ) 
+                { 
+                    $class->{method}='none';
+                    $class->{sip}=[]; 
+                } 
+
+                #************ if ViewPoint is service, we need this line  **************************  
+                if ( $class->{method}=~m/^ls$/ ) 
+                {
+                    foreach my $table ( @$temptables ) 
+                    { 
+                        if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                        if ( $table->{equalize} )                                       { next; }
+                        if ( $table->{dsipnum}==0 && $table->{numpath} > 0 )            { push( @accept_tables, $table->{table_num} ); } 
+                        if ( $table->{dsipnum} > 0 )                                    { push( @accept_tables, $table->{table_num} ); } 
+                        #if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+                    }
+                }  
+                elsif ( $class->{method}=~m/^ss$/ ) 
+                {
+                    my $all_sips=$class->{sip};
+                    foreach my $table ( @$temptables ) 
+                    {
+
+                        if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                        if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+                        if ( $table->{dsipnum}==0 ) 
+                        {
+                            if ( $table->{numpath}>0 ) { push( @accept_tables, $table->{table_num} ); }
+                        } 
+                        elsif( $table->{dsipnum}==1 ) 
+                        {
+                            my $dsip_iid;
+                            my $sip_iid;
+                            my $all_paths=$table->{path};
+        
+                            foreach my $sip ( @$all_sips) { $sip_iid=$sip->{isp}; }
+                            foreach my $path ( @$all_paths ) { if ( $path->{weight} > 0 && $path->{dsip}==1 ) { $dsip_iid=$path->{isp}; last; } }
+                            if ( $sip_iid eq $dsip_iid ) { push( @accept_tables, $table->{table_num} ); }
+                        }     
+                    }  
+                }
+                elsif ( $class->{method}=~m/^ms$/ ) 
+                {
+                    foreach my $table ( @$temptables ) 
+                    {
+                        if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                        if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+                        if ( $table->{dsipnum}==0 && $table->{numpath} > 0)             { push( @accept_tables, $table->{table_num} ); }
+                    }  
+                }
+                elsif ( $class->{method}=~m/^none$/ ) 
+                {
+                    #if ( $action{viewpoint}=~m/^dmz$/ || ($action{viewpoint}=~m/^nat$/ && $class->{direction} eq 's'  && $class->{isp}=~m/^\d+/) )
+                    if ( $action{viewpoint}=~m/^dmz$/ || ($action{viewpoint}=~m/^nat$/ && $class->{isp}=~m/^\d+/) )
+                    {
+                        # If which ISP this DMZ source belongs is unknown, there will be no available routing tables 
+                        if ( !$class->{isp} || $class->{isp} eq "system" ) { next; } 
+
+                        foreach my $table ( @$temptables ) 
+                        {
+                            if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                            
+                            if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+
+                            if ( $table->{dsipnum}==0 ) 
+                            {    
+                                if ( $table->{numpath} > 0 ) { push( @accept_tables, $table->{table_num} ); }
+                            }
+                            elsif ( $table->{dsipnum}==1 ) 
+                            {
+                                my $dsip_iid;
+                                my $all_paths=$table->{path};
+                
+                                foreach my $path ( @$all_paths ) { if ( $path->{weight} > 0 && $path->{dsip}==1 ) { $dsip_iid=$path->{isp}; last; } }
+                                if ( $class->{isp} eq $dsip_iid ) { push( @accept_tables, $table->{table_num} ); }
+                            }         
+                        }
+                    }
+                    elsif ( $action{viewpoint}=~m/^nat$/ && $class->{isp}!~m/^\d+/ )
+                    {
+                        foreach my $table ( @$temptables ) 
+                        {
+                            if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                            if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+                            if ( $table->{numpath} > 0)                                     { push( @accept_tables, $table->{table_num} ); }
+                        }  
+                    }
+                        
+                    if ( $class->{direction} eq 's' ) { push ( @accept_tables, ($gRRG, $gALLPATH) ); }
+                }
+
+                push ( @accept_tables, $gDROP );
+
+                @accept_tables=sort num_sort ( @accept_tables );
+                
+                $POLICY_USABLE_TABLES{$KEYOFCLASS}=\@accept_tables;
+            }
+            elsif( $action{viewpoint}=~m/^lvs$/) 
+            {
+                my @accept_tables;
+                my $belong_isp_hash;
+                my @belong_isp_list=();
+
+                if ( $class->{service}=~m/^others/ )
+                {
+                    foreach my $table ( @$temptables ) 
+                    {
+                        if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                        push ( @accept_tables, $table->{table_num} );
+                    }
+                }
+                else
+                {
+                    if ( $class->{source}=~m/\/32$|^localhost$/ )
+                    {
+                        $belong_isp_hash=$BELONGISPFORALLMAPPINGS{$class->{source}.':'.$class->{service}};
+                        @belong_isp_list=keys %$belong_isp_hash;
+                    }
+                    else
+                    {
+                        foreach my $item ( keys %BELONGISPFORALLMAPPINGS )
+                        {
+                            my ( $rserver32, $service)=split(/:/, $item);
+                
+                            if ( $class->{service} ne $service ) { next; }
+                            
+                            $rserver32=~s/\/32$//g;
+
+                            if ( isSubnetIP($rserver32, $class->{source}) == 1  )  
+                            {
+                                my $isp_hash_subset=$BELONGISPFORALLMAPPINGS{$item};
+                                my @isp_list_subset=keys %$isp_hash_subset;
+                                get_union_set(\@belong_isp_list, \@isp_list_subset);
+                            }
+                        }
+                    }
+
+                    #若屬於任何一家 ISP，就自動判定table
+                    if ( @belong_isp_list > 0 ) 
+                    { 
+                        foreach my $table ( @$temptables ) 
+                        {
+                            if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                            
+                            if ( $table->{mode} eq "REDIRECT" )     { push( @accept_tables, $table->{table_num} ); next; }
+                            
+                            if ( $table->{dsipnum}==0 ) 
+                            {
+                                if ( $table->{numpath} > 0 ) { push( @accept_tables, $table->{table_num} ); }
+                            }
+                            elsif ( $table->{dsipnum}==1 ) 
+                            {
+                                if ( @belong_isp_list == 1 ) 
+                                {
+                                    my $dsip_iid;
+                                    my $all_paths=$table->{path};
+                                    foreach my $path ( @$all_paths ) { if ( $path->{weight}>0 && $path->{dsip}==1 ) { $dsip_iid=$path->{isp}; last; } }
+                                    if ( $belong_isp_list[0] eq $dsip_iid ) { push( @accept_tables, $table->{table_num} ); }
+                                }    
+                            }     
+                        }
+                    }
+                }
+
+                push ( @accept_tables, ($gRRG, $gALLPATH) );
+                push ( @accept_tables, $gDROP );
+                
+                @accept_tables=sort num_sort (@accept_tables);
+                
+                $POLICY_USABLE_TABLES{$KEYOFCLASS}=\@accept_tables;
+            }
+        }
+
+        return %POLICY_USABLE_TABLES;
+    }
+    elsif( $action{action} eq 'GETAPPLICABLETABLEIDS' ) 
+    {
+        #ex:maintainRtable( action=>"GETAPPLICABLETABLEIDS", viewpoint=>"", isp=>"", source=>"", service=>"service:direction", method=>"", sip=>[""]  )
+        if ( $action{viewpoint}=~m/^dmz$|^nat$|^app$/ ) 
+        {
+            my @accept_tables;
+            #************ if ViewPoint is service, we need this line  **************************  
+            my ( $service, $destination )=split( /:/, $action{service} );
+    
+            if ( $action{method}=~m/^ls$|^manual_ls$/ ) 
+            {
+                foreach my $table ( @$temptables ) 
+                { 
+                    if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                    if ( $table->{equalize} )                                       { next; }
+                    if ( $table->{dsipnum}==0 && $table->{numpath} > 0 )            { push( @accept_tables, $table->{table_num} ); } 
+                    if ( $table->{dsipnum} > 0 )                                    { push( @accept_tables, $table->{table_num} ); } 
+                    if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+                }
+            }  
+            elsif ( $action{method}=~m/^ss$/ ) 
+            {
+                my $all_sips=$action{sip};
+
+                foreach my $table ( @$temptables ) 
+                {
+                    if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                    if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+                    if ( $table->{dsipnum}==0 ) 
+                    {
+                        if ( $table->{numpath}>0 ) { push( @accept_tables, $table->{table_num} ); }
+                    } 
+                    elsif( $table->{dsipnum}==1 ) 
+                    {
+                        my $dsip_iid;
+                        my $sip_iid;
+                        my $all_paths=$table->{path};
+    
+                        foreach my $sip ( @$all_sips) { $sip_iid=$sip->{isp}; }
+                        foreach my $path ( @$all_paths ) { if ( $path->{weight} > 0 && $path->{dsip}==1 ) { $dsip_iid=$path->{isp}; last; } }
+                        if ( $sip_iid eq $dsip_iid ) { push( @accept_tables, $table->{table_num} ); }
+                    }     
+                }  
+            }
+            elsif ( $action{method}=~m/^ms$/ ) 
+            {
+                foreach my $table ( @$temptables ) 
+                {
+                    if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                    if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+                    if ( $table->{dsipnum}==0 && $table->{numpath} > 0)             { push( @accept_tables, $table->{table_num} ); }
+                }  
+            }
+            elsif ( $action{method}=~m/^none$/ ) 
+            {
+                #if ( $action{viewpoint}=~m/^dmz$/ || ($action{viewpoint}=~m/^nat$/ && $action{service}=~m/:s$/ && $action{isp}=~m/^\d+/) )
+                if ( $action{viewpoint}=~m/^dmz$/ || ($action{viewpoint}=~m/^nat$/ && $action{isp}=~m/^\d+/) )
+                {
+                    # If which ISP this DMZ source belongs is unknown, there will be no available routing tables 
+                    if ( !$action{isp} || $action{isp} eq "system" ) { return; } 
+
+                    foreach my $table ( @$temptables ) 
+                    {
+                        if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                        
+                        if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+
+                        if ( $table->{dsipnum}==0 ) 
+                        {    
+                            if ( $table->{numpath} > 0 ) { push( @accept_tables, $table->{table_num} ); }
+                        }
+                        elsif ( $table->{dsipnum}==1 ) 
+                        {
+                            my $dsip_iid;
+                            my $all_paths=$table->{path};
+            
+                            foreach my $path ( @$all_paths ) { if ( $path->{weight} > 0 && $path->{dsip}==1 ) { $dsip_iid=$path->{isp}; last; } }
+                            if ( $action{isp} eq $dsip_iid ) { push( @accept_tables, $table->{table_num} ); }
+                        }         
+                    }
+                }
+                elsif ( $action{viewpoint}=~m/^nat$|^app$/ && $action{isp}!~m/^\d+/ )
+                {
+                    foreach my $table ( @$temptables ) 
+                    {
+                        if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                        if ( $table->{mode} eq "REDIRECT" )                             { push( @accept_tables, $table->{table_num} ); }
+                        if ( $table->{numpath} > 0)                                     { push( @accept_tables, $table->{table_num} ); }
+                    }  
+                }
+                    
+                if ( $action{service}=~m/:s$/ ) { push ( @accept_tables, ($gRRG, $gALLPATH) ); }
+            }
+        
+            push ( @accept_tables, $gDROP );
+            return sort num_sort ( @accept_tables );
+        }
+        elsif( $action{viewpoint}=~m/^lvs$/) 
+        {
+            my @accept_tables;
+            
+            if ( $action{service}=~m/^others/ )
+            {
+                foreach my $table ( @$temptables ) 
+                {
+                    if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                    push ( @accept_tables, $table->{table_num} );
+                }
+            }
+            else
+            {
+                my @belong_isp_list=maintainVS( action=>'GETBELONGISPNUM', service=>$action{service}, source=>$action{source} );
+
+                #若屬於任何一家 ISP，就自動判定table
+                if ( @belong_isp_list > 0 ) 
+                { 
+                    foreach my $table ( @$temptables ) 
+                    {
+                        if ( $table->{table_num} eq 'system' || $table->{numpath}==-1 || $table->{table_num} eq $gALLPATH ) { next; }
+                        
+                        if ( $table->{mode} eq "REDIRECT" )     { push( @accept_tables, $table->{table_num} ); next; }
+                        
+                        if ( $table->{dsipnum}==0 ) 
+                        {
+                            if ( $table->{numpath} > 0 ) { push( @accept_tables, $table->{table_num} ); }
+                        }
+                        elsif ( $table->{dsipnum}==1 ) 
+                        {
+                            if ( @belong_isp_list == 1 ) 
+                            {
+                                my $dsip_iid;
+                                my $all_paths=$table->{path};
+                                foreach my $path ( @$all_paths ) { if ( $path->{weight}>0 && $path->{dsip}==1 ) { $dsip_iid=$path->{isp}; last; } }
+                                if ( $belong_isp_list[0] eq $dsip_iid ) { push( @accept_tables, $table->{table_num} ); }
+                            }    
+                        }     
+                    }
+                }
+            }
+
+            push ( @accept_tables, ($gRRG, $gALLPATH) );
+            push ( @accept_tables, $gDROP );
+            
+            return sort num_sort (@accept_tables);
+        }
+    }
+    #************** ADD ***********************
+    elsif ( $action{action} eq 'CREATETABLE' ) 
+    {
+        my %hashOfAllTableNum;
+        foreach my $table ( @$temptables ) { $hashOfAllTableNum{$table->{table_num}}=1; }
+        
+        # This will be a GLOBAL variable
+        $gNEWTABLEID=0;
+        foreach my $tablenum (1..$gMAXTABLENUM) 
+        { 
+            if ( !exists($hashOfAllTableNum{$tablenum})  &&  ($tablenum ne $gBALANCE ) ) 
+            { 
+                $gNEWTABLEID=$tablenum; 
+                last;
+            } 
+        }
+        
+        if ( !$gNEWTABLEID ) { $gMSGPROMPT.=qq (Routing Table Full); return; }
+        
+        my %create_new_table=( 'table_num'=>$gNEWTABLEID, 'numpath'=>-1 );
+        push(@$temptables, \%create_new_table); 
+
+        $gMSGPROMPT.=qq (New Routing Table is: $gNEWTABLEID \\n);
+    }
+    #************** DELETE ***********************
+    elsif ( $action{action} eq 'DELETETABLES' )
+    {
+        my $tablestodel=$action{tablestodel};
+        my @totaltablestodel;
+        foreach my $table ( @$tablestodel ) { push(@totaltablestodel, $table); }
+        
+        my @tempTableArray;
+        foreach my $originalTableItem ( @$temptables ) 
+        {
+            if ( grep(/^$originalTableItem->{table_num}$/, @totaltablestodel) ) 
+            { 
+                LogUserAction( action=>'DELPOOL', table_num=>$originalTableItem->{table_num} ); 
+                next; 
+            }
+            if ( grep(/^$originalTableItem->{backup_table}$/, @totaltablestodel) ) 
+            { 
+                $originalTableItem->{backup_table}=''; 
+                LogUserAction( action=>'DELPOOL', table_num=>$originalTableItem->{backup_table} ); 
+            }
+            push(@tempTableArray, $originalTableItem);  
+        }
+
+        $rtables->{table}=\@tempTableArray;
+        
+        
+    }
+    #ex:( %action )
+    elsif ( $action{action} eq 'SAVE' ) 
+    {
+        my $ispref = XMLread($gPATH.'basic.xml');
+        my $zoneref = XMLread($gPATH.'zonecfg.xml');
+        my $ispinfo=$ispref->{isp};
+        my $zoneinfo=$zoneref->{nat};
+        my @ispinfolist;
+        my $warning = '0';
+        $action{tablenote}=~s/\[(.|\s)+\]\s+//g;
+
+        if ( $action{tablenote}=~m/$gBIG5/ ) 
+        { 
+            $gMSGPROMPT.=qq(Note Can be written in English Only\\n);
+            return;
+        }
+	if ($action{redirect}){$warning = '1';}
+	foreach my $zone ( @$zoneinfo )
+	{
+	    if ( $action{redirect} && isSubnetIP( $action{redirect} , $zone->{network} ) ==1)
+	    {
+	        $warning = '0';
+	        maintainOverview( action=>'SAVEWARNING' , warning=>'0');
+	    }
+	}
+	if ( $warning eq '1')
+	{
+	    $gMSGPROMPT.=qq ( Warning: No entry in Redirect To Transparent Proxy for Static Routes Setting!! );
+	    maintainOverview( action=>'SAVEWARNING' , warning=>'1');
+	}
+        # 將 isp 的資訊從 $ispinfo 中整理到 @ispinfolist 中，並以 iid 當成 index
+        foreach my $isp ( @$ispinfo ) 
+        { 
+            if ( $isp->{iid} eq 'system' ) { next; }
+            $ispinfolist[$isp->{iid}]=$isp;
+        }
+        
+        $temp->{path}           =   $action{path};
+        $temp->{backup_table}   =   $action{backup_table};
+        $temp->{wltegress}      =   $action{wltegress};
+        $temp->{note}           =   $action{tablenote};
+        $temp->{redirect}       =   $action{redirect};
+    # BTK Measure Setup 20060919 Brian 
+        $temp->{level}          =   $action{level};
+        $temp->{measure_time}   =   $action{measure_time};
+        $temp->{tolerance_latency}     =   $action{tolerance_latency};
+        $temp->{latency_diff}          =   $action{latency_diff};
+        $temp->{warning}        =   $warning;
+
+        $temp->{enable_latency_tolerance}    =   $action{enable_latency_tolerance};
+        $temp->{enable_latency_difference}   =   $action{enable_latency_difference};
+        $temp->{enable_pktloss_rate}         =   $action{enable_pktloss_rate};
+        $temp->{latency_tolerance}           =   $action{latency_tolerance};
+        $temp->{latency_difference}          =   $action{latency_difference};
+        $temp->{pktloss_rate}                =   $action{pktloss_rate};
+        $temp->{latency_tolerance_keeptime}  =   $action{latency_tolerance_keeptime};
+        $temp->{latency_difference_keeptime} =   $action{latency_difference_keeptime};
+        $temp->{pktloss_rate_keeptime}       =   $action{pktloss_rate_keeptime};
+
+        my $enable_path_count=0;
+        my $dsip_count=0;
+        my $allpath=$temp->{path};
+     
+        foreach my $path ( @$allpath ) 
+        { 
+            $path->{dsip}=$ispinfolist[$path->{isp}]->{dsip}; 
+            if ( $path->{dsip} ) { $dsip_count++ }; 
+            if ( @$allpath == 1 ) { $path->{weight}=1; }
+        }
+
+        $temp->{numpath}=@$allpath;
+        $temp->{multiple}=( @$allpath > 1 ) ? 1 : 0;
+        $temp->{equalize}=( @$allpath > 1 ) ? ( $action{equalize} ) : (0); 
+        $temp->{aggregate}=( @$allpath > 1 ) ? ( $action{aggregate} ) : ( 0 ); 
+        $temp->{vtlc}=$action{vtlc}; 
+
+        $action{mode}=~s/WRR_AGGREGATE/WRR/g;
+        $action{mode}=~s/WRR_EQUALIZE/WLC/g;
+        $action{mode}=~s/BTK_EQUALIZE/BTK/g;
+        $action{mode}=~s/WLT_EQUALIZE/WLT/g;
+        #20110411
+        $action{mode}=~s/WRR_LATENCY/BBL/g;
+        $action{mode}=~s/WRR_LCY_PKT/BBLP/g;
+        $temp->{mode}=($action{mode}) ? ($action{mode}) : ('WRR');
+        $temp->{mode1}=''; 
+        if ($action{mode} eq 'TB')
+        {
+            $temp->{mode}='WLC';
+            $temp->{mode1}='TB';
+        }
+        
+        $temp->{dsipnum}=$dsip_count;
+        #if ( $dsip_count>=2 && $temp->{equalize} ) {  $temp->{equalize}=0; }
+
+        $temp->{dirty}=0;
+        $temp->{base}=1;
+    # BTK Measure Setup 20060919 Brian 
+        if ( $action{mode} eq 'BTK' )
+        {
+            runCommand(command=>'/opt/qb/bin/script/setbtkconf.sh', params=>$action{level}.' '.$action{measure_time});
+        }
+        LogUserAction( action=>'SAVEPOOL', isp=>$path, table_num=>$action{table_num}, mode=>$action{mode}, note=>$action{tablenote}, backup_table=>$action{backup_table}, measure_time=>$action{measure_time}, redirect=>$action{redirect}, latency_diff=>$action{latency_diff}, tolerance_latency=>$action{tolerance_latency} );
+
+    } 
+    #maintainRtable( action=>"NEWISP", isp=>"1" )
+    elsif ( $action{action} eq 'NEWISP' )
+    {
+        my $ispref = XMLread($gPATH.'basic.xml');
+        my $ispinfo=$ispref->{isp};
+        my @ispinfolist;
+        my $tableAllPath;
+        my $tableBalance;
+        my $tableTemplate;
+        
+        #將 isp 的資訊從 $ispinfo 中整理到 @ispinfolist 中，並以 iid 當成 index
+        foreach my $isp ( @$ispinfo ) 
+        { 
+            if ( $isp->{iid} eq 'system' ) { next; }
+            $ispinfolist[$isp->{iid}]=$isp;
+        }
+        
+        my $tableAllPathExist=0;
+        my $lancetableBalanceExist=0;
+        foreach my $table ( @$temptables ) 
+        { 
+            if ( $table->{table_num} eq $gALLPATH ) { $tableAllPath=$table;  $tableAllPathExist=1; } 
+            if ( $table->{table_num} eq $gBALANCE ) { $tableBalance=$table;  $tableBalanceExist=1; } 
+            if ( $table->{table_num} eq 'system' )  { $tableTemplate=$table;  } 
+        }
+
+        #******************************************************
+        #
+        # 1. update attribute value of Table $gALLPATH 
+        # Add path of ISP into Table $gALLPATH 
+        # collect path info. for table ALLPATH
+
+        my %tableAllPathData=%$tableTemplate;
+        $tableAllPathData{table_num}=$gALLPATH;
+        $tableAllPathData{mode}='WRR';
+        
+        #******************************************************
+        #
+        my @allPath;
+        my $numOfDsip=0;
+        foreach my $isp ( @$ispinfo )
+        {
+            if ( $isp->{iid} eq 'system' )     { next; }
+
+            if ( $isp->{isptype} eq 'tunnel' ) { next; }
+            if ( $isp->{isptype} eq 'dtunnel' ) { next; }
+            if ( $isp->{isptype} eq 'ipsec' ) { next; }
+
+            my %ispPath=(   weight=>'1', 
+                            subnet=>$isp->{subnet}, 
+                            dsip=>$isp->{dsip}, 
+                            gateway=>$isp->{gateway}, 
+                            systemip=>$isp->{systemip}, 
+                            isp=>$isp->{iid} 
+            );
+
+            if ( $isp->{dsip} ) 
+            { 
+                $numOfDsip++; 
+            }
+
+            push( @allPath, \%ispPath );
+        }
+
+        if ( @allPath > 1 ) { $tableAllPathData{multiple}=1; }
+
+        $tableAllPathData{dsipnum}=$numOfDsip;
+
+        $tableAllPathData{numpath}=@allPath;
+
+        $tableAllPathData{path}=\@allPath;
+
+        if ( $tableAllPathExist ) 
+        { 
+            %$tableAllPath=%tableAllPathData; 
+        }
+        else 
+        { 
+            push ( @$temptables, \%tableAllPathData ); 
+        }
+
+        #******************************************************
+        #
+        # 2. update attribute value of Table $gBALANCE 
+        # Add path of ISP into Table $gBALANCE 
+        # collect path info. for table BALANCE 
+        #
+        #******************************************************
+        my %tableBalanceData=%$tableTemplate;
+        $tableBalanceData{table_num}=$gBALANCE;
+        $tableBalanceData{mode}='BSWLT';
+        
+        #******************************************************
+        #
+        my @balancePath;
+        my $numOfDsip=0;
+        foreach my $isp ( @$ispinfo )
+        {
+            if ( $isp->{iid} eq 'system' )     { next; }
+
+            if ( $isp->{isptype} eq 'tunnel' ) { next; }
+            if ( $isp->{isptype} eq 'dtunnel' ) { next; }
+            if ( $isp->{isptype} eq 'ipsec' ) { next; }
+
+            my %ispPath=(   weight=>'1', 
+                            subnet=>$isp->{subnet}, 
+                            dsip=>$isp->{dsip}, 
+                            gateway=>$isp->{gateway}, 
+                            systemip=>$isp->{systemip}, 
+                            isp=>$isp->{iid} 
+            );
+
+            if ( $isp->{dsip} ) 
+            { 
+                $numOfDsip++; 
+            }
+
+            push( @balancePath, \%ispPath );
+        }
+
+        if ( @balancePath > 1 ) { $tableBalanceData{multiple}=1; }
+
+        $tableBalanceData{dsipnum}=$numOfDsip;
+
+        $tableBalanceData{numpath}=@balancePath;
+
+        $tableBalanceData{path}=\@balancePath;
+        
+        if ( $tableBalanceExist ) 
+        { 
+            %$tableBalance=%tableBalanceData; 
+        }
+        else 
+        { 
+            push ( @$temptables, \%tableBalanceData ); 
+        }
+
+
+        #******************************************************
+        #
+        # 2. formatting  %tableIspPath by $tableTemplate
+        #
+        my %tableIspPath=%$tableTemplate;
+        $tableIspPath{table_num}=$gALLPATH+$action{isp};
+        $tableIspPath{numpath}=1;
+        $tableIspPath{dsipnum}=$ispinfolist[$action{isp}]->{dsip};
+        my %ispPath=(   weight=>'1', 
+                        subnet=>$ispinfolist[$action{isp}]->{subnet}, 
+                        dsip=>$ispinfolist[$action{isp}]->{dsip}, 
+                        gateway=>$ispinfolist[$action{isp}]->{gateway}, 
+                        systemip=>$ispinfolist[$action{isp}]->{systemip}, 
+                        isp=>$action{isp} 
+                    );
+
+        $tableIspPath{path}=(\%ispPath);
+
+        #check if ISP Specified Table already exists
+        my $ispTable;
+        my $ispTableExist=0;
+        foreach my $table ( @$temptables )
+        {
+            if ( $table->{table_num} != $gALLPATH+$action{isp} ) { next; }
+            $ispTable=$table;
+            $ispTableExist=1;
+        }
+
+        if ( $ispTableExist ) 
+        { 
+            %$ispTable=%tableIspPath; 
+        }
+        else 
+        { 
+            push ( @$temptables, \%tableIspPath ); 
+        }
+    }
+    #maintainRtable( action=>"DELISP", isp=>"1" )
+    elsif ( $action{action} eq 'DELISP' ) 
+    {
+        my $ispref = XMLread($gPATH.'basic.xml');
+        my $ispinfo=$ispref->{isp};
+        my @newrtablelist;
+        my @ispinfolist;
+        
+        #將 isp 的資訊從 $ispinfo 中整理到 @ispinfolist 中，並以 iid 當成 index
+        foreach my $isp ( @$ispinfo ) 
+        { 
+            if ( $isp->{iid} eq 'system' ) { next; }
+            $ispinfolist[$isp->{iid}]=$isp;
+        }
+    
+        foreach my $table ( @$temptables ) 
+        {
+            if ( $table->{table_num}=~m/^system$/ ) { push( @newrtablelist, $table ); next; }
+            
+            #移除 ISP $action{isp} 專屬的 Table $gALLPATH+$action{isp}
+            if ( $table->{table_num} == $gALLPATH+$action{isp} ) { next; }
+            
+            #移除屬於 $action{isp} 的 path，其他的 path 則根據 @ispinfolist 的資訊更新其內容
+            my @path_list_after_update;
+            my $allpath=$table->{path};
+            foreach my $path ( @$allpath ) 
+            { 
+                if ( $path->{isp} eq $action{isp} ) { next; }
+                $path->{dsip}=$ispinfolist[$path->{isp}]->{dsip};
+                $path->{subnet}=$ispinfolist[$path->{isp}]->{subnet};
+                push ( @path_list_after_update, $path); 
+            }  
+          
+            $table->{path}=\@path_list_after_update;
+          
+            # 若移除 $action{isp} 這個 path 後已經沒有其他的 path，就 drop 掉這個 table
+            # 除了 Table $gALLPATH
+            if ( @path_list_after_update == 0 && $table->{table_num} ne $gALLPATH && $table->{mode} ne "REDIRECT")  
+            { 
+                $gMSGPROMPT.=qq(Report:Routing Table $table->{table_num} has been deleted ...\\n);
+                next;
+            }
+          
+            my $dsip_count=0;
+    
+            foreach my $path ( @path_list_after_update ) { if ( $path->{dsip} !=0 ) { $dsip_count++ }; } 
+    
+            $table->{dsipnum}=$dsip_count;
+        
+            $table->{numpath}=@path_list_after_update;
+            
+            ( $table->{numpath} > 1 ) ? ( $table->{multiple}=1 ) : ( $table->{multiple}=0 );
+        
+            if ( $table->{numpath} <= 1 ) { $table->{equalize}=0 }; 
+    
+            #$table->{dirty}=( $dsip_count>=2 && $table->{equalize} ) ? 1 : 0;
+        
+            push( @newrtablelist, $table ); 
+        }
+    
+        #reset backup table attribute of every table whose backup table is deleted
+        my %allTableHash;
+        foreach my $table ( @newrtablelist ) 
+        {
+            if ( $table->{table_num} eq 'system' ) { next; }
+            $allTableHash{$table->{table_num}}=1; 
+        }
+
+        foreach my $table ( @newrtablelist )
+        {
+            if ( !exists($allTableHash{$table->{backup_table}}) ) { $table->{backup_table}=''; }
+        }
+    
+        $rtables->{table}=\@newrtablelist;
+        
+    }
+    #ex:maintainRtable( action=>"DSIPUPDATE" )
+    elsif ( $action{action} eq 'DSIPUPDATE' ) 
+    {
+        my $ispref = XMLread($gPATH.'basic.xml');
+        my $ispinfo=$ispref->{isp};
+        my @ispinfolist;
+    
+        #將 isp 的資訊從 $ispinfo 中整理到 @ispinfolist 中，並以 iid 當成 index
+        foreach my $isp ( @$ispinfo ) 
+        { 
+            if ( $isp->{iid} eq 'system' ) { next; }
+            $ispinfolist[$isp->{iid}]=$isp;
+        }
+    
+        foreach my $table ( @$temptables ) 
+        {
+            if ( $table->{table_num} eq 'system' ) { next; }
+        
+            #根據 @ispinfolist 的資訊更新其內容
+            my $allpath=$table->{path};
+            foreach my $path ( @$allpath ) 
+            { 
+                $path->{dsip}=$ispinfolist[$path->{isp}]->{dsip};
+                $path->{subnet}=$ispinfolist[$path->{isp}]->{subnet};
+            }  
+          
+            my $dsip_count=0;
+            foreach my $item ( @$allpath ) { if ( $item->{dsip} !=0 ) { $dsip_count++ }; } 
+            $table->{dsipnum}=$dsip_count;
+        
+            $table->{multiple}=( $table->{numpath} > 1 ) ? 1:0;
+            
+            if ( $table->{numpath} <= 1 ) { $table->{equalize}=0 }; 
+    
+            #$table->{dirty}=( $dsip_count>=2 && $table->{equalize} ) ? 1:0;
+        }
+    }
+    elsif ( $action{action} eq "REPORT" )
+    {
+        print qq (<fieldset><legend><font class="subtitle">Balance Configuration</font></legend>);
+        print qq (<div class="reportdiv">);
+        foreach my $table ( @$temptables )
+        {
+            if ( $table->{table_num} eq 'system' ) { next; }
+            foreach my $key ( keys %$table ) { if ( $key eq "path") { next; } print qq ( [ $key:$table->{$key} ] );  } 
+            print qq (<br>);
+
+            my $allpath=$table->{path};
+            foreach my $path ( @$allpath ) 
+            { 
+                foreach my $key ( keys %$path ) { print qq ( [ $key:$path->{$key} ] ); }
+                print qq (<br>);
+            }
+
+            print qq (<hr size="1">);
+        }
+        print qq (</div>);
+        print qq (</fieldset>);
+    }
+ 
+    
+    #--------updating rtable.xml------------------------ 
+    XMLwrite($rtables, $gPATH."rtable.xml");
+    
+    #@dep:
+    if ( $action{action}!~m/^GET|^NEWISP$|^DSIPUPDATE$/ ) { maintainIniroute( action=>'JUDGEDIRTYVALUEOFPOLICY', caller=>'rtable==>'.$action{action} ); }
+
+    # if acton is "CREATETABLE" return new Table Number to rtable.cgi
+    if ( $action{action} eq "CREATETABLE" ) { return $gNEWTABLEID; }
+}
+#maintainRtable
+
+
+
+#==============================================================================================================
+sub prepareTableInfo
+{
+    my $rtables = XMLread($gPATH.'rtable.xml');
+    my $tables=$rtables->{table};
+    my %ispname=maintainBasic( action=>'GETISPNAMEHASH');
+
+    print qq (<script language="javascript">);
+    print qq (function TABLE(){this.I=new Array(); this.P = new Array();});
+    print qq (function gPATH(a,b,c,d){this.a = a;this.b = b;this.c = c;this.d=d;});
+    print qq (var T = new Array(););
+    foreach my $table ( @$tables )
+    {
+        if ( $table->{table_num} eq 'system' ) { next; }
+        my $bypacket=( $table->{equalize} ) ? ( 'yes' ) : ( 'no' );
+        my $modeName=( $table->{mode} ) ? ( $table->{mode} ) : ('WRR') ;
+        my $aggregate=( $table->{aggregate} ) ? ( 'yes' ) : ( 'no' );
+        my $rdrcthost=( $table->{redirect} ) ? ( $table->{redirect} ) : ('');
+        #20100223 Brian To show the note of the pool
+        my $tablenote=( $table->{note} ) ? ( $table->{note} ) : ('');
+        
+        print qq (T.push(new TABLE()););
+
+        #print qq (T[T.length-1].I=["$bypacket","$modeName","$aggregate", "$rdrcthost"];);
+        print qq (T[T.length-1].I=["$bypacket","$modeName","$aggregate", "$rdrcthost", "$tablenote"];);
+        
+        my $allpath=$table->{path};
+        foreach my $path ( @$allpath )
+        {
+            my $dsipvalue=( $path->{dsip} ) ? ( "yes" ) : ( "no");
+            print qq (T[T.length-1].P.push(new gPATH("$path->{isp}","$ispname{$path->{isp}}","$path->{weight}","$dsipvalue")););
+        }
+
+        print qq ( var T$table->{table_num}=T[T.length - 1]; );
+    }
+    print qq ( </script> );
+}
+#prepareTableInfo
+
+#================================================================================================
+sub sort_table_by_id 
+{
+    my $avalue=$a->{table_num}; 
+    my $bvalue=$b->{table_num}; 
+    int($avalue) <=> int($bvalue);
+}
+
+#sort_table_by_id
+#
+1

@@ -1,0 +1,241 @@
+sub showQuotaInfo
+{
+	my (%action)=@_;
+	my $ispref=XMLread($gPATH.'basic.xml');
+	my $quotaref=XMLread($gPATH.'quota.xml');
+	#my $authref=XMLread($gPATH.'auth.xml');
+	my $isplist=$ispref->{isp};
+	my $quotalist=$quotaref->{quota};
+	
+	my $lineCount=0;
+	my $postena=0;
+	my $postquota='';
+	my @titleName=('Quota by Link','Quota by Policy','Quota by Authenticated Users');
+	my @title=('Enable','Name','Available Down/Up','Reset','Quota Down/Up','Cycle','Interface','Gateway');	#link
+	my @title2=('Enable','Source','Destination','Available Down/Up','Reset','Quota Down/Up','Cycle');		#policy
+	my @title3=('Enable','Name','Host','Available Down/Up','Reset','Quota Down/Up','Cycle');				#auth
+	my @week=("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+	my $viewtitle;
+	my @viewitem;
+	my $viewtype;
+	if($action{view} eq 'port'){@viewitem=@title;$viewtype='port';$viewtitle=@titleName[0];}
+	if($action{view} eq 'policy'){@viewitem=@title2;$viewtype='policy';$viewtitle=@titleName[1];}
+	if($action{view} eq 'ip'){@viewitem=@title3;$viewtype='ip';$viewtitle=@titleName[2];}
+	
+	print qq(<table width="80%" class="sortable" cellspacing="0" border="0">);
+	print qq(<tr><td class="bigtitle" colspan="12" align="left">$viewtitle<hr size=1></td></tr><tr bgcolor="#332211"> );
+	foreach my $title (@viewitem ){print qq(<td width="auto" align="center" style="white-space: nowrap;">$title);}
+	print qq(</td>);
+	print qq(<td align="center" width="auto" height="25"><a href="javascript:delQuota('$viewtype')"><img border="0" title="Delete Checked Quota" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('quota', this.checked)" title="select or deselect all items"></td>);
+	print qq(</tr>);
+	
+	foreach my $quota (@$quotalist)
+	{
+		my $originalColor=my $bgcolor=($lineCount%2) ? ( '#334455' ) : ( '#556677' );
+		print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor">);
+		my $time = "--";
+		my $cycle = "--";
+		my $view_time ="--";
+		my $maxdown = "--";
+		my $maxup = "--";
+		my $down = "--";
+		my $up = "--";
+		my $maxtotal = "--";
+		my $total = "--/--";
+		my $now = '--';
+		my $port = '--';
+	
+		my $name='--';
+		my $host='--';
+		my $source='--';
+		my $destination='--';
+		my $realtime='';
+		my $realbs='';
+		
+		if ($quota->{gateway} eq "system"){next;}
+		if ($quota->{type} ne $viewtype && $quota->{type} ne 'group'){next;}
+		if ($viewtype eq 'port' && $quota->{type} eq 'group'){next;}
+		if ($viewtype eq 'policy' && $quota->{type} eq 'group'){next;}
+		if ($quota->{cycle} eq "1"){$cycle = "Daily";}
+		if ($quota->{cycle} eq "7"){$cycle =  "Weekly-".$week[$quota->{chose}];}
+		if ($quota->{cycle} eq "30"){$cycle = "Monthly-".$quota->{chose};}
+		if ($quota->{cycle} eq "0"){$cycle = "non-Cyclic";}
+		if ($quota->{up})
+		{
+			my ($num,$oo)=split(":",$quota->{up});
+			if ($oo eq "1024"){$maxup = $num."KB";}
+			if ($oo eq "1048576"){$maxup = $num."MB";}
+			if ($oo eq "1073741824"){$maxup = $num."GB";}
+			if ($oo eq "1099511627776"){$maxup = $num."TB";}
+		}
+		if ($quota->{down})
+		{ 
+			my ($num,$oo)=split(":",$quota->{down});
+			if ($oo eq "1024"){$maxdown = $num."KB";}
+			if ($oo eq "1048576"){$maxdown = $num."MB";}
+			if ($oo eq "1073741824"){$maxdown = $num."GB";}
+			if ($oo eq "1099511627776"){$maxdown = $num."TB";}
+		}
+		open(FILE1,"/tmp/view_quotaDown");
+		open(FILE11,"/tmp/view_quotaUp");
+		foreach my $line (<FILE1>)
+		{
+			($dev,$size)=split(/,/,$line);
+			if ($quota->{port} eq $dev)
+			{
+				if ($size <= "1024"||$size >= "1024" && $size < "1048576")
+				{
+					$size/=1024;
+					$size = sprintf("%.2f", $size);
+					$down = $size."KB";
+				}
+				if ($size >= "1048576" && $size < "1073741824")
+				{
+					$size/=1048576;
+					$size = sprintf("%.2f", $size);
+					$down = $size."MB";
+				}
+				if ($size >= "1073741824" && $size < "1099511627776")
+				{
+					$size/=1073741824;
+					$size = sprintf("%.2f", $size);
+					$down = $size."GB";
+				}
+				if ($size >= "1099511627776")
+				{
+					$size/=1099511627776;
+					$size = sprintf("%.2f", $size);
+					$down = $size."TB";
+				}
+				#$down=$size;
+				$down=~s/\n//;
+			}
+		}
+		foreach my $line (<FILE11>)
+		{
+			($dev,$size)=split(/,/,$line);
+			if ($quota->{port} eq $dev)
+			{
+				if ($size <= "1024"||$size >= "1024" && $size < "1048576")
+				{
+					$size/=1024;
+					$size = sprintf("%.2f", $size);
+					$up = $size."KB";
+				}
+				if ($size >= "1048576" && $size < "1073741824")
+				{
+					$size/=1048576;
+					$size = sprintf("%.2f", $size);
+					$up = $size."MB";
+				}
+				if ($size >= "1073741824" && $size < "1099511627776")
+				{
+					$size/=1073741824;
+					$size = sprintf("%.2f", $size);
+					$up = $size."GB";
+				}
+				if ($size >= "1099511627776")
+				{
+					$size/=1099511627776;
+					$size = sprintf("%.2f", $size);
+					$up = $size."TB";
+				}
+				#$up=$size;
+				$up=~s/\n//;
+			}
+		}
+		$time = $quota->{date};
+		if($cycle eq 'non-Cyclic'){$view_time='non-Cyclic'}
+		else{$view_time=$time.' ['.$cycle.']'}
+	#	$total = $down." / ".$up;
+		$maxtotal = $maxdown." / ".$maxup;
+		$enabled = $quota->{enabled};
+		$realtime=$quota->{name};
+		$realbs=$quota->{bs};
+			
+		if($quota->{port} ne '')
+		{
+			$port = $quota->{port};
+			$source = '--';
+			$destination = '--';
+		}
+		
+		if($quota->{gateway} ne ''){$now = $quota->{gateway};}
+		
+		if($quota->{name} ne ''){$name = $quota->{name}}
+		if($quota->{ip} ne '')
+		{
+			$host = $quota->{ip};
+			my @np=split(/\./,$host);
+			#$realtime=$np[0].$np[1].$np[2].$np[3];
+		}
+		if($quota->{source} ne '' && $quota->{dest} ne '' && $quota->{type} eq 'policy')
+		{
+			$name = '--';
+			$source = $quota->{source};
+			$source =~ s/host-//g;
+			$destination = $quota->{dest};
+			$destination =~ s/host-//g;
+		}
+		
+		print qq (<td align="center" width="50" height="25">);
+		if ($enabled eq '1'){print qq (<input type="checkbox" id="enabled$lineCount" onclick="selenable('$quota->{name}','0','$viewtype')" checked value="1"></td>);}
+		if ($enabled eq '0'){print qq (<input type="checkbox" id="enabled$lineCount" onclick="selenable('$quota->{name}','1','$viewtype')" value="0"></td>);}
+		if ($enabled eq '') {print qq (<input type="checkbox" id="enabled$lineCount" onclick="selenable('$quota->{name}','0','$viewtype')" checked value="1"></td>);}
+		if($viewtype eq 'port')
+		{
+			print qq (<td align="center" width="120" height="25" class="name" >$name</td>);
+			print qq (<td align="center" width="150" height="25" class="$realtime" >$total</td>);
+			print qq (<input type="hidden" id="quota$lineCount" value="$realtime" >);
+			print qq (<td><a href="javascript:resetQuota('$quota->{name}','$viewtype');"><image src="image/Reset.gif" title="Reset" border="0"></td>);
+			if($quota->{bs} eq '1'){print qq (<td align="center" width="150" height="25" class="down$lineCount" >$maxdown</td>);}
+			else{print qq (<td align="center" width="150" height="25" class="down$lineCount" >$maxtotal</td>);}
+			print qq (<td align="center" width="125" height="25" class="time$lineCount" >$view_time</td>);
+			print qq (<td align="center" width="120" height="25">$port</td>);
+			print qq (<td align="center" width="120" height="25">$now</td>);
+			print qq (<td align="center" width="auto" height="25"><input type="checkbox" name="quota" value="$quota->{name}"></td>);
+			print qq (<input type="hidden" id="num$lineCount" value="$lineCount" >);
+			$lineCount++;
+			if($quota->{enabled} eq '1'){$postquota = $postquota . $realtime.'/'.$realbs.':'; $postena=1;}
+		}
+		if($viewtype eq 'policy')
+		{
+			print qq (<td align="center" width="20%" height="25" class="source" >$source</td>);
+			print qq (<td align="center" width="20%" height="25" class="destination" >$destination</td>);
+			print qq (<td align="center" width="150" height="25" class="$realtime" >$total</td>);
+			print qq (<input type="hidden" id="quota$lineCount" value="$realtime" >);
+			print qq (<td><a href="javascript:resetQuota('$quota->{name}','$viewtype');"><image src="image/Reset.gif" title="Reset" border="0"></td>);
+			if($quota->{bs} eq '1'){print qq (<td align="center" width="150" height="25" class="down$lineCount" >$maxdown</td>);}
+			else{print qq (<td align="center" width="150" height="25" class="down$lineCount" >$maxtotal</td>);}
+			#print qq (<td align="center" width="150" height="25" class="down$lineCount" >$maxtotal</td>);
+			print qq (<td align="center" width="125" height="25" class="time$lineCount" >$view_time</td>);
+			print qq (<td align="center" width="auto" height="25"><input type="checkbox" name="quota" value="$quota->{name}"></td>);
+			print qq (<input type="hidden" id="num$lineCount" value="$lineCount" >);
+			$lineCount++;
+			if($quota->{enabled} eq '1'){$postquota = $postquota . $realtime.'/'.$realbs.':'; $postena=1;}
+		}
+		if($viewtype eq 'ip')
+		{
+			print qq (<td align="center" width="120" height="25" class="name" >$name</td>);
+			print qq (<td align="center" width="20%" height="25" class="host" >$host</td>);
+			print qq (<td align="center" width="150" height="25" class="$realtime" >$total</td>);
+			print qq (<input type="hidden" id="quota$lineCount" value="$realtime" >);
+			print qq (<td><a href="javascript:resetQuota('$quota->{name}','$viewtype');"><image src="image/Reset.gif" title="Reset" border="0"></td>);
+			if($quota->{bs} eq '1'){print qq (<td align="center" width="150" height="25" class="down$lineCount" >$maxdown</td>);}
+			else{print qq (<td align="center" width="150" height="25" class="down$lineCount" >$maxtotal</td>);}
+			print qq (<td align="center" width="125" height="25" class="time$lineCount" >$view_time</td>);
+			print qq (<td align="center" width="auto" height="25"><input type="checkbox" name="quota" value="$quota->{name}"></td>);
+			print qq (<input type="hidden" id="num$lineCount" value="$lineCount" >);
+			
+			$lineCount++;
+			if($quota->{enabled} eq '1'){$postquota = $postquota . $realtime.'/'.$realbs.':'; $postena=1;}
+		}
+	}	
+	print qq (</tr>);
+	print qq(<tr><td colspan="12"><hr size=1></td></tr>);
+	print qq (</table>);
+	print qq (<input type="hidden" id="postena" value="$postena" >);
+	print qq (<input type="hidden" id="postquota" value="$postquota" >);	
+}
+#showQuotaInfo
+1

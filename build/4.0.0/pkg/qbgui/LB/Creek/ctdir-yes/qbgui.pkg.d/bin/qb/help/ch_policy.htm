@@ -1,0 +1,50 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Policy Configuration</title><!--政策性路由設定 第二步: 政策組態-->
+</head>
+<body>
+
+<h2>Policy Configuration</h2><!--政策性路由設定 第二步: 政策組態-->
+<p>
+利用在 subnet/service切割的分類加上目的地及時間來選擇policy的行動 
+</p> 
+<table>
+<tr><td valign=top>Source :</td><td>Internal網段的Source IP，也就是Subnet/Service裡面的Internal Subnet</td></tr>
+<tr><td valign=top class="light">Service :</td><td class="light">所有的Service</td></tr>
+<tr><td valign=top>Destination  :</td><td>目的地，Anywhere 表示不作特定限制，也能根據特定的Destination來設定使用不同的Table</td></tr>
+<tr><td valign=top class="light">Schedule :</td><td class="light">Policy的適用時間區段</td></tr> 
+<tr><td valign=top>Pool :</td><td>依據不同的需求選定所需的Pool，在Outbound Pool Configuration中可以定義</td></tr>
+<tr><td valign=top class="light">NAT Mode :</td><td class="light">選擇Smart，None及Manual三種模式</td></tr>
+</table>
+<ol>
+<li>Pool的選擇</li> <!--1-->
+<p>     
+不同的網段會使用不同的Pool線路組合來做負載平衡，POOL可以有許多應用，比如說不同的人使用不同的線路，或是不同的應用程式來使用不同的線路。<br>
+除了使用者自行定義的 Pool外，Q-Balancer也提供了幾個系統預設的線路組合：<br>
+<ol type=a> 
+<li>每個ISP的單一線路，[ISP1]，[ISP2] ...
+<li>所有線路都使用的組合，[BALANCE] 
+<li>使用request來的時候的gateway來做回覆的線路，[RRG]
+<li>使用request來的時候使用路線的IP來做回覆的線路，[RSI]
+<li>直接作丟棄處理,不做任何線路的選擇，[DROP]
+</ol></p> 
+
+<li>NAT Mode</li> <!--2-->
+<p>
+Q-Balancer是以選擇的路徑來考量NAT的行為<br>
+<ol type=a>
+<li>SMART NAT：會使用每條線路預設的 System IP來作為NAT的IP，當某個選connection在線路組合的演算法中選擇該路徑時也會使用該路徑的IP來做NAT
+<center><table>
+<tr><th>Source IP</th><th class="light">	SYSTEM IP	</th><th>Description</th></tr>
+<tr><td rowspan=2 valign=top>10.10.50.0/24</td><td class="light">	61.220.116.222</td><td>Q-Balancer在<b>ISP1</b>的System IP</td></tr>
+<tr><td class="light">	211.23.43.172</td><td>Q-Balancer在<b>ISP2</b>的System IP</td></tr>
+</table></center>
+<li>None NAT：不論選擇哪個路徑都不作NAT 
+<li>Manual NAT：手動來指定NAT,如 1-to-1 Nat，1-to-many Nat，或某些路徑作NAT，某些路徑不作NAT 
+</ol>
+在展開的欄位中，可以看見所有在Link IP Binding中所設定的 IP，可以按住Ctrl加上滑鼠左鍵以複選所要使用的IP，如果所有的線路都不選，系統會使用ISP線路預設的 IP ，如果有些線路選，有些線路不選，則系統在未選擇的線路上將不作NAT。<br>
+譬如當使用某個Public IP網段對外作服務的設定時，這個網段在自己所屬的線路不作NAT，而在其他的線路作NAT。</p>
+</ol>
+</body></html>

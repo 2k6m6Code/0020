@@ -1,0 +1,14 @@
+<opt file="url">
+    <exempt>
+      <neme ip="system"/>
+    </exempt>
+    <forbid>
+      <name forbidname="system"/>
+    </forbid>
+    <keyword>
+      <name keywordname="system"/>
+    </keyword>
+    <trust>
+      <name trustname="system"/>
+    </trust>
+</opt>

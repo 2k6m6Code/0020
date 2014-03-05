@@ -1,0 +1,19 @@
+#!/bin/sh
+# Dean Info.
+# AFS SYSTEM
+# recovery host name
+
+## NOTE: this script should be run just after /usr mounted as R/W while system entering multiuser mode
+## /etc/rc2.d/S10afs: Solaris 2.x, SCO UNIX 3.2.4.x
+
+F_HT=/etc/hosts
+F_TMP_HT=/tmp/afs_rc0_$$
+
+PATH=/usr/bin:/bin:/usr/sbin:/sbin:/etc:/usr/etc
+
+grep -v "AFS_@^~_" $F_HT > $F_TMP_HT
+if [ -s $F_TMP_HT ] ;then
+	cp $F_TMP_HT $F_HT
+fi
+rm -f $F_TMP_HT
+exit 0

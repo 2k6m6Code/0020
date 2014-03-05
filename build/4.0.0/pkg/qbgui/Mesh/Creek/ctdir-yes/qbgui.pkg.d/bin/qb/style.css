@@ -1,0 +1,11 @@
+.sortable th {background:#332211; text-align:center;}
+.sortable .evenrow td {background:#334455}^M
+.sortable .oddrow td {background:#556677}^M
+
+#controls {width:980px; margin:0 auto; height:20px}
+#perpage {float:left; width:200px}
+#perpage select {float:left; font-size:11px}
+#perpage span {float:left; margin:2px 0 0 5px}
+#navigation {float:left; width:580px; text-align:center}
+#navigation img {cursor:pointer}
+#text {float:left; width:200px; text-align:right; margin-top:2px}

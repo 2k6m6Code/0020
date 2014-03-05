@@ -1,0 +1,71 @@
+#---------------
+# perl0003.lib
+# Written:  06-04-1999  James A. Alarie
+#
+# Time & Date:
+#   $time_second, $time_minute, $time_hour, $time_full(hh:mm:ss),
+#   $time_tag (hhmmss), $date_month, $date_day, $date_year(ccyy),
+#   $date_tag(ccyymmdd), $date_full(mm-dd-ccyy), $date_julian(ccyy.ddd),
+#   $date_ftag(ccyymmdd_hhmmss), $date_month_name, $date_day_name
+sub date
+{
+    my ($time_second, $time_minute, $time_hour,          # server time/date
+     $date_day, $date_month, $date_year,
+     $day_week, $day_year, $isdst) = localtime($_[0]);
+
+    my $time_hour   = sprintf("%02d", $time_hour);       # force 2 digits
+    my $time_minute = sprintf("%02d", $time_minute);
+    my $time_second = sprintf("%02d", $time_second);
+    my $time_full = $time_hour.":".$time_minute.":".$time_second;
+    my $time_tag  = $time_hour.$time_minute.$time_second;
+
+    my $date_month_name = $month_names[$date_month];
+    my $date_day_name   = $day_names  [$day_week];
+
+    if ($date_year < 70) {$date_year += 2000;}        # add century
+    else {$date_year += 1900;}
+
+    my $workm1 = sprintf("%02d", $date_month + 1);       # force 2 digits
+    my $workd1 = sprintf("%02d", $date_day);
+    my $workd2 = sprintf("%03d", $day_year + 1);
+    my $date_full   = "$workm1-$workd1-$date_year";      # mm-dd-yy
+    my $date_tag    = $date_year.$workm1.$workd1;        # ccyymmdd
+    my $date_ftag   = $date_tag."_".$time_tag;           # ccyymmdd_hhmmss
+    my $date_julian = "$workm1.$workd2";                 # ccyy.ddd
+
+    my %date_time;
+    $date_time{'time_hour'}       = $time_hour;
+    $date_time{'time_minute'}     = $time_minute;
+    $date_time{'time_second'}     = $time_second;
+    $date_time{'time_full'}       = $time_full;       # hh:mm:ss
+    $date_time{'time_tag'}        = $time_tag;        # hhmmss
+    $date_time{'date_month'}      = $date_month;
+    $date_time{'date_day'}        = $date_day;
+    $date_time{'date_year'}       = $date_year;       # ccyy
+    $date_time{'date_tag'}        = $date_tag;        # ccyymmdd
+    $date_time{'date_full'}       = $date_full;       # mm-dd-ccyy
+    $date_time{'date_ftag'}       = $date_ftag;       # ccyymmdd_hhmmss
+    $date_time{'date_julian'}     = $date_julian;     # ccyy.ddd
+    $date_time{'date_month_name'} = $date_month_name;
+    $date_time{'date_day_name'}   = $date_day_name;
+    $date_time{'isdst'}           = $isdst;           #20090417 Brian for Daylight saving time
+
+    return %date_time;
+}
+
+#--------------
+# Given time in epoch time, give the name of the corresponding file it is in
+# $_[0]: epoch time
+# $_[1]: file time returned
+sub calcFileTime
+{
+    my %formattime = date($_[0]);
+    $formattime{'date_ftag'} =~ /(....)(..)(..)/;
+    #return (mktime(0, 0, 0, $3, $2-1, $1-1900));
+    #20090417 Brian :Need to add Daylight saving time or Historical traffic can't work in some countries.
+    #print "DayLight:$formattime{'isdst'}\n";
+    return (mktime(0, 0, 0, $3, $2-1, $1-1900, 0, 0, $formattime{'isdst'}));
+}
+
+
+1;

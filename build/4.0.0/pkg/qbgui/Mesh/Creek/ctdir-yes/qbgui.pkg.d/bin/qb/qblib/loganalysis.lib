@@ -1,0 +1,105 @@
+sub showLog
+{
+    my (%action)=@_;
+    
+    print qq (<table>);
+    print qq (<tr><td class="bigtitle" colspan="2">System Logs ); #</td></tr>); 
+    print qq (<a href="javascript:qbShowHelp('loganalysis')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    print qq (<tr><td class="bigtitle" colspan="2"><hr size="1"></td></tr>); 
+	#select form
+    print qq (<tr><td class="bigtitle" colspan="2">Log Selection<select id = "logss" name="type" style="margin-left: 5px; margin-right: 5px;">);
+	
+	print qq (<option value=""> </option>);
+  print qq (<option value="qbengine">Show Engine Process Log</option>);
+  print qq (<option value="qbalertlog">Show Alert Log</option>);
+  print qq (<option value="pppoelog">Show PPPoE Dial Log</option>);
+  print qq (<option value="ipseclog">Show IPSEC Log</option>);
+  print qq (<option value="pptplog">Show PPTP Log</option>);
+  print qq (<option value="ipchangelog">Show IP change Log</option>);
+  # print qq (<option value="tunnellog">Tunnel Bandwidth Measure Log</option>);
+  print qq (<option value="pppoestatus">PPPoE Status</option>);
+  print qq (<option value="dhcplog">DHCP Log</option>);
+#  print qq (<option value="category">Web Filter Log</option>);
+#  print qq (<option value="webproxy">Web Proxy Log</option>);
+  print qq (<option  value="userlog">User's Action Log</option>);
+print qq ( <option value="clearalertlog" style="display: none;" disabled="disabled"></option></select> );
+	
+	print qq (<input class="qb" type="button" value="Go !!" title="Click to get information" onclick="go()" style="width:80"><button id="qbalertlogbutton" value="clearalertlog" type="button" onclick="goClear()" style="display: none;">Clear Alert Log</button></td></tr>); 
+	#select form
+    print qq (<tr><td class="bigtitle" colspan="2"><hr size="1"></td></tr>); 
+    print qq (<tr><td colspan="2">);
+    print qq (<iframe name="loginfo" style="background-color:#C2D1E1; width:800; height:400; filter:alpha(opacity=95);" scrolling="auto"></iframe>);
+    print qq (</td></tr>);
+    
+
+
+    print qq (</table>);
+}
+#showLog
+
+sub logScript
+{
+    print << "LOGSCRIPT";
+
+    <script language="javascript">
+
+        var myform;
+    
+        function cgi_dep_onload() { myform=window.document.forms[0]; } 
+
+        function go() 
+        {  
+            var choice=document.getElementById("logss").value;
+            
+            switch (choice)
+            {
+                case "syslog":
+                    goSyslog();
+                    break;
+                case "snmp":
+                    goSnmp(); 
+                    break;
+				case "qbalertlog":
+					
+					var choiceb=document.getElementById("qbalertlogbutton");
+					choiceb.style.display= "inline";
+					myform.submit();
+                    break;
+                default:
+					var choiceb=document.getElementById("qbalertlogbutton");
+					choiceb.style.display= "none";
+                    myform.submit();
+                    break;
+            }
+        }
+		function goClear(){
+		
+		var ssi =  document.getElementById("logss");
+		ssi.value = "clearalertlog";
+		myform.submit();
+		}
+        
+        function goSnmp() 
+        { 
+            var privilege=getcookie('privilege');
+            if(privilege!=1) {alert('Privilege Not Allowed'); return;}
+            window.top.mainFrame.location.href="snmp.cgi";
+        }
+
+        function goSyslog() 
+        { 
+            var privilege=getcookie('privilege');
+            if(privilege!=1) {alert('Privilege Not Allowed'); return;}
+            window.top.mainFrame.location.href="syslog.cgi";
+        }
+
+        
+    </script>
+    
+LOGSCRIPT
+
+}
+
+
+#
+1

@@ -1,0 +1,525 @@
+<opt file="service">
+  <service title="ssh" type="known">
+    <port value="system" protocol="system" />
+    <port value="22" protocol="tcp" />
+  </service>
+  <service title="telnet" type="known">
+    <port value="system" protocol="system" />
+    <port value="23" protocol="tcp" />
+  </service>
+  <service title="ftp" type="known">
+    <port value="system" protocol="system" />
+    <port value="21" protocol="tcp" />
+    <port value="20" protocol="tcp" />
+  </service>
+  <service title="smtp" type="known">
+    <port value="system" protocol="system" />
+    <port value="25" protocol="tcp" />
+  </service>
+  <service title="pop3" type="known">
+    <port value="system" protocol="system" />
+    <port value="110" protocol="tcp" />
+  </service>
+  <service title="domain" type="known">
+    <port value="system" protocol="system" />
+    <port value="53" protocol="tcp" />
+    <port value="53" protocol="udp" />
+  </service>
+  <service title="http" type="known">
+    <port value="system" protocol="system" />
+    <port value="80" protocol="tcp" />
+  </service>
+  <service title="tftp" type="known">
+    <port value="system" protocol="system" />
+    <port value="69" protocol="tcp" />
+  </service>
+  <service title="time" type="known">
+    <port value="system" protocol="system" />
+    <port value="37" protocol="tcp" />
+  </service>
+  <service title="maintain" type="qb">
+    <port value="system" protocol="system" />
+    <port value="4000" protocol="tcp" />
+  </service>
+  <service title="imap" type="known">
+    <port value="system" protocol="system" />
+    <port value="143" protocol="tcp" />
+  </service>
+  <service title="proxy" type="user">
+    <port value="system" protocol="system" />
+    <port value="3128" protocol="tcp" />
+  </service>
+  <service title="icmp" type="user">
+    <port value="system" protocol="system" />
+    <port value="" protocol="icmp" />
+  </service>
+  <service title="ping" type="user">
+    <port value="system" protocol="system" />
+    <port value="" protocol="icmp" />
+  </service>
+  <service title="pptp" type="user">
+    <port protocol="system" value="system" />
+    <port protocol="47" value="" />
+    <port protocol="tcp" value="1723" />
+  </service>
+  <service title="IPSec" type="user">
+    <port protocol="system" value="system" />
+    <port protocol="50" value="" />
+    <port protocol="51" value="" />
+    <port protocol="udp" value="500" />
+    <port protocol="udp" value="4500" />
+  </service>
+  <service title="https" type="user">
+    <port protocol="system" value="system" />
+    <port protocol="tcp" value="443" />
+  </service>
+  <service title="snmp_L4" type="known">
+    <port value="system" protocol="system" />
+    <port value="161" protocol="udp" />
+    <port value="162" protocol="udp" />
+  </service>
+  <service title="aim" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="aim" value="AIM - AOL instant messenger" />
+  </service>
+  <service title="aimwebcontent" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="aimwebcontent" value="AIM web content" />
+  </service>
+  <service title="applejuice" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="applejuice" value="Apple Juice - P2P filesharing" />
+  </service>
+  <service title="ares" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ares" value="Ares - P2P filesharing" />
+  </service>
+  <service title="battlefield1942" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="battlefield1942" value="Battlefield 1942 - An EA game" />
+  </service>
+  <service title="battlefield2" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="battlefield2" value="Battlefield 2 - An EA game" />
+  </service>
+  <service title="bgp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="bgp" value="BGP - Border Gateway Protocol" />
+  </service>
+  <service title="biff" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="biff" value="Biff - new mail notification" />
+  </service>
+  <service title="bittorrent" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="bittorrent" value="Bittorrent - P2P filesharing" />
+  </service>
+  <service title="chikka" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="chikka" value="Chikka - SMS service which can be used without phones" />
+  </service>
+  <service title="cimd" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="cimd" value="Computer Interface to Message Distribution, an SMSC protocol by Nokia" />
+  </service>
+  <service title="ciscovpn" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ciscovpn" value="Cisco VPN - VPN client software to a Cisco VPN server" />
+  </service>
+  <service title="citrix" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="citrix" value="Citrix ICA - proprietary remote desktop application" />
+  </service>
+  <service title="counterstrike_source" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="counterstrike-source" value="Counterstrike (using the new Source engine) - network game" />
+  </service>
+  <service title="cvs" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="cvs" value="CVS - Concurrent Versions System" />
+  </service>
+  <service title="dayofdefeat_source" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="dayofdefeat-source" value="Day of Defeat: Source - game (Half-Life 2 mod)" />
+  </service>
+  <service title="dhcp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="dhcp" value="DHCP - Dynamic Host Configuration Protocol" />
+  </service>
+  <service title="directconnect" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="directconnect" value="Direct Connect - P2P filesharing" />
+  </service>
+  <service title="dns" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="dns" value="DNS - Domain Name System" />
+  </service>
+  <service title="doom3" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="doom3" value="Doom 3 - computer game" />
+  </service>
+  <service title="edonkey" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="edonkey" value="eDonkey - P2P filesharing" />
+  </service>
+  <service title="fasttrack" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="fasttrack" value="FastTrack - P2P filesharing" />
+  </service>
+  <service title="finger" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="finger" value="Finger - User information server" />
+  </service>
+  <service title="freenet" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="freenet" value="Freenet - Anonymous information retrieval" />
+  </service>
+  <service title="ftp_layer7" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ftp" value="FTP - File Transfer Protocol" />
+  </service>
+  <service title="gkrellm" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="gkrellm" value="Gkrellm - a system monitor" />
+  </service>
+  <service title="gnucleuslan" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="gnucleuslan" value="GnucleusLAN - LAN-only P2P filesharing" />
+  </service>
+  <service title="gnutella" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="gnutella" value="Gnutella - P2P filesharing" />
+  </service>
+  <service title="goboogy" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="goboogy" value="GoBoogy - P2P filesharing" />
+  </service>
+  <service title="gopher" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="gopher" value="Gopher - A precursor to HTTP" />
+  </service>
+  <service title="h323" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="h323" value="H.323 - Voice over IP" />
+  </service>
+  <service title="halflife2_deathmatch" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="halflife2-deathmatch" value="Half-Life 2 Deathmatch - popular computer game" />
+  </service>
+  <service title="hddtemp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="hddtemp" value="hddtemp - Hard drive temperature reporting" />
+  </service>
+  <service title="hotline" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="hotline" value="Hotline - An old P2P filesharing protocol" />
+  </service>
+  <service title="httprtsp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="http-rtsp" value="RTSP tunneled within HTTP" />
+  </service>
+  <service title="http_layer7" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="http" value="HTTP - HyperText Transfer Protocol" />
+  </service>
+  <service title="ident" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ident" value="Ident - Identification Protocol" />
+  </service>
+  <service title="imap_layer7" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="imap" value="Internet Message Access Protocol" />
+  </service>
+  <service title="imesh" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="imesh" value="iMesh - the native protocol of iMesh, a P2P application" />
+  </service>
+  <service title="ipp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ipp" value="IP printing - a new standard for UNIX printing" />
+  </service>
+  <service title="irc" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="irc" value="IRC - Internet Relay Chat" />
+  </service>
+  <service title="jabber" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="jabber" value="Jabber (XMPP) - open instant messenger protocol" />
+  </service>
+  <service title="kugoo" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="kugoo" value=" - KuGoo P2P filesharing" />
+  </service>
+  <service title="live365" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="live365" value="live365 - An Internet radio site" />
+  </service>
+  <service title="lpd" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="lpd" value="LPD - Line Printer Daemon Protocol" />
+  </service>
+  <service title="mohaa" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="mohaa" value="Medal of Honor Allied Assault - an Electronic Arts game" />
+  </service>
+  <service title="msn_filetransfer" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="msn-filetransfer" value="MSN Messenger file transfers" />
+  </service>
+  <service title="msnmessenger" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="msnmessenger" value="MSN Messenger - Microsoft Network chat client" />
+  </service>
+  <service title="mute" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="mute" value="MUTE - P2P filesharing" />
+  </service>
+  <service title="napster" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="napster" value="Napster - P2P filesharing" />
+  </service>
+  <service title="nbns" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="nbns" value="NBNS - NetBIOS name service" />
+  </service>
+  <service title="ncp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ncp" value="NCP - Novell Core Protocol" />
+  </service>
+  <service title="netbios" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="netbios" value="NetBIOS - Network Basic Input Output System" />
+  </service>
+  <service title="nntp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="nntp" value="NNTP - Network News Transfer Protocol" />
+  </service>
+  <service title="ntp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ntp" value="(S)NTP - (Simple) Network Time Protocol" />
+  </service>
+  <service title="openft" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="openft" value="OpenFT - P2P filesharing" />
+  </service>
+  <service title="pcanywhere" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="pcanywhere" value="pcAnywhere - Symantec remote access program" />
+  </service>
+  <service title="poco" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="poco" value="POCO and PP365 - Chinese P2P filesharing" />
+  </service>
+  <service title="pop3_layer7" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="pop3" value="POP3 - Post Offic" />
+  </service>
+  <service title="qq" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="qq" value="Tencent QQ Protocol - Chinese instant messenger protocol" />
+  </service>
+  <service title="quakehalflife" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="quake-halflife" value="Half Life 1 engine games (HL 1, Quake 2/3/World, Counterstrike 1.6, etc.)" />
+  </service>
+  <service title="quake1" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="quake1" value="Quake 1 - A popular computer game" />
+  </service>
+  <service title="radmin" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="radmin" value="Famatech Remote Administrator - remote desktop for MS Windows" />
+  </service>
+  <service title="rdp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="rdp" value="RDP - Remote Desktop Protocol" />
+  </service>
+  <service title="rlogin" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="rlogin" value="rlogin - remote login" />
+  </service>
+  <service title="rtsp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="rtsp" value="RTSP - Real Time Streaming Protocol" />
+  </service>
+  <service title="shoutcast" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="shoutcast" value="Shoutcast and Icecast - streaming audio" />
+  </service>
+  <service title="sip" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="sip" value="SIP - Session Initiation Protocol" />
+  </service>
+  <service title="smb" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="smb" value="Samba/SMB - Server Message Block - Microsoft Windows filesharing" />
+  </service>
+  <service title="smtp_layer7" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="smtp" value="SMTP - Simple Mail Transfer Protocol" />
+  </service>
+  <service title="snmp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="snmp" value="SNMP - Simple Network Management Protocol" />
+  </service>
+  <service title="socks" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="socks" value="SOCKS Version 5 - Firewall traversal protocol" />
+  </service>
+  <service title="soribada" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="soribada" value="Soribada - P2P filesharing" />
+  </service>
+  <service title="soulseek" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="soulseek" value="Soulseek - P2P filesharing" />
+  </service>
+  <service title="ssdp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ssdp" value="SSDP - Simple Service Discovery Protocol" />
+  </service>
+  <service title="ssh_layer7" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ssh" value="SSH - Secure SHell" />
+  </service>
+  <service title="ssl" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ssl" value="SSL and TLS - Secure Socket Layer / Transport Layer Security" />
+  </service>
+  <service title="sslportal" type="qb">
+    <port protocol="system" value="system" />
+    <port protocol="tcp" value="5000" />
+  </service>
+  <service title="stun" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="stun" value="STUN - Simple Traversal of UDP Through NAT" />
+  </service>
+  <service title="subspace" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="subspace" value="Subspace - 2D asteroids-style space game" />
+  </service>
+  <service title="subversion" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="subversion" value="Subversion - a version control system" />
+  </service>
+  <service title="teamspeak" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="teamspeak" value="TeamSpeak - VoIP application" />
+  </service>
+  <service title="telnet_layer7" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="telnet" value="Telnet - Insecure remote login" />
+  </service>
+  <service title="tesla" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="tesla" value="Tesla Advanced Communication - P2P filesharing" />
+  </service>
+  <service title="tftp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="tftp" value="TFTP - Trivial File Transfer Protocol" />
+  </service>
+  <service title="thecircle" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="thecircle" value="The Circle - P2P filesharing" />
+  </service>
+  <service title="tls" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="tls" value="SSL and TLS - Secure Socket Layer / Transport Layer Security" />
+  </service>
+  <service title="tor" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="tor" value="Tor - The Onion Router - used for anonymization" />
+  </service>
+  <service title="tsp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="tsp" value="TSP - Berkely UNIX Time Synchronization Protocol" />
+  </service>
+  <service title="uucp" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="uucp" value="UUCP - Unix to Unix Copy" />
+  </service>
+  <service title="validcertssl" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="validcertssl" value="Valid certificate SSL" />
+  </service>
+  <service title="ventrilo" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="ventrilo" value="Ventrilo - VoIP" />
+  </service>
+  <service title="vnc" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="vnc" value="VNC - Virtual Network Computing" />
+  </service>
+  <service title="whois" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="whois" value="Whois - query/response system" />
+  </service>
+  <service title="worldofwarcraft" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="worldofwarcraft" value="World of Warcraft - popular network game" />
+  </service>
+  <service title="x11" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="x11" value="X Windows Version 11 - Networked GUI system used in most Unices" />
+  </service>
+  <service title="xboxlive" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="xboxlive" value="XBox Live - Console gaming" />
+  </service>
+  <service title="xunlei" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="xunlei" value="Xunlei - P2P filesharing" />
+  </service>
+  <service title="yahoo" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="yahoo" value="Yahoo messenger - an instant messenger protocol" />
+  </service>
+  <service title="zmaap" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="zmaap" value="ZMAAP - Zeroconf Multicast Address Allocation Protocol" />
+  </service>
+  <service title="audiogalaxy" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="audiogalaxy" value="Audiogalaxy - P2P filesharing" />
+  </service>
+  <service title="http_dap" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="http-dap" value="HTTP by Download Accelerator Plus" />
+  </service>
+  <service title="http_freshdownload" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="http-freshdownload" value="HTTP by Fresh Download" />
+  </service>
+  <service title="httpaudio" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="httpaudio" value="HTTP - Audio over HyperText Transfer Protocol" />
+  </service>
+  <service title="httpcachehit" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="httpcachehit" value="HTTP - Proxy Cache hit for HyperText Transfer ProtocolP" />
+  </service>
+  <service title="httpcachemiss" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="httpcachemiss" value="HTTP - Proxy Cache miss for HyperText Transfer Protocol " />
+  </service>
+  <service title="httpvideo" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="httpvideo" value="HTTP - Video over HyperText Transfer Protocol" />
+  </service>
+  <service title="pressplay" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="pressplay" value="pressplay - A legal music distribution site" />
+  </service>
+  <service title="quicktime" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="quicktime" value="Quicktime HTTP" />
+  </service>
+  <service title="snmpmon" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="snmp-mon" value="SNMP Monitoring - Simple Network Management Protocol" />
+  </service>
+  <service title="snmptrap" type="layer7">
+    <port protocol="system" value="system" />
+    <port protocol="snmp-trap" value="SSNMP Traps - Simple Network Management" />
+  </service>
+</opt>

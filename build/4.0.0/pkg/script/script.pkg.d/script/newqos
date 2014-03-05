@@ -1,0 +1,13 @@
+#!/bin/bash
+#set -x
+NUMOFPORT=`grep NUMOFPORT /opt/qb/registry|awk '{print $2}'`
+for (( i = 0; i < "$NUMOFPORT"; i++ ))
+do
+  tc qdisc del dev eth$i root handle 100: htb default 3
+  tc qdisc add dev eth$i root handle 100: htb default 3
+  tc class add dev eth$i parent 100: classid 100:3 htb rate 10240000kbit ceil 1024000kbit 
+  tc qdisc del dev imq$i root handle 100: htb default 3
+  tc qdisc add dev imq$i root handle 100: htb default 3
+  tc class add dev imq$i parent 100: classid 100:3 htb rate 10240000kbit ceil 1024000kbit 
+  iptables -t mangle -A PREROUTING -i eth$i -j IMQ --todev $i
+done

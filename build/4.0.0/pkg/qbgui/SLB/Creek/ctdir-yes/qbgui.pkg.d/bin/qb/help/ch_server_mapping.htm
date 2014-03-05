@@ -1,0 +1,21 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Server Mapping</title><!--內部伺服器對應-->
+</head>
+<body>
+
+<h2>Server Mapping</h2><!--內部伺服器對應-->
+<p>
+Server mapping主要在設定接取服務從某個IP導向另一個IP，是一種使用 Destination為NAT的模式。</p>
+<p>假設一個簡單的架構，有兩條ISP，但內部其實只有一台Server同時提供HTTP與DNS兩種服務，而Q-Balancer的工作就是分別在兩條ISP幫這台Server Mapping相對應的IP</p> 
+<table>
+<tr><td valign=top width=100>ISP ID :	</td><td>區別不同的ISP</td></tr>
+<tr><td valign=top class="light">ISP Name :	</td><td class="light">各自使用的ISP線路</td></tr> 
+<tr><td valign=top>Virtual IP :	</td><td>外部對應的IP，只有在Link IP Binding裡面設定的IP才會出現.</td></tr> 
+<tr><td valign=top class="light">Service :	</td><td class="light">所要Mapping的各種Service Group</td></tr> 
+<tr><td valign=top>Real Servers :	</td><td>要將該Service Redirect到內部的Server IP。如果勾選To Q-Balancer，則表示該Service要Redirect到Q-Balancer設備身上</td></tr> 
+<tr><td valign=top class="light">Real service	</td><td class="light">除了作 IP1：port->IP2的mapping,也可做 IP1：port1->IP2：port2的mapping，假設在一個 Multi Path VPN的環境中，要使用headquarter的一個對外IP來管理數個private 網段其他的Q-balancer則可以使用這個方法</td></tr> 
+</table>
+</body></html>

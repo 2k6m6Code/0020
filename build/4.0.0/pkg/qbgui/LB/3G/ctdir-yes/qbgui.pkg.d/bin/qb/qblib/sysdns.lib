@@ -1,0 +1,46 @@
+###############################################################################################
+#                                          showSysdns
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showSysdns 
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    
+    print qq (<table cellspacing="0" border="0">);
+    print qq (<tr><td class="bigtitle" valign="top" align="center" colspan="2" style="height: 30px">);
+    print qq ( DNS Reslover );
+    #print qq (</td></tr>);
+    #print qq (</table>); 
+    
+    print qq (<tr><td colspan="2" valign="top" style="height: 10px"><hr size="1"></td></tr>);
+    
+    #print qq (<table cellspacing="0" border="0">\n);
+    #print qq (<tr><td align="center" class="bigtitle" colspan="2" > $qblang[352] ); 
+    print qq (<tr>);
+    print qq (<td class="body" valign="top" align="center" >DNS Reslover  </td>); 
+    print qq (<td class="body" align="center" >);
+    print qq ( : <input type="text" class="qbtext" maxlength="15" id="resolve" name="resolve" value="$overview->{resolve}" style="width:130" onChange="checkAndSetDNS(this.value)">); 
+    print qq (</td></tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="bottom" align="center" style="width: 200px" >);
+    my $status=( $overview->{dnsserver} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" name="dnsserver" $status value="1"> $qblang[353] );
+    print qq ($qblang[354]);
+    print qq (</td>);
+    
+    print qq (<td class="body"  valign="center" align="center" >);
+    print qq ( : <input type="text" class="qbtext" maxlength="15" id="relay" name="relay" value="$overview->{relay}" style="width:130" onChange="checkAndSetDNS(this.value)">);
+    print qq (</td></tr>);
+    
+    print qq (<tr><td colspan="2" valign="bottom" style="height: 10px"><hr size="1"></td></tr>);
+    print qq (<tr><td colspan="2" align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[54]" title="Save All Parameters" onClick="goSubmit('SAVE')" style="width:180">);
+    print qq (</tr></td>);
+    print qq (</table>);
+}
+#showSysdns
+#
+1

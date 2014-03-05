@@ -1,0 +1,135 @@
+###############################################################################################
+#                                           Snmp Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showTime 
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2" >$qblang[375]); 
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq ($qblang[376]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    my $local_time=runCommand(command=>'date', params=>'');
+    print qq ($local_time);
+    print qq (</td>);
+    print qq (</tr>);
+
+    runCommand(command=>"rm", params=>'-f /tmp/init*');
+    runCommand(command=>"cp", params=>'-f /mnt/conf/init.dat /tmp/init.nc');
+    runCommand(command=>"mcrypt", params=>'-d /tmp/init.nc -k 2k6m6$');
+    my $Warranty_time=runCommand(command=>'cat', params=>qq('/tmp/init'\|grep Warranty\|tail -n 1\|awk \'\{print \$2\}\'));
+    my $Reg_Warranty_time;
+    $Warranty_time=~s/\n//g;
+    if ( $registered_date_sec ne '' )
+    {
+      $Reg_Warranty_time=365 * 86400 + $registered_date_sec;
+    }
+    #date -d "1970-01-01 UTC xxxxxxxxxx seconds"
+    if ( $Warranty_time ne '' )
+    {
+      $Warranty_time_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $Warranty_time seconds\"));
+      if ( $Reg_Warranty_time >= $Warranty_time )
+      {
+       $Warranty_time_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $Reg_Warranty_time seconds\"));
+      }
+      else
+      {
+       $Warranty_time_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $Warranty_time seconds\"));
+      }
+      print qq (<tr>);
+      if ( $gENABLEVM )
+      {
+          my $license_expired=runCommand(command=>'/opt/qb/bin/script/licensetime', params=>'');
+          print qq (<td class="body"  valign="top" align="left">);
+          print qq ($qblang[377]:);
+          print qq (</td>);
+          print qq (<td class="body"  valign="top" align="left">);
+          print qq ($license_expired);
+          print qq (</td>);
+      }
+      else
+      {
+          print qq (<td class="body"  valign="top" align="left">);
+          print qq ($qblang[378]:);
+          print qq (</td>);
+          print qq (<td class="body"  valign="top" align="left">);
+          print qq ($Warranty_time_date);
+          print qq (</td>);
+      }
+    }
+    #************************************ Set TimeZone  ********************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq ($qblang[379]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    my $presentzone=runCommand(command=>"cat", params=>$gCLOCK);
+    my $zoneinfo=runCommand(command=>"cat", params=>$gZONEINFO);
+    my @zonerecord=split(/\n/, $zoneinfo);
+    my @zonelist;
+    foreach my $record ( @zonerecord )
+    {
+        if ( $record=~m/^#/) { next; }
+        my @zonedata=split(/\s+/, $record);
+        push ( @zonelist, $zonedata[2]);
+    }
+
+    print qq(<select name="timezone" class="qbopt" style="width:180">);
+    foreach my $zone ( sort @zonelist )
+    {
+        my $status=( $presentzone=~m/$zone/ ) ? ( $status="selected" ) : ( $status="" );
+        print qq (<option value="$zone" $status >$zone</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td>);
+
+    #************************************ NTP Time Server ********************************************
+    #20081204 Brian for NTP Time Server
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq ($qblang[380]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<select class="qbopt" name="ntptimeserver" value="$overview->{ntptimeserver}" style="width:150">);
+    my @ntpserver=("time.stdtime.gov.tw", "time.nist.gov", "time-nw.nist.gov", "time-a.nist.gov", "time-b.nist.gov", "tick.stdtime.gov.tw", "tock.stdtime.gov.tw", "clock.stdtime.gov.tw", "watch.stdtime.gov.tw");
+    foreach my $ntp ( sort @ntpserver )
+    {
+        my $status=( $action{ntptimeserver} eq $ntp ) ? ( 'selected' ) : ( '' );
+        print qq (<option value="$ntp" $status >$ntp</option>\n);
+    }
+    print qq (</select>);
+    print qq (<input class="qb" type="button" value="$qblang[381]" title="Sync the NTP Server" onClick="goSubmit('SYNC')" style="width:60">);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+}
+#showTime
+
+
+#======================================================================================================================
+sub TimeScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+
+    </script>
+SCRIPT
+}
+#TimeScript
+#
+1

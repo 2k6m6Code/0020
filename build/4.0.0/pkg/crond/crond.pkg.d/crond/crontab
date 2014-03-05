@@ -1,0 +1,10 @@
+57  23 * * *  root  /usr/local/apache/qb/setuid/do_exportlog.pl
+30   2 * * *  root 	/usr/local/sbin/ip route flush cache 
+*/20 * * * *  root 	/opt/qb/bin/script/qbmon.sh 
+*/5  * * * *  root 	/usr/local/apache/qb/status/isphis 
+*/5  * * * *  root 	/usr/local/apache/qb/status/nethis.pl logmin
+0 0-23 * * * root 	/usr/local/apache/qb/status/nethis.pl loghour
+0 0 1-31 * * root 	/usr/local/apache/qb/status/nethis.pl logday
+0 0 1-31 * * root 	/usr/local/apache/qb/status/nethis.pl rollover
+
+

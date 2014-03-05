@@ -1,0 +1,3 @@
+<opt file="newportscan">
+  <newportscan dosip="system" enable="false" logset="false" />
+</opt>

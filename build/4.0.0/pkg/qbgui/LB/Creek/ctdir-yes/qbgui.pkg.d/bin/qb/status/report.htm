@@ -1,0 +1,748 @@
+<html>
+<head> 
+<title>TDC03</title>
+<link rel="stylesheet" href="../gui.css" type="text/css">
+<style>
+body{
+	margin:0;
+	background:#336699;
+	overflow:hidden;
+	scrollbar-base-color:#336699;
+}
+body,table,select{
+	font:12 Verdana;
+	color:skyblue;
+	overflow: auto;
+}
+
+select{
+	font:12 Verdana;
+	color:black;
+}
+
+a{	color:skyblue;}
+
+table.#DataTab{
+	color:#ffffff;
+}
+table.dataTable {
+	margin: 0 auto;
+	clear: both;
+	width: 100%;
+}
+
+table.dataTable thead th {
+	text-decoration: underline;
+	padding: 3px 18px 3px 10px;
+	border-bottom: 1px solid black;
+	font-weight: bold;
+	cursor: pointer;
+	*cursor: hand;
+}
+
+table.dataTable tfoot th {
+	padding: 3px 18px 3px 10px;
+	border-top: 1px solid black;
+	font-weight: bold;
+}
+
+table.dataTable td {
+	padding: 3px 10px;
+}
+
+table.dataTable td.center,
+table.dataTable td.dataTables_empty {
+	text-align: center;
+}
+
+
+/*
+ * Table wrapper
+ */
+.dataTables_wrapper {
+	position: relative;
+	clear: both;
+	*zoom: 1;
+}
+
+
+/*
+ * Page length menu
+ */
+.dataTables_length {
+	float: left;
+}
+
+
+/*
+ * Filter
+ */
+.dataTables_filter {
+	float: right;
+	text-align: right;
+}
+
+
+/*
+ * Table information
+ */
+.dataTables_info {
+	clear: both;
+	float: left;
+}
+
+
+/*
+ * Pagination
+ */
+.dataTables_paginate {
+	float: right;
+	text-align: right;
+}
+
+/* Two button pagination - previous / next */
+.paginate_disabled_previous,
+.paginate_enabled_previous,
+.paginate_disabled_next,
+.paginate_enabled_next {
+	height: 19px;
+	float: left;
+	cursor: pointer;
+	*cursor: hand;
+	color: #111 !important;
+}
+.paginate_disabled_previous:hover,
+.paginate_enabled_previous:hover,
+.paginate_disabled_next:hover,
+.paginate_enabled_next:hover {
+	text-decoration: none !important;
+}
+.paginate_disabled_previous:active,
+.paginate_enabled_previous:active,
+.paginate_disabled_next:active,
+.paginate_enabled_next:active {
+	outline: none;
+}
+.paginate_enabled_previous,
+.paginate_enabled_next {
+	font-weight: bold;
+    text-decoration: underline;
+}
+
+.paginate_disabled_previous,
+.paginate_disabled_next {
+	color: #666 !important;
+}
+.paginate_disabled_previous,
+.paginate_enabled_previous {
+	padding-left: 23px;
+}
+.paginate_disabled_next,
+.paginate_enabled_next {
+	padding-right: 23px;
+	margin-left: 10px;
+}
+
+</style>
+
+<script type="text/javascript" src="../qb.js"></script>
+<script type="text/javascript" language="javascript" src="../qbjs/jquery.js"></script>
+<script type="text/javascript" language="javascript" src="../qbjs/jquery.dataTables.min.js"></script>
+<script>
+////////////////////
+//Last Modify:	2003/12/2 18:00 @ HOME
+////////////////////
+
+var cgipath = "report.cgi";
+var datapath = "conntrack.web";
+var loading = false;
+var allcount = 0;
+var nowcount = 0;
+
+
+
+function init(){
+
+	//重置頁面上的狀態
+	ResetStatus();
+
+	LoadData();
+}
+
+/*----- 3.data -----*/
+
+function LoadData(){
+	/*if(navigator.userAgent.search("MSIE 6") == -1){
+		FXLoadData();
+		//return false;
+		
+	}
+	*/
+	var intTopNumber,booAuto,intAutoTime;
+
+	//設定flag
+	loading=true;
+
+	//取得使用者資料
+
+	//usrTop(select)
+	intTopNumber = parseInt(usrTop.value);
+
+	//usrAuto(input::checkbox)
+	booAuto = usrAuto.checked;
+
+	//usrTime(select)
+	intAutoTime = parseInt(usrTime.value);
+
+	if(LoadData.autotimer)
+		clearTimeout(LoadData.autotimer);
+
+	//讀取資料之前
+
+	var intTopNumber = $('#usrTop').val();
+	//window.myframe.location="report.cgi?top="+intTopNumber;
+
+	//連結資料
+	window.myframe.location.href=cgipath+"?top="+intTopNumber;
+	
+	if(booAuto)
+		LoadData.autotimer = setTimeout("LoadData()",intAutoTime*1000);
+}LoadData.autotimer = null;
+function FXLoadData(){
+	
+	var showDid= document.getElementById("DataDiv");
+	showDid.style.height = "";
+	//showDid.style.borderTop="1px solid black";
+	var client = new XMLHttpRequest();
+	client.open('GET', '../status/conntrack.web',false );
+	client.onreadystatechange = function() {
+	  if(client.readyState == 4)
+		{
+			var webLogText = client.responseText;
+			var ccText = webLogText.split('\n');
+			var outssText ='<TABLE id="ht" border=0 cellSpacing=0 cellPadding=0 width=100% height=100%>' ;
+			outssText +='<TR style=""><TH style="width: 13%;"> </TH><TH style="width: 35%; font-weight: bolder;"><span style="background-color: #808080; color:#ffffff;">Request</span></TH><TH style="width: 35%; font-weight: bolder;"><span style="background-color: #6D6D6D; color:#ffffff;">Reply</span></TH><TH> </TH></TR></TABLE>';
+			
+			outssText +='<TABLE id="webte" ><thead>' ;
+			for(var ct=0;ct<ccText.length;ct++){
+				var ssText = ccText[ct].split(",");
+				if(ssText.length<2){
+				break;
+				}
+				if(ct>=1){
+					outssText += '<TR style="color: rgb(255, 255, 255);">';
+				}else{
+					outssText +='<TR style="background-color:#336699;">';
+				}
+				
+				for (var x =0;x<ssText.length;x++)
+				{
+				
+				if(ct>=1){
+					if(x>9 || x<2){
+					ssText[x] = "<td>"+ssText[x] +"</td>";
+					}else{
+						if(x<6){
+						ssText[x] = '<td style="background-color:#808080;">'+ssText[x] +'</td>';
+						}else{
+						ssText[x] =  '<td style="background-color:#6D6D6D;">'+ssText[x] +"</td>";
+						}
+					
+					}
+				outssText+=ssText[x] ;
+					}else{
+					ssText[x] = '<th class="table-sortable:alphanumeric">'+ssText[x] +"</th>";
+					var delIntstring= ssText[x].replace(":Int","");
+					outssText+=delIntstring;
+					
+					}
+				}
+				if(ct>=1){
+				outssText += "</TR>";}
+				else{
+				outssText+="</TR></thead><tbody>"
+				}
+			}
+			document.getElementById("nowRecordCount").innerHTML = ccText.length -2;
+			document.getElementById("allRecordCount").innerHTML = ccText.length -2;
+			showDid.innerHTML = outssText+"</tbody></TABLE>";
+			
+		}
+	}
+	client.send();
+	var pagenum = $.cookie("pageinput");
+	if(!pagenum){
+	pagenum = 15;
+	}
+var oTable =$('#webte').dataTable( {
+    "iDisplayLength":  pagenum,
+    "aLengthMenu":  [[15, 50, 100,300, -1], [15, 50, 100,300, "All"]]
+
+    
+ 
+  });
+  $("input[type='text']").val($.cookie("searchinput"));
+  $("select[name='webte_length']").val($.cookie("pageinput"));
+  oTable.fnFilter( $("input[type='text']").val());
+  $("input[type='text']").keyup(function () { 
+  //alert("asdas");
+  $.cookie("searchinput", $("input[type='text']").val());
+  });
+  $("select[name='webte_length']").change(function () { 
+  //alert("asdas");
+  $.cookie("pageinput", $("select[name='webte_length']").val());
+  });
+}
+
+(function ($, document, undefined) {
+
+	var pluses = /\+/g;
+
+	function raw(s) {
+		return s;
+	}
+
+	function decoded(s) {
+		return decodeURIComponent(s.replace(pluses, ' '));
+	}
+
+	var config = $.cookie = function (key, value, options) {
+
+		// write
+		if (value !== undefined) {
+			options = $.extend({}, config.defaults, options);
+
+			if (value === null) {
+				options.expires = -1;
+			}
+
+			if (typeof options.expires === 'number') {
+				var days = options.expires, t = options.expires = new Date();
+				t.setDate(t.getDate() + days);
+			}
+
+			value = config.json ? JSON.stringify(value) : String(value);
+
+			return (document.cookie = [
+				encodeURIComponent(key), '=', config.raw ? value : encodeURIComponent(value),
+				options.expires ? '; expires=' + options.expires.toUTCString() : '', // use expires attribute, max-age is not supported by IE
+				options.path    ? '; path=' + options.path : '',
+				options.domain  ? '; domain=' + options.domain : '',
+				options.secure  ? '; secure' : ''
+			].join(''));
+		}
+
+		// read
+		var decode = config.raw ? raw : decoded;
+		var cookies = document.cookie.split('; ');
+		for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')); i++) {
+			if (decode(parts.shift()) === key) {
+				var cookie = decode(parts.join('='));
+				return config.json ? JSON.parse(cookie) : cookie;
+			}
+		}
+
+		return null;
+	};
+
+	config.defaults = {};
+
+	$.removeCookie = function (key, options) {
+		if ($.cookie(key) !== null) {
+			$.cookie(key, null, options);
+			return true;
+		}
+		return false;
+	};
+
+})(jQuery, document);
+
+
+function LoadData2(){
+//alert('Page should have been changed');
+
+	DataObj.dataURL=datapath;
+	DataObj.reset();
+}
+
+
+function DataOnLoad(){
+	
+	//讀到資料以後
+
+	if(loading){
+		allcount = DataObj.recordset.recordCount;
+		nowcount = DataObj.recordset.recordCount;
+
+		//裝資料
+		ResetDataTab();	
+
+		//重置控制區
+		ResetCtrlTab();
+
+		//TDC填充資料
+		DataTab.dataSrc="#DataObj";
+
+		//重置選單
+		ResetSelect();
+
+		//微調各項欄位寬度
+	        ResetFieldWidth();
+
+		//重置頁面上的狀態
+		ResetStatus();
+	
+		loading = false;
+	}
+	else{
+		nowcount = DataObj.recordset.recordCount;
+	
+		//重置選單
+		ResetSelect();
+		
+		//重置頁面上的狀態
+		ResetStatus();
+	}
+}
+
+function ResetStatus(){
+	nowRecordCount.innerText = nowcount;
+	allRecordCount.innerText = allcount;
+}
+
+function ResetDataTab(){
+
+	//clean tab_data
+
+	while(DataTab.rows.length)
+		DataTab.rows[0].removeNode(1);
+
+
+	var oTR = DataTab.insertRow();
+	
+	//set <span> in tab_data
+
+	var i,oSP,oTD;
+
+	for(i=0;i<DataObj.recordset.fields.count;i++){
+
+		oTD = oTR.insertCell();
+		
+		if(typeof(DataObj.recordset.fields(i).value)=="number")
+			oTD.Align="right";
+		else
+			oTD.Align="center";
+
+		oSP = document.createElement("SPAN");
+		oSP.datafld = DataObj.recordset.fields(i).name;
+		oTD.appendChild(oSP);
+	}
+}
+
+function Filter(){
+	var i,filterText="";
+	for(i=0;i< CtrlFrm.elements.length;i++)
+	{
+		if(CtrlFrm.elements[i].value != '*'){
+			filterText += (filterText.length?'&':'');
+			filterText += "("+CtrlFrm.elements[i].name+"="+CtrlFrm.elements[i].value+")";
+		}
+	}
+	DataObj.Filter = filterText;
+	DataObj.Reset();
+}
+
+function Sort(name){
+
+	if( name == Sort.lastname )
+		Sort.dir = (Sort.dir ==''?'-':'');
+	else
+		Sort.dir = "";
+	DataObj.sort = Sort.dir + name;
+	Sort.lastname = name;
+	DataObj.reset();
+
+}
+Sort.lastname="";
+Sort.dir="";
+
+function ResetCtrlTab(){
+
+	//clean tab_sfdiv
+	
+	while(CtrlTab.rows.length)
+		CtrlTab.rows[0].removeNode(1);
+	
+	var oTR0 = CtrlTab.insertRow();  // add another Header....nancy041126
+
+	var oTR = CtrlTab.insertRow();
+	
+	//set <select> & a default <option value="*"> in tab_sfdiv
+	
+	var i,oSL,oTD,count, oTD0; // add cell for TR0...nancy041126
+	
+	for(i=0;i<DataObj.recordset.fields.count;i++){
+
+		oTD0 = oTR0.insertCell(); oTD0.align="center";
+                switch (i) {
+                case 2:
+		    oTD0.innerHTML="Request";
+                    break;
+                case 6:
+		    oTD0.innerHTML="Reply";
+                    break;
+                default:
+		    oTD0.innerHTML="";
+                }
+
+
+		oTD = oTR.insertCell();
+
+                switch (i) {
+                case 2:
+		    oTD.innerHTML="<a href='javascript:Sort(\""+DataObj.recordset.fields(i).name+"\");'>"+DataObj.recordset.fields(i).name+"</a><a href='javascript:getSearchIP(\""+DataObj.recordset.fields(i).name+"\");'><image src=\"..\/image\/edit.gif\" title=\"Type an IP you want to search\" border=\"0\"></a><br>";
+                    break;
+                case 4:
+		    oTD.innerHTML="<a href='javascript:Sort(\""+DataObj.recordset.fields(i).name+"\");'>"+DataObj.recordset.fields(i).name+"</a><a href='javascript:getSearchIP(\""+DataObj.recordset.fields(i).name+"\");'><image src=\"..\/image\/edit.gif\" title=\"Type an IP you want to search\" border=\"0\"></a><br>";
+                    break;
+                case 6:
+		    oTD.innerHTML="<a href='javascript:Sort(\""+DataObj.recordset.fields(i).name+"\");'>"+DataObj.recordset.fields(i).name+"</a><a href='javascript:getSearchIP(\""+DataObj.recordset.fields(i).name+"\");'><image src=\"..\/image\/edit.gif\" title=\"Type an IP you want to search\" border=\"0\"></a><br>";
+                    break;
+                case 8:
+		    oTD.innerHTML="<a href='javascript:Sort(\""+DataObj.recordset.fields(i).name+"\");'>"+DataObj.recordset.fields(i).name+"</a><a href='javascript:getSearchIP(\""+DataObj.recordset.fields(i).name+"\");'><image src=\"..\/image\/edit.gif\" title=\"Type an IP you want to search\" border=\"0\"></a><br>";
+                    break;
+                default:
+                    oTD.innerHTML="<a href='javascript:Sort(\""+DataObj.recordset.fields(i).name+"\");'>"+DataObj.recordset.fields(i).name+"</a><br>";
+                }
+
+		oTD.align = "center";
+		oSL = document.createElement("SELECT");
+		oSL.name = DataObj.recordset.fields(i).name;
+		oSL.id = DataObj.recordset.fields(i).name;
+                oSL.style.font="9 Verdana Arial Helvetica sans-serif"; 
+                oSL.style.color='#003366';
+		oSL.onchange = Filter;
+		oSL.options.add(new Option("*","*"));
+		oTD.appendChild(oSL);
+	}
+}
+function ResetSelect(){
+
+	var i,j;
+	tmpObjArr = new Array();
+	var tmpArr = new Array();
+	
+	for(i=0;i<DataObj.recordset.fields.count;i++){
+		tmpObjArr.push(new Object());
+	}
+
+	//收集相同資料
+	
+	if(DataObj.recordset.recordCount)
+		DataObj.recordset.MoveFirst();
+
+	while(!DataObj.recordset.EOF){
+		for(i=0;i<DataObj.recordset.fields.count;i++){
+			if(DataObj.recordset.fields(i).value!=""){
+				tmpObjArr[i][DataObj.recordset.fields(i).value]=true;
+			}
+		}
+		DataObj.recordset.MoveNext();
+	}
+	
+	//整理資料
+
+	for(i=0;i<DataObj.recordset.fields.count;i++){
+		tmpArr = new Array();
+		for(key in tmpObjArr[i])
+			tmpArr.push(key)
+		if(typeof(DataObj.recordset.fields(i).value)=="number")
+			tmpArr.sort(function(a,b){return a-b});
+		else
+			tmpArr.sort();
+		tmp = CtrlFrm.elements[i].value;
+		while(CtrlFrm.elements[i].options.length>1)
+			CtrlFrm.elements[i].options.remove(1);
+		for(j=0;j<tmpArr.length;j++)
+			CtrlFrm.elements[i].options.add(new Option(tmpArr[j],tmpArr[j]));
+		CtrlFrm.elements[i].value = tmp;
+	}
+}
+function ResetFieldWidth(){
+
+	var i,tmp1,tmp2;
+	
+	for(i=0;i<CtrlFrm.elements.length;i++){
+		CtrlTab.rows[0].cells[i].width = CtrlFrm.elements[i].clientWidth;
+		tmp1 = DataTab.rows[0].cells[i].clientWidth;
+		tmp2 = CtrlTab.rows[0].cells[i].clientWidth;
+		CtrlTab.rows[0].cells[i].width = DataTab.rows[0].cells[i].width = ( tmp1 > tmp2 ? tmp1 : tmp2 ) - 2;
+	}
+}
+
+
+function DataTabOnMouseover(){
+	var oTR = event.srcElement;
+	while(oTR.tagName != "TR")
+		oTR = oTR.parentElement;
+	DataTab.rows[oTR.rowIndex].style.backgroundColor="#4488cc";
+	DataTab.rows[oTR.rowIndex].style.color="white";
+}
+
+function DataTabOnMouseout(){
+	var oTR = event.srcElement;
+	while(oTR.tagName != "TR")
+		oTR = oTR.parentElement;
+	DataTab.rows[oTR.rowIndex].style.backgroundColor="";
+	DataTab.rows[oTR.rowIndex].style.color="";
+}
+
+function DataTabOnClick(){
+	if(DataTabOnClick.last < DataTab.rows.length){
+		DataTab.rows[DataTabOnClick.last].runtimeStyle.backgroundColor = "";
+		DataTab.rows[DataTabOnClick.last].runtimeStyle.color = "";
+	}
+
+	var oTR = event.srcElement;
+	while(oTR.tagName != "TR")
+		oTR = oTR.parentElement;
+	DataTab.rows[oTR.rowIndex].runtimeStyle.backgroundColor = "black";
+	DataTab.rows[oTR.rowIndex].runtimeStyle.color = "white";
+	DataTabOnClick.last = oTR.rowIndex;
+
+}DataTabOnClick.last=0;
+
+function Mode(){
+	if(DataDiv.style.overflowY=="scroll"){
+		DataDiv.style.overflowY="";
+		document.body.style.overflow="auto";
+	}
+	else{
+		DataDiv.style.overflowY="scroll";
+		document.body.style.overflow="hidden";
+	}
+}
+
+function exportlog(){
+
+     conntracklog='conntrack.csv';
+     window.open(conntracklog);
+}
+
+
+function DataTabOnReadystatechange(){
+}
+
+function getSearchIP(name){
+     var SearchIP = prompt("Please enter the IP","");
+     //new_option = new Option(SearchIP,SearchIP);        
+     //leng = document.getElementById(name).length;
+     //document.getElementById(name).options.add(new_option);
+     document.getElementById(name).value = SearchIP;
+     //document.getElementById(name).selectedIndex  = leng;  
+     Filter();
+}
+
+var  myVar;
+
+
+$(document).ready( function(){
+
+    // 點選單一checkbox 檢查是否設定全選/全消
+var intAutoTime = $('#usrTime').val()*1000;
+
+            $('#usrAuto').click(function(){               
+                if (this.checked){
+                    myVar =setInterval("LoadData()",intAutoTime);
+                }else{                   
+                    clearInterval(myVar);
+                }
+            });
+        }); 
+
+</script>
+</head>
+
+<body>
+
+
+
+
+
+<table width="100%" height="100%" border="0" cellspacing="0" cellpadding="0">
+
+<!--PART 1 : status & operation-->
+
+<tr height="40">
+	<td>
+
+	<table width="100%" height="100%" border="0" cellspacing="0" cellpadding="0">
+
+	<tr><td>
+		&nbsp; Records : &nbsp; <span ID="nowRecordCount"></span> &nbsp / &nbsp <span ID="allRecordCount"></span>
+		&nbsp; show top:
+		<select class="qbopt" id="usrTop">
+		<option value="100">100</option>
+		<option value="200">200</option>
+		<option value="300">300</option>
+		<option value="500">500</option>
+		<option value="1000">1000</option>
+		<option value="2000">2000</option>
+		<option value="5000">5000</option>
+		<option value="9000">9000</option>
+		<option value="15000">15000</option>
+		<option value="30000">30000</option>
+		<option value="100000">100000</option>
+		</select>
+		<button class="qb" onclick="LoadData()">Apply</button>
+		&nbsp; autorefresh 
+		<input id="usrAuto" type="checkbox">
+		every
+		<select class="qbopt" id="usrTime">
+			<option value="10">10</option>
+			<option value="20">20</option>
+			<option value="30">30</option>
+			<option value="40">40</option>
+			<option value="50">50</option>
+			<option value="60">60</option>
+		</select>
+		seconds &nbsp; &nbsp;
+
+		<button class="qb" onclick="exportlog()">export log</button>
+		<!-- <button class="qb" onclick="Mode()">toggle display mode</button> -->
+                <a href="javascript:qbShowHelp('report')"><image src="/image/help.gif" border="0" title="Help"></a>
+	</td>
+	</tr>
+	</table>
+
+	</td>
+</tr>
+
+
+<!--PART 2 : control ( sort & filter )-->
+<tr height="50px" style="display: none">
+	<td style="border:1px solid black">
+		<FORM ID="CtrlFrm" style="margin:0">
+		<table ID="CtrlTab" cellspacing=0></table> 
+		</FORM>
+	</td>
+</tr>
+
+<!--PART 3 : list data -->
+<tr>
+	<td bgColor="#2D606F" style="vertical-align:top;">
+		<DIV ID="DataDiv" style="width:100%;height:100%;">
+		<table ID="DataTab" cellspacing="0" onmouseover="DataTabOnMouseover()" onmouseout="DataTabOnMouseout()" onclick="DataTabOnClick()" onreadystatechange="DataTabOnReadystatechange()"></table>
+		</DIV>
+	</td>
+</tr>
+
+</table>
+<!--<object  id="DataObj" CLASSID="CLSID:333C7BC4-460F-11D0-BC04-0080C7055A83" ondatasetcomplete="DataOnLoad()">
+	<PARAM NAME="FieldDelim" value=",">
+	<PARAM NAME="UseHeader" value="True">
+</object> -->
+<iframe name="myframe" style="display: none"></iframe>
+<div id="FXshow"></div>
+</body>
+</html>

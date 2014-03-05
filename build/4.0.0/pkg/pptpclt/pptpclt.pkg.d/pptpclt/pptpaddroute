@@ -1,0 +1,15 @@
+#!/bin/bash
+#set -x
+
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+PPTPIID=`grep isptype=\"pptp\" $ACTIVEBASICXML|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+
+for ispid in $PPTPIID
+do
+   pppispid=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pppispid=\"//"|sed -e "s/\".*//"`
+   pptproutegw=`grep iid=\"$pppispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*gateway=\"//"|sed -e "s/\".*//"`
+   pptproutenic=`grep iid=\"$pppispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`
+   pptpserver=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pptpserver=\"//"|sed -e "s/\".*//"`
+   case "$pptpserver" in *[a-zA-Z]*) pptpserver=`/opt/qb/bin/script/ns $pptpserver`;; esac
+   /sbin/ip route replace $pptpserver via $pptproutegw dev $pptproutenic table 254
+done

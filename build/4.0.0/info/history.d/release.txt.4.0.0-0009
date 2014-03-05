@@ -1,0 +1,5 @@
+   1.To fix if add a new host object into bigger config,GUI will spend 90 sec to wait the return.
+    The modification include :nat.lib
+   2.To fix if click update from GUI with bigger config,GUI will spend more than 5 mins to wait the return.
+    The modification include :qbmod.cgi
+

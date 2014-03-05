@@ -1,0 +1,1948 @@
+########################################################################################################
+#                                     Virtual Server Config
+########################################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showVS 
+{
+    my (%action)=@_;
+	my $service=XMLread($gPATH.'service.xml');#GET SERVICE DETAIL
+    my $servicelist=$service->{service};
+	my %portlist2;
+        #runCommand( command=>'echo', params=>$action{service}.' >/tmp/sss');
+        foreach $service3 ( @$servicelist ) 
+        {
+            if ( $service3->{type} eq 'layer7' ) { next; }
+                my $portlist=$service3->{port};
+                foreach my $port ( @$portlist )
+                {
+                    if ( $port->{protocol} eq 'system' ) { next; }
+                    # push(@portlist2, $port->{protocol}.':'.$port->{value});
+					if($port->{value} eq ""){
+					$portlist2{$service3->{title}} .=  'protocol:'.$port->{protocol}."\n";
+					}else{
+					$portlist2{$service3->{title}} .=  $port->{protocol}.':'.$port->{value}."\n";
+					}
+                }       
+        }
+    my $vsref=XMLread($gPATH."lvs.xml");
+    my $allVS=$vsref->{virtual_server}; my @sortedVS;
+    my $sortingKEY=$action{sortingkey};
+    my %ispHash=maintainBasic(action=>'GETISPNAMEHASH');
+    my %titleWidth=('ISP ID'=>'40', 'Name'=>'120', 'Virtual IP'=>'120', 'Service'=>'120', 'Real Servers'=>'150', 'Real Service'=>'120', 'Status'=>'80', 'Delete'=>'50');
+    my @titleList=('ISP ID', 'Name', 'Virtual IP', 'Service', 'Real Servers', 'Real Service', 'Status');
+    my @titleHeadList=('Real Servers', 'Real Service', 'Status');
+
+    #=========================================================================================
+    my %selected_vip_services;
+    my $selectedvip=$action{vip};
+    my $selectedservices=$action{service};
+    foreach my $service ( @$selectedservices ) { $selected_vip_services{$selectedvip.':'.$service}=1; }
+
+    #===== print title first ==================================================================
+    # print qq (<div class="divframe">);
+    # print qq (<table class="body" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#332211">);
+    # print qq (<td align="center" width="$titleWidth{'ISP ID'}"><a href="javascript:sortVS('BYISP')" title="Sort by ISP" border="0">ISP ID</a></td>);
+    # print qq (<td align="center" width="$titleWidth{'Name'}">Name</td>);
+    # print qq (<td align="center" width="$titleWidth{'Virtual IP'}"><a href="javascript:sortVS('BYVIP')"  title="Sort by VIP" border="0">Virtual IP</a></td>);
+    # print qq (<td align="center" width="$titleWidth{'Service'}"><a href="javascript:sortVS('BYSERVICE')" title="Sort by Service" border="0">Service</a></td>);
+
+    # foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+
+    # print qq (<td align="center" width="$titleWidth{Delete}">);
+    # print qq (<a href="javascript:delVS()"><image src="image/del.gif" title="Delete Checked Virtual Server(s)" border="0"></a>);
+    # print qq (<input type="checkbox" name="allvs" onClick="setAllCheckBoxValue('vses', this.checked);">);
+    # print qq (</td>);
+    # print qq (</tr></table>);
+    # print qq (</div>);
+
+    if      ( !$sortingKEY )                { $sortingKEY='BYISP'; }
+    if      ( $sortingKEY eq 'BYISP' )      { @sortedVS=sort vs_sort_by_isp @$allVS; } 
+    elsif   ( $sortingKEY eq 'BYVIP' )      { @sortedVS=sort vs_sort_by_vip @$allVS; } 
+    elsif   ( $sortingKEY eq 'BYSERVICE' )  { @sortedVS=sort vs_sort_by_service @$allVS; } 
+    
+    print qq (<div class="divframe" style="height:210">);
+    print qq (<table id="vsList" width="100%" cellspacing="0" cellpadding="0" class="body"><thead><tr style="background-color:#332211;"><th width="40" align="center"><a border="0" title="Sort by ISP" href="javascript:sortVS('BYISP')">$qblang[56]</a></th><th width="120" align="center">$qblang[29]</th><th width="120" align="center"><a border="0" title="Sort by VIP" href="javascript:sortVS('BYVIP')">$qblang[184]</a></th><th width="120" align="center"><a border="0" title="Sort by Service" href="javascript:sortVS('BYSERVICE')">$qblang[164]</a></th><th width="150" align="center">$qblang[185]</th><th width="120" align="center">$qblang[186]</th><th width="80" align="center">$qblang[24]</th><th width="50" align="center"><a href="javascript:delVS()"><img border="0" title="Delete Checked Virtual Server(s)" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('vses', this.checked);" name="allvs"></th></tr></thead>);
+    my $lineCount=0;
+    foreach my $vs ( @sortedVS ) 
+    {
+        if ( $vs->{service} eq 'system' ) { next; }
+        if ( $vs->{enabled} eq '1' ) { next; }
+        
+        #===================================================================      
+        # prepare display color
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        my $originalColor=$bgcolor;
+        if ( $vs->{dirty} )   { $originalColor=$bgcolor='#bb6600' }; 
+        if ( $vs->{warning} ) { $originalColor=$bgcolor='#7000fe' }; 
+        if ( $vs->{isnew} )   { $originalColor=$bgcolor='#008080' }; 
+
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+        #===================================================================      
+        my $display=$vs->{isp};
+        print qq (<td align="center" width="$titleWidth{$titleList[0]}">$display</td>);
+
+        #===================================================================      
+        my $display=$ispHash{$vs->{isp}};
+        print qq (<td align="center" width="$titleWidth{$titleList[1]}">$display</td>);
+        
+        #===================================================================      
+        my $display=$vs->{vip}; 
+        print qq (<td align="center" width="$titleWidth{$titleList[2]}">$display</td>);
+        
+        #===================================================================      
+        my $display=($vs->{service} eq 'others') ? ('ANY') : ($vs->{service}); 
+        print qq (<td align="center" width="$titleWidth{$titleList[3]}" title="$portlist2{$display}" alt="$portlist2{$display}">$display</td>);
+        
+        #===================================================================      
+        my $realServers=$vs->{real_server};
+        print qq (<td align="center" width="$titleWidth{$titleList[4]}">);
+
+        if ( grep(/localhost/, @$realServers) ) { print qq (To Q-Balancer); }
+        elsif ( @$realServers==1 ) { print qq (None); }
+        else
+        {
+            my $firstrserver='';
+            foreach my $rserver ( @$realServers ) { if ( $rserver ne 'system' ) { $firstrserver=$rserver; last;} }
+            $firstrserver.=( @$realServers > 2 ) ? ( ' ...' ) : ('');
+
+            my $rserverlist='';
+            if ( @$realServers > 2 ) { foreach my $rserver ( @$realServers ) { if ( $rserver ne 'system' ) { $rserverlist.=$rserver."\n"; } } }
+            
+            print qq (<span title="$rserverlist" style="width:$titleWidth{$titleList[4]}">$firstrserver</span>);
+        }
+        print qq (</td>);
+
+        #===================================================================  
+        my $display=($vs->{real_service}) ? ( $vs->{real_service} ) : ( $vs->{service} );    
+        if ( $display eq 'others' ) { $display='ANY'; } 
+        print qq (<td align="center" width="$titleWidth{$titleList[5]}">$display</td>);
+        
+        #===================================================================      
+        my $imgSrc=( $vs->{dirty} ) ? ( '/image/alert.gif' ) : ( '/image/ok.gif' );
+        print qq (<td align="center" width="$titleWidth{Status}"><image src="$imgSrc" border="0"></td>);
+        
+        #===================================================================      
+        #print checkbox and set its value
+        print qq (<td align="center" width="$titleWidth{Delete}">);
+        my $vskey=$vs->{isp}.':'.$vs->{vip}.':'.$vs->{service};
+        print qq (<input type="checkbox" name="vses" value="$vskey">);
+        print qq (</td>);
+        
+        print qq (</tr>);
+          
+        if ( $selected_vip_services{$vs->{vip}.':'.$vs->{service}} ) { print qq (<script>initSelect(vsList.rows[$lineCount]);</script>); }
+        
+        $lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>)
+}
+#showVS
+        
+
+#=============================================================================================
+sub showVSScript
+{
+    print << "SHOWVSSCRIPT";
+
+    <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+    
+    function sortVS(key)
+    {
+        myform.sortingkey.value=key;
+        myform.submit();
+    }
+
+    function delVS() { if ( qbConfirm(2, 'Confirm Deletion ?') == 1 ) { goSubmit('DELETEVS'); } }
+
+    </script>
+
+SHOWVSSCRIPT
+
+}
+#showVSScript
+
+#============================================================================================
+sub editVS
+{
+    my (%action)=@_;
+    my $lvs=XMLread($gPATH."lvs.xml");
+    my $vservers=$lvs->{virtual_server};
+
+    #=========================================================================================
+    if ( $action{action} eq 'SWITCHISP' )
+    {
+        $action{vip}='';
+        $action{service}=''; 
+    }
+    elsif ( $action{action} eq 'SWITCHVIP' )
+    {
+        $action{service}='';
+    }
+
+    #=========================================================================================
+    print qq (<table width="100%" bgcolor="#336699" cellpadding="0" cellspacing="0" border="0">);
+    print qq (<tr>);
+    
+    my %lvsiidlist;
+    foreach my $vs ( @$vservers ) 
+    { 
+        if ( $vs->{isp} eq 'system' ) { next; }
+        $lvsiidlist{$vs->{isp}}=1; 
+    }
+    
+    my %isphash=maintainBasic(action=>'GETISPNAMEHASH');
+    my @lvsiid=sort keys %lvsiidlist;
+    if ( !$action{isp} ) { $action{isp}=$lvsiid[0]; } 
+    print qq (<td valign="top" align="left" class="body" width="35%">);
+    print qq (<table bgcolor="#336699">);
+    print qq (<tr><td class="body" valign="top" align="left">$qblang[56]: </td>);
+    print qq (<td align="left" ><select class="qbopt" name="isp" onchange="goSubmit('SWITCHISP')" style="width:150"> );
+    foreach my $iid ( @lvsiid ) 
+    {   
+        my $status=( $iid eq $action{isp} ) ? ( "selected") : ( '' ) ;
+        print qq (<option $status value="$iid">$isphash{$iid} [ ISP $iid ] </option>); 
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    #列出屬於某ISP的VIP
+    my %lvsviplist;
+    foreach my $vserver ( @$vservers )
+    {
+        if ( $vserver->{isp} eq 'system' ) { next; }
+        if ( $vserver->{isp} eq $action{isp} ) { $lvsviplist{$vserver->{vip}}=1; }
+    }
+    
+    my @lvsvip=sort ip_sort keys %lvsviplist;
+    if ( !$action{vip} ) { $action{vip}=$lvsvip[0]; }
+
+    print qq (<tr><td class="body" align="left">Virtual IP: </td>);
+    print qq (<td align="left"><select class="qbopt" name="vip" style="width:150">);
+    foreach my $vip ( @lvsvip ) 
+    {   
+        my $status=( $vip eq $action{vip} ) ? ( "selected") : ( '' ) ;
+        print qq (<option $status value="$vip">$vip</option>); 
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    #=========================================================================================
+    # List available services for creating new virtual server
+    #my @services=maintainService( action=>'GETALLSERVICE' ); 
+    my @services=maintainService( action=>'GETVSSERVICE' ); 
+    
+    #=========================================================================================
+    # For 1-to-1  Virtual Server
+    push ( @services, "others");
+    
+    #=========================================================================================
+    if ( !$action{service} ) { $action{service}=$services[0]; }
+    print qq (<tr><td class="body" valign="top" align="left">Services: </td>);
+    print qq (<td align="left">);
+    print qq (<select class="qbopt" multiple size="7" name="service" style="width:150">\n);
+    foreach my $item ( @services ) 
+    {   
+        my $selectedservices=$action{service};
+        my $status=( grep(/^$item$/, @$selectedservices) ) ? ( 'selected' ) : ( '' );
+        my $show=($item eq 'others') ? ('ANY') : ($item);
+        print qq (<option $status value="$item">$show</option>\n); 
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</td>);
+
+    my $targetvserver;
+    my $targetexist=0;
+    foreach my $vs ( @$vservers ) 
+    {
+        if ( $vs->{vip}.$vs->{service} ne $action{vip}.$action{service} ) { next; }
+        $targetvserver=$vs;
+        $targetexist=1;
+        last;
+    }    
+    
+    #=========================================================================================
+    #列出這一組VSERVER的RealServers
+    my $realservers=$targetvserver->{real_server};
+    my $localReplyStatus=( grep/^localhost$/, @$realservers ) ? ( 'checked') : ( '' );
+    
+    print qq (<td class="body" align="center" valign="top" class="body" width="50%">);
+    print qq (<table class="body" bgcolor="#667788" cellspacing="3" width="60%">);
+    print qq (<tr><td colspan="2" align="left">);
+    print qq (<input type="checkbox" name="local" $localReplyStatus value="localhost" onclick="localReply(this.checked)">);
+    print qq (To Q-Balancer);
+    print qq (</td></tr>);
+    
+    my $allrserver='';
+    foreach my $realserver ( @$realservers )
+    {
+        if ( $realserver=~m/^system$|^local$/ ) { next; }
+        $allrserver.=$realserver.';'.'&#13;';
+    }
+    $allrserver=~s/^;//g;
+
+    print qq (<tr><td align="center">);
+    print qq (Real Server(s)<br>);
+    print qq (<textarea class="qbtext" name="rservers" style="width:160;height:70">$allrserver</textarea>);
+    print qq (</td></tr>);
+
+    print qq (<tr><td colspan="2" valign="top" align="left">Real Service:);
+    print qq (<select class="qbopt" size="1" name="real_service" style="width:120">\n);
+    print qq (<option value="">None</option>\n); 
+    foreach my $item ( @services ) 
+    {   
+        my $show=($item eq 'others') ? ('ANY') : ($item);
+        my $status=( $item eq $action{real_service} ) ? ( 'selected' ) : ( '' );
+        print qq (<option $status value="$item">$show</option>\n); 
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</td>);
+
+    print qq (<td class="body" align="right" valign="bottom">);
+    print qq (<input class="qb" type="button" value="Add" onClick="newvs(rservers)" style="width:160"><br>);
+    #print qq (<input class="qb" type="button" value="Advanced Setting" onClick="goToPolicyConfig()" style="width:160"><br>);
+    #print qq (<input class="qb" type="button" value="Batch Add 1 to 1" onClick="batchAddOne2One()" style="width:60"><br>);
+    print qq (<input type="hidden" vallue="" name="batcrtdata">);
+    print qq (</td>);
+    
+    print qq (</tr></table>);
+}
+#editVS
+
+#=============================================================================================
+sub editVSScript
+{
+    print << "EDITVSSCRIPT";
+
+   <script language="javascript">
+
+    var myform=document.forms[0];
+    
+    function cgi_dep_onload()
+    {
+        if ( myform.service )
+        {
+            var service=myform.service.value;
+        }
+        
+        if ( myform.local )
+        {
+            var localreply=myform.local.checked;
+            localReply(localreply);
+        }
+
+        setTimeout("informShowVS()",500);
+    }
+
+    function informShowVS()
+    {
+        var action=myform.action.value;
+
+        if ( action=="NEW" || action=="ADDONE2ONE" )
+        {
+			window.top.mainFrame.mainframe.show.location.href='showvs.cgi';
+            //window.top.mainFrame.show.document.forms[0].submit();
+        }          
+    }
+
+    
+    function localReply(local)
+    {
+        var myform=document.forms[0];
+        
+        switch (local)
+        {
+            case true:
+                myform.rservers.value='';
+                myform.rservers.disabled=true;
+                //myform.real_service.disabled=true;
+				myform.real_service.disabled=false;
+            break;
+            case false:
+                myform.rservers.disabled=false;
+                myform.real_service.disabled=false;
+            break;
+        }
+    }
+    
+    function del() { if ( qbConfirm(2, 'Confirm Deletion ?') == 1 ) { goSubmit('DELETEVS'); } }
+    
+    function newvs(rservers) 
+	{	
+		if(myform.local.checked == false && myform.rservers.value =="")
+		{
+			alert("Set [To Q-Balancer] or [Real Server]" );
+			return false;
+		}
+		goSubmit('NEW'); 
+	}
+    
+
+    
+    function update(rservers) { goSubmit('UPDATE'); }
+
+
+    function goToPolicyConfig()
+    {
+        var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to do advanced setting !!'); return;}
+        window.top.mainFrame.location.href="policy.cgi?viewpoint=lvs";
+    }
+
+    function changeInterface(action)
+    {
+        var rservers=document.forms[0].rservers;
+        goSubmit(action);
+    }
+
+    function batchAddOne2One()
+    {
+        var data=qbBatchAddOne2One(myform.vip);
+        if ( !data ) { return; }
+        myform.batcrtdata.value=data;
+        goSubmit('ADDONE2ONE');
+    }
+
+    
+    </script>
+
+EDITVSSCRIPT
+
+}
+#editVSScript
+
+#=============================================================================================
+sub editVIP
+{
+    my ( %action )=@_;
+    my $focusedVIP=$action{focusedvip};
+    my %isphash=maintainBasic( action=>'GETISPNAMEHASH' );
+
+    my %ispnichash=maintainBasic( action=>'GETISPNICHASH' );
+    foreach my $isp ( keys %ispnichash ) 
+    { 
+        my $interface=nicTranslate($ispnichash{$isp});
+        if ( ! $interface )  { $interface=$ispnichash{$isp}; }
+        $ispnichash{$isp}=$interface;
+    }
+
+    my %wansubnethash=maintainBasic( action=>'GETISPSUBNETHASH' );
+
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">$qblang[60] );
+    print qq (<a href="javascript:qbShowHelp('vsvip')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+    
+    my @viplist=sort ip_sort maintainVS(action=>'GETVIPLIST');
+    my @iidList=maintainBasic(action=>'GETNORMALISPIIDLIST');
+
+    my %validVip;
+    foreach my $ispid ( @iidList )
+    {
+        my @ispVip=maintainIPBank(from=>'isp'.$ispid.'public', action=>'read');
+        $validVip{$ispid}=\@ispVip;
+    }
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    
+    #=================================================
+    # Print Title first
+    # print qq (<div class="divframe" style="width:500">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    # print qq (<td width="15%">ISP ID</td>);
+    # print qq (<td width="15%">Name</td>);
+    # print qq (<td width="15%">Interface</td>);
+    # print qq (<td width="15%">Public IP</td>);
+    # print qq (<td width="15%">Edit</td>);
+    # print qq (<td>);
+    # print qq (<a href="javascript:delPublicIP()"><image src="image/del.gif" title="Delete Checked Public IP(s)" border="0"></a>);
+    # print qq (<input type="checkbox" name="allpip" title="select or deselect all public IP(s)" onClick="setAllCheckBoxValue('publiciptodel', this.checked)">);
+    # print qq (</td>);
+    # print qq (</tr></table>);
+    # print qq (</div>);
+    # Print Title first
+    print qq (<div class="divframe" style="width:500;height:200">);
+    print qq (<table id="vipList" border="0" width="100%" >);
+	print qq (<thead bgcolor="#332211" width="100%" border="0"><tr>);
+    print qq (<th width="15%">$qblang[56]</th>);
+    print qq (<td width="15%">$qblang[29]</th>);
+    print qq (<th width="15%">$qblang[28]</th>);
+    print qq (<th width="15%">$qblang[55]</th>);
+    print qq (<th width="15%">$qblang[25]</th>);
+    print qq (<th>);
+    print qq (<a href="javascript:delPublicIP()"><image src="image/del.gif" title="Delete Checked Public IP(s)" border="0"></a>);
+    print qq (<input type="checkbox" name="allpip" title="select or deselect all public IP(s)" onClick="setAllCheckBoxValue('publiciptodel', this.checked)">);
+    print qq (</th>);
+    print qq (</tr></thead>);
+    my $lineCount=0;
+    foreach my $vip ( @viplist ) 
+    {
+        my ($isp, $ip)=split(/J/, $vip);
+
+        my $validIspVip=$validVip{$isp};
+
+        my $dirty=!(grep/^$ip$/, @$validIspVip);
+
+        my $originalColor=$bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+
+        if ( $dirty ) { $originalColor=$bgcolor='#bb6600' }; 
+
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="15%">$isp</td>);
+        print qq (<td width="15%">$isphash{$isp}</td>);
+        print qq (<td width="15%">$ispnichash{$isp}</td>);
+        print qq (<td width="15%">$ip</td>);
+        print qq (<td width="15%"><a href="javascript:setFocusedIP('$vip','$isp','$ip');selectedColor(vipList.rows[$lineCount+1]);" ><image src="image/edit.gif" title="Set Focus to this IP" border="0"></a></td>);
+        print qq (<td><input type="checkbox" name="publiciptodel" value="$vip"></td>);
+        print qq (</tr>);
+        #if ( $vip eq $focusedVIP ) { print qq (<script>initSelect(vipList.rows[$lineCount]);</script>); }
+        $lineCount++;    
+    }
+    print qq (<input type="hidden" name="focusedvip" value="$focusedVIP">);
+    print qq (</table></div>);
+    print qq (</td></tr>);
+    
+    print qq (<tr><td align="right">);
+    print qq (<table width="100%" cellspacing="0">);
+    print qq (<tr>);
+
+    #========================================================================================================
+    # Prepare availabe IPs of each ISP for VS to choose 
+    my @good_iid_list=maintainBasic(action=>'GETGOODNORMALIIDLIST');
+    print qq (<td valign="top" align="left">);
+    print qq (<table cellspacing="3" bgcolor="#667788" width="100%">);
+    print qq (<tr><td class="subtitle">$qblang[61]:</td></tr>);
+	my $my_num = 0;
+    foreach my $ispid ( @good_iid_list ) 
+    { 
+        my $isp_subnet=$wansubnethash{$ispid};
+        my $isp_hint=$isp_subnet; $isp_hint=~s/\/\d*//g; 
+
+        print qq (<tr>);
+        print qq (<td class="body"  align="left">);
+        print qq (<input type="radio" name="isp_of_vip" value="$ispid"><span title="$isp_subnet">ISP $ispid [ $isphash{$ispid} ]</span></td>);
+        print qq (<td class="body" align="left">);
+        print qq (<input type="text" class="qbtext" id="set$ispid" name="set$ispid" onFocus="this.value='$isp_hint';change_isp_of_vip_radio('$ispid','$isp_hint');" style="WIDTH:200px">);
+        print qq (</td>);
+        print qq (<td class="body" align="center">[ $ispnichash{$ispid} ]</td>);
+        print qq (</tr>);
+		$my_num+=1;
+    }
+
+    if ( @good_iid_list == 0 ) { print qq (<tr><td class="body" align="center">No ISP Configured  </td></tr>); }
+    
+	print qq (<input type="hidden" name="isp_num" id="isp_num" value="$my_num">);
+    
+	print qq (</table>);
+    print qq (</td>);
+    
+    print qq (<td valign="bottom" align="right">);
+    print qq (<input type="button"  class="qb" name="Add"       value="$qblang[57]"     onClick="NEWappendVSIP()"   style="width:100%"><br>);
+    #print qq (<input type="button"  class="qb" name="Change"    value="$qblang[58]"  onClick="updateVSIP()"  style="width:100%"><br>);
+	print qq (<input type="button"  class="qb" name="Openwin"    value="$qblang[59]"  onClick="newwindow()"  style="width:100%"><br>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</td></tr>);
+}
+#editVIP
+
+
+#=============================================================================================
+sub editVIPScript
+{
+    print << "EDITVIPSCRIPT";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function setFocusedIP(vip,isp,ip)
+    {
+		var isp_num = document.getElementById('isp_num').value;
+		var set2 = document.getElementById('set'+isp);
+		if(myform.focusedvip.value==vip)
+		{
+			myform.focusedvip.value='';
+			myform.focusedvip_f.value='';
+			for(var i=1; i<= isp_num; i++)
+			{
+				document.getElementById('set'+i).value='';
+			}
+			var set = document.getElementById('set'+isp);
+			if(myform.isp_of_vip.length)
+			{
+				for(var i=0;i<myform.isp_of_vip.length;i++)
+				{
+					if(myform.isp_of_vip[i].value==isp)
+					{
+						myform.isp_of_vip[i].checked=false;
+					}
+				}
+			}
+			else
+			{
+				myform.isp_of_vip.checked=false;
+			}
+		}
+		else
+		{
+			myform.focusedvip.value=vip;
+			myform.focusedvip_f.value='1';
+			for(var i=1; i<= isp_num; i++)
+			{
+				document.getElementById('set'+i).value='';
+			}
+			if(myform.isp_of_vip.length)
+			{
+				for(var i=0;i<myform.isp_of_vip.length;i++)
+				{
+					if(myform.isp_of_vip[i].value==isp)
+					{
+						myform.isp_of_vip[i].checked=true;
+					}
+				}
+			}
+			else
+			{
+				myform.isp_of_vip.checked=true;
+			}
+			set2.value=ip;
+		}
+    }
+	
+	function change_format_radio(sel)
+    {
+		var f2_1 = document.getElementById('start_ip1');
+		var f2_2 = document.getElementById('ip_num');
+		var f3_1 = document.getElementById('start_ip');
+		var f3_2 = document.getElementById('end_ip');
+		if(sel=='f2')
+		{
+			f3_1.value='';
+			f3_2.value='';
+		}
+		if(sel=='f3')
+		{
+			f2_1.value='';
+			f2_2.value='';
+		}
+        if(myform.sel_format.length)
+        {
+            for(var i=0;i<myform.sel_format.length;i++)
+            {
+                if(myform.sel_format[i].value==sel)
+                {
+                    myform.sel_format[i].checked=true;
+                }
+            }
+        }
+        else
+        {
+            myform.sel_format.checked=true;
+        }
+    }
+    
+    function change_isp_of_vip_radio(isp,ip)
+    {
+		var set = document.getElementById('set'+isp);
+		if(myform.isp_of_vip.length)
+		{
+			for(var i=0;i<myform.isp_of_vip.length;i++)
+			{
+				if(myform.isp_of_vip[i].value==isp)
+				{
+					myform.isp_of_vip[i].checked=true;
+				}
+			}
+		}
+		else
+		{
+			myform.isp_of_vip.checked=true;
+		}
+	}
+
+	function change_name_value(isp,ip)
+	{
+		var set = document.getElementById(isp);
+		if(set.value == ip)
+		set.value='';
+		else
+		set.value=ip;
+	}
+	
+	//function newwindow(obj)
+	//{
+	//	var strFeatures='dialogWidth=600px;dialogHeight=300px;center=yes;'
+     //   strFeatures+='scrollbars=no;border=thin;help=no;status=no;'
+	//	window.open("multi_add.cgi",obj, strFeatures);
+		//window.showModalDialog("multi_add.cgi",obj, strFeatures);
+	//}
+	
+	function newwindow()
+	{
+		window.open ('multi_add.cgi', 'Multi_Add', 'height=250,width=650,toolbar=no,menubar=no,scrollbars=no,resizable=no,location=no,status=no');
+	}
+	
+    function delPublicIP()  
+    { 
+        if ( qbConfirm(2, 'Confirm Deletion ?') != 1 )  return;
+        goSubmit('DELETEPUBLICIP'); 
+    }
+	
+	function myalert()
+	{
+		var ctrlobj=document.getElementById('isp_of_vip');
+		var isp_of_vip='';
+		isp_of_vip=ctrlobj.options[ctrlobj.selectedIndex].value;
+		
+		var post_ip = document.getElementById('set'+isp_of_vip);
+		var f2_1 = document.getElementById('start_ip1').value;
+		var f2_2 = document.getElementById('ip_num').value;
+		var f3_1 = document.getElementById('start_ip').value;
+		var f3_2 = document.getElementById('end_ip').value;
+		var final_ip = '';
+		var sel='';
+		
+		m1 = window.opener.document.getElementById('isp_of_vip');
+		m2 = window.opener.document.getElementById('set'+isp_of_vip);
+		m3 = window.opener.document.getElementById('action');
+	
+		if(myform.sel_format.length)
+        {
+            for(var i=0;i<myform.sel_format.length;i++)
+            {
+                if(myform.sel_format[i].checked==true)
+                {
+					if(myform.sel_format[i].value=="f2")
+					{
+						if(document.getElementById('start_ip1').value&&document.getElementById('ip_num').value)
+						{
+							final_ip = f2_1+':'+f2_2;
+							sel='f2';
+						}
+					}
+					if(myform.sel_format[i].value=="f3")
+					{
+						if(document.getElementById('start_ip').value&&document.getElementById('end_ip').value)
+						{
+							final_ip = f3_1+'-'+f3_2;
+							sel='f3';
+						}
+					}
+                }
+            }
+        }
+		post_ip.value=final_ip;
+		//goSubmit('APPENDVSIP');
+		
+		rule = /\\d{1,3}\.\\d{1,3}\.\\d{1,3}\.\\d{1,3}/g;
+		rule2 = /\\D/g;
+		if(sel=='f2')
+		{
+			var ck = f2_1.split("\.");
+			for (var i = 0; i < 4; i++)
+			{
+				if (ck[i] > 255 || ck[i] < 0 || f2_2 > 255 || f2_2 < 0 || rule2.test(ck[i]) || rule2.test(f2_2))
+				{
+					alert("IP ERROR!!");
+					return;
+				}
+			}
+			if (parseInt(ck[3])+parseInt(f2_2) > 255 || parseInt(ck[3])+parseInt(f2_2) < 0)
+			{
+				alert("IP ERROR!!");
+				return;
+			}
+			else
+			{
+				for(i=0;i<document.all.isp_of_vip.length;i++)
+				{
+					if(window.opener.document.all.isp_of_vip[i].value==isp_of_vip)
+					{	  
+                         window.opener.document.all.isp_of_vip[i].checked=true;
+					}
+				}
+				m1.value = isp_of_vip;
+				m2.value = post_ip.value;
+				m3.value = 'APPENDVSIP';
+				window.opener.vsform.submit();
+				window.close();
+			}
+		}
+		if(sel=='f3')
+		{
+			var ck = f3_1.split("\.");
+			var ck2 = f3_2.split("\.");
+			for (var i = 0; i < 4; i++)
+			{
+				if (ck[i] > 255 || ck[i] < 0 || ck2[i] > 255 || ck2[i] < 0 || rule2.test(ck[i]) || rule2.test(ck2[i]))
+				{
+					alert("IP ERROR!!");
+					return;
+				}
+			}
+			for(i=0;i<document.all.isp_of_vip.length;i++)
+			{
+				if(window.opener.document.all.isp_of_vip[i].value==isp_of_vip)
+				{	  
+                    window.opener.document.all.isp_of_vip[i].checked=true;
+				}
+			}
+			m1.value = isp_of_vip;
+			m2.value = post_ip.value;
+			m3.value = 'APPENDVSIP';
+			window.opener.vsform.submit();
+			window.close();
+		}
+	}
+	
+	function NEWappendVSIP()
+    {
+		var focusedvip_f = document.getElementById('focusedvip_f')
+		if(!focusedvip_f.value)
+		{
+			var isp_of_vip='';
+			for ( var i=0; i<myform.elements.length; i++)
+			{
+				var ctrlobj=myform.elements[i];
+				if (ctrlobj.name=="isp_of_vip") 
+				{
+					if ( ctrlobj.checked ) { isp_of_vip=ctrlobj.value; }
+				}
+			} 
+			
+			rule = /\\D/g;
+			check_ip = document.getElementById('set'+isp_of_vip);
+			var ck = check_ip.value.split("\.");
+			for (var i = 0; i < 4; i++)
+			{
+				if (ck[i] > 255 || ck[i] < 0 || rule.test(ck[i]))
+				{
+					alert("IP ERROR!!");
+					return;
+				}
+			}
+
+			var vipSET=eval("document.forms[0].set"+isp_of_vip); 
+			if ( !vipSET || vipSET.selectedIndex < 0 ) 
+			{
+				alert("Select at least one Virtual IP first"); 
+				return; 
+			}
+    
+			goSubmit('APPENDVSIP');
+		}
+		if(focusedvip_f.value=='1')
+		{
+			var isp_of_vip='';
+			for ( var i=0; i<myform.elements.length; i++)
+			{
+				var ctrlobj=myform.elements[i];
+				if (ctrlobj.name=="isp_of_vip") 
+				{
+					if ( ctrlobj.checked ) { isp_of_vip=ctrlobj.value; }
+				}
+			}
+			
+			rule = /\\D/g;
+			check_ip = document.getElementById('set'+isp_of_vip);
+			var ck = check_ip.value.split("\.");
+			for (var i = 0; i < 4; i++)
+			{
+				if (ck[i] > 255 || ck[i] < 0 || rule.test(ck[i]))
+				{
+					alert("IP ERROR!!");
+					return;
+				}
+			}
+ 
+			var vipSET=eval("document.forms[0].set"+isp_of_vip); 
+			if ( !vipSET ) 
+			{
+				alert("Select One Virtual IP first"); 
+				return; 
+			}
+
+			goSubmit('UPDATEVSIP');
+		}
+    }
+	
+    function appendVSIP()
+    {
+        var isp_of_vip='';
+        for ( var i=0; i<myform.elements.length; i++)
+        {
+            var ctrlobj=myform.elements[i];
+            if (ctrlobj.name=="isp_of_vip") 
+            {
+                if ( ctrlobj.checked ) { isp_of_vip=ctrlobj.value; }
+            }
+        } 
+
+        var vipSET=eval("document.forms[0].set"+isp_of_vip); 
+        if ( !vipSET || vipSET.selectedIndex < 0 ) 
+        {
+            alert("Select at least one Virtual IP first"); 
+            return; 
+        }
+    
+        goSubmit('APPENDVSIP');
+    }
+
+
+    function  updateVSIP()
+    {
+        var isp_of_vip='';
+        for ( var i=0; i<myform.elements.length; i++)
+        {
+            var ctrlobj=myform.elements[i];
+            if (ctrlobj.name=="isp_of_vip") 
+            {
+                if ( ctrlobj.checked ) { isp_of_vip=ctrlobj.value; }
+            }
+        }
+ 
+        var vipSET=eval("document.forms[0].set"+isp_of_vip); 
+        if ( !vipSET ) 
+        {
+            alert("Select One Virtual IP first"); 
+            return; 
+        }
+
+        goSubmit('UPDATEVSIP');
+    }
+    
+    </script>
+
+EDITVIPSCRIPT
+
+}
+#editVIPScript
+
+#=======================================================================================================
+#maintainVS(%action)
+sub maintainVS 
+{
+    my ( %action )=@_;
+    if ( !$action{action} ) { return; }
+    
+    if ( !$action{viewpoint} ) { $action{viewpoint}='lvs'; }
+    
+    my $vs=XMLread($gPATH."lvs.xml");
+    my $temp=$vs->{virtual_server};
+    my %iphash;
+    my @temparray;
+	
+	my $serg=XMLread($gPATH."sergroup.xml");
+    my $serglist=$serg->{sergroup};
+	
+	my $ser=XMLread($gPATH."service.xml");
+    my $serlist=$ser->{service};
+
+    # for SMARTAPPENDSUBNET
+    my @services_ok_to_smart_append_subnet;
+    
+    #-- for edit VIP
+    #-- Tricky point:-split $action{focusedvip} (ex: 1/61.30.78.123) into 
+    #-- $targetisp:1 and $targetvip:61.30.78.123
+    my ( $targetisp, $targetvip )=split(/J/, $action{focusedvip});  
+
+    #===============================================================
+    if ( $action{action} eq "GETVIPLIST" ) 
+    { 
+        foreach my $item ( @$temp ) 
+        { 
+            if ( $item->{vip} eq 'system' ) { next; }
+            $iphash{"$item->{isp}".'J'."$item->{vip}"}=1; 
+        }
+ 
+        return sort keys %iphash;
+    }
+    #for pppoe pptp dhcp, return single ip address
+    elsif ( $action{action} eq "GETBINDIP" )
+    {
+        foreach my $item ( @$temp ) 
+        {
+            if ( $item->{isp} eq $action{isp} )
+            {
+                return $item->{vip};
+            }
+        }
+        return ''; 
+    }
+    elsif ( $action{action} eq "GETBINDIPS" )
+    {
+        my @ip;
+        foreach my $item ( @$temp ) 
+        {
+            if ( $item->{isp} eq $action{isp} )
+            {
+                push(@ip, $item->{isp}.'J'.$item->{vip});
+            }
+        }
+        return @ip; 
+    }
+    elsif ( $action{action}=~m/^GETBELONGISPNUM$/ ) 
+    {
+        my %isphash;
+
+        foreach my $lvs ( @$temp) 
+        {
+            if ( $lvs->{dirty} || $lvs->{service} eq 'system' ) { next; }
+
+            if ( $lvs->{service}.':s' ne $action{service} && $action{service}!~m/\*:/ ) { next; }
+            
+            my $rserverlist=$lvs->{real_server};
+
+            foreach my $rserver ( @$rserverlist ) 
+            {
+                if ( $rserver eq 'system' ) { next; }
+		
+                if ( $action{source} eq "localhost" &&  $rserver eq "localhost")        { $isphash{$lvs->{isp}}=1; last; }
+
+                if ( isSubnetIP($rserver, $action{source} ) == 1  )                     { $isphash{$lvs->{isp}}=1; last;}
+            } 
+        }
+    
+        return  sort num_sort keys %isphash;  
+    } 
+    elsif ( $action{action}=~m/^GETBELONGISPFORALLMAPPINGS$/ )
+    {
+        # create a hash stored in the forme of $belongisp{realserver/32:service}=\%isphash;
+        
+        my %belongisp;
+
+        foreach my $lvs ( @$temp) 
+        {
+            if ( $lvs->{dirty} || $lvs->{service} eq 'system' ) { next; }
+
+            my $rserverlist=$lvs->{real_server};
+            foreach my $rserver ( @$rserverlist ) 
+            {
+                if ( $rserver eq 'system' ) { next; }
+                if ($rserver =~ m/\d{1,3}\./)
+                { 
+                    if ( $rserver ne 'localhost' ) { $rserver.='/32'; }
+                }
+                else
+                {
+                    if ( $rserver ne 'localhost' ) { $rserver.='/128'; }
+                }
+                
+                # step 1:    
+                my $keyofthisservice=$rserver.':'.$lvs->{service};
+                if ( exists($belongisp{$keyofthisservice}) ) 
+                { 
+                    $belongisp{$keyofthisservice}->{$lvs->{isp}}=1; 
+                }
+                else
+                {
+                    $belongisp{$keyofthisservice}={ $lvs->{isp}=>1 }; 
+                }
+    
+                # step 2:
+                my $keyofstarservice=$rserver.':*';
+                if ( exists($belongisp{$keyofstarservice}) ) 
+                { 
+                    $belongisp{$keyofstarservice}->{$lvs->{isp}}=1; 
+                }
+                else
+                {
+                    $belongisp{$keyofstarservice}={ $lvs->{isp}=>1 }; 
+                }
+            }
+        }
+
+        return %belongisp;
+    }
+    elsif ( $action{action}=~m/^getHashOfAllRealServerAndService$/ )
+    {
+        my %realserver_service;
+       
+        foreach my $lvs ( @$temp ) 
+        {
+            my $service=( $lvs->{real_service} ) ?  ( $lvs->{real_service} ) : ( $lvs->{service} );
+            my $rservers=$lvs->{real_server};
+            foreach my $rserver ( @$rservers ) 
+            {
+                if ( $rserver eq 'system' ) { next; }
+                my $key=$rserver."/32:".$service;
+                $realserver_service{$key}=1;
+            }
+        }
+        
+        return %realserver_service;
+    }
+    elsif ( $action{action}=~m/^CHECKREALSERVERS$/ ) 
+    {
+        my $vserverarray=$vs->{virtual_server};
+        my @subnets_of_static_routes=maintainInterrt(action=>"GETSTATICROUTESUBNETS");
+        my @natdestarray=maintainOverview(action=>'GETDESTINATION');
+        my @iidlist=maintainBasic(action=>'GETIIDLIST');
+
+        #********************************************************
+        #@dep if any netwokr of  lvs is involved, mark it dirty
+        
+        my %viphash;
+
+        foreach my $vserver ( @$vserverarray ) 
+        {
+            my $rservers=$vserver->{real_server};
+            my $vsOBS=0;
+
+            # IF  the ISP this vs entry belongs to is gone, we must mark this as OBS
+            
+            if ( !exists($viphash{$vserver->{isp}}) )
+            {
+                my @ispVSIPs=maintainIPBank(from=>"isp".$vserver->{isp}."public", action=>'read');
+                $viphash{$vserver->{isp}}=\@ispVSIPs;
+            }
+            else
+            {
+                my $vipOfThisISP=$viphash{$vserver->{isp}};
+                if ( !grep(/^$vserver->{vip}$/, @$vipOfThisISP ) )
+                {
+                    $vserver->{dirty}=1;
+                    next;
+                }
+            }
+            
+
+            if ( grep(/^localhost$/, @$rservers) ) 
+            {   
+                $vserver->{dirty}=0;
+                next; 
+            }
+            
+
+            foreach my $rserver ( @$rservers ) 
+            {
+                if ( $rserver eq 'system' ) { next; }
+                if ( $rserver eq 'localhost' ) { next; }
+                
+                my $rsOBS=1; 
+
+                # Check all lvs Zones ==> equal to all Internal Zones from qb2.0 
+                foreach my $zone ( @subnets_of_static_routes, @natdestarray ) 
+                { 
+                    if ($rserver =~m/\d{1,3}\./)
+                    {
+                        if (   isSubnetIP($rserver, $zone) == 1  ) 
+                        {    
+                            $rsOBS=0; 
+                            last; 
+                        }
+                    }
+                    else
+                    {
+                        if (   isSubnetIP_v6($rserver, $zone) == 1  ) 
+                        {
+                            $rsOBS=0;
+                            last;
+                        }
+                    } 
+                }
+
+                if ( $rsOBS ) { $vsOBS=1; last; } 
+            }
+            
+            $vserver->{dirty}=$vsOBS;    
+        }
+    }     
+    elsif ( $action{action}=~m/^NEW$/ ) 
+    {
+        my $services=$action{service};
+        if ( !$action{vip} || @$services==0 ) { $gMSGPROMPT.=qq( Select Virtul IP ==> Service(s) first \\n); return; }
+        
+        #==============================================================
+        # create a hash to store all the existing 'vip':'service' pairs into
+        #==============================================================
+        %allvip2service;
+        foreach my $vserver ( @$temp ) 
+        { 
+            $allvip2service{$vserver->{vip}.':'.$vserver->{service}}=$vserver; 
+            $vserver->{isnew}=0;
+            $vserver->{warning}=0;
+            
+            LogUserAction( action=>'ADDSERVERMAPPING', vip=>$vserver->{vip}, service=>$vserver->{service} );
+        }
+
+        my @validVsIP=maintainIPBank(from=>"isp".$action{isp}."public", action=>"read");
+        
+        my $dirty=( grep(/^$action{vip}$/, @validVsIP) ) ? 0 : 1;
+        foreach my $service ( @$services )
+        {
+            my $existence_check_key=$action{vip}.':'.$service;
+            if ( exists($allvip2service{$existence_check_key}) && $action{enabled} ne '1') 
+            { 
+                $gMSGPROMPT.=qq( $action{vip} : $service already exists \\n);
+                $allvip2service{$existence_check_key}->{warning}=1;
+                next; 
+            }
+            else
+            {
+				#======================JianYu-20140102_Warning message for service group duplicate================
+				foreach my $servicel ( @$serlist )
+				{
+					if ( $servicel->{title} eq 'system'){next;}
+					if ( $servicel->{type} eq 'layer7' ) { next; }
+					if ( $servicel->{type} eq 'layer7group' ) { next; }
+					if($servicel->{title} eq $service)
+					{
+						my @sum_tcp;
+						my @sum_udp;
+						my @sum_protocol;
+						my @ori_tcp;
+						my @ori_udp;
+						my @ori_protocol;
+						my $portlist=$servicel->{port};
+						foreach my $port ( @$portlist )
+						{
+								if ( $port->{protocol} eq 'system' ) { next; }
+								if ( $port->{value} eq '' )     { push(@sum_protocol,$servicel->{title}.':'.$port->{protocol});}
+								if ( $port->{protocol} eq 'tcp' ) { push(@sum_tcp,$servicel->{title}.':'.$port->{value});}
+								if ( $port->{protocol} eq 'udp' ) { push(@sum_udp,$servicel->{title}.':'.$port->{value});}
+						}
+						foreach my $tt ( @$temp )
+						{
+							if($tt->{vip} eq 'system'){next;}
+							if($action{vip} eq $tt->{vip})
+							{
+								foreach my $aa ( @$serlist )
+								{
+									if($aa->{title} eq 'system'){next;}
+									if($aa->{title} eq $tt->{service})
+									{
+										my $portlistt=$aa->{port};
+										foreach my $portt ( @$portlistt )
+										{
+												if ( $portt->{protocol} eq 'system' ) { next; }
+												if ( $portt->{value} eq '' )     { push(@ori_protocol,$aa->{title}.':'.$portt->{protocol});}
+												if ( $portt->{protocol} eq 'tcp' ) { push(@ori_tcp,$aa->{title}.':'.$portt->{value});}
+												if ( $portt->{protocol} eq 'udp' ) { push(@ori_udp,$aa->{title}.':'.$portt->{value});}
+										}
+									}
+								}
+							}
+						}
+						t1:foreach my $sum_result ( @sum_tcp )
+						{
+							my @sum=split(/:/,$sum_result);
+							foreach my $ori_result ( @ori_tcp )
+							{
+								my @ori=split(/:/,$ori_result);
+								if($sum[1] eq $ori[1])
+								{
+									$gMSGPROMPT.=qq( $action{vip} : $sum[0] tcp $sum[1] already exists \\n);
+									#$gMSGPROMPT.=qq($sum[0]: $sum[1]  $ori[0]: $ori[1] duplicate!\\n);
+									next t1;
+								}
+							}
+						}
+						t2:foreach my $sum_result ( @sum_udp )
+						{
+							my @sum=split(/:/,$sum_result);
+							foreach my $ori_result ( @ori_udp )
+							{
+								my @ori=split(/:/,$ori_result);
+								if($sum[1] eq $ori[1])
+								{
+									$gMSGPROMPT.=qq( $action{vip} : $sum[0] udp $sum[1] already exists \\n);
+									#$gMSGPROMPT.=qq($sum[0]: $sum[1]  $ori[0]: $ori[1] duplicate!\\n);
+									next t2;
+								}
+							}
+						}
+						t3:foreach my $sum_result ( @sum_protocol )
+						{
+							my @sum=split(/:/,$sum_result);
+							foreach my $ori_result ( @ori_protocol )
+							{
+								my @ori=split(/:/,$ori_result);
+								if($sum[1] eq $ori[1])
+								{
+									$gMSGPROMPT.=qq( $action{vip} : $sum[0] protocol $sum[1] already exists \\n);
+									#$gMSGPROMPT.=qq($sum[0]: $sum[1]  $ori[0]: $ori[1] duplicate!\\n);
+									next t3;
+								}
+							}
+						}
+					}
+				}
+				#======================JianYu-20140102_Warning message for service group duplicate================
+				
+                my $rservers=$action{rservers};
+                my @real_servers=@$rservers;
+                if (@real_servers[0] eq ""){@real_servers[0]='None';}
+                if ($action{enabled} eq '1'){$dirty='0';}
+                my %newvserver=(
+                        isp=>$action{isp},
+                        vip=>$action{vip},
+                        service=>$service,
+                        dirty=>$dirty,
+                        isnew=>1,
+                        real_server=>\@real_servers,
+                        real_service=>$action{real_service},
+               		enabled=>$action{enabled} 
+                ); 
+                push ( @$temp, \%newvserver );
+                
+                # prepare services for SMARTAPPENDSUBNET
+                push ( @services_ok_to_smart_append_subnet, $service );
+            }
+        }
+
+        #===============================================================================================================
+        # if this is port-level server mapping, the reply services of real server will be changed to $action{real_service} 
+        if ( $action{real_service} )
+        {
+            @services_ok_to_smart_append_subnet=($action{real_service});
+        }
+        
+    } 
+    elsif ( $action{action}=~m/^ADDONE2ONE$/ )
+    {   
+        #=================================================================
+        # phase 1: parse $action{batcrtdata} into one2one mapping pairs
+        my %map=&parseOne2One($action{batcrtdata});
+
+        #=================================================================
+        # phase 2: add all this mapping into lvs.xml
+
+        my %existhash;
+        #=================================================================
+        # make a hash to store existing tupple for existence checking
+        foreach my $vserver (@$temp) 
+        {
+            if ($vserver->{service}=~m/^system$/) { next; } 
+            my $key=$vserver->{isp}.'j'.$vserver->{vip}.'j'.$vserver->{service};
+            LogUserAction( action=>'ADDONE2ONE', isp=>$vserver->{isp},vip=>$vserver->{vip}, service=>$vserver->{service} );
+            $existhash{$key}=1;
+        }
+
+        my @validVsIP=maintainIPBank(from=>"isp".$action{isp}."public", action=>"read");
+        
+        foreach my $source ( keys %map) 
+        {
+            my $existkey=$action{isp}.'j'.$source.'j'.'others';
+
+            if ( exists($existhash{$existkey}) ) 
+            { 
+                $gMSGPROMPT.=qq( Mapping of  $source:ANY already exists \\n);
+                next; 
+            }
+
+            if ( !grep(/^$source$/,@validVsIP) ) { next; }
+            
+
+            my %newvserver=(
+                    isp=>$action{isp},
+                    vip=>$source,
+                    service=>'others',
+                    dirty=>0,
+                    real_server=>['system', $map{$source}]
+            );
+
+            push( @$temp, \%newvserver);
+        }
+
+        #=================================================================
+        # phase 3: add RRG route for all real servers into iniroute.xml
+        
+        
+    }
+    elsif ( $action{action}=~m/^DELSERVICE$/ )
+    {
+        foreach my $vs (@$temp) 
+        { 
+            if ( $vs->{service} eq $action{service} ) { next;} 
+            push( @temparray, $vs ); 
+        }
+        
+        $vs->{virtual_server}=\@temparray;
+        
+
+    }
+    elsif ( $action{action}=~m/^DELETEVS$/ ) 
+    {
+        my $vstodel=$action{vses};
+        if( @$vstodel <=0 ) 
+        { 
+            $gMSGPROMPT.=qq (Please select virtual server(s) first\\n);
+            return; 
+        }    
+   
+        foreach my $vs (@$temp) 
+        { 
+            my $matchkey=$vs->{isp}.':'.$vs->{vip}.':'.$vs->{service};
+            if ( grep(/^$matchkey$/, @$vstodel) ) {LogUserAction( action=>'DELSERVERMAPPING', isp=>$vs->{isp},vip=>$vs->{vip}, service=>$vs->{service} ); next;} 
+            push( @temparray, $vs ); 
+        }
+        
+        $vs->{virtual_server}=\@temparray;
+    }
+    #............................................................
+    #
+    # 2013-0102
+    # for Health check work
+    #
+    #    #maintainProute( action=>'ADDQBROUTE', type=>'PUBLICIP', isp=>$action{isp_of_vip}, ip=>\@viparray);
+    #
+    #............................................................
+    elsif ( $action{action}=~m/^APPENDVSIP_1$/ ) 
+    {
+
+	if ($aa =~m/\d{1,3}\./){ @viptoappend=&str2IpList($action{viptoappend});}
+	else {@viptoappend=$action{viptoappend};}
+	
+        my $subnet=maintainBasic(action=>'GETISPSUBNET', iid=>$action{isp_of_vip} );
+        
+        my $gateway=maintainBasic(action=>'GETISPGATEWAY', iid=>$action{isp_of_vip} );
+    
+        my %dmzip_of_this_isp=maintainDMZreg(isp=>$action{isp_of_vip}, action=>'GETDMZIPHASH');
+    
+        my %viptoappendtoipbank;
+        my %viptoappendtoipaddr;
+
+        foreach my $vip_to_append ( @viptoappend )
+        {
+            if ( $subnet=~m/$vip_to_append\// )
+            {
+                $gMSGPROMPT.=qq (Warning :$vip_to_append is network id !! \\n); 
+            }
+
+            if ( $vip_to_append eq get_bcast_ip($subnet) )
+            {
+                $gMSGPROMPT.=qq (Warning :$vip_to_append is broadcast ip !! \\n); 
+            }
+
+            if ( $vip_to_append eq $gateway )
+            {
+                $gMSGPROMPT.=qq (Warning :IP $vip_to_append is used by gateway  !! \\n); 
+                next;
+            }
+	    if ( $subnet =~ m/\d{1,3}\./)
+	    {
+                if ( isSubnetIP($vip_to_append, $subnet) <= 0 )
+                {
+                    $gMSGPROMPT.=qq (Warning :IP $vip_to_append is not in $subnet!! \\n); 
+            	}
+            }
+            else
+            {
+            	if ( isSubnetIP_v6($vip_to_append, $subnet) <= 0 )
+            	{
+            	    $gMSGPROMPT.=qq (Warning :IP $vip_to_append is not in $subnet!! \\n);
+            	}
+            }
+            
+
+            #---------------------------------------------------------------------
+            #check if the Public IP does exist. 
+            my $publicIPexist=0; 
+            my $target;
+            
+            foreach my $item (@$temp) { if ( $item->{vip} eq $vip_to_append ) { $publicIPexist=1; $target=$item; last; } }
+            
+            if ( $publicIPexist && $target->{dirty}==0 ) 
+            { 
+                $gMSGPROMPT.=qq (Warning :Public IP $vip_to_append already exists\\n); 
+                next; 
+            }
+            elsif ( $publicIPexist && $target->{dirty}==1 ) { $target->{dirty}=0; }
+            elsif ( !$publicIPexist )
+            {
+                #---- append new Virtual Server and non-existing service items into  $vs->{virtual_server}   
+                my %tempservice=('vip' => $vip_to_append, 'isp' => $action{isp_of_vip}, 'service' => 'system'); 
+                push( @$temp, \%tempservice );
+        
+                LogUserAction( action=>'ADDVSIP', isp=>$action{isp_of_vip}, vip=>$vip_to_append );
+            }
+            
+            $viptoappendtoipbank{$vip_to_append}=1; 
+
+            if ( !exists($dmzip_of_this_isp{$vip_to_append}) ) { $viptoappendtoipaddr{$vip_to_append}=1; }
+        }
+
+        #======= move an IP form isp? class to isp?lvs class in ipbank.xml
+        # @dep
+        my @viparray=keys %viptoappendtoipbank;
+        maintainIPBank(to=>'isp'.$action{isp_of_vip}.'public', action=>'append', ipset=>\@viparray );
+        #20120105 Brian To remove ADDQBROUTE or it will cause healthy check can not work properly.
+        #maintainProute( action=>'ADDQBROUTE', type=>'PUBLICIP', isp=>$action{isp_of_vip}, ip=>\@viparray);
+        #maintainProute( action=>'ADDQBROUTE', type=>'PUBLICIP', isp=>$action{isp_of_vip}, ip=>'100.111.222.121');
+            
+        #=======  以下部分與 ipneigh (arpproxy) 或 ipaddress 有相依性
+        # @dep
+        my $nic=maintainBasic( action=>"GETISPNIC", iid=>$action{isp_of_vip} );
+        
+        # add these ipaddresses entry into ipaddr.xml
+        maintainIPaddress( action=>"BATADD", nic=>$nic, isp=>$action{isp_of_vip}, ip=>\%viptoappendtoipaddr );         
+         
+    }
+    elsif ( $action{action}=~m/^APPENDVSIP$/ ) 
+    {
+	#Gary add if the IP are using 20130219
+	my $ipneigh=XMLread($gPATH."ipneigh.xml");
+        my $ipneigharray=$ipneigh->{ipneigh};
+	
+	#if ($aa =~m/\d{1,3}\./){ @viptoappend=&str2IpList($action{viptoappend});}
+	#else {@viptoappend=$action{viptoappend};}
+	@viptoappend=&str2IpList($action{viptoappend});
+        my $subnet=maintainBasic(action=>'GETISPSUBNET', iid=>$action{isp_of_vip} );
+        
+        my $gateway=maintainBasic(action=>'GETISPGATEWAY', iid=>$action{isp_of_vip} );
+    
+        my %dmzip_of_this_isp=maintainDMZreg(isp=>$action{isp_of_vip}, action=>'GETDMZIPHASH');
+    
+        my %viptoappendtoipbank;
+        my %viptoappendtoipaddr;
+
+        foreach my $vip_to_append ( @viptoappend )
+        {
+	    foreach my $neigh ( @$ipneigharray )
+            {
+                if ( $neigh->{ip} eq $vip_to_append )
+                {
+                $gMSGPROMPT.=qq (The IP :$vip_to_append are using !! \\n);
+                return;
+                }
+            }
+            if ( $subnet=~m/$vip_to_append\// )
+            {
+                $gMSGPROMPT.=qq (Warning :$vip_to_append is network id !! \\n); 
+            }
+
+            if ( $vip_to_append eq get_bcast_ip($subnet) )
+            {
+                $gMSGPROMPT.=qq (Warning :$vip_to_append is broadcast ip !! \\n); 
+            }
+
+            if ( $vip_to_append eq $gateway )
+            {
+                $gMSGPROMPT.=qq (Warning :IP $vip_to_append is used by gateway  !! \\n); 
+                next;
+            }
+	    if ( $subnet =~ m/\d{1,3}\./)
+	    {
+                if ( isSubnetIP($vip_to_append, $subnet) <= 0 )
+                {
+                    $gMSGPROMPT.=qq (Warning :IP $vip_to_append is not in $subnet!! \\n); 
+            	}
+            }
+            else
+            {
+            	if ( isSubnetIP_v6($vip_to_append, $subnet) <= 0 )
+            	{
+            	    $gMSGPROMPT.=qq (Warning :IP $vip_to_append is not in $subnet!! \\n);
+            	}
+            }
+            
+
+            #---------------------------------------------------------------------
+            #check if the Public IP does exist. 
+            my $publicIPexist=0; 
+            my $target;
+            
+            foreach my $item (@$temp) { if ( $item->{vip} eq $vip_to_append ) { $publicIPexist=1; $target=$item; last; } }
+            
+            if ( $publicIPexist && $target->{dirty}==0 ) 
+            { 
+                $gMSGPROMPT.=qq (Warning :Public IP $vip_to_append already exists\\n); 
+                next; 
+            }
+            elsif ( $publicIPexist && $target->{dirty}==1 ) { $target->{dirty}=0; }
+            elsif ( !$publicIPexist )
+            {
+                #---- append new Virtual Server and non-existing service items into  $vs->{virtual_server}   
+                my %tempservice=('vip' => $vip_to_append, 'isp' => $action{isp_of_vip}, 'service' => 'system'); 
+                push( @$temp, \%tempservice );
+        
+                LogUserAction( action=>'ADDVSIP', isp=>$action{isp_of_vip}, vip=>$vip_to_append );
+            }
+            
+            $viptoappendtoipbank{$vip_to_append}=1; 
+
+            if ( !exists($dmzip_of_this_isp{$vip_to_append}) ) { $viptoappendtoipaddr{$vip_to_append}=1; }
+        }
+
+        #======= move an IP form isp? class to isp?lvs class in ipbank.xml
+        # @dep
+        my @viparray=keys %viptoappendtoipbank;
+        maintainIPBank(to=>'isp'.$action{isp_of_vip}.'public', action=>'append', ipset=>\@viparray );
+        #20120105 Brian To remove ADDQBROUTE or it will cause healthy check can not work properly.
+        maintainProute( action=>'ADDQBROUTE', type=>'PUBLICIP', isp=>$action{isp_of_vip}, ip=>\@viparray);
+        #maintainProute( action=>'ADDQBROUTE', type=>'PUBLICIP', isp=>$action{isp_of_vip}, ip=>'100.111.222.121');
+            
+        #=======  以下部分與 ipneigh (arpproxy) 或 ipaddress 有相依性
+        # @dep
+        my $nic=maintainBasic( action=>"GETISPNIC", iid=>$action{isp_of_vip} );
+        
+        # add these ipaddresses entry into ipaddr.xml
+        maintainIPaddress( action=>"BATADD", nic=>$nic, isp=>$action{isp_of_vip}, ip=>\%viptoappendtoipaddr );         
+         
+    }
+    elsif ( $action{action}=~m/^UPDATEVSIP$/ ) 
+    {
+        my $dirty=0;
+        
+        if ( !$targetvip ) { $gMSGPROMPT.=qq (Select a Public IP\\n); return; }
+
+        my $vip_to_append=$action{viptoappend};
+
+        my $subnet=maintainBasic(action=>'GETISPSUBNET', iid=>$action{isp_of_vip} );
+        
+        my $gateway=maintainBasic(action=>'GETISPGATEWAY', iid=>$action{isp_of_vip} );
+    
+        my %dmzip_of_this_isp=maintainDMZreg(isp=>$action{isp_of_vip}, action=>'GETDMZIPHASH');
+        
+        if ( $subnet=~m/$vip_to_append\// )
+        {
+            $gMSGPROMPT.=qq (Warning :$vip_to_append is network id !! \\n); 
+            #return;
+        }
+
+        if ( $vip_to_append eq get_bcast_ip($subnet) )
+        {
+            $gMSGPROMPT.=qq (Warning :$vip_to_append is broadcast ip !! \\n); 
+            #return;
+        }
+
+        if ( $vip_to_append eq $gateway )
+        {
+            $gMSGPROMPT.=qq (Warning :IP $vip_to_append is used by gateway  !! \\n); 
+            return;
+        }
+	if ($subnet =~ m/\d{1,3}\./)
+	{
+            if ( isSubnetIP($vip_to_append, $subnet) <= 0 )
+            {
+                $gMSGPROMPT.=qq (Warning :IP $vip_to_append is not in $subnet!! \\n); 
+            }
+        }
+        else
+        {
+            if ( isSubnetIP_v6($vip_to_append, $subnet) <= 0 )
+            {
+                $gMSGPROMPT.=qq (Warning :IP $vip_to_append is not in $subnet!! \\n);
+            }
+        }
+
+        foreach my $item (@$temp) { if ( $item->{vip} eq $targetvip ) { $dirty=$item->{dirty}; last; } }
+
+        foreach my $item (@$temp) 
+        {
+            if ( $item->{vip} ne $targetvip ) { next; } 
+            $item->{isp}=$action{isp_of_vip};
+            $item->{vip}=$vip_to_append; 
+            $item->{dirty}="0";
+        }
+
+        #@dep:
+        #maintain ip transaction in ipbank.xml
+        maintainIPBank(from=>'isp'.$targetisp.'public', action=>'remove', ipset=>["$targetvip"]);
+        maintainIPBank(to=>'isp'.$action{isp_of_vip}.'public', action=>'append', ipset=>["$vip_to_append"]);
+        
+        #@dep:
+        # delete this ipaddress entry in ipaddr.xml
+        my @systemip=maintainIPBank(from=>'isp'.$targetisp.'system', action=>'read');
+        my $isSystemIP=( grep(/^$targetvip$/, @systemip) ) ?  1 : 0;
+        my $nic=maintainBasic( action=>"GETISPNIC", iid=>$targetisp );
+        if ( !$isSystemIP || exists($dmzip_of_this_isp{$targetvip}) ) { maintainIPaddress( action=>"DEL", ip=>$targetvip, nic=>$nic, isp=>$targetisp ); }
+        
+        #@dep
+        # if vip_to_append is not a dmz ip, we should add this ip to ipaddr.xml
+        my $nic=maintainBasic( action=>"GETISPNIC", iid=>$action{isp_of_vip} );
+        if ( !exists($dmzip_of_this_isp{$vip_to_append}) ) { maintainIPaddress( action=>"ADD", ip=>$vip_to_append, nic=>$nic, isp=>$action{isp_of_vip} ); }
+
+        $gMSGPROMPT.=qq (Change Server Cluster entries of $targetvip to $vip_to_append ...OK\\n\\n);
+        
+        LogUserAction( action=>'CHANGEVSIP', isp=>$action{isp_of_vip}, vip=>$vip_to_append );
+    }
+    elsif ( $action{action}=~m/^DELETEPUBLICIP$/ ) 
+    {
+        my $publiciptodel=$action{publiciptodel};
+        my %iptodelfromipaddress;
+        my %publiciptodelfromipbank;
+        my %ispSystemIPHash;
+        #====================================================================================
+        # build isp system ip hash for quick checking
+        my @iidlist=maintainBasic(action=>'GETIIDLIST');
+        foreach $iid ( @iidlist ) 
+        {   
+            my @systemip=maintainIPBank(from=>'isp'.$iid.'system', action=>'read');
+            $ispSystemIPHash{$iid}=\@systemip;
+        }
+
+        foreach my $deadip ( @$publiciptodel )
+        {
+            my ( $targetisp, $targetvip )=split(/J/, $deadip);  
+
+            my $dirty=0;
+            foreach my $item (@$temp) 
+            {
+                if ( $item->{vip} ne $targetvip ) { next;}
+                if ( $item->{dirty} ) { $dirty=1; }
+                last; 
+            }
+  
+            # @dep
+            # we have to del this targetvip from  public ip group of corresponding targetisp
+            if ( !exists($publiciptodelfromipbank{$targetisp}) )
+            {
+                $publiciptodelfromipbank{$targetisp}=[$targetvip];
+            }
+            else
+            {
+                my $iparray=$publiciptodelfromipbank{$targetisp};
+                push( @$iparray, $targetvip );
+            }
+ 
+            # @dep
+            # judge if we have to del this ipaddress entry from ipaddr.xml 
+            my $systemip=$ispSystemIPHash{$targetisp};
+            my $isSystemIP=( grep(/^$targetvip$/, @$systemip) ) ? 1:0;
+            if ( !$isSystemIP ) { $iptodelfromipaddress{$targetvip}=1; }
+            maintainProute( action=>'DELQBROUTEIP' ,iip=>$targetvip , isp=>$targetisp);
+            LogUserAction( action=>'DELVSIP', isp=>$targetisp, vip=>$targetvip );
+        }
+
+        #================================================================================
+        # @dep:
+        # maintain ip transaction in ipbank.xml
+        foreach my $iid ( keys %publiciptodelfromipbank )
+        {
+            maintainIPBank(from=>'isp'.$iid.'public', action=>'remove', ipset=>$publiciptodelfromipbank{$iid});
+        }
+        
+        #================================================================================
+        # @dep
+        # Remove deleted VIP ( and not SystemIP ) form ipaddr.xml
+        maintainIPaddress( action=>"BATDEL", ip=>\%iptodelfromipaddress);
+
+        #============================================================== 
+        # @dep        
+        # Remove Server Cluster set of which the public IP is deleted   
+        my @vsAfterDeletingPublicIP;
+        foreach my $item (@$temp) 
+        { 
+            if ( grep(/$item->{vip}$/, @$publiciptodel) )  { next; }
+
+            push(@vsAfterDeletingPublicIP, $item);
+            
+        }
+        $vs->{virtual_server}=\@vsAfterDeletingPublicIP;
+        #============================================================== 
+	#$gMSGPROMPT .= qq($isSystemIP,$ispSystemIPHash{$iid},$systemip);
+#        LogUserAction( action=>'DELVSIP', isp=>$action{isp_of_vip}, vip=>$vip_to_append );
+    }    
+    elsif ( $action{action}=~m/^SUBNETCHANGED$/ ) 
+    {
+        my ( @vipToMarkDirty, @vipToMarkClean);
+        my ( %dirtyVipHash, %cleanVipHash);
+        
+        foreach my $item (@$temp) 
+        {
+            if ( $item->{isp} ne $action{isp} ) { next; } 
+
+            if ( $item->{dirty} )
+            { 
+                if ( isSubnetUsableIP($item->{vip}, $action{newsubnet}) != 1 ) { next; } 
+                $cleanVipHash{$item->{vip}}=1;
+                $item->{dirty}=0;
+            }
+            elsif ( !($item->{dirty}) )
+            {
+                if ( isSubnetUsableIP($item->{vip}, $action{newsubnet}) == 1 ) { next; } 
+                $dirtyVipHash{$item->{vip}}=1;
+                $item->{dirty}=1;
+            }
+        }
+
+        @vipToMarkDirty=keys %dirtyVipHash;
+        @vipToMarkClean=keys %cleanVipHash;
+
+        #@dep:
+        #maintain ip transaction in ipbank.xml
+        maintainIPBank(from=>'isp'.$action{isp}.'public', action=>'remove', ipset=>\@vipToMarkDirty);
+        maintainIPBank(to=>'isp'.$action{isp}.'public', action=>'append', ipset=>\@vipToMarkClean);
+        
+        #@dep:
+        #update ipaddr.xml for VS IPs
+        my $nic=maintainBasic( action=>"GETISPNIC", iid=>$action{isp} );
+        maintainIPaddress( action=>"BATADD",  nic=>$nic, isp=>$action{isp}, ip=>\%cleanVipHash);
+        #maintainIPaddress( action=>"BATDEL", ip=>\%dirtyVipHash); 
+    }
+    elsif ( $action{action}=~m/^MARKVSERVERS$/ ) 
+    {
+        if( !$action{isp} ) 
+        { 
+            $gMSGPROMPT.=qq (ERROR: ISP ID NOT given\\n);
+            return; 
+        }
+    
+        foreach my $item (@$temp) { if ( $item->{isp} eq $action{isp} ) { $item->{dirty}=1;} }
+    }  
+    elsif ( $action{action} eq "REPORT" )
+    {
+        print qq (<fieldset><legend><font class="subtitle">Server Cluster Configuration</font></legend>);
+        print qq (<div class="reportdiv">);
+        foreach my $vs ( @$temp )
+        {
+            if ( $vs->{vip} eq 'system' || $vs->{service} eq 'system') { next; }
+            foreach my $key ( keys %$vs ) { if ( $key=~m/real_server/ ) { next; } print qq ( [ $key:$vs->{$key} ] );  } 
+            print qq (<br>);
+
+            my $allrserver=$vs->{real_server};
+            foreach my $rserver ( @$allrserver ) { if ( $rserver eq "system") { next; } print qq ( [ $rserver ] ); }
+            print qq (<br>);
+            
+            print qq (<hr size="1">);
+        }
+        print qq (</div>);
+        print qq (</fieldset>);
+    }
+  
+    #--------updating lvs.xml------------------------ 
+    XMLwrite($vs, $gPATH."lvs.xml");
+  
+    #@dep
+    #if ( $action{action}=~m/^APPENDVSIP$|^UPDATEVSIP$/ )    {   maintainProute( action=>'UPDATEQBROUTE' ); }
+    #if ( $action{action}=~m/^APPENDVSIP$|^UPDATEVSIP$/ )    {   maintainProute( action=>'UPDATEQBROUTE' ); }
+    
+    #@dep
+#=cut
+    if ( $action{action}=~m/^NEW$/ )               
+    {   
+	maintainVS(action=>'CHECKREALSERVERS'); 
+
+        maintainNAT(action=>'SMARTAPPENDSUBNET', viewpoint=>"lvs", rservers=>$action{rservers}, service=>\@services_ok_to_smart_append_subnet );
+        
+        maintainIniroute(action=>'SMARTADD', viewpoint=>'lvs', rservers=>$action{rservers}, service=>\@services_ok_to_smart_append_subnet);
+    }
+#=cut
+
+    #@dep
+    if ( $action{action}=~m/^DELETEVS$|^DELSERVICE$/ )               
+    {
+        maintainNAT(action=>'autoDeleteSubnet', viewpoint=>"lvs");
+    }
+    
+    
+    #@dep 
+    #update firewall mark values of lvs zone
+    maintainFwmark(type=>'lvslocalhost');
+}
+#maintainVS
+
+#================================================================================================
+sub vs_sort_by_isp 
+{
+    my @afields=split(/\.|\//,$a->{vip});
+    my @bfields=split(/\.|\//,$b->{vip});
+    foreach my $index ( 0..3 )
+    {
+         $avalue=$afields[$index]; 
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+
+    if ( $a->{isp} == $b->{isp} )
+    {
+        if ( $avalue == $bvalue )
+        {
+            return $a->{service} cmp  $b->{service};
+        }
+        else
+        {
+            $avalue <=> $bvalue;
+        }
+    }
+    else
+    {
+        $a->{isp} <=> $b->{isp};
+    }
+}
+#sub vs_sort_by_isp
+
+#================================================================================================
+sub vs_sort_by_vip 
+{
+    my @afields=split(/\.|\//,$a->{vip});
+    my @bfields=split(/\.|\//,$b->{vip});
+    foreach my $index ( 0..3 )
+    {
+         $avalue=$afields[$index]; 
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+
+    if ( $avalue == $bvalue )
+    {
+        if ( $a->{service} eq $b->{service} )
+        {
+            return $a->{isp} <=> $b->{isp};
+        }
+        else
+        {
+            return $a->{service} cmp  $b->{service};
+        }
+    }
+    else
+    {
+        $avalue <=> $bvalue;
+    }
+}
+#vs_sort_by_vip
+
+#================================================================================================
+sub vs_sort_by_service 
+{
+    if ( $a->{service} ne $b->{service} )  
+    {
+        return $a->{service} cmp $b->{service};
+    }
+    else
+    {
+        @afields=split(/\.|\//,$a->{vip});
+        @bfields=split(/\.|\//,$b->{vip});
+        foreach my $index ( 0..3 )
+        {
+            $avalue=int($afields[$index]); 
+            $bvalue=int($bfields[$index]);
+            if ( $avalue ne $bvalue ) { last; }
+        }
+
+        if ( $avalue == $bvalue )
+        {
+            $a->{isp} <=> $b->{isp};
+        }
+        else
+        {
+            return $avalue <=> $bvalue;
+        }
+    }
+}
+#vs_sort_by_service
+
+#
+1

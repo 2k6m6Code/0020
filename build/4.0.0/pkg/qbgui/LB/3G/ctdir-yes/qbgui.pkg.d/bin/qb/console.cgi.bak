@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+require ("qbmod.cgi");
+
+#認證是否是經過正常且標準的程序登入進來的
+authenticate( action=>'RANDOMCHECK' );
+print "Content-type:text/html\n\n";
+
+use CGI;
+use Data::Dumper;
+
+#---------------- read-in form information ------------------------------
+my $form=new CGI;
+my %action;
+
+###############################################
+#GENERAL
+$action{action}=$form->param('action');
+
+$action{express}=$form->param('express');
+$action{aggregate}=$form->param('aggregate');
+
+$action{measure}=$form->param('measure');
+$action{sendarp}=$form->param('sendarp');
+$action{igwpermnt}=$form->param('igwpermnt');
+$action{stealth}=0;
+$action{numofuser}=$form->param('maximumuser');
+$action{resolve}=$form->param('resolve');
+$action{dnsserver}=$form->param('dnsserver') ? (1) : (0);
+$action{dnsserverip}=$form->param('dnsserverip');
+$action{relay}=$form->param('relay');
+$action{dnsproxyport}=$form->param('dnsproxyport');
+$action{primary}=$form->param('primary');
+$action{slave}=$form->param('slave');
+$action{httpsport}=$form->param('httpsport'); #20080925 Brian support user define https port
+$action{ntptimeserver}=$form->param('ntptimeserver'); #20081204 Brian for NTP Time Server
+$action{hostname}=$form->param('hostname'); #20080925 Brian support user define hostname
+$action{rmlogserver}=$form->param('rmlogserver');
+$action{rmusername}=$form->param('rmusername');
+$action{rmpassword}=$form->param('rmpassword');
+
+#20081226 Brian Export config file to ftp server
+$action{enablecfgftpserver}=($form->param('enablecfgftpserver') && $form->param('cfgftpserverip')) ? (1) : (0);
+$action{cfgftpserverip}=$form->param('cfgftpserverip');
+$action{cfgftpusername}=$form->param('cfgftpusername');
+$action{cfgftppassword}=$form->param('cfgftppassword');
+$action{cfgftpdirectory}=$form->param('cfgftpdirectory');
+$action{devicename}=$form->param('devicename');
+$action{formattype}=$form->param('formattype');
+$action{analydev}=$form->param('analydev');
+$action{analytpe}=$form->param('analytpe');
+$action{registername}=$form->param('registername');
+$action{registersn}=$form->param('registersn');
+$action{registermail}=$form->param('registermail');
+$action{tcp_opt}=$form->param('tcp_opt');
+
+#20090706 Brian Modify mss to 1428
+$action{mssmodify}=$form->param('mssmodify'); if ( !$action{mssmodify} ) { $action{mssmodify}=0; }
+$action{mssmodify_value}=$form->param('mssmodify_value'); if ( !$action{mssmodify_value} && $action{mssmodify}==1 ) { $action{mssmodify_value}=1428; }
+
+##############################################
+# Set TIMEZONE
+$action{timezone}=$form->param('timezone');
+
+##############################################
+# Set DATE
+$action{dateinfo}=$form->param('dateinfo');
+
+my @maillist;
+for my $mailcount (1..5)
+{
+    my $mail=$form->param('mail'.$mailcount);
+    if ( !$mail ) { $mail='system'; }
+    my %mailhash=(value=>$mail);
+    push( @maillist, \%mailhash );
+}
+
+$action{mail}=\@maillist;
+
+#=========================================================================================
+print qq(<html><head><link rel="stylesheet" href="gui.css" type="text/css"></head>);
+print qq(<body bgcolor="#336699" text="#ffffff" link="#000040" vlink="#400040">);
+#假如認證失敗，就直接結束
+if ( !$gLOGINRESULT ) { general_script(); exit;}
+
+maintainOverview( %action );
+#------- start to draw every form object to interact with users ------------------------------------
+print qq (<div align="center">);
+print qq (<form name="consoleform" method="post" action="console.cgi">);
+consoleScript();
+showConsole( %action ); 
+print qq (<input type="hidden" name="action" value="">);
+print qq (</form>);
+print qq (</div>);
+
+general_script();
+
+print qq(</body></html>);
+
+
+
+
+

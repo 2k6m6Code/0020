@@ -1,0 +1,179 @@
+#!/bin/bash
+#set -x
+QBREG_FILE=/opt/qb/registry
+service postgresql stop
+service syslog stop
+service crond stop
+service httpd stop
+umount -f /mnt/tclog
+umount -f /mnt/log
+#Device=$1
+#Fstype=$2
+#dev=`df|grep tclog|awk '{print $1}'`
+#echo "Formating Device:$dev"
+MODELNAME=$(awk  "/HARDWARE/ { print \$2 }" $QBREG_FILE)
+#    case $Fstype in
+#        ext2 )  /sbin/mke2fs -F /dev/$Device
+#                mount /dev/$Device /mnt/tclog
+#                ;;  #
+#        ext3 )  /sbin/mkfs.ext3 -F /dev/$Device
+#                mount /dev/$Device /mnt/tclog
+#                ;;  # 
+#        vfat )  /sbin/mkdosfs -F 32 /dev/$Device
+#                mount /dev/$Device /mnt/tclog
+#                ;;  # 
+#        * )  echo "Something wrong!!!"
+#    esac
+#mount_result=$?
+#if [ "$mount_result" != "0" ];then
+#echo $(date) "Fail to mount the hard disk...">>/mnt/log/bootlog
+#dmesg >/mnt/log/dmesg.log
+#exit 1 
+#fi
+
+#=======================New Format========================
+INFO=`fdisk -l|grep Disk|awk '{print $2 $3 $4}'`
+PARTITION=`fdisk -l|grep heads|awk '{print $1}'`
+y=0
+z=0
+if [ ! -f /tmp/command.txt ]; then
+    #if [ $PARTITION -gt 1 ]; then
+    #    echo "d" > /tmp/command.txt
+    #    echo "n" >> /tmp/command.txt
+    #    echo "p" >> /tmp/command.txt
+    #    echo "1" >> /tmp/command.txt
+    #    echo "" >> /tmp/command.txt
+    #    echo "100" >> /tmp/command.txt
+    #    echo "n" >> /tmp/command.txt
+    #    echo "p" >> /tmp/command.txt
+    #    echo "2" >> /tmp/command.txt
+    #    echo "" >> /tmp/command.txt
+    #    echo "" >> /tmp/command.txt
+    #    echo "w" >> /tmp/command.txt
+    #fi
+    #if [ $PARTITION -eq 1 ]; then
+        echo "d" > /tmp/command.txt
+        echo "n" >> /tmp/command.txt
+        echo "p" >> /tmp/command.txt
+        echo "1" >> /tmp/command.txt
+        echo "" >> /tmp/command.txt
+        echo "" >> /tmp/command.txt
+        echo "w" >> /tmp/command.txt
+    #fi
+fi
+                                                
+for((i=0;i<${#INFO};i++));do
+    if [ ${INFO:$i:1} == ',' ]; then
+        z=$i-$y
+        tmp2=${INFO:$y:$z}
+        tmp1=${tmp2/MB/};
+        tmp=${tmp1/,/};
+        for((x=0;x<${#tmp};x++))do
+            if [ ${tmp:$x:1} == ':' ];then
+                if [ ${tmp:$x+1:${#tmp}} -gt "600" ];then
+                    SSD=`ls ${tmp:0:$x}*`
+                    #echo ${tmp:0:$x};
+                    #if [ ${#SSD} == 8 ];then
+                        
+                        fdisk ${tmp:0:$x} < /tmp/command.txt
+                        sleep 1;
+                        /sbin/mkfs.ext3 -F ${tmp:0:$x}1
+                        mount ${tmp:0:$x}1 /mnt/tclog
+                       	mkdir /mnt/tclog/log
+                       	ln -s /mnt/tclog/log /mnt/ 
+                    #fi
+                fi
+            fi
+        done
+        y=$i+1
+    fi
+done
+#rm -f /tmp/command.txt                
+
+#==========================================================================
+#tar zxfC /mnt/analylib.pkg /mnt/tclog/
+#tar zxfC /mnt/pgsql.pkg /mnt/tclog/analyser/var/lib/
+#sync
+#ln -s /usr/local/apache/qb/analyser_web/.pgpass /root
+chmod 777 /var/tmp
+chmod 777 /tmp
+rm -f /mnt/tclog/analyser/var/lib/pgsql/data/postmaster.pid
+#/sbin/service postgresql start
+#/usr/bin/psql -U qbalancer -e creek_sys < /usr/local/apache/qb/analyser_web/public.sql
+
+#Check memory size and config php.ini
+PHP_Mem=$(grep memory_limit /etc/php.ini|awk '{print $3}')
+Physical_Mem=$(cat /proc/meminfo |grep MemTotal|head -n 1|awk '{print $2}')
+                
+if [ $Physical_Mem -ge 2000000 ];then   #2G RAM
+ /sbin/sysctl -w kernel.shmmax=234881024 #192M+32M
+ sed -i -e "s/memory_limit =.*;/memory_limit = 256M      ;/" /etc/php.ini
+ sed -i -e '{
+             s/autovacuum = off/autovacuum = on/
+             s/#autovacuum/autovacuum/g
+             s/effective_cache_size =.*#/effective_cache_size = 120000          #/
+             s/#effective_cache_size/effective_cache_size/g
+             s/work_mem =.*#/work_mem = 16384          #/
+             s/#work_mem/work_mem/g
+             s/shared_buffers =.*#/shared_buffers = 24000          #/
+             s/#shared_buffers/shared_buffers/g
+            }' /mnt/tclog/analyser/var/lib/pgsql/data/postgresql.conf       
+elif [ $Physical_Mem -ge 1000000 ];then #1G RAM
+ /sbin/sysctl -w kernel.shmmax=134217728 #96M+32M
+ sed -i -e "s/memory_limit =.*;/memory_limit = 128M      ;/" /etc/php.ini
+ sed -i -e '{
+             s/autovacuum = off/autovacuum = on/
+             s/#autovacuum/autovacuum/g
+             s/effective_cache_size =.*#/effective_cache_size = 60000          #/
+             s/#effective_cache_size/effective_cache_size/g
+             s/work_mem =.*#/work_mem = 8192          #/
+             s/#work_mem/work_mem/g
+             s/shared_buffers =.*#/shared_buffers = 12000          #/
+             s/#shared_buffers/shared_buffers/g
+            }' /mnt/tclog/analyser/var/lib/pgsql/data/postgresql.conf       
+elif [ $Physical_Mem -ge 500000 ];then   #512M RAM
+ /sbin/sysctl -w kernel.shmmax=83886080 #48M+32M
+ sed -i -e "s/memory_limit =.*;/memory_limit = 64M      ;/" /etc/php.ini
+ sed -i -e '{
+             s/autovacuum = off/autovacuum = on/
+             s/#autovacuum/autovacuum/g
+             s/effective_cache_size =.*#/effective_cache_size = 15000          #/
+             s/#effective_cache_size/effective_cache_size/g
+             s/work_mem =.*#/work_mem = 4096          #/
+             s/#work_mem/work_mem/g
+             s/shared_buffers =.*#/shared_buffers = 6000          #/
+             s/#shared_buffers/shared_buffers/g
+            }' /mnt/tclog/analyser/var/lib/pgsql/data/postgresql.conf       
+elif [ $Physical_Mem -ge 220000 ];then   #256M RAM
+ /sbin/sysctl -w kernel.shmmax=58720256 #24M+32M
+ sed -i -e "s/memory_limit =.*;/memory_limit = 32M      ;/" /etc/php.ini
+ sed -i -e '{
+             s/autovacuum = off/autovacuum = on/
+             s/#autovacuum/autovacuum/g
+             s/effective_cache_size =.*#/effective_cache_size = 6000          #/
+             s/#effective_cache_size/effective_cache_size/g
+             s/work_mem =.*#/work_mem = 2048          #/
+             s/#work_mem/work_mem/g
+             s/shared_buffers =.*#/shared_buffers = 3000          #/
+             s/#shared_buffers/shared_buffers/g
+            }' /mnt/tclog/analyser/var/lib/pgsql/data/postgresql.conf       
+fi
+
+sed -i -e '{
+             s/max_execution_time =.*/max_execution_time = 600/g
+             s/upload_max_filesize =.*/upload_max_filesize = 2000M/g
+             s/post_max_size =.*/post_max_size = 2000M/g
+             s/;upload_tmp_dir =.*/upload_tmp_dir = \/mnt\/tclog /g
+           }' /etc/php.ini                 
+
+sleep 1
+mkdir /mnt/tclog/squid
+mkdir /mnt/tclog/squid/cache
+mkdir /mnt/tclog/squid/log
+chown squid:squid /mnt/tclog/squid/
+chown squid:squid /mnt/tclog/squid/cache
+chown squid:squid /mnt/tclog/squid/log
+cat /dev/null >/mnt/tclog/traffic.log
+cat /dev/null >/mnt/tclog/service.log
+echo $(date) "Hard Disk was formated...">>/mnt/tclog/bootlog
+sync;sync

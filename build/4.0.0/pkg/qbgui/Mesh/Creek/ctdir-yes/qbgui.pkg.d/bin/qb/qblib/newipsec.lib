@@ -1,0 +1,988 @@
+#=============================================================================================
+sub showNewIPSec
+{
+    my (%action)=@_;
+    
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    my $target;
+    
+    foreach my $isp ( @$isplist ) { if ( $isp->{iid} eq $action{iid}  ) { $target = $isp; } }
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">IPSec Configuration);
+
+    print qq (<hr size=1>);
+    print qq (<table>);
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Interface
+    #-------------------------------------------------------------------------------------------
+    print qq (<input type="hidden" class="qbtext" name="nic" style="WIDTH: 120px" value="$target->{nic}" >);
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Name 
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="ispname" style="WIDTH: 120px" value="$target->{ispname}" > (e.g.Hinet));
+    print qq (</td></tr>);
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Tunnel Header Local IP
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Tunnel Header Local IP :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<select class="qbopt" name="wanisp" id="wanisp" style="width:120">\n); 
+    my @WANISPNAME = maintainBasic(action=>'GETWANISPNAME');
+    foreach my $wan ( @WANISPNAME )
+    {
+        my $showip = maintainBasic(action=>'GETIP', ispname=>$wan);
+        my $status = ( $target->{local} eq $showip ) ? ( 'selected' ) : ( '' );
+        print qq (<option $status value="$wan" title="$showip">$wan</option>\n);
+    }
+    print qq (/select);
+    print qq (</td></tr>);
+    print qq (<input type="hidden" class="qbtext" name="local" style="WIDTH: 120px" value="" >);
+
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Tunnel Header Remote IP
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Tunnel Header Remote IP :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="remote" id="remote" style="WIDTH: 120px" value="$target->{remote}" > (if unknown,type 0.0.0.0));
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="oriremote" value="$target->{remote}">);
+ 
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Remote Domain name
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Tunnel Header Remote Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="remotename" style="WIDTH: 120px" value="$target->{remotename}" >);
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="oriremotename" value="$target->{remotename}">); 
+
+    #****************************************************************************************
+    # NAT Support
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (NAT Support:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $status=( $target->{mpv_nat} ) ? ('checked') : ('');
+    print qq (<input type="radio" name="mpv_nat" value="1" onclick="setNAT_Support()" $status>On );
+    my $status=( $target->{mpv_nat} ) ? ('') : ('checked');
+    print qq (<input type="radio" name="mpv_nat" value="0" $status>Off );
+    print qq (<input type="hidden" name="mpv_nat_ip" value="">);
+    print qq ($target->{mpv_nat_ip});
+    print qq (</td></tr>);
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Local Identity Type
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Local Identity Type:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{localid};
+    print qq (<select class="qbopt" name="localid" onChange="setid()" style="width:120">\n);
+    @IDENTITY=("address", "user_fqdn", "fqdn");
+    foreach my $id ( @IDENTITY )
+    {
+        my $status=( $id eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $id eq "" ) ? (''):("$id");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Local Identity Data
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Local Identity Data:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="localdata" style="WIDTH: 120px"  value="$target->{localdata}">\n);
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="orilocaldata" value="$target->{localdata}">);
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Remote Identity Type
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Remote Identity Type:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{remoteid};
+    print qq (<select class="qbopt" name="remoteid" onChange="setid()" style="width:120">\n);
+    @IDENTITY=("address", "user_fqdn", "fqdn");
+    foreach my $id ( @IDENTITY )
+    {
+        my $status=( $id eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $id eq "" ) ? (''):("$id");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Remote Identity Data
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Remote Identity Data:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="remotedata" style="WIDTH: 120px" value="$target->{remotedata}" >\n);
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="oriremotedata" value="$target->{remotedata}">);
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: LAN
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Local Subbent:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $systemip=$target->{systemip};
+    print qq (<select class="qbopt" name="localsubnet" style="width:120">\n);
+    @SUBNET=maintainZone(action=>'GETNATZONES');
+    foreach my $lsubnet ( @SUBNET )
+    {
+        my $status=( $lsubnet eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $lsubnet eq "" ) ? (''):("$lsubnet");
+        print qq (<option $status value="$value" onchange="iprange_dep();" >$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="origateway" value="$target->{origateway}">);   
+    print qq (<input type="hidden" name="origateway" value="$target->{systemip}">);   
+
+  
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Remote Subnet
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Remote Subnet:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="remotesubnet" style="WIDTH: 120px" value="$target->{remotesubnet}" onchange="remote_dep();" >\n);
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="oriremotesubnet" value="$target->{remotesubnet}">);
+                                                
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Remote Gateway
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Remote Gateway:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="gateway" id="gateway" style="WIDTH: 120px" value="$target->{gateway}" onchange="document.getElementById('target').value = this.value;">\n);    
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="origateway" value="$target->{origateway}">);    
+    
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Healthcheck IP
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Healthcheck IP:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="target" id="target" style="WIDTH: 120px" value="$target->{target}" >\n);
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="oritarget" value="$target->{target}">);    
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Pre Shared Key
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Pre Shared Key:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input type="password" class="qbtext" name="presharekey" style="WIDTH: 120px" value="$target->{presharekey}" >\n);
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="oripresharekey" value="$target->{presharekey}">);    
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Phase 1 isakmp SA
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Phase 1 isakmp SA:);
+    print qq (</td></tr>); 
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Exchange Mode
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Exchange Mode:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{exchange};
+    print qq (<select class="qbopt" name="exchange" style="width:150">\n);
+    @MODE=("main", "aggressive");
+    foreach my $exmode ( @MODE )
+    {
+        my $status=( $exmode eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $exmode eq "main" ) ? ('main'):("$exmode");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>); 
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Lifetime
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Lifetime:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    if ( $target->{lifetime1} eq '' ) { $target->{lifetime1} = '28800'; }
+    print qq (<input class="qbtext" name="lifetime1" style="WIDTH: 70px" value="$target->{lifetime1}" >\n);
+    print qq (<input type="hidden" name="orilifetime1" value="$target->{lifetime1}">);
+    my $statuschoice=$target->{timeformat1};
+    print qq (<select class="qbopt" name="timeformat1" style="width:75">\n);
+    @TIME=("sec", "min", "hour");
+    foreach my $tformat ( @TIME )
+    {
+        my $status=( $tformat eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $tformat eq "sec" ) ? ('sec'):("$tformat");
+	print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: ENCRYPTION ALGORITHM
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Encryption Algorithm:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{ph1alg};
+    print qq (<select class="qbopt" name="ph1alg" style="width:150">\n);
+    @ALGORITHM1=("des", "3des", "aes 128", "aes 192", "aes 256");
+    foreach my $alg1 ( @ALGORITHM1 )
+    {
+        my $status=( $alg1 eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $alg1 eq "des" ) ? ('des'):("$alg1");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: HASH ALGORITHM
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Hash Algorithm:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{ph1hash};
+    print qq (<select class="qbopt" name="ph1hash" style="width:150">\n);
+    @HASH=("sha1", "md5");
+    foreach my $hash ( @HASH )
+    {
+        my $status=( $hash eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $hash eq "sha1" ) ? ('sha1'):("$hash");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>); 
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: DH_GROUP
+    #-------------------------------------------------------------------------------------------
+
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (DH_GROUP:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{dhgroup};
+    print qq (<select class="qbopt" name="dhgroup" style="width:150">\n);
+    @DHGROUP=("dh_group 1", "dh_group 2", "dh_group 5");
+    foreach my $dh ( @DHGROUP )
+    {
+        my $status=( $dh eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $dh eq "dh_group 1" ) ? ('dh_group 1'):("$dh");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);  
+   
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Phase 2 IPsec SA
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Phase 2 IPsec SA:);
+    print qq (</td></tr>); 
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Protocol
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Protocol:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{protocol};
+    print qq (<select class="qbopt" name="protocol" style="width:150">\n);
+    @PROTOCOL=("ah", "esp");
+    foreach my $pro ( @PROTOCOL )
+    {
+        my $status=( $pro eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $pro eq "ah" ) ? ('ah'):("$pro");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>); 
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Lifetime
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">Lifetime:);
+    print qq (Lifetime:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    if ( $target->{lifetime2} eq '' ) { $target->{lifetime2} = '3600'; }
+    print qq (<input class="qbtext" name="lifetime2" style="WIDTH: 70px" value="$target->{lifetime2}" >\n);
+    print qq (<input type="hidden" name="orilifetime2" value="$target->{lifetime2}">);
+    my $statuschoice=$target->{timeformat2};
+    print qq (<select class="qbopt" name="timeformat2" style="width:75">\n);
+    @TIME=("sec", "min", "hour");
+    foreach my $tformat ( @TIME )
+    {
+        my $status=( $tformat eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $tformat eq "sec" ) ? ('sec'):("$tformat");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: ENCRYPTION ALGORITHM
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Encryption Algorithm:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{ph2alg};
+    print qq (<select class="qbopt" name="ph2alg" style="width:150">\n);
+    @ALGORITHM2=("des", "3des", "aes 128", "aes 192", "aes 256");
+    foreach my $alg2 ( @ALGORITHM2 )
+    {
+        my $status=( $alg2 eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $alg2 eq "des" ) ? ('des'):("$alg2");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);     
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: AUTHENTITION ALGORITHM
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Authentication Algorithm:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{ph2auth};
+    print qq (<select class="qbopt" name="ph2auth" style="width:150">\n);
+    @AUTH=("hmac_sha1", "hmac_md5");
+    foreach my $auth ( @AUTH )
+    {
+        my $status=( $auth eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $auth eq "hmac_sha1" ) ? ('hmac_sha1'):("$auth");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>); 
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: PF_GROUP
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (PF_Group:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $statuschoice=$target->{pfgroup};
+    print qq (<select class="qbopt" name="pfgroup" style="width:150">\n);
+    @PFGROUP=("off", "pfs_group 1", "pfs_group 2", "pfs_group 5");
+    foreach my $pf ( @PFGROUP )
+    {
+        my $status=( $pf eq "$statuschoice" ) ? ('selected'):('');
+        my $value=( $pf eq "pfs_group 1" ) ? ('pfs_group 1'):("$pf");
+        print qq (<option $status value="$value">$value</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>); 
+    
+    #-------------------------------------------------------------------------------------------
+    #  IPSec: Download/Upload Speed
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Download/Upload :);
+    my $bylist=( $target->{download} && $target->{upload} ) ? ('') : ('checked');
+    my $byhand=( $bylist eq 'checked' ) ? ('') : ('checked');
+    
+    #-->A by List
+    print qq (<td class="body" align="left">);
+    print qq (<input type="radio" name="udmethod" id="bylist" value="bylist" $bylist>);
+    print qq (<select class="qbopt" name="downupspeed" id="downupspeed" style="width:180">\n);
+    foreach my $rate ( sort @gDOWNUPRATE ) { print qq (<option value="$rate">$rate</option>\n); }
+    print qq (</select>);
+    print qq (</td></tr>);
+
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    #-->B by user keying in
+    print qq (<td class="body" align="left">);
+    print qq (<input type="radio" name="udmethod" id="byhand" value="byhand" $byhand>);
+    print qq (<input class="qbtext" type="text" maxlength="8" size="8" name="download" value="$target->{download}">/);
+    print qq (<input class="qbtext" type="text" maxlength="8" size="8" name="upload" value="$target->{upload}">(Kbit));
+    print qq (</td></tr>);
+    
+    print qq (</table>);
+    print qq (<hr size=1>);
+    
+    print qq (<table style="width:100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="Save" onclick="SaveIPSec();">);
+    #print qq (<input class="qb" type="button" width="100" value="Back" onclick="BackIPSec();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</table>);
+    
+}
+#showNewIPSec
+
+
+#=============================================================================================
+
+sub scriptNewIPSec
+{
+    print << "scriptNewHost";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() 
+    { 
+    	myform=window.document.forms[0]; 
+    	checkState();
+    	check_enabled_setting();
+    }
+    function iprange_dep()
+    {
+        var systemip = document.getElementById('systemip').value;
+        var gateway = document.getElementById('gateway');
+        var iparray = systemip.split('.');
+        gateway.value = iparray[0] + '\.' + iparray[1] + '\.' + iparray[2] + '\.';
+        
+    }
+
+    function SaveIPSec()
+    {
+        var slt_wan = document.getElementById('wanisp');
+        var bylist = document.getElementById('bylist');
+        var gateway = document.getElementById('gateway').value;
+        var hctarget = document.getElementById('target').value;
+        var remote = document.getElementById('remote').innerHTML;
+        var ipcom_on = document.getElementById('ipcom_on');
+        var local;
+        
+        if (remote != '' && !isValidIP(remote))
+        {
+            alert("Tunnel Header Remote IP format error !!");
+            return;
+        }
+        
+        if (gateway == '')
+        {
+            alert("Please type Remote Gateway IP !!");
+            return;
+        }
+
+        if (gateway != '' && !isValidIP(gateway))
+        {
+            alert("Remote Gateway IP format error !!");
+            return;
+        }
+
+        if (hctarget == '')
+        {
+            alert("Please type Healthcheck IP !!");
+            return;
+        }
+
+        if (hctarget != '' && !isValidIP(hctarget))
+        {
+            alert("Healthcheck IP format error !!");
+            return;
+        }
+
+        for (var i = 0; i < slt_wan.length; i++)
+        {
+            if ( slt_wan[i].selected == true )
+            {
+                local = slt_wan[i].title;
+            }
+        }
+        if (local == remote)
+        {
+            alert('Tunnel Header Source IP and Remote IP can not be the same\\n');
+            return;
+        }
+        
+        if (bylist.checked == true)
+        {
+            var downupspeed = document.getElementById('downupspeed').value;
+            var regex = /[a-zA-Z]/g;
+            downupspeed = downupspeed.replace(regex, "");
+            var rate = downupspeed.split('/');;
+            myform.download.value = rate[0];
+            myform.upload.value = rate[1];
+        }
+        
+        /*alert(mtu);
+        if ( mtu == '' )
+        {
+            myform.mtu.value = mtu_value;
+        }
+        if ( mss == '' )
+        {
+            myform.mss.value = mss_value;
+        }*/
+        myform.action.value = 'SAVE';
+        myform.local.value = local;
+        myform.submit();
+    }
+    
+    function BackIPSec()
+    {
+        window.top.mainFrame.location.href = "ipsec.cgi";
+    }
+    
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        
+        if ( action != '' )
+            window.top.mainFrame.location.href="ipsec.cgi";
+    }
+    
+    function remote_dep()
+    {
+        var remotesubnet = myform.remotesubnet.value;
+        var array = remotesubnet.split('\.');
+        myform.gateway.value = array[0] + '\.' + array[1] + '\.' + array[2] + '\.';
+    }
+    
+    function setNAT_Support() 
+    { 
+        myform.exchange.value="aggressive";
+        myform.protocol.value="esp";
+        myform.localid.value="fqdn";
+        myform.remoteid.value="fqdn";
+    }                                                
+    
+    function setid()
+    {
+        myform.localdata.disabled=(myform.localid.value=="address");
+      	myform.remotedata.disabled=(myform.remoteid.value=="address");
+    }
+    
+    function check_enabled_setting()
+    {
+        if ( myform.localid.value == "" || myform.localid.value == "address")
+        {
+            myform.localdata.disabled=true;
+        }                                                  
+        if ( myform.remoteid.value == "" || myform.remoteid.value == "address")
+        {                                                                                
+            myform.remotedata.disabled=true;
+        }
+    }
+    
+    </script>
+    
+scriptNewHost
+}
+#scriptNewHost
+
+sub byName
+{
+    $a->{hostname} cmp $b->{hostname};
+}
+#byName
+
+sub maintainIPSec
+{
+    %action = @_;
+    my $ispref = XMLread($gPATH.'basic.xml');
+    my $isplist = $ispref->{isp};
+    my $exist = 0;
+    
+    my $QB_ZONE = "/usr/local/apache/qbconf/zonecfg.xml";
+    my $zoneinfo = XMLread($QB_ZONE);
+    my $zonelist = $zoneinfo->{nat};
+    foreach my $nat ( @$zonelist )
+    {                                                
+        if ( $nat->{network} eq $action{localsubnet} )
+        {                                                                            
+            $ipsecip=$nat->{ip};
+        }                                                                                                                                    
+    }                                                                                                                                                    
+    $action{systemip}=$ipsecip;
+    
+    if ( !$action{action} ) { return; } 
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        delete($action{action});
+	$action{state}='FORMATOK';
+	$action{enabled}='1';
+	$action{isptype}='ipsec';
+        $action{target} = $action{gateway};
+
+        if ( $action{localid} eq "address" ) { $action{localdata}=$action{local}; }
+        if ( $action{remoteid} eq "address" ) { $action{remotedata}=$action{remote}; }
+        
+        #------------------------------------
+        #  to check local and  remote ip
+        #------------------------------------
+        foreach my $isp ( @$isplist )
+        {
+            if ( $action{iid} eq $isp->{iid} ) { next; }
+            if ( $isp->{local} eq $action{local} && $isp->{remote} eq $action{remote} ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR : Duplicated local and remote IP with ISP$isp->{iid} $isp->{ispname}\\n );
+                return;
+            }
+        }
+        
+        $action{remotesubnet}=get_subnet( $action{remotesubnet} );
+        if ( !$action{remotesubnet} )
+        {
+            $gMSGPROMPT.=qq (ERROR :Remote Subnet Format ERROR\\n);
+            return;
+        }
+        
+        if ( $action{lifetime1} eq "" || $action{lifetime2} eq "" )
+        {
+            $gMSGPROMPT.=qq (ERROR:Lifetime MUST be assign\\n);
+            return;
+        }
+        
+        if ( $action{lifetime1}=~m/\D/ || $action{lifetime2}=~m/\D/ )
+        {
+            $gMSGPROMPT.=qq (ERROR:Lifetime MUST be numeric\\n);
+            return;
+        }
+        
+        if ( $action{mtu_value} ne '' )
+        {
+            $action{mtu} = $action{mtu_value};
+        }
+        if ( $action{mss_value} ne '' )
+        {
+            $action{mss} = $action{mss_value};
+        }
+        #------------------------------------
+        #  ipsec already exist
+        #------------------------------------
+        if ( $action{iid} )
+        {
+            #--- dipsec -----
+            #
+            $action{remote} = ($action{remote} eq "" ) ? ("0.255.0.".$action{iid}) : ($action{remote});
+            
+            #--- ddns -----
+            #
+            if ($action{remotename} ne "")
+            {
+                $dnsip=runCommand(command=>'/opt/qb/bin/script/ns ', params=>$action{remotename});
+                $dnsip=~s/\n//g;
+                if ($dnsip eq "")
+                {
+                    $gMSGPROMPT.=qq ( ERROR : Can't get the domain name's IP\\n );
+                    return;
+                }
+                $action{remote}=$dnsip;
+            }
+            
+            if ( $action{mpv_nat} eq "1" )
+            {
+                my $mpv_nat_ip=runCommand(command=>'/sbin/wget ', params=>'--bind-address='.$action{local}.' -O - -q icanhazip.com --timeout=10');
+                $mpv_nat_ip=~s/\n//g;
+                #wget -O - -q icanhazip.com --bind-address=192.168.1.110 --timeout=10
+                $action{mpv_nat_ip}=$mpv_nat_ip;
+            }
+            
+            #--- find target ipsec and replace it-----
+            #
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{iid} eq $action{iid} )
+                {
+		    maintainIPBank(from=>'isp'.$action{iid}.'system', action=>'remove', ipset=>["$isp->{systemip}"]);
+                    maintainProute( action=>'SAVEMPV', isp=>$action{iid}, ip=>$action{systemip} );
+                    maintainIPaddress( action=>"DEL", ip=>$isp->{systemip}, nic=>$isp->{nic}, isp=>$isp->{iid} );
+                    $isp = \%action;
+                }
+            }
+        }
+        #------------------------------------
+        # new ipsec
+        #------------------------------------
+        else
+        {
+            #----- check ipsec numbers -----
+            #
+            $totalipsec = 0;
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{isptype} eq "ipsec" ) { $totalipsec++; }
+                if ( $isp->{isptype} eq "tunnel" ) { $totalipsec++; }
+                if ( $isp->{isptype} eq "dtunnel" ) { $totalipsec++; }
+            }
+            if ( $gMAXMPVISP  && $totalipsec >= $gMAXMPVISP && $action{isptype} eq "dtunnel" )
+            {
+                $gMSGPROMPT.=qq( Upper bound of IPSec ISP is $gMAXMPVISP \\n);
+                #print " Upper bound of IPSec ISP is $gMAXMPVISP \n";
+                return;
+            }
+            
+            #----- check ipsec name -----
+            #
+            if ( $action{ispname}!~/.{3,12}/ || $action{ispname}=~m/$gBIG5/ || $action{ispname}=~m/\s+/ )
+            {
+                $gMSGPROMPT.=qq (ERROR:ISPNAME is a MUST or Format Error\\n);
+                #print "ERROR:ISPNAME is a MUST or Format Error\n";
+                return; 
+            }
+            
+            #----- check if this ISP name conflicts with other ISP -----
+            #
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{ispname} ne $action{ispname} ) { next; }
+                $gMSGPROMPT.=qq (ERROR:$action{ispname} has been used by ISP$isp->{iid}\\n);
+                #print "ERROR:$action{ispname} has been used by ISP$isp->{iid}\n";
+                return;
+            }
+            
+            #------ get isp iid ------
+            #
+            my $ispiid = 1;
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{iid} eq 'system' ) { next; }
+                if ( $isp->{iid} ne $ispiid )
+                {
+                    $action{iid} = $ispiid;  
+                    last;
+                }
+                $ispiid++;
+				if ( $ispiid eq '154' ) { $ispiid+=2; }
+                $action{iid} = $ispiid;  
+            }
+            
+            #---- get ipsec iid ----
+            #
+            my %ipsec_nic;
+            foreach my $isp ( @$isplist )
+            {
+            	if ( $isp->{isptype} eq 'tunnel' || $isp->{isptype} eq 'dtunnel' || $isp->{isptype} eq 'ipsec' )
+            	{
+            	    $ipsec_nic{$isp->{nic}} = 1;
+            	}
+            	
+            }
+            for my $ipsec ( 0..$gMAXMPVISP )
+            {
+            	my $nic = 'ipsec'.$ipsec;
+            	
+            	if( !exists($ipsec_nic{$nic}) )
+            	{
+            	    $action{nic} = $nic;
+            	    last;
+            	}
+            }
+            #----- dipsec ------
+            #
+            $action{remote} = ($action{remote} eq "" ) ? ("0.255.0.".$action{iid}) : ($action{remote});
+            
+            #----- ddns ------
+            #
+            if ($action{remotename} ne "")
+            {
+                $dnsip=runCommand(command=>'/opt/qb/bin/script/ns ', params=>$action{remotename});
+                $dnsip=~s/\n//g;$dnsip=~s/\n//g;
+                if ($dnsip eq "")
+                {
+                    $gMSGPROMPT.=qq ( ERROR : Can't get the domain name's IP\\n );
+                    return;
+                }
+                $action{remote}=$dnsip;
+            }
+            
+            #----- push new ipsec to hash array -----
+            #
+            push( @$isplist, \%action);
+            maintainZone( action=>"ADDISPOFDMZ", dmzid=>$action{iid} );
+            maintainDNS( action=>'NEWISP', isp=>$action{iid} );
+            maintainIPBank(action=>'createisp', isp=>$action{iid} );
+            maintainService( action=>'ADDISP', isp=>$action{iid} );
+            maintainFwmark( action=>'ADDISP', isp=>$action{iid} );
+            maintainProute( action=>'ADDMPV', isp=>$action{iid}, ip=>$action{systemip} );
+        }
+        #----- save xml before dependence -----
+        #
+        @$isplist = sort { $a->{iid} <=> $b->{iid} } @$isplist;
+        $gIid = $action{iid};
+        XMLwrite($ispref, $gPATH."basic.xml");
+
+	#@dep5: update ipaddr for system IP and VS IP of ISP $action{iid}
+        #**************************************************************************************
+        my %dmzip_of_this_isp=maintainDMZreg(isp=>$action{iid}, action=>"GETDMZIPHASH");
+        my @vsIP=maintainIPBank(from=>'isp'.$action{iid}.'public', action=>'read');
+        my $isVSIP=( grep(/$action{systemip}/, @vsIP) ) ? 1 : 0;
+        if ( !$isVSIP || exists($dmzip_of_this_isp{$action{systemip}}) )
+        {
+            maintainIPaddress( action=>"DEL", ip=>$action{systemip}, nic=>$action{nic}, isp=>$action{iid} );
+        }
+
+        if ( !exists($dmzip_of_this_isp{$action{systemip}}) )
+        {
+            maintainIPaddress( action=>"ADD", ip=>$action{systemip}, nic=>$action{nic}, isp=>$action{iid} );
+        }
+
+        #@dep: 
+	maintainIPBank(to=>'isp'.$action{iid}.'system', action=>'append', ipset=>["$action{systemip}"]);
+	maintainRtable(action=>'NEWISP', isp=>$action{iid} );
+	
+	#$gMSGPROMPT.=qq (Save Success!!\\n);
+        LogUserAction( action=>'SAVEIPSEC', iid=>$action{iid}, ispname=>$action{ispname}, nic=>$action{nic}, ispname=>$action{ispname}, systemip=>$action{systemip}, target=>$action{target}, local=>$action{local}, remote=>$action{remote} ); 
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet = $action{ipsec};
+        
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some IPSec first\\n\\n);
+            return;
+        }
+	foreach my $del ( @$delet )
+	{
+
+            #@dep1
+            ###########################################################################################
+            #1:ipbank.xml:clear ip bank of focused ISP in ipbank.xml
+            maintainIPBank(action=>'delisp', isp=>$del);
+
+            #@dep2
+            ###########################################################################################
+            #2:dmzreg.xml:  clear all DMZ zone hosts of $del in dmzreg.xml
+            #maintainDMZreg(action=>'CLEAR', isp=>$del);
+
+            #@dep3
+            ###########################################################################################
+            #3:ipneigh.xml:  clear ipneigh entries of $target->{subnet} in ipneigh.xml
+            maintainIPneigh( action=>'CLEAR', isp=>$del );
+
+            #@dep4
+            ###########################################################################################
+            #4:ipaddr.xml:  clear ipaddress entries of $target->{subnet} in ipaddr.xml
+            maintainIPaddress(  action=>'CLEAR', isp=>$del  );
+
+            #@dep5
+            ###########################################################################################
+            #5:subnet.xml:CLEAR ALL DMZ SUBNET Belonging to this ISP *********
+            #maintainDMZ( action=>"MARKDMZSUBNETOFISP", isp=>$del );
+
+            #@dep6
+            ###########################################################################################
+            #6:lvs.xml:  MARK lvs set with the Vertual IP of isp$del in lvs.xml as DIRTY
+            #maintainVS( action=>'MARKVSERVERS', isp=>"$del" );
+
+            #@dep7
+            ###########################################################################################
+            #7.interrt.xml ²¾°£³o­ÓISP ©Ҧ³ªº interroute entries
+            #maintainInterrt( action=>"CLEAR", isp=>$del );
+
+            #@dep8
+            ###########################################################################################
+            #8. overview.xml ±N¦¹ ISP ªº DMZ §R°£
+            #maintainZone( action=>"DELISPOFDMZ", dmzid=>$del );
+
+	    #@dep9
+            ###########################################################################################
+            #9. rtable.xml ±N¦¹ ISP ªº DMZ §R°£
+            maintainRtable( action=>"DELISP", isp=>$del );
+
+            #@dep10
+            ###########################################################################################
+            #10. dns.xml §R°£ ISP ªº DNS entry
+            #maintainDNS( action=>'DELISP', isp=>$del  );
+
+            maintainService( action=>'DELISP', isp=>$del );
+            maintainFwmark( action=>'DELISP', isp=>$del );
+            maintainProute( action=>'DELIPSec', isp=>$del );
+	}
+        my @temparray;
+        foreach my $isp ( @$isplist) 
+        {
+            if ( grep(/^$isp->{iid}$/, @$delet) )
+            {
+               LogUserAction( action=>'DELIPSEC', iid=>$isp->{iid}, ispname=>$isp->{ispname} );
+               next;
+            }
+            push(@temparray, $isp);
+        }
+        $ispref->{isp}=\@temparray;
+        XMLwrite($ispref, $gPATH."basic.xml");
+        maintainFwmark( action=>'ISPUPDATED' );
+    }
+    maintainRtable( action=>"DSIPUPDATE" );
+}
+#
+1

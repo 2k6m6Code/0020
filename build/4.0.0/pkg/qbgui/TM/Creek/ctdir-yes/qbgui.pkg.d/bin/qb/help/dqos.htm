@@ -1,0 +1,94 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>DoS Prevention</title>
+</head>
+<body>
+
+<h2>DoS Prevention</h2>
+<p>
+For suspicious or misbehaving network patterns, Q-Balancer offers way to minimize the impacts and offer warnings. Some of the features can work together with QoS. </p>
+<ol>
+<li>Privileged List to Bypass Checks</li> <!--1-->
+<p>
+	Sometimes there are special considerations; administrators would like certain hosts or subnets to bypass the system wide DoS check. The Privileged List serves this purpose. IP addresses or subnets filled in this list do not subject to security checks.<br> 
+Configure a privileged list:<br>
+<ul>
+<li><b>Add:</b>Enter the IP address or subnet in the text box and click the Add button. 
+<li><b>Delete:</b>Select on the host or subnet desired to be removed, then click on the delete button. (Multiple selections allowed.)
+</ul> 
+<p><em>To either add or delete an entry, Save needs to be pressed afterward. If it should immediately take effect, please press Save and followed immediately with Update on the main menu.</em></p>
+</p>
+<li>Quota Overflow Detection</li> <!--2-->
+<p>
+	In a shared network environment, there can be some hosts who are continuously uploading or downloading very large files and occupies a large portion of egress bandwidth. Quota Overflow Detection allows calculating packets for each connection, and labels particular TOS value if it has overflowed. Combined with QoS->Service-based filter, the overflow packets can be directed to lower bandwidth QoS class or be dropped. This way, network bandwidth is preserved. 
+<br>
+Configure Quota Overflow Detection:<br>  
+<ul>
+<li><b>Enable:</b> Check to enable the feature.
+<li><b>Privileged List:</b> IP addresses or subnets listed does not subject to checks 
+<li><b>Log Rate:</b> When checked, syslog is generated for QOD. To prevent heavy logging that can seriously impact system performance, please specify Log Rate to restrict logging frequency.
+<li><b>Log Prefix:</b> The string filled here becomes the heading string for the QOD syslog entries. Setting this appropriately helps users distinguish QOD entries from other entries. 
+ 
+<li><b>"If quota > ? KB => Set TOS Value as 0x02", etc. rules:</b> Provide up to five types of TOS value or packets drop policy. Every policy can be set or unset at will. There are no effects if the fields are left empty. 
+</ul>
+<p><em>Policies sets here can only change packets' TOS value. To have any QoS effects, please accompany this setting with filters set in QoS->Service-Based filter. Filters can be set up to handle particular TOS value. This achieves dynamic QoS. </em></p>
+</p>
+<li>FPFD(fuzzy ping flooding detection)</li> <!--3-->
+<p>
+	If someone or some malicious software on a network continuously sends out a large number of ICMP packets, very often the LAN can slow to a crawl and outbound bandwidth can be clogged. Sometimes network appliances such as router and firewall can even malfunction. To avoid this kind of network attacks, administrators tend to block all ICMP services. Although the network can be secured this way, it can also render many applications inoperable. The FPFD module introduces the concept of fuzzy theory. It determines ICMP attacks base on user-defined parameters. The heavier the attacks, the more often packets are dropped, and vice-versa. This allows ICMP packets to be passed freely under normal conditions, but also effectively protects the network when it is being attacked. With syslog, the malicious host or subnet can be traced. This provides administrators extra information to understand the nature of the attack.<br>
+
+Fuzzy Ping Flooding Configuration:<br>
+<ul>
+<li><b>Enable:</b> Click to enable the feature.
+<li><b>Privileged List:</b> Hosts or Subnet in this list are not restricted by the FPFD check. 
+<li><b>Log Rate:</b> When checked, syslog is generated for FPFD. To prevent heavy logging that can seriously impact system performance, please specify Log Rate to restrict logging frequency.
+<li><b>Log Prefix:</b> The string filled here becomes the heading string for the FPFD syslog entries. Setting this appropriately helps users distinguish FPFD entries from other entries.
+<li><b>Drop Packet if matched:</b> If checked, packets that satisfies the PFPD checks are dropped. 
+<li><b>Lower and Upper (pkts/s Number of ICMP packets per second</b>
+<ol type=a> 
+<li>	When the instantaneous ICMP packets flow is smaller than the Lower bound, packets are not dropped. 
+<li>	When the instantaneous ICMP packets flow is between the Lower and Upper bound, the closer the number gets to Upper bound, the chances of the packets getting dropped approaches 99%. 
+<li>	When the instantaneous ICMP packets flow has surpassed the Upper bound, 99% of the packets are dropped. 
+</ol>
+</ul>	
+<p><em>Q-Balancer's sampling rates are 1/10 of a second.</em></p>
+</p> 
+<li>PSD(Port Scan Detection)</li> <!--4-->
+<p> 
+	This module is used to detect and log port scans initiated from hackers or malicious software.<br>
+PSD configuration:<br>
+<ul>
+<li><b>Enable:</b> Check to start PSD check 
+<li><b>Privileged to bypass PSD:</b> Hosts or Subnet in this list are not restricted by the PSD check. 
+<li><b>Log Rate:</b> When checked, syslog is generated for PSD. To prevent heavy logging that can seriously impact system performance, please specify Log Rate to restrict logging frequency. 
+<li><b>Log Prefix:</b> The string filled here becomes the heading string for the PSD syslog entries. Setting this appropriately helps users distinguish PSD entries from other entries. 
+<li><b> Drop Packet if matched:</b> If checked, packets that satisfy the PSD checks are dropped. 
+<li><b> Drop Packet if matched:</b>
+<li><b>Weight Threshold, Hight Port Weight, Low Port Weight, Delay Threshold</b><br>
+<b>Four parameters:</b>
+<ol type=a>
+<li>	Weight Threshold: defaults to 21
+<li>	Low Port Weight: defaults to 3
+<li>	High Port Weight: defaults to 1
+<li>	Delay Threshold: defaults to 300 seconds
+</ol>
+</ul>
+<p>
+The parameters and how they fit into the PSD algorithms are described below:<br>  
+	Within a set time interval (Delay Threshold: 300 seconds), if a source IP address is continuously making connections, the first connection is logged and a weight (Weight Threshold: 21) is given for the connection. When the source IP address makes a new connection between port 1 and 1024, its weight is deducted by a value (Low Port Weight: 3). When the source IP address makes a new connection to port 1024 or above, its weight is deducted by another value (High Port Weight: 1). If the weight reaches 0, it is determined to be port scanning. The system then takes appropriate measure, either drop, log, or ignore according to user configurations.</p>
+</p>	 
+<li>COD (Connection Overflow Detection)</li> <!--5-->
+<p>
+	To prevent hackers or malicious software from making large numbers of connections to bring down the network, this module can limit the number of connections established by a single source IP address.  
+<br>
+<ul> 
+<li><b>Enable:</b> Check to enable the COD module. 
+<li><b>Privileged List to bypass COD:</b> Hosts or Subnet in this list are not restricted by the COD check.  
+<li><b>Log Rate:</b> When checked, syslog is generated for COD. To prevent heavy logging that can seriously impact system performance, please specify Log Rate to restrict logging frequency. 
+<li><b>Log Prefix:</b> The string filled here becomes the heading string for the COD syslog entries. Setting this appropriately helps users distinguish COD entries from other entries. 
+<li><b>Drop Packet if matched:</b> If checked, packets that satisfies the COD checks are dropped. 
+<li><b>Can not go over [...] connections per IP:</b> Fill in the maximum number of connections allowed per source IP address here. 
+</ul>
+</ol>
+</body></html>

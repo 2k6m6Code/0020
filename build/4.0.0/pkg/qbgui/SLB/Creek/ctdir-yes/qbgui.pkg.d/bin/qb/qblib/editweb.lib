@@ -1,0 +1,146 @@
+sub showWebPolicyTitle
+{
+    my (%action)=@_;
+    my $viewpoint=$action{viewpoint};
+    #my %titleWidth=(Source=>'130', Service=>'100', Destination=>'130', 'NAT Status'=>'80', Pool=>'100', Schedule=>'90', Status=>'50', QoS=>'60', Edit=>'40');
+    my %titleWidth=(Source=>'150', Filter=>'200', Schedule=>'150', Action=>'100', Edit=>'100');
+    #my @titleList=('Schedule', 'Pool', 'NAT Status', 'Status', 'QoS', 'Edit');
+
+    #print qq (<div class="divframe">);
+    print qq (<table align="center" class="body" width="100%" bgcolor="#332211" border="0"> );
+    print qq (<tr>);
+    #print qq (<td align="center" width="$titleWidth{'Source'}" ><a href="javascript:sortPolicy('BYSOURCE')" title="Sort by Source" border="0">Source</a></td>);
+    print qq (<td align="center" width="$titleWidth{'Source'}" >Source</td>);
+    print qq (<td align="center" width="$titleWidth{'Filter'}" >Web Filter</td>);
+    print qq (<td align="center" width="$titleWidth{'Schedule'}" >Schedule</td>);
+    print qq (<td align="center" width="$titleWidth{'Action'}" >Action</td>);
+    print qq (<td align="center" width="$titleWidth{'Edit'}" >Edit</td>);
+   
+=cut
+    #my $title = ( $action{viewpoint} eq 'app' ) ? ( 'Application' ) : ( 'Service' );
+    #print qq (<td align="center" width="$titleWidth{'Service'}" ><a href="javascript:sortPolicy('BYSERVICE')" title="Sort by Service" border="0">$title</a></td>);
+    #foreach my $title ( @titleList ) { print qq (<td  align="center" width="$titleWidth{$title}"><font color="#ffffff">$title</font></td>); }
+=cut
+
+    print qq (<td width="100" align="center"><a href="javascript:delPolicy()"><image src="image/del.gif" title="Delete checked policies" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('rule', this.checked)">);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    #print qq (</div>);
+}
+#showPolicyTitle
+
+
+sub list_webini_rule
+{
+    my $iniweb = XMLread($gPATH."iniweb.xml");
+    my $classes = $iniweb->{class};
+    
+    my %titleWidth=(Source=>'150', Filter=>'200', Schedule=>'150', Action=>'100', Edit=>'100');
+    print qq (<div class="divframe" style="height:270">);
+    print qq (<table id="ruleList" width="100%" class="body" border="0" style="table-layout:fixed;work-break-all" >);
+    my $lineCount=0;
+    
+    foreach my $class ( @$classes ) 
+    {
+        if ( $class->{source} eq 'system' ) { next; }
+        my $rulekey = $class->{source}.$class->{webfilter}.$class->{schedule}.$class->{web_action};
+        
+        my ( $originalColor, $bgcolor ); $originalColor=$bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        my $display = $class->{source};
+        $display=~s/host-//g;
+        my $addresslist=maintainHost( action=>'GETADDRESSLIST', hostname=>$display);
+        print qq (<td class="body" align="center" width="$titleWidth{Source}" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$display</td>);
+        #print qq (<td class="body" align="center" width="$titleWidth{Source}" >$display</td>);
+        print qq (<td class="body" align="center" width="$titleWidth{Filter}" >$class->{webfilter}</td>);
+        print qq (<td class="body" align="center" width="$titleWidth{Schedule}" >$class->{schedule}</td>);
+        print qq (<td class="body" align="center" width="$titleWidth{Action}" >$class->{web_action}</td>);
+        print qq (<td class="body" align="center" width="$titleWidth{Edit}">);
+        
+        $key_for_shortcut = $class->{source}.'&'.$class->{webfilter}.'&'.$class->{schedule}.'&'.$class->{web_action};
+        print qq (<a href="javascript:edit_this_rule('$key_for_shortcut', '$rulekey');selectedColor(ruleList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit rule properties" border="0"></a></td>);
+        print qq (<td class="body" align="center" width="100">);
+        print qq (<input type="checkbox" name="rule" value="$rulekey">);
+        print qq (</td>);
+        $lineCount++;
+    }
+    
+    print qq (</table>);
+}
+#list_webini_rule
+
+sub list_ini_rule_script
+{
+    print << "LIST_INI_RULE_SCRIPT";
+    
+    <div id="HostDiv" class="infodiv"></div>
+     
+    <script type="text/javascript" src="grid.js"></script>
+    <script language="javascript">
+    
+    var myform;
+    
+    function cgi_dep_onload()
+    { 
+        myform=window.document.forms[0];
+        //setTimeout("informProute()",500);
+    } 
+    
+    function delPolicy()
+    {
+        var setDeleteOn = false
+        var rules = document.getElementsByName('rule');
+        for (var i = 0; i < rules.length; i++)
+        {
+            if ( rules[i].checked == true )
+                setDeleteOn = true;
+        }
+        if (!setDeleteOn) { alert("There is No Policy Rule Checked"); }
+        if (setDeleteOn) { if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )  { goSubmit('DELRULES');} }
+    }
+    
+    function edit_this_rule(key_for_shortcut, rulekey)
+    {
+    
+        var params = key_for_shortcut.split('&');
+        var qstring = '';
+       
+        qstring += 'iniweb.cgi';
+        qstring += '?source=' + params[0];
+        qstring += '&webfilter=' + params[1];
+        qstring += '&schedule=' + params[2];
+        qstring += '&web_action=' + params[3];
+        qstring += '&rulekey=' + rulekey;
+        
+        window.top.mainFrame.iniweb.location.href=qstring;
+    }
+    
+    function showHostInfo(name, addresslist)
+    {
+        if ( addresslist == '' )
+        {
+            addresslist = (name == 'Anywhere') ? ('0.0.0.0/0') : (name);
+        }
+        HostDiv.innerText="<table class=infodivtable><tr><td>"+"Host Name:" + name + "</td></tr>";
+        HostDiv.innerText += "<tr><td>Address Detail:" + addresslist + "</td></tr>";
+        
+        with(HostDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop + event.y;
+            style.display="block";
+        }
+    }
+    
+    function hideHostInfo(){HostDiv.style.display="none";}
+    
+    
+    </script>
+LIST_INI_RULE_SCRIPT
+}
+#
+1

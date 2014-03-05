@@ -1,0 +1,4 @@
+#set -x
+eth=$1
+#/sbin/ifconfig $eth|grep 'inet' |awk '{print $2}' |sed -e "s/addr\://"
+/usr/local/sbin/ip route |grep $eth |grep 'proto' |awk '{print $9}'

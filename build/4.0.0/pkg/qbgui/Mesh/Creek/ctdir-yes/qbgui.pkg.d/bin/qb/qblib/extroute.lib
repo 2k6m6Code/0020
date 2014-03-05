@@ -1,0 +1,291 @@
+###############################################################################################
+#                                           Route Management Console
+###############################################################################################
+#======================================================================================================================
+sub maintainEXTROUTE 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $extroute=XMLread($gPATH.'extroute.xml');
+    my @extroutearray;
+
+    if ( $action{action}=~m/^APPLY$/ ) 
+    {
+        my @extroutelist=split(/;/,$action{extrouteinfo});
+
+	foreach my $entry ( @extroutelist ) { 
+            my %extrouterec;
+            #($extrouterec{ip}, $extrouterec{nic}, $extrouterec{extroutedhcpadd})=split(/,/,$entry);
+            ($extrouterec{ip}, $extrouterec{ispid})=split(/,/,$entry);
+            push (@extroutearray,\%extrouterec);
+            
+            LogUserAction( action=>'UPDATESUBONWAN', ip=>$extrouterec{ip}, ispid=>$extrouterec{ispid} );
+        }
+        $extroute->{extroute}=\@extroutearray;
+    }
+    
+    #-------updating extroute.xml------------------------ 
+    XMLwrite($extroute, $gPATH."extroute.xml");
+
+    #@dep.......update extroute command list. (extroute table will be killed while re-run qbserv)
+    #writeRouteShellScript();
+    #runCommand(command=>'do_qbstaticextroute.pl', params=>'');
+    return 1;
+
+}
+#maintainEXTROUTE
+
+#======================================================================================================================
+######## about EXTROUTE.
+sub showEXTROUTE
+{
+	my $extrouteref=XMLread($gPATH.'extroute.xml');
+	my $extroutearray=$extrouteref->{extroute};
+        my @iidlist=maintainBasic(action=>'GETGOODIIDLIST');
+        
+        @$extroutearray=sort sort_extroute_ip @$extroutearray;
+
+        print qq (<br><table border=0>);
+        print qq (<tr><td class="bigtitle" colspan="3">Subnet on WAN</td></tr>); 
+        print qq (<tr><td class="bigtitle" colspan="3"><hr size="1"></td></tr>); 
+	print qq (<tr><td align="center" colspan="3">);
+        print qq (<input type="button" class="qb" value="Multi-Add" onclick="addRouteRecs()" title="Add several new extroute records" style="width:70">);
+        print qq (<input type="button" class="qb" value="Add" onclick="addRouteRec(1)" title="Add new extroute record" style="width:70">);
+        print qq (<input type="button" class="qb" value="Update" onclick="updateRoute()" title="Update as viewing" style="width:70">);
+	print qq (<input type="button" class="qb" value="Restore" onClick="goSubmit()" title="Restore original extroute list" style="width:70">);
+        print qq (<tr><td colspan="3">);
+
+	print qq (<div class="divframe">);
+	print qq (<table width=100% id="ListTab" bgcolor="#224488" class="body" cellspacing="0" border="0">);
+	print qq (<thead>);
+	print qq (<tr><td align="right" colspan="3">);
+        print qq (<tr bgcolor="#332211" align="center" width=100%>);
+        #print qq (<td width=60>DHCP<title="Checked IP/MAC for DHCP Server" border="0">);
+        #print qq (<input type="checkbox" name="addalldhcpextroute" title="select or deselect all items for DHCP Server" onClick="setAllCheckBoxValue('extroutedhcpadd', this.checked)">);
+        print qq (<td width=130>IP/Subnet</td><td width=130>ISP</td>);
+        print qq (<td width=40><a href="javascript:delRouteRec()"><image src="image/del.gif" title="Delete checked extroute list" border="0"></a>);
+        print qq (<input type="checkbox" name="delallextroute" title="select or deselect all items" onClick="setAllCheckBoxValue('extroutestodel', this.checked)">);
+        print qq (</td></tr>);
+        print qq (</thead><tbody>);
+
+        foreach my $nicrec ( @$extroutearray ) { 
+        if ( $nicrec->{ispid} ) 
+        { 
+            #my $status = $nicrec->{extroutedhcpadd} ? " checked='true'" : "";
+	    #print qq (<tr><td width="120" align="center"><input type="checkbox" name="extroutedhcpadd" $status ></td><td width="130"><input class="qbtext" type=text name="ip"  value=$nicrec->{ip}></td><td width="130"><input class="qbtext" type=text name="nic" value=$nicrec->{nic}></td><td width="40" align="center"><input type="checkbox" name="extroutestodel"></td></tr>);
+	    #print qq (<tr><td width="130"><input class="qbtext" type=text name="ip" value=$nicrec->{ip}></td><td width="130"><input class="qbopt" name="nic" value=$nicrec->{nic}></td><td width="40" align="center"><input type="checkbox" name="extroutestodel"></td></tr>);
+	    print qq (<tr><td width="250"><input class="qbtext" type=text name="ip" size="44" value=$nicrec->{ip}></td>);
+=cut
+	    print qq (<td width="130">);
+            print qq (<select class="qbopt" name="nic" style="width:130">);
+            foreach my $eth ( -1..$gNUMOFPORT-1-$gRESERVEDLANPORT )
+            {
+              $eth=~s/eth//;
+              my $ethnum=$nicrec->{nic};
+              $ethnum=~s/eth//;
+              my $status=( $eth eq $ethnum ) ? ('selected'):('');
+              my $ethvalue=( $eth eq "-1" ) ? ('-1'):('eth'.$eth);
+              my $tmpeth1=$eth;
+              my $portvalue=( $eth eq "-1" ) ? ('None') : ('PORT '.++$eth);
+              my $tmpeth2=$eth-1;
+              #20080222 Brian Fix a bug,when vlan id=10,20,...,UI will show portx.1 x.2 ...
+              $portvalue=( $tmpeth1 eq $tmpeth2 || $portvalue eq 'None') ? ($portvalue) : ($portvalue.'0');
+              print qq (<option $status value="$ethvalue">$portvalue</option>);
+            }
+            print qq (</select>);
+=cut
+	    print qq (<td width="130">);
+            print qq (<select class="qbopt" name="ispid" style="width:130">);
+            foreach my $ispid ( sort num_sort @iidlist )
+            {
+               my $status=($ispid eq $nicrec->{ispid}) ? ('selected') : ('');
+               my $ISPNAME_rec=maintainBasic(action=>'GETNAMEBYIID', iid=>$ispid );
+               print qq (<option value="$ispid" $status>ISP$ispid ($ISPNAME_rec)</option>);
+            }
+            print qq (</select>);
+                                                        
+	    print qq (<td width="40" align="center"><input type="checkbox" name="extroutestodel"></td>);
+	    print qq (</tr>);
+         }
+        }	
+
+        print qq (</tbody><tfoot>);
+        print qq (<input type="hidden" value="" name="extrouteinfo">);
+        print qq (</tfoot>);
+	print qq (</table>);
+	print qq (</div>);
+
+        print qq (</td></tr>);
+        print qq (</table>);
+}
+
+sub showEXTROUTEScript
+{
+    my @ispiidlist=maintainBasic(action=>'GETGOODIIDLIST');
+    print qq (<script language="javascript">);
+    print qq (var ISPNAME = new Array(););
+    print qq (var ISPID = new Array(););
+    foreach my $isp_iid ( @ispiidlist )
+    { 
+      my $ISPNAME_rec=maintainBasic(action=>'GETNAMEBYIID', iid=>$isp_iid );
+      print qq (ISPNAME.push("ISP$isp_iid \($ISPNAME_rec\)");); 
+      #print qq (ISPNAME.push("$ISPNAME_rec");); 
+      print qq (ISPID.push("$isp_iid");); 
+    }
+    print qq (</script>);
+                        
+	print  << "SHOWEXTROUTESCRIPT";
+	
+	<script language="javascript">
+	
+	var myform=window.document.forms[0];
+
+        function cgi_dep_onload() {}
+
+	// Maintain EXTROUTE Record.
+	function addRouteRecs()
+        {
+            var max_num=100;
+            var num=qbPrompt("Enter record number:");
+            
+            if (isDecimal(num)) {
+                if (num>max_num)  num=max_num;
+                addRouteRec(num);
+            } else if (!num) { return; }
+        }
+
+	function addRouteRec(num)
+        { 
+	var i,oTD,oDiv, j, colnum=2, oInput, oBox, oSelect;
+	var oTR; 
+        var PortNum=$gNUMOFPORT;
+        
+         for (j=0;j<num;j++) 
+         {	
+
+            oTR = ListTab.childNodes[1].insertRow();
+            oTR.align="center";
+
+            oTD = oTR.insertCell();
+            oInput = document.createElement("INPUT");
+            oInput.size="44";
+            oTD.appendChild(oInput);
+            oInput.className="qbtext";
+
+            oTD = oTR.insertCell();
+            oInput = document.createElement("SELECT");
+                        
+            for(var i=0;i<ISPNAME.length;i++)
+            {
+                oInput.options[i]=new Option(ISPNAME[i],ISPID[i]);
+            }
+            oInput.className="qbopt";
+            oTD.appendChild(oInput);
+            oInput.style.width="130";
+            
+            oTD = oTR.insertCell();
+            oBox = document.createElement("INPUT");
+            oBox.type = "checkbox";
+            oBox.name = "extroutestodel"; // for delete / undelete all.
+            oTD.appendChild(oBox);
+         }
+	}
+	
+	function delRouteRec()
+        {
+	var colnum=2;
+	for(var i=0;i<ListTab.childNodes[1].rows.length;){
+	        if(ListTab.childNodes[1].rows[i].cells[colnum].firstChild.checked)
+	            ListTab.childNodes[1].rows[i].removeNode(1);
+	        else
+	            i++;
+	}
+        extrouteform.delallextroute.checked=false;
+	}
+	
+	function updateRoute()
+        { // A:Ip, B:Port
+	var pass=true;
+	var data = "";
+	var i,j,stA,stB,ver;
+	var oInputA,oInputB;
+	var oTBody = ListTab.childNodes[1];
+ 	
+	for(i=0;i<oTBody.rows.length;i++){
+		oInputA = oTBody.rows[i].cells[0].firstChild;
+		oInputB = oTBody.rows[i].cells[1].firstChild;
+                var check = /\\./; 
+                if (check.test(oInputA.value)){ver = 4;}
+                else{ver = 6;}
+                if (ver == "4")
+                    stA = checkValue(oInputA.value);  
+                if (ver == "6")      		
+		    stA = checkValue_v6(oInputA.value);
+	   	
+		if(stA=="empty")
+		    continue;
+		if(stA!="ok")
+		    pass = false;
+		
+		oInputA.runtimeStyle.backgroundColor= (stA=="ok"?"":"pink");
+		
+		if(!pass)continue;
+		data += oInputA.value +","+oInputB.value +";"
+	}
+	if(pass){
+	    if( qbConfirm(2,"Data Check OK, Apply them ?")==1 ){
+	        extrouteform.extrouteinfo.value= data;
+                goSubmit("APPLY");
+	    }
+	} else {
+	    alert("Data Check Failed !!");
+	}
+	}
+	
+	function checkValue(text){
+	//if(text.match(/,|;/gi)) return "error";
+	if(text.match(/,|;/gi)) return "error";
+	
+	if(text=="")        return "empty";
+	else if(isValidIP(text))return "ok";
+	else if(isValidSubnet(text))return "ok";
+	else            return "error";
+	}
+	
+	function checkValue_v6(text){
+	if(text.match(/,|;/gi)) return "error";
+	
+	if(text=="")        return "empty";
+	else if(isValidIP_v6(text))return "ok";
+	else if(isValidSubnet_v6(text))return "ok";
+	else            return "error";
+	}
+	
+	</script>
+	
+SHOWEXTROUTESCRIPT
+}
+
+#=========================================================================
+sub sort_extroute_ip
+{
+#    $a->{ip} cmp $b->{ip};
+my @afields=split(/\./,$a->{ip});
+my @bfields=split(/\./,$b->{ip});
+my ($avalue, $bvalue);
+
+foreach my $index ( 0..3 )
+{
+$avalue=$afields[$index];
+$bvalue=$bfields[$index];
+if ( $avalue ne $bvalue ) { last; }
+}
+
+int($avalue) <=> int($bvalue);
+
+}
+#sort_extroute_ip
+
+
+#
+1

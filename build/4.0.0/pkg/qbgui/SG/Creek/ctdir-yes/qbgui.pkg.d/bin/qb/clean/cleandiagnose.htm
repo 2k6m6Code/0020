@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="../gui.css" type="text/css">
+    </head>
+    <body onload="byebye()" bgcolor="#336699">
+        <script language="javascript">
+            function byebye() { setTimeout("window.close()",10); }   
+        </script>
+        <div class="body" align="center">
+        <hr size="1">
+            Shutting Down None Stopping Ping Process<br>
+            Shutting Down None Stopping Arping Process<br>
+            Shutting Down None Stopping Tcpdump Process<br>
+            Please wait 2 seconds ...
+        <hr size="1">
+        </div>
+        <iframe src="../setuid/rundiatool.cgi?action=stop&tool=ping" style="display:none"></iframe>
+        <iframe src="../setuid/rundiatool.cgi?action=stop&tool=arping" style="display:none"></iframe>
+        <iframe src="../setuid/rundiatool.cgi?action=stop&tool=tcpdump" style="display:none"></iframe>
+    </body>
+</html>

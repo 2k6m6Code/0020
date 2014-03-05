@@ -1,0 +1,19 @@
+#!/bin/sh
+# HP/UX 9.x: This File should be add to end of /etc/rc
+# Solaris 2.x: /etc/rc2.d/S99afs
+# SCO UNIX 3.2.4.x: /etc/rc2.d/S99afs
+
+# AFS SYSTEM
+
+case "$1" in
+start)
+	if [ -x /usr/afs/afstart ] ;then
+		/usr/afs/afstart
+	fi
+	;;
+stop)
+	/usr/afs/afstop
+	;;
+esac
+
+exit 0

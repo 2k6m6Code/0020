@@ -1,0 +1,4 @@
+<opt>
+  <dos ip="" log="cod:connectionoverflow" match="ip=50:port=50:80" time="1/m" type="COD" />
+  <list list="system" />
+</opt>

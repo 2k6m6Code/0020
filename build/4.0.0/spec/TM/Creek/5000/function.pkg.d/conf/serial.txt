@@ -1,0 +1,4 @@
+[FUNCTION.PKG] 
+version = 4.0.0 
+serial = 5000 
+[/FUNCTION.PKG]

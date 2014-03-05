@@ -1,0 +1,322 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showqoslan
+{
+    my (%action)=@_;
+    my $edit;
+
+    my $qoslanref=XMLread($gPATH.'qoslan.xml');
+    my $qoslanlist=$qoslanref->{qos};
+
+    #my $qosref=XMLread($gPATH.'qos.xml');
+    #my $qoslist=$qosref->{qos};
+
+    my @titleHeadList=('Source', 'Download' ,'Upload', 'Priority', 'Type', 'Edit');
+    my %titleWidth=('Source'=>150, 'Download'=>150, 'Upload'=>150, 'Priority'=>60, 'Type'=>60, 'Edit'=>60);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    #print qq (<tr><td class="bigtitle">QoS of LAN);
+    print qq (<tr><td class="bigtitle">$qblang[159]);
+
+    print qq (<hr size=1>);
+    # print qq (<table border="0" bgcolor="#332211" style="width:850" >);
+    # print qq (<tr>);
+    # foreach my $title ( @titleHeadList ) { print qq (<td class="body" align="center" width="$titleWidth{$title}">$title</td>); }
+    # print qq (<td class="body" align="center" >);
+    # print qq (<a href="javascript:DeleteQoS()"><image src="image/del.gif" title="Delete Checked Schdule(s)" border="0"></a>);
+    # print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('qosrule', this.checked)">);
+    # print qq (</td></tr>);
+    # print qq (</table>);
+    print qq (<div class="divframe" style="width:850; height:200" >);
+    print qq (<table id="policyList" style="width:850" border="0"><thead><tr bgcolor="#332211">
+    	<td>$qblang[150]</td>
+    	<td>$qblang[151]</td>
+    	<td>$qblang[148]</td>
+    	<td>$qblang[152]</td>
+    	<td>$qblang[153]</td>
+    	<td>$qblang[25]</td>
+    	<td><a href="javascript:DeleteQoS()"><image src="image/del.gif" title="Delete Checked Schdule(s)" border="0"><input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('qosrule', this.checked)"></a></td>
+    </tr></thead>);
+    my $lineCount=0;
+    foreach my $item ( @$qoslanlist )
+    {
+        if ( $item->{source} eq '' ) { next; }
+        if ( $action{source} eq  $item->{source} ) { $edit = $item; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        #my $rulekey = $item->{source}.'-'.$item->{destination};
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td style="center: 0px; width: 150px; table-layout: fixed; word-break: normal; word-wrap: break-word;" title="$item->{source}" height="25">$item->{display}</td>);
+        #print qq (<td align="center" width="$titleWidth{Download}" height="25">$item->{download} kbps</td>);
+        #print qq (<td align="center" width="$titleWidth{Upload}" height="25">$item->{uploadmin} kbps</td>);
+        print qq (<td align="center" width="$titleWidth{Download}" height="25">$item->{downloadmin}-$item->{downloadmax}kbps</td>);
+        print qq (<td align="center" width="$titleWidth{Upload}" height="25">$item->{uploadmin}-$item->{uploadmax}kbps</td>);
+        print qq (<td align="center" width="$titleWidth{Priority}" height="25">$item->{priority}</td>);
+        print qq (<td align="center" width="$titleWidth{Type}" height="25">$item->{qostype}</td>);
+        print qq (<td align="center" width="60" height="25">);
+        print qq (<a href="qoslan.cgi?source=$item->{source}"; selectedColor(policyList.rows[$lineCount])" ><image src="image/edit.gif" title="" border="0"></a></td>);
+        #print qq (<a href="javascript:EditRule()"; selectedColor(policyList.rows[$lineCount])" ><image src="image/edit.gif" title="" border="0"></a></td>);
+        print qq (<td align="center" width="50" height="25">);
+        print qq (<input type="checkbox" name="qosrule" value="$item->{source}">);
+        print qq (</td></tr>);
+        $lineCount++;
+    }
+    print qq (</table></div>);
+    
+    print qq (<table bgcolor="#667788" width="850">);
+    #-------------------------------------------------------------------------------------------
+    #  
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 10%"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20%">);
+    print qq ($qblang[150] :);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20%">);
+    #my ($network, $host) = getAllSource();
+    #my %network = getAllSource();
+    my @network = getAllSource();
+    #my $status = ( defined($edit->{source}) ) ? 'disabled' : '';
+    print qq (<select class="qbopt" size="1" name="source" style="WIDTH:auto" >);
+    foreach my $item ( @network )
+    {
+        my @tmp = split(/\@/, $item);
+        $tmp[0] =~ s/host-//g;
+        my $status = ( $edit->{source} eq $tmp[0] ) ? ( 'selected' ) : ( '' );
+        print qq (<option $status value="$item" title="$tmp[0]" >$tmp[0]</option>);
+    }
+    print qq (</select>);
+    print qq (<input type="hidden" name="edit" value="$edit->{source}">);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 5%"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20%">);
+    print qq ($qblang[154]:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 25%">);
+    print qq (<input class="qbtext" name="downloadmin" id="downloadmin"  style="WIDTH: 100px" value="$edit->{downloadmin}" > - );#kbps);
+    print qq (<input class="qbtext" name="downloadmax" id="downloadmax" style="WIDTH: 100px" value="$edit->{downloadmax}" >kbps);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 5%"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20%">);
+    print qq ($qblang[155]:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 25%">);
+    print qq (<input class="qbtext" name="uploadmin" id="uploadmin" style="WIDTH: 100px" value="$edit->{uploadmin}" > - );
+    print qq (<input class="qbtext" name="uploadmax" id="uploadmax" style="WIDTH: 100px" value="$edit->{uploadmax}" >kbps);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 5%"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20%">);
+    print qq ($qblang[152]:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 25%">);
+    print qq (<select class="qbopt" size="1" name="priority" style="width:120">);
+    my $status = ( $pri eq '1' ) ? 'selected' : '';
+    print qq (<option $status value="1">1(highest)</option>);
+    foreach my $pri ( 2..9 )
+    {
+    	 my $status = ( $pri eq $edit->{priority} ) ? 'selected' : '';
+         print qq (<option $status value="$pri">$pri</option>);
+    }
+    my $status = ( $pri eq '10' ) ? 'selected' : '';
+    print qq (<option $status value="10">10(lowest)</option>);
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 5%"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20%">);
+    print qq ($qblang[156] :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 25%">);
+    print qq (<select class="qbopt" size="1" name="qostype" style="WIDTH:120">);
+    my $status = ( $edit->{qostype} eq 'Share' ) ? 'selected' : '';
+    print qq (<option $status value="Share">$qblang[157]</option>);
+    my $status = ( $edit->{qostype} eq 'Individual' ) ? 'selected' : '';
+    print qq (<option $status value="Individual">$qblang[158]</option>);
+    print qq (</select>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20%">);
+    #print qq (<input class="qb" type="button" style="width: 30" value="Add" onclick="AddQoS();">);
+    #print qq (<input class="qb" type="button" style="width: 60" value="Update" onclick="UpdateQoS();">);
+    #my $status = ( $action{source} ne '' ) ? 'disabled' : '';
+    print qq (<input class="qb" type="button" style="width: auto" value="Save" onclick="QoS('SAVEQOS');">);
+    #print qq (<input class="qb" type="button" style="width: auto" value="$qblang[57]" onclick="QoS('ADDQOS');">);
+    #print qq (<input class="qb" type="button" style="width: 60" value="$qblang[148]" onclick="QoS('UPDATEQOS');">);
+    print qq (</td>);
+    print qq (</table>);
+
+    #-----------------------------------------------------------------------------------------------------
+}
+#showqoslan
+
+
+#=============================================================================================
+
+sub scriptqoslan
+{
+    print << "scriptqoslan";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="qb.js"></script>
+   <script language="javascript">
+   var myform;
+    
+   function cgi_dep_onload() { myform=window.document.forms[0]; }
+   
+   function QoS(action)
+   {
+        var downloadmin = document.getElementById('downloadmin').value;
+        var downloadmax = document.getElementById('downloadmax').value;
+        var uploadmin = document.getElementById('uploadmin').value;
+        var uploadmax = document.getElementById('uploadmax').value;
+        
+        if ( downloadmin == '' || downloadmax == '' || uploadmin == '' || uploadmax == '' )
+        {
+        	alert('Please enter number of bandwidth!!');
+        	return;
+        }
+        
+        if ( isNaN(downloadmin) || isNaN(downloadmax) || isNaN(uploadmin) || isNaN(uploadmax) )
+        {
+        	alert('Please enter number of bandwidth!!');
+        	return;
+        }
+        if ( parseInt(downloadmin) > parseInt(downloadmax) || parseInt(uploadmin) > parseInt(uploadmax) )
+        {
+        	alert('Invalid bandwidth range!!');
+        	return;
+        }
+        
+        myform.action.value = action;
+        myform.submit();
+   }
+
+    function DeleteQoS()
+    {
+        myform.action.value = 'DELQOS';
+        myform.submit();
+    }
+    
+    </script>
+    
+scriptqoslan
+}
+#scriptqoslan
+
+sub maintainQoSLAN
+{
+    my (%action)=@_;
+
+    my $qoslanref = XMLread($gPATH."qoslan.xml");
+    my $qoslanlist = $qoslanref->{qos};
+    
+    my @tmpsrc = split(/\@/, $action{source});
+    $action{source} = ( grep(/host-/, $action{source}) ) ? $tmpsrc[2] : $tmpsrc[0];
+    $action{nic} = $tmpsrc[1];
+    $action{display} = $tmpsrc[0];
+    $action{display} =~ s/host-//g;
+
+    #if ( $action{action} eq 'ADDQOS' )
+    if ( $action{action} eq 'SAVEQOS' )
+    {
+    	if ( $action{edit} eq '' )
+    	{
+            foreach my $item ( @$qoslanlist )
+            {
+                if ( $item->{source} eq $action{source} )
+                {
+                    $gMSGPROMPT.= qq(Policy Already Exists);
+                    return; 
+                }
+            }
+            delete($action{action});
+            push(@$qoslanlist, \%action);
+        
+            LogUserAction( action=>'ADDIPQOS', source=>$action{source}, qostype=>$action{qostype}, priority=>$action{priority}, downloadmin=>$action{downloadmin},downloadmax=>$action{downloadmax}, uploadmin=>$action{uploadmin}, uploadmax=>$action{uploadmax} );
+        }
+    #}
+    #elsif ( $action{action} eq 'UPDATEQOS' )
+    #{
+    	if ( $action{edit} ne '' )
+    	{
+            my $editrule;
+            my @allsource;
+            foreach my $item ( @$qoslanlist )
+            {
+                if ( $item->{source} eq $action{edit} )
+                {
+                    delete($action{action});
+                    delete($action{edit});
+                    $item = \%action;
+                    next;
+                }
+                push(@allsource, $item->{source});
+            }
+        
+            if ( grep(/^$action{source}$/, @allsource) )
+            {
+                $gMSGPROMPT.= qq(Policy Already Exists);
+                return; 
+            }
+            #$editrule = \%action;
+            LogUserAction( action=>'UPDATEIPQOS', source=>$action{source}, qostype=>$action{qostype}, priority=>$action{priority}, downloadmin=>$action{downloadmin}, downloadmax=>$action{downloadmax}, uploadmin=>$action{uploadmin}, uploadmax=>$action{uploadmax} );
+        }
+    }
+    elsif ( $action{action} eq 'DELQOS' )
+    {
+        my $delet = $action{qosrule};
+        my @temparray;
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some QoS rule first\\n\\n);
+            return;
+        }
+
+        foreach my $item ( @$qoslanlist )
+        {
+            my $rulekey = $item->{source};
+            if ( grep(/^$rulekey$/, @$delet) ) { next; }
+            push(@temparray, $item);
+        }
+        $qoslanref->{qos} = \@temparray;
+        LogUserAction( action=>'DELIPQOS', source=>$action{source} );
+    }
+    elsif ( $action{action} eq 'AUTODEL' )
+    {
+        my $subnet = $action{source};
+        my @array_after_del;
+        my $address;
+        foreach my $item ( @$qoslanlist )
+        {
+            if ( grep(/\-/, $item->{source}))
+            {
+                my @tmp = split(/\-/, $item->{source});
+                $address = $tmp[0]."\/32";
+            }
+            elsif (grep(/\//, $item->{source}))
+            {
+                $address = $item->{source};
+            }
+            else
+            {
+                $address = $item->{source}."\/32";
+            }
+            
+            my $result = subnet_belong_check($address, $subnet);
+            if ( $result == 1 || $result == 3 ) { next; }
+            push(@array_after_del, $item);
+        }
+        $qoslanref->{qos} = \@array_after_del;
+        LogUserAction( action=>'AUTODELIPQOS', source=>$action{source} );
+    }
+
+    XMLwrite($qoslanref, $gPATH."qoslan.xml");
+}
+#
+1

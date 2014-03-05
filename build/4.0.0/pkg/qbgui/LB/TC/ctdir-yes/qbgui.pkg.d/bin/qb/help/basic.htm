@@ -1,0 +1,58 @@
+<html>
+<head><link rel="stylesheet" href="help.css" type="text/css"></head>
+<title>Link Config.</title>
+<body>
+
+<h2>Link Config.</h2>
+<p>
+Click [Create] to start and choose Normal ISP, [SAVE] to store.</p>
+<b>Configuration Parameters Explained:</b>
+<ol>
+<li>Interface</li>	<!--1-->
+<p>
+	Here we select the physical port which the ISP configured will be hooked to. Q-Balancer has the Virtual WAN Link feature. There can be multiple ISP hooked to the same port via a switch or a hub.
+	In most of the configuration web interfaces, physical ports are referred to as "Ports", as in Port1 and Port2. However, in Packet Captor, they are labeled as "Eths", such as Eth0, Eth1. The port to eth relationship is shown below: 
+</p>
+<b><center>
+Port 1 = Eth 0<br>
+Port 2 = Eth 1
+</center></b>
+<li>Name</li>	<!--2-->
+<p>
+	This is an alphanumerical string to identify the ISP. The name cannot be started with digits. 
+</p>
+<li>Subnet</li>	<!--3-->
+<p>
+	This is the Network Number of the ISP. All the subnet's netmask are written in Bits Netmask format (CIDR format ) on the right of a slash. The conversion of Bits, dotted decimal netmask and binary netmask are shown below:<br><center> 
+
+<table>
+<tr><th>Bits	</th><th class="light">Dotted Decimal Netmask</th><th>	Binary Netmask</th></tr>
+<tr><td>/24     </td><td class="light"> 255.255.255.0        </td><td>11111111 11111111 11111111 00000000</td></tr>
+<tr><td>/25     </td><td class="light"> 255.255.255.128      </td><td>11111111 11111111 11111111 10000000</td></tr>
+<tr><td>/26     </td><td class="light"> 255.255.255.192      </td><td>11111111 11111111 11111111 11000000</td></tr>
+<tr><td>/27     </td><td class="light"> 255.255.255.224      </td><td>11111111 11111111 11111111 11100000</td></tr>
+<tr><td>/28     </td><td class="light"> 255.255.255.240      </td><td>11111111 11111111 11111111 11110000</td></tr>
+<tr><td>/29     </td><td class="light"> 255.255.255.248      </td><td>11111111 11111111 11111111 11111000</td></tr>
+<tr><td>/30     </td><td class="light"> 255.255.255.252      </td><td>11111111 11111111 11111111 11111100</td></tr>
+<tr><td>/31     </td><td class="light"> 255.255.255.254      </td><td>11111111 11111111 11111111 11111110</td></tr>
+<tr><td>/32     </td><td class="light"> 255.255.255.255      </td><td>11111111 11111111 11111111 11111111</td></tr>
+</table></center>
+</p>
+<li>Gateway IP</li>	<!--4-->
+<p>
+	This is the Gateway IP address given by the ISP for the subnet. Q-Balancer supports multiple ISPs with the same gateway. However, Virtual Wan Link is not supported under such arrangement. 
+</p>
+<li>System IP</li>	<!--5-->
+<p>
+	This is the IP address Q-Balancer binds to, it is used to connect itself the subnet. 
+</p>
+<li>Target IP</li>	<!--6-->
+<p>
+	This is the targeting address used in Link Check to detect WAN link failures. It is recommended to set it to a stable, external host. (Best if it's set to a the ISP's DNS server.) The operating mechanism is as shown below:  
+Link Check illustration
+</p>
+<li>Download / Upload</li>	<!--7-->
+<p>
+	This is the link bandwidth. The parameters affect how Q-Balancer load-balances. There are cases in which the actual bandwidth is smaller than the specification. This can be due to a variety of reasons; such as DSL links signal degradation due to distance. In such cases, please fill in actual bandwidth approximations to avoid miscalculations in load-balance algorithms. 
+</ol>
+</body></html>

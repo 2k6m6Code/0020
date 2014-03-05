@@ -1,0 +1,10 @@
+<opt igwpermnt="0" httpsport="443" aggregate="0" resolve="66.8.85.130" sendarp="0" express="0" mssmodify="1" ntptimeserver="66.8.85.130" cfgftpdirectory="" cfgftppassword="qbl" cfgftpserverip="66.8.85.45" cfgftpusername="qbl" enablecfgftpserver="1">
+  <mail value="system" />
+  <mail value="system" />
+  <mail value="system" />
+  <mail value="system" />
+  <mail value="system" />
+  <destination>
+    <opt>system</opt>
+  </destination>
+</opt>

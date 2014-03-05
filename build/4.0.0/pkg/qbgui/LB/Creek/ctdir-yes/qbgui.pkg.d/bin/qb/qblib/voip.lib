@@ -1,0 +1,65 @@
+###############################################################################################
+#                                           VOIP Setting
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showVOIP 
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[392]); #</td></tr>);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #****************************************************************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq ($qblang[393]:);
+    print qq (</td>);
+    print qq (</tr>); 
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<span title="Consistent NAT">$qblang[394]</span>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    my $status=( $overview->{h323helper}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="h323helper"  $status value="1">$qblang[100]);
+    $status=( $overview->{h323helper}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="h323helper"  $status value ="0">$qblang[101]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #****************************************************************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq ($qblang[395]:);
+    print qq (</td>);
+    print qq (</tr>); 
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<span title="Consistent NAT">$qblang[396]</span>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    my $status=( $overview->{siphelper}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="siphelper"  $status value="1">$qblang[100]);
+    $status=( $overview->{siphelper}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="siphelper"  $status value ="0">$qblang[101]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (</table>);
+
+    #************************************ Command Button  ********************************************
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[54]" title="Save All Parameters" onClick="goSubmit('SAVE')" style="width:180">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showAdvance
+#
+1

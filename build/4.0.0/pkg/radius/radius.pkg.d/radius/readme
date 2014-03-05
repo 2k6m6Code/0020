@@ -1,0 +1,9 @@
+/usr/local/lib/libfreeradius-radius-020202.so
+
+/usr/local/etc/raddb
+
+/usr/local/share/freeradius
+
+/usr/local/bin/radtest
+
+/usr/local/bin/radclient

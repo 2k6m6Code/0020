@@ -1,0 +1,7 @@
+#/Q-Balancer/bin/make-release.sh 3.0.0 Creek 420 SG
+/Q-Balancer/bin/make-release.sh 3.0.0 Creek 2400 SG
+#/Q-Balancer/bin/make-release.sh 3.0.0 Creek 1420 SG
+/Q-Balancer/bin/make-release.sh 3.0.0 Creek 500_820 SG
+/Q-Balancer/bin/make-release.sh 3.0.0 Creek 25 SG
+/Q-Balancer/bin/make-release.sh 3.0.0 Creek 50 SG
+/Q-Balancer/bin/make-release.sh 3.0.0 Creek 100 SG

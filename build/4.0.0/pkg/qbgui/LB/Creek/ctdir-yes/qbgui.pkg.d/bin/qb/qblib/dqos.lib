@@ -1,0 +1,649 @@
+#######################################################################################################################
+#                                           DQOS Config
+#######################################################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showDQOS 
+{
+    my (%action)=@_;
+    my $dqos=XMLread($gPATH.'dqos.xml');
+    my $process,$tmp,$tmp2;
+
+    print qq (<div align="left"><span class="bigtitle">$qblang[245] );
+    print qq (<a href="javascript:qbShowHelp('dqos')"><image src="image/help.gif" border="0" title="Help"></a></span></div>);
+    print qq(<hr size="2">);
+
+#begin of List : 
+
+    $process = $dqos->{forward}->[0];
+
+    print qq(<a name="forward">);
+    print qq(<form action="" target="" method="post">);
+    print qq(<input type="hidden" name="topic" value="forward">);
+    print qq(<input type="hidden" name="action" value="savelist">);
+    print qq(<table id="tab_list" border="0" style="font:11 Verdana;">);
+    print qq(<tr bgcolor="664422"><td align="center">$qblang[246]</td></tr>);
+
+    print qq(<tr><td align="center"><select name="exception" multiple="true" class="qbopt" size="10" style="width:130">);
+    foreach $item (split(/:/,$process->{exception})) { print qq(<option value="$item">$item</option>); }
+    print qq(</select></td></tr>);
+
+    print qq(<tr><td align="center"><input name="newip" class="qb"></td></tr>);
+    print qq(<tr><td align="center"><button class="qb" onclick="if(isValidIP(this.form.newip.value)||isValidSubnet(this.form.newip.value)){add_options_by_text(this.form.newip.value,this.form.exception);}else{alert('Invalid IP');}">$qblang[57]</button>);
+    print qq(<button class="qb" onclick="del_options(this.form.exception)">$qblang[165]</button>);
+    print qq(<button class="qb" onclick="for(var i=0;i<this.form.exception.options.length;i++)this.form.exception.options[i].selected='true';this.form.submit();">$qblang[54]</button></td></tr>);
+    print qq(</table>);
+    print qq(</form>);
+    print qq(<hr size="2">);
+
+#end of List : 
+#=====================================================
+
+#=====================================================
+#begin of IPlimit
+
+    $process = $dqos->{connlimit}->[0];
+
+    print qq(<a name="connlimit">);
+    print qq(<form action="" target="" method="post">\n);
+    print qq(<input type="hidden" name="topic" value="connlimit">);
+    print qq(<input type="hidden" name="action" value="saveconnlimit">);
+    print qq(<table id="tab_connlimit" border="0" style="font:11 Verdana;">\n);
+    print qq(<tr bgcolor="664422"><td colspan="2" align="center">$qblang[247]</td></tr>);
+
+    $tmp = $process->{enable} ? " checked='true'" : "";
+    print qq(<tr><td><input name="enable" type="checkbox"$tmp value="1"> $qblang[26]</td>\n);
+
+    print qq(<td rowspan="5" align="center">);
+    print qq($qblang[248]<br>);
+    print qq(<select name="exception" class="qbopt" multiple="true" size="10" style="width:130">);
+    
+    foreach my $item (split(/:/,$process->{exception})) { print qq(<option value="$item">$item</option>); }
+    
+    print qq(</select><br>);
+    print qq(<input name="newip" class="qbtext"><br>);
+    print qq(<button class="qb" onclick="if(isValidIP(this.form.newip.value)||isValidSubnet(this.form.newip.value)){add_options_by_text(this.form.newip.value,this.form.exception);}else{alert('Invalid IP');}">$qblang[57]</button>);
+    print qq(<button class="qb" onclick="del_options(this.form.exception)">$qblang[165]</button>);
+    print qq(</td></tr>\n);
+
+    $tmp = $process->{lograte} ? " checked='true'" : "";
+    print qq(<tr><td><input name="log_enable" type="checkbox"$tmp value="1"> $qblang[249]: );
+
+    $tmp = $process->{lograte};
+    if($tmp) { ($tmp,$tmp2) = split(/\//,$tmp); }
+    else{ $tmp = $tmp2 = "";        }
+
+    print qq(<input name="lograte" class="qbtext" style="width:50" value="$tmp" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"> / <select name="lograteunit" class="qbopt">);
+        
+    my %unitab=('m'=>$qblang[250], 'h'=>$qblang[251], 's'=>$qblang[1] );
+
+    foreach my $item ( 'h', 'm', 's')
+    {
+        my $status=( $item eq $tmp2 ) ? ('selected') : ('');
+        print qq(<option value="$item" $status >$unitab{$item}</option>);
+    }
+    print qq(</select></td></tr>\n);
+
+    $tmp = $process->{logprefix};
+    
+    print qq(<tr><td><span style="width:60">$qblang[252]</span> : <input name="logprefix" class="qbtext" value="$tmp"></td></tr>\n);
+    
+    my $status=$process->{drop} ? ('checked') : ('');
+    print qq(<tr><td><input type="checkbox" name="drop" $status value="1">$qblang[253]</td></tr>);
+    
+    print qq(<tr><td  width="250">\n);
+
+    print qq($qblang[254] : <input name="above" class="qbtext" style="width:30"value="$process->{above}" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"> $qblang[255]);
+    print qq(</td></tr>\n);
+    
+    print qq(<tr><td colspan="2" align="center"><button class="qb" style="width:180" onclick="for(var i=0;i<this.form.exception.options.length;i++)this.form.exception.options[i].selected='true';this.form.submit();">$qblang[54]</button></td></tr>);
+    print qq(</table>);
+    print qq(</form>);
+
+#end of Limit
+#===================================================
+
+#=====================================================
+#begin of PFD : Fuzzy Ping Flooding Detection
+
+    $process = $dqos->{fuzzypfd}->[0];
+
+    print qq(<a name="fuzzypfd">);
+    print qq(<form action="" target="" method="post">\n);
+    print qq(<input type="hidden" name="topic" value="fuzzypfd">);
+    print qq(<input type="hidden" name="action" value="savepfd">);
+    print qq(<table id="tab_pfd" border="0" style="font:11 Verdana;">\n);
+    print qq(<tr bgcolor="664422"><td colspan="2" align="center">$qblang[256]</td></tr>);
+
+    $tmp = $process->{enable} ? " checked='true'" : "";
+    print qq(<tr><td><input name="enable" type="checkbox"$tmp value="1"> $qblang[26]</td>\n);
+
+    print qq(<td rowspan="5" align="center">);
+    print qq($qblang[257]<br>);
+    print qq(<select name="exception" class="qbopt" multiple="true" size="10" style="width:130">);
+    
+    foreach my $item (split(/:/,$process->{exception}))
+    {
+        print qq(<option value="$item">$item</option>);
+    }
+    
+    print qq(</select><br>);
+    print qq(<input name="newip" class="qbtext"><br>);
+    print qq(<button class="qb" onclick="if(isValidIP(this.form.newip.value)||isValidSubnet(this.form.newip.value)){add_options_by_text(this.form.newip.value,this.form.exception);}else{alert('Invalid IP');}">$qblang[57]</button>);
+    print qq(<button class="qb" onclick="del_options(this.form.exception)">$qblang[165]</button>);
+    print qq(</td></tr>\n);
+
+    $tmp = $process->{lograte} ? " checked='true'" : "";
+    print qq(<tr><td><input name="log_enable" type="checkbox"$tmp value="1"> $qblang[249]: );
+
+    $tmp = $process->{lograte};
+    if($tmp) { ($tmp,$tmp2) = split(/\//,$tmp); }
+    else{ $tmp = $tmp2 = "";        }
+
+    print qq(<input name="lograte" class="qbtext" style="width:50" value="$tmp" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"> / <select name="lograteunit" class="qbopt">);
+        
+    my %unitab=('m'=>'minute', 'h'=>'hour', 's'=>'second' );
+
+    foreach my $item ( 'h', 'm', 's')
+    {
+        my $status=( $item eq $tmp2 ) ? ('selected') : ('');
+        print qq(<option value="$item" $status >$unitab{$item}</option>);
+    }
+    print qq(</select></td></tr>\n);
+
+    $tmp = $process->{logprefix};
+    
+    print qq(<tr><td>$qblang[252] : <input name="logprefix" class="qbtext" value="$tmp"></td></tr>\n);
+    
+    my $status=$process->{drop} ? ('checked') : ('');
+    print qq(<tr><td><input type="checkbox" name="drop" $status value="1">$qblang[253]</td></tr>);
+    
+    print qq(<tr><td  width="250">\n);
+    print qq($qblang[258] : );
+    print qq(<select name="lower" class="qbopt" style="width:60">);
+    foreach my $value (1..100)
+    {
+        my $lowercount=5*$value;
+        my $status=($process->{lower} eq $lowercount) ? ('selected') : ('');
+        print qq ( <option value="$lowercount" $status>$lowercount</option>);
+    }
+    print qq (</select> pkts/s<br>);
+    print qq($qblang[259] : );
+    print qq(<select name="upper" class="qbopt" style="width:60">);
+    foreach my $value (1..100)
+    {
+        my $uppercount=5*$value;
+        my $status=($process->{upper} eq $uppercount) ? ('selected') : ('');
+        print qq ( <option value="$uppercount" $status>$uppercount</option>);
+    }
+    print qq (</select> pkts/s);
+    print qq(</td></tr>\n);
+    
+    print qq(<tr><td colspan="2" align="center"><button class="qb" style="width:180" onclick="for(var i=0;i<this.form.exception.options.length;i++)this.form.exception.options[i].selected='true';this.form.submit();">$qblang[54]</button></td></tr>);
+    print qq(</table>);
+    print qq(</form>);
+    print qq(<hr size="2">);
+
+#end of PFD : Fuzzy Ping Flooding Detection
+#===================================================
+
+#===================================================
+#begin of PSD
+
+    $process = $dqos->{psd}->[0];
+
+    print qq(<a name="psd">);
+    print qq(<form action="" target="" method="post">\n);
+    print qq(<input type="hidden" name="topic" value="psd">);
+    print qq(<input type="hidden" name="action" value="savepsd">);
+    print qq(<table id="tab_psd" border="0" style="font:11 Verdana;">\n);
+    print qq(<tr bgcolor="664422"><td colspan="2" align="center">$qblang[260]</td></tr>);
+
+    $tmp = $process->{enable} ? " checked='true'" : "";
+    print qq(<tr><td><input name="enable" type="checkbox"$tmp value="1"> $qblang[26]</td>\n);
+
+    print qq(<td rowspan="5" align="center">);
+    print qq($qblang[261]<br>);
+    print qq(<select name="exception" class="qbopt" multiple="true" size="10" style="width:130">);
+    
+    foreach my $item (split(/:/,$process->{exception}))
+    {
+        print qq(<option value="$item">$item</option>);
+    }
+    
+    print qq(</select><br>);
+    print qq(<input name="newip" class="qbtext"><br>);
+    print qq(<button class="qb" onclick="if(isValidIP(this.form.newip.value) || isValidSubnet(this.form.newip.value)){add_options_by_text(this.form.newip.value,this.form.exception);}else{alert('Invalid IP');}">$qblang[57]</button>);
+    print qq(<button class="qb" onclick="del_options(this.form.exception)">$qblang[165]</button>);
+    print qq(</td></tr>\n);
+
+    $tmp = $process->{lograte} ? " checked='true'" : "";
+    print qq(<tr><td><input name="log_enable" type="checkbox"$tmp value="1"> $qblang[249]: );
+
+    $tmp = $process->{lograte};
+    if($tmp) { ($tmp,$tmp2) = split(/\//,$tmp); }
+    else{ $tmp = $tmp2 = "";        }
+
+    print qq(<input name="lograte" class="qbtext" style="width:50" value="$tmp" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"> / <select name="lograteunit" class="qbopt">);
+        
+    my %unitab=('m'=>$qblang[250], 'h'=>$qblang[251], 's'=>$qblang[1] );
+
+    foreach my $item ( 'h', 'm', 's')
+    {
+        my $status=( $item eq $tmp2 ) ? ('selected') : ('');
+        print qq(<option value="$item" $status >$unitab{$item}</option>);
+    }
+    print qq(</select></td></tr>\n);
+
+    $tmp = $process->{logprefix};
+    
+    print qq(<tr><td>$qblang[252] : <input name="logprefix" class="qbtext" value="$tmp"></td></tr>\n);
+    
+    my $status=$process->{drop} ? ('checked') : ('');
+    print qq(<tr><td><input type="checkbox" name="drop" $status value="1">$qblang[253]</td></tr>);
+    
+    print qq(<tr><td  width="350">\n);
+    print qq(<span style="width:120">$qblang[262]</span> : <input name="threshold" class="qbtext" value="$process->{threshold}" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"><br>);
+    print qq(<span style="width:120">$qblang[263]</span> : <input name="highport" class="qbtext" value="$process->{highport}" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"><br>);
+    print qq(<span style="width:120">$qblang[264]</span> : <input name="lowport" class="qbtext" value="$process->{lowport}" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"><br>);
+    print qq(<span style="width:120">$qblang[265]</span> : <input name="delay" class="qbtext" value="$process->{delay}" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"> $qblang[1]);
+    print qq(</td></tr>\n);
+    
+    print qq(<tr><td colspan="2" align="center"><button class="qb" style="width:180" onclick="for(var i=0;i<this.form.exception.options.length;i++)this.form.exception.options[i].selected='true';this.form.submit();">$qblang[54]</button></td></tr>);
+    print qq(</table>);
+    print qq(</form>);
+    print qq(<hr size="2">);
+
+#end of PSD
+
+
+#===================================================
+#begin od QoD : Quota overflow Detection
+   
+    $process = $dqos->{qod}->[0];
+    
+    print qq(<a name="qod">);
+    print qq(<form action="" target="" method="post">\n);
+    print qq(<input type="hidden" name="topic" value="qod">);
+    print qq(<input type="hidden" name="action" value="saveqod">);
+    print qq(<table id="tab_qod" border="0" style="font:11 Verdana;">\n);
+    print qq(<tr bgcolor="664422"><td colspan="2" align="center">$qblang[266]</td></tr>);
+
+    $tmp = $process->{enable} ? " checked='true'" : "";
+    print qq(<tr><td><input name="enable" type="checkbox"$tmp value="1"> $qblang[26]</td>\n);
+    print qq(<td rowspan="5" align="center">);
+
+    print qq($qblang[267]<br>);
+    print qq(<select name="exception" class="qbopt" multiple="true" size="10" style="width:130">);
+    foreach my $item (split(/:/,$process->{exception})) { print qq(<option value="$item">$item</option>); }
+    print qq(</select><br>\n);
+    print qq(<input name="newip" class="qbtext"><br>);
+    print qq(<button class="qb" onclick="if(isValidIP(this.form.newip.value)||isValidSubnet(this.form.newip.value)){add_options_by_text(this.form.newip.value,this.form.exception);}else{alert('Invalid IP');}">$qblang[57]</button>);
+    print qq(<button class="qb" onclick="del_options(this.form.exception)">$qblang[165]</button>);
+    print qq(</td></tr>\n);
+
+    $tmp = $process->{lograte} ? " checked='true'" : "";
+
+    print qq(<tr><td><input name="log_enable" type="checkbox"$tmp value="1"> $qblang[249]: );
+
+    $tmp = $process->{lograte};
+
+    if($tmp) { ($tmp,$tmp2) = split(/\//,$tmp); }
+    else{ $tmp = $tmp2 = "";        }
+
+    print qq(<input name="lograte" class="qbtext" style="width:50" value="$tmp" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"> / <select name="lograteunit" class="qbopt">);
+        
+    my %unitab=('m'=>$qblang[250], 'h'=>$qblang[251], 's'=>$qblang[1] );
+    foreach my $item ( 'h', 'm', 's')
+    {
+        my $status=( $item eq $tmp2 ) ? ('selected') : ('');
+        print qq(<option value="$item" $status >$unitab{$item}</option>);
+    }
+    
+    print qq(</select></td></tr>\n);
+
+    $tmp = $process->{logprefix};
+    print qq(<tr><td>$qblang[252] : <input name="logprefix" class="qbtext" value="$tmp"></td></tr>);
+
+    print qq(<tr><td width="450">\n);
+
+    foreach my $item ( split(/;/,$process->{level}) )
+    {
+       ($tmp2,$tmp) = split(/:/,$item);
+        my $description=( $tmp ne "0xff" ) ? ("$qblang[269] $tmp") : ($qblang[270]);
+	print qq( $qblang[268] > <input name="level$tmp" class="qbtext" value="$tmp2" onchange="this.value=isNaN(parseInt(this.value))?'':parseInt(this.value);"> KB => $description<br>\n);
+    }
+
+    print qq(</td></tr>\n);
+    print qq(<tr><td colspan="2" align="center"><button class="qb" style="width:180" onclick="for(var i=0;i<this.form.exception.options.length;i++)this.form.exception.options[i].selected='true';this.form.submit();">$qblang[54]</button></td></tr>);
+    print qq(</table>);
+    print qq(</form>);
+    print qq(<hr size="2">);
+
+#end od QoD : Quota overflow Detection
+#=====================================================
+
+}
+#showDQOS
+
+
+#======================================================================================================================
+sub dqosScript 
+{
+    my (%action)=@_;
+
+    print << "DQOSSCRIPT";
+ 
+    <script type="text/javascript" src="grid.js"></script>
+    <script type="text/javascript" src="qb.js"></script>
+    <script language="javascript">
+    function cgi_dep_onload() 
+    { 
+        dqosJumpToTopic("$action{topic}"); 
+    }
+
+    function dqosJumpToTopic(topic)
+    {
+        if ( !topic ) { return; }
+        
+        window.document.location.href='#'+topic; 
+    }
+
+    </script>
+    
+DQOSSCRIPT
+
+}
+#dqosScript
+
+
+
+#======================================================================================================================
+sub maintainDQOS 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $dqos=XMLread($gPATH.'dqos.xml');
+    my $process,$save;
+
+    $save = 0;
+
+    if($action{action} eq "saveqod"){
+        $save = 1;
+        $process = $dqos->{qod}->[0];
+        $process->{level} = $action{level};
+        
+        LogUserAction( action=>'SAVEQOD', enable=>$action{enable}, lograte=>$action{lograte}, logprefix=>$action{logprefix}, level=>$action{level}, exception=>$action{exception} );
+    }
+    elsif($action{action} eq "savepfd"){
+        $save = 1;
+        $process = $dqos->{fuzzypfd}->[0];
+    	$process->{upper} = $action{upper};
+    	$process->{lower} = $action{lower};
+    	
+        LogUserAction( action=>'SAVEPFD', enable=>$action{enable}, lograte=>$action{lograte}, logprefix=>$action{logprefix}, drop=>$action{drop}, lower=>$action{lower}, upper=>$action{upper}, exception=>$action{exception} );
+    }
+    elsif($action{action} eq "savepsd"){
+        $save = 1;
+        $process = $dqos->{psd}->[0];
+    	$process->{highport} = $action{highport};
+        $process->{lowport} = $action{lowport};
+        $process->{threshold} = $action{threshold};
+        $process->{delay} = $action{delay};
+        
+        LogUserAction( action=>'SAVEPSD', enable=>$action{enable}, lograte=>$action{lograte}, logprefix=>$action{logprefix}, drop=>$action{drop}, threshold=>$action{threshold}, highport=>$action{highport}, lowport=>$action{lowport}, delay=>$action{delay}, exception=>$action{exception} );
+    }
+    elsif($action{action} eq "saveconnlimit"){
+        $save = 1;
+    	$process = $dqos->{connlimit}->[0];
+        $process->{above} = $action{above};
+        
+        LogUserAction( action=>'SAVECONNLIMIT', enable=>$action{enable}, lograte=>$action{lograte}, logprefix=>$action{logprefix}, drop=>$action{drop}, above=>$action{above}, exception=>$action{exception} );
+    }
+    elsif($action{action} eq "savelist"){
+    	$process = $dqos->{forward}->[0];
+        $process->{exception} = $action{exception};
+        
+        LogUserAction( action=>'SAVEDOSLIST', exception=>$action{exception} );
+    }
+    else{
+        $save = 0;
+    }
+    
+    if($save){
+        $process->{enable} = $action{enable};
+        $process->{lograte} = $action{lograte};
+        $process->{drop} = $action{drop};
+        $process->{logprefix} = $action{logprefix};
+        $process->{exception} = $action{exception};
+    }
+
+
+    #--------updating dqos.xml------------------------ 
+    XMLwrite($dqos, $gPATH."dqos.xml");
+    
+    writeDQOSShell();
+}
+#maintainDQOS
+
+
+#=====================================================================================================================
+sub writeDQOSShell
+{
+    my $DQOSSHELL="/usr/local/apache/qbconf/dqos.sh";
+    my $IPTCMD="/usr/local/sbin/iptables -t mangle ";
+    my $SHELLHEAD="#!/bin/sh ";
+    my $LIMITBURST=5;
+
+    open(DQOS, ">$DQOSSHELL");
+    
+    my $dqos=XMLread($gPATH.'dqos.xml');
+
+    #==============================================
+    # 0. print the shell head 
+    #=============================================
+    
+    print DQOS qq ($SHELLHEAD \n\n);
+    
+    #==============================================
+    # 1. NEW all the user defined chain we need 
+    #=============================================
+    
+    print DQOS qq (#=======  NEW all the ruser defined chains we need \n);
+    
+    my @userchain=split(/:/, $dqos->{forward}->[0]->{userchain});
+
+    foreach my $chain ( @userchain ) { print DQOS qq($IPTCMD -X $chain \n\n); }
+ 
+    foreach my $chain ( @userchain ) { print DQOS qq($IPTCMD -N $chain \n\n); } 
+   
+    #================================================
+    # 2. Forming PSD Chain 
+    #================================================
+    
+    my $chain=$dqos->{psd}->[0];
+    
+    my $CMD=$IPTCMD." -A ".$chain->{chain};
+    
+    my $LOGPREFIX=( $chain->{logprefix} ) ? ( qq(--log-prefix $chain->{logprefix}) ) : ('');
+
+    print DQOS qq (#=============  PSD chain ================= \n);
+    
+    if ( !$chain->{enable} ) { print DQOS qq($CMD  -j $chain->{next} \n\n); }
+    else
+    {
+        my @avoidlist=split(/:/, $chain->{exception});
+        foreach my $avoid ( @avoidlist ) 
+        { 
+            print DQOS qq($CMD -s $avoid -j $chain->{next} \n); 
+            print DQOS qq($CMD -d $avoid -j $chain->{next} \n); 
+        } 
+
+        if ( $chain->{lograte} ) 
+        { 
+            print DQOS qq($CMD -m $chain->{match} --psd-weight-threshold $chain->{threshold} --psd-delay-threshold $chain->{delay} );
+            print DQOS qq(--psd-lo-ports-weight $chain->{lowport} --psd-hi-ports-weight $chain->{highport} ); 
+            print DQOS qq(-m limit --limit $chain->{lograte} --limit-burst $LIMITBURST -j LOG $LOGPREFIX \n); 
+        }
+
+        if ( $chain->{drop} ) 
+        { 
+            print DQOS qq($CMD -m $chain->{match} --psd-weight-threshold $chain->{threshold} --psd-delay-threshold $chain->{delay} );
+            print DQOS qq(--psd-lo-ports-weight $chain->{lowport} --psd-hi-ports-weight $chain->{highport} -j DROP \n); 
+        }
+    
+        print DQOS qq($CMD  -j $chain->{next} \n\n);
+    }
+
+    #================================================
+    #  3. Forming IPLIMIT Chain 
+    #================================================
+    
+    my $chain=$dqos->{connlimit}->[0];
+    
+    my $CMD=$IPTCMD." -A ".$chain->{chain};
+    
+    my $LOGPREFIX=( $chain->{logprefix} ) ? ( qq(--log-prefix $chain->{logprefix}) ) : ('');
+
+    my $LOGLEVEL="--log-level alert ";
+
+    my $ABOVE=( $chain->{above} ) ? ( $chain->{above} ) : ('50');
+    
+    print DQOS qq (#=============  IPLIMIT chain ================= \n);
+
+    # this code is designed to be always on (logging into /mnt/log/alert.log)
+    print DQOS qq($CMD -p tcp --syn -m $chain->{match} --connlimit-above $ABOVE -m limit -j LOG $LOGLEVEL $LOGPREFIX \n); 
+    
+    if ( !$chain->{enable} ) { print DQOS qq($CMD -j $chain->{next} \n\n); }
+    else
+    {
+        my @avoidlist=split(/:/, $chain->{exception});
+        foreach my $avoid ( @avoidlist ) 
+        { 
+            print DQOS qq($CMD -s $avoid -j $chain->{next} \n); 
+            print DQOS qq($CMD -d $avoid -j $chain->{next} \n); 
+        } 
+
+        if ( $chain->{lograte} ) { print DQOS qq($CMD -p tcp --syn -m $chain->{match} --connlimit-above $chain->{above} -m limit --limit $chain->{lograte} --limit-burst $LIMITBURST -j LOG $LOGPREFIX \n); }
+
+        if ( $chain->{drop} ) { print DQOS qq($CMD -p tcp --syn -m $chain->{match}  --connlimit-above $chain->{above} -j DROP \n); }
+    
+        print DQOS qq($CMD -j $chain->{next} \n\n);
+    }
+
+
+    #================================================
+    #  4. Forming QOD Chain 
+    #================================================
+    
+    my $chain=$dqos->{qod}->[0];
+    
+    my $CMD=$IPTCMD." -A ".$chain->{chain};
+    
+    my $LOGPREFIX=( $chain->{logprefix} ) ? ( qq(--log-prefix $chain->{logprefix}) ) : ('');
+    
+    print DQOS qq (#=============  QOD chain ================= \n);
+    
+    if ( !$chain->{enable} ) { print DQOS qq($CMD -j  $chain->{next} \n\n); }
+    else
+    {
+        my %vol2tos;
+
+        foreach my $voltos ( split(/;/, $chain->{level} ) )
+        {
+            my ($vol, $tos)=split(/:/, $voltos);
+
+            if ( !$vol && $tos eq '0xff' ) { next; }
+
+            $vol2tos{$vol}=$tos;
+        }
+
+        my @avoidlist=split(/:/, $chain->{exception}); 
+        foreach my $avoid ( @avoidlist ) 
+        { 
+            print DQOS qq($CMD -s $avoid -j $chain->{next} \n);  
+            print DQOS qq($CMD -d $avoid -j $chain->{next} \n); 
+        }
+
+        foreach my $vol ( sort num_sort keys %vol2tos )
+        {
+            if ( !$vol ) { next;} 
+
+            
+            if ( $chain->{lograte} ) { print DQOS qq($CMD -m $chain->{match} --action-type 1 --traffic-threshold $vol -m limit --limit $chain->{lograte} --limit-burst $LIMITBURST -j LOG $LOGPREFIX \n); }
+            
+             if ( $vol2tos{$vol} eq '0xff' )
+             {
+                print DQOS qq($CMD -m $chain->{match}  --action-type 2 --traffic-threshold $vol -j DROP \n); 
+             }
+             else
+             {
+                print DQOS qq($CMD -m $chain->{match}  --action-type 2 --traffic-threshold $vol -j TOS --set-tos $vol2tos{$vol}  \n); 
+             }
+        }
+
+        print DQOS qq($CMD -j $chain->{next} \n\n);
+    }
+
+
+    #================================================
+    #  5. Forming FUZZYPFD Chain 
+    #================================================
+    
+    my $chain=$dqos->{fuzzypfd}->[0];
+    
+    my $CMD=$IPTCMD." -A ".$chain->{chain};
+    
+    my $LOGPREFIX=( $chain->{logprefix} ) ? ( qq(--log-prefix $chain->{logprefix}) ) : ('');
+
+    print DQOS qq (#=============  FUZZYPFD chain ================= \n);
+    
+    if ( !$chain->{enable} ) { print DQOS qq($CMD  -j $chain->{next} \n\n); }
+    else
+    {
+        my @avoidlist=split(/:/, $chain->{exception});
+        foreach my $avoid ( @avoidlist ) 
+        { 
+            print DQOS qq($CMD -s $avoid -j $chain->{next} \n); 
+            print DQOS qq($CMD -d $avoid -j $chain->{next} \n); 
+        } 
+
+        if ( $chain->{lograte} ) 
+        {
+            
+            print DQOS qq($CMD -m  $chain->{match} --lower-limit $chain->{lower} --upper-limit $chain->{upper} -m limit --limit $chain->{lograte} --limit-burst $LIMITBURST -j LOG $LOGPREFIX \n);
+        }
+
+        if ( $chain->{drop} ) {  print DQOS qq($CMD -m  $chain->{match} --lower-limit $chain->{lower} --upper-limit $chain->{upper} -j DROP \n); }
+    
+        print DQOS qq($CMD -j $chain->{next} \n\n);
+    }
+
+    #================================================
+    #  6. Forming FORWARD Chain 
+    #================================================
+    
+    my $chain=$dqos->{forward}->[0];
+    
+    my $CMD=$IPTCMD." -A ".$chain->{chain};
+    
+    print DQOS qq (#=============  FORWARD chain ================= \n);
+    
+    my @avoidlist=split(/:/, $chain->{exception});
+    foreach my $avoid ( @avoidlist ) 
+    { 
+        print DQOS qq($CMD -s $avoid -j ACCEPT \n); 
+        print DQOS qq($CMD -d $avoid -j ACCEPT \n); 
+    } 
+
+    print DQOS qq($CMD -p icmp -j FUZZYPFD \n);
+
+    print DQOS qq($CMD -j PSD \n);
+
+    close(DQOS);
+}
+#writeDQOSShell
+
+#=====================================================================================================================
+1
+

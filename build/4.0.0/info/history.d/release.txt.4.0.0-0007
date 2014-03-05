@@ -1,0 +1,9 @@
+   1.To fix DDNS can't work for dyndns.org.
+    The modification include :ddnscfg
+   2.To fix Smart NAT can't work on V4.0 and refine bridge to remove some error messages.
+    The modification include :proute.C,utils.h,utils.c
+   3.To fix real time traffic can't show bridge traffic.
+    The modification include :qbkf_core.c,qbkflow.ko
+   4.To support bridge failover if Link's gateway is unreachable.
+    The modification include :qbserv.h,proute.C,proute.h,qroute.c
+

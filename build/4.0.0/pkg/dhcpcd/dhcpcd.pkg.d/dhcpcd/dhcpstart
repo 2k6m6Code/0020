@@ -1,0 +1,228 @@
+ #!/bin/sh
+ QBREG_FILE=/opt/qb/registry
+ TEMPM_XML="/tmp/temp.xml"
+ BASICXML="/mnt/qb/conf/set/boot/basic.xml"
+ IPADDRXML="/mnt/qb/conf/set/boot/ipaddr.xml"
+ IPBANKXML="/mnt/qb/conf/set/boot/ipbank.xml"
+ PROUTEXML="/mnt/qb/conf/set/boot/proute.xml"
+ RTABLEXML="/mnt/qb/conf/set/boot/rtable.xml"
+ LVSXML="/mnt/qb/conf/set/boot/lvs.xml"
+ DNSXML="/mnt/qb/conf/set/boot/dns.xml"
+# config="/etc/sysconfig/network-scripts/ifcfg-$cnic"
+ M_BASICXML="/usr/local/apache/qbconf/basic.xml"
+ M_IPADDRXML="/usr/local/apache/qbconf/ipaddr.xml"
+ M_IPBANKXML="/usr/local/apache/qbconf/ipbank.xml"
+ M_PROUTEXML="/usr/local/apache/qbconf/proute.xml"
+ M_RTABLEXML="/usr/local/apache/qbconf/rtable.xml"
+ M_LVSXML="/usr/local/apache/qbconf/lvs.xml"
+ M_DNSXML="/usr/local/apache/qbconf/dns.xml"
+
+ #Have DHCP Links or not
+  grep isptype=\"dhcp\" $M_BASICXML > /dev/null 2>&1
+  checkdhcp=$?
+  if [ "$checkdhcp" != "0" ];then
+  exit 0
+  fi
+
+ #To get boot configuration's info.
+ `grep isptype=\"dhcp\" $M_BASICXML|sed -e "s/  <isp.*systemip=\"//"|sed -e "s/\".*//" >/tmp/dhcp_oriip`
+ `grep isptype=\"dhcp\" $M_BASICXML|sed -e "s/  <isp.*gateway=\"//"|sed -e "s/\".*//" >/tmp/dhcp_origw`
+ `grep isptype=\"dhcp\" $M_BASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//" >/tmp/dhcp_dev`
+ `grep isptype=\"dhcp\" $M_BASICXML|sed -e "s/  <isp.*enableddns=\"//"|sed -e "s/\".*//" >/tmp/enableddns` 
+ `grep isptype=\"dhcp\" $M_BASICXML|sed -e "s/  <isp.*ddnschoice=\"//"|sed -e "s/\".*//" >/tmp/ddnschoice`
+ `grep isptype=\"dhcp\" $M_BASICXML|sed -e "s/  <isp.*ddnsname=\"//"|sed -e "s/\".*//" >/tmp/ddnsname`
+ `grep isptype=\"dhcp\" $M_BASICXML|sed -e "s/  <isp.*ddnspasswd=\"//"|sed -e "s/\".*//" >/tmp/ddnspasswd`
+ `grep isptype=\"dhcp\" $M_BASICXML|sed -e "s/  <isp.*ddnsdomainname=\"//"|sed -e "s/\".*//" >/tmp/ddnsdomainname`
+ `grep isptype=\"dhcp\" $M_BASICXML|sed -e "s/  <isp.*target=\"//"|sed -e "s/\".*//" >/tmp/targetip`
+
+
+  #To establish dhcp's link.
+  ethnum=1
+  while test $ethnum -gt 0
+  do
+     eth=`awk NR==$ethnum /tmp/dhcp_dev`
+     targetip=`awk NR==$ethnum /tmp/targetip`
+     if [ "$eth" = "" ];then
+       ethnum=0
+       elif [ "$eth" != "" ];then
+        /sbin/dhcpcd $eth
+        PLATFORM=$(awk "/^PLATFORM/ {print \$2}"  $QBREG_FILE)
+         case "$PLATFORM" in
+          VIA)
+              #/sbin/dhcpreconnect $eth $targetip 2>>/tmp/dhcpreconnect_$eth &
+              #/sbin/dhcpreconnect $eth $targetip $PLATFORM &
+           ;;
+            *)
+              sleep 1
+              #/sbin/dhcpreconnect $eth $targetip 2>>/tmp/dhcpreconnect_$eth &
+              /sbin/dhcpreconnect $eth $targetip &
+           ;;
+        esac
+            let ethnum=$ethnum+1
+     fi
+  done
+ 
+  #To get new & old IP
+  updatenum=1
+  while test $updatenum -gt 0
+  do
+     dhcpdev=`awk NR==$updatenum /tmp/dhcp_dev`
+     if [ "$dhcpdev" = "" ];then
+        updatenum=0
+        elif [ "$dhcpdev" != "" ];then
+        INFO="/etc/dhcpc/dhcpcd-$dhcpdev.info"
+        xmlsystemip=`grep IPADDR= $INFO|sed -e "s/IPADDR=//"`
+        #xmlsystemip=`/usr/local/sbin/ip route |grep $dhcpdev |grep 'proto' |awk '{print $9}'`
+        xmlgateway=`/sbin/dhcp-awk1 $dhcpdev`
+        ppporiip=`awk NR==$updatenum /tmp/dhcp_oriip`
+        ppporigw=`awk NR==$updatenum /tmp/dhcp_origw`
+        enableddns=`awk NR==$updatenum /tmp/enableddns`
+            if [ "$enableddns" = "Yes" ];then
+                wildcard="no"
+                #/bin/cp -af /mnt/pppoe/resolv.con  /etc/resolv.conf
+            fi
+            if [ "$enableddns" = "Yes,and wildcard" ];then
+                wildcard="yes"
+                #/bin/cp -af /mnt/pppoe/resolv.con  /etc/resolv.conf
+            fi
+            if [ "$enableddns" != "No" ];then
+             if [ "$enableddns" != "" ];then
+                ddnschoice=`awk NR==$updatenum /tmp/ddnschoice`
+                ddnsname=`awk NR==$updatenum /tmp/ddnsname`
+                ddnspasswd=`awk NR==$updatenum /tmp/ddnspasswd`
+                ddnsdomainname=`awk NR==$updatenum /tmp/ddnsdomainname`
+                case "$ddnschoice" in
+                 www.dyndns.org)
+                           protocol="dyndns2"
+
+                           server="members.dyndns.org"
+                          ;;
+                 www.dslreports.com)
+                           protocol="dslreports1"
+                           server="members.dslreports.com"
+                          ;;
+                 www.dnspark.com)
+                          protocol="dnspark"
+                          server="www.dnspark.com"
+                          ;;
+                 www.easydns.com)
+                          protocol="easydns"
+                          server="members.easydns.com"
+                          ;;
+                 www.namecheap.com)
+                          protocol="namecheap"
+                          server="dynamicdns.park-your-domain.com"
+                          ;;
+                 www.zoneedit.com)
+                          protocol="zoneedit1"
+                          server="www.zoneedit.com"
+                          ;;
+                 www.no-ip.com)
+                          protocol="noip"
+                          server="www.no-ip.com"
+                          ;;
+               esac
+                /usr/sbin/ddnscfg $ddnsname $ddnspasswd $wildcard $protocol $server $ddnsdomainname $dhcpdev
+               fi
+              fi
+
+      if [ "$xmlsystemip" != "" ];then
+        #Refresh basic.xml
+        sed -e '{
+        s/'$ppporiip'/'$xmlsystemip'/g
+        s/'$ppporigw'/'$xmlgateway'/g
+        }' $M_BASICXML > $TEMPXML
+        if [ "$?" != "1" ];then
+           /bin/chmod 777 $TEMPXML
+        #   /bin/cp -af $TEMPXML $BASICXML
+        #   /bin/cp -af $TEMPXML $M_BASICXML
+        fi
+
+        #Refresh ipaddr.xml
+        sed -e '{
+        s/'$ppporiip'/'$xmlsystemip'/g
+        s/'$ppporigw'/'$xmlgateway'/g
+        }' $M_IPADDRXML > $TEMPXML
+        if [ "$?" != "1" ];then
+            /bin/chmod 777 $TEMPXML
+        #    /bin/cp -af $TEMPXML $IPADDRXML
+        #    /bin/cp -af $TEMPXML $M_IPADDRXML
+        fi
+
+        #Refresh ipbank.xml
+        sed -e '{
+        s/'$ppporiip'/'$xmlsystemip'/g
+        s/'$ppporigw'/'$xmlgateway'/g
+        }' $M_IPBANKXML > $TEMPXML
+        if [ "$?" != "1" ];then
+           /bin/chmod 777 $TEMPXML
+        #   /bin/cp -af $TEMPXML $IPBANKXML
+        #   /bin/cp -af $TEMPXML $M_IPBANKXML
+        fi
+
+        #Refresh proute.xml
+        sed -e '{
+        s/'$ppporiip'/'$xmlsystemip'/g
+        s/'$ppporigw'/'$xmlgateway'/g
+        }' $M_PROUTEXML > $TEMPXML
+        if [ "$?" != "1" ];then
+        /bin/chmod 777 $TEMPXML
+        #/bin/cp -af $TEMPXML $PROUTEXML
+        #/bin/cp -af $TEMPXML $M_PROUTEXML
+        fi
+
+        #Refresh rtable.xml
+        sed -e '{
+        s/'$ppporiip'/'$xmlsystemip'/g
+        s/'$ppporigw'/'$xmlgateway'/g
+        }' $M_RTABLEXML > $TEMPXML
+        if [ "$?" != "1" ];then
+        /bin/chmod 777 $TEMPXML
+        #/bin/cp -af $TEMPXML $RTABLEXML
+        #/bin/cp -af $TEMPXML $M_RTABLEXML
+        fi
+
+        #Refresh lvs.xml
+        sed -e '{
+        s/'$ppporiip'/'$xmlsystemip'/g
+        s/'$ppporigw'/'$xmlgateway'/g
+        }' $M_LVSXML > $TEMPXML
+        if [ "$?" != "1" ];then
+        /bin/chmod 777 $TEMPXML
+        #/bin/cp -af $TEMPXML $LVSXML
+        #/bin/cp -af $TEMPXML $M_LVSXML
+        fi
+
+        #Refresh dns.xml
+        sed -e '{
+        s/'$ppporiip'/'$xmlsystemip'/g
+        s/'$ppporigw'/'$xmlgateway'/g
+        }' $M_DNSXML > $TEMPXML
+        if [ "$?" != "1" ];then
+        /bin/chmod 777 $TEMPXML
+        #/bin/cp -af $TEMPXML $DNSXML
+        #/bin/cp -af $TEMPXML $M_DNSXML
+        fi
+
+      fi
+     let updatenum=$updatenum+1
+     fi
+  done
+     echo 101 > /tmp/fifo.qbserv
+     sed -e '{
+     s/\#insert_update/echo 101 > \/tmp\/fifo.qbserv/g
+     }' /etc/dhcpc/dhcpcd.exe > $TEMPXML
+     /bin/chmod 755 $TEMPXML
+     /bin/cp -af $TEMPXML /etc/dhcpc/dhcpcd.exe 
+
+     /bin/rm -f $TEMPXML
+     /bin/rm -f /tmp/dhcp
+     /bin/rm -f /tmp/ddnsdomainname 
+     /bin/rm -f /tmp/ddnsname 
+     /bin/rm -f /tmp/ddnspasswd  
+     /bin/rm -f /tmp/ddnschoice 
+     /bin/rm -f /tmp/enableddns
+     /bin/rm -f /tmp/dhcp_dev 
+     /bin/rm -f /tmp/dhcp_oriip 
+     /bin/rm -f /tmp/dhcp_origw
+     /bin/rm -f /tmp/targetip

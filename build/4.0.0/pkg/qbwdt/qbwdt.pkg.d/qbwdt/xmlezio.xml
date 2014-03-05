@@ -1,0 +1,44 @@
+<!--  By John.
+    So we should write a daemon can
+    catch the push event and save the all the logs
+    and put it all together in a package
+
+    what log
+     
+    1. /var/log/qbalancer.log
+    2. /mnt/log/*.log 
+    3. ip route
+    4 ip rule
+    5 iptables -t mangle -L -vn
+    6.iptables -t nat -L -vn
+    7 dmesg -c
+    8 arp -an
+    9 ifconfig eth0 , .......
+    10 /proc/qbalancer/ *
+    11 /proc/net/ip_conntrack
+    12 route -s show cache
+-->
+<!-- 
+    avoid using empty tag without any children inside, such as <menu></menu>,
+Think:
+    Log : how to remove log
+    Reset qbcli : unsure writing
+-->
+
+<root title="Q-Balancer">
+
+  <menu title="Loading">
+       <proc title="CPU" prog="/opt/qb/bin/script/uptime.sh" />
+       <proc title="Session" prog="/opt/qb/bin/script/qbwc.sh /proc/net/ip_conntrack" />
+  </menu>
+
+  <menu title="Memory">
+        <proc title="Free memory" prog="/opt/qb/bin/script/qbmem.sh" />
+        <proc title="Free ramdisk" prog="/opt/qb/bin/script/qbmon.sh" />
+  </menu>
+
+  <proc title="Uptime" prog="/opt/qb/bin/script/uptime.sh time" />
+  <proc title="Log" prog="/opt/qb/bin/script/savelog.sh" />
+  <proc title="Reset qbcli" prog="/opt/qb/bin/script/reset_qbcli.sh" />
+
+</root>

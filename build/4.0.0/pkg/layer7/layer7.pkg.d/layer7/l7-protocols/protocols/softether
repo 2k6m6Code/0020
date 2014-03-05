@@ -1,0 +1,2 @@
+softether
+^\x80\x2f\x01\x03\x01\x06|certification.*softether vpn server

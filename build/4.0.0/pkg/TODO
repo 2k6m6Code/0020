@@ -1,0 +1,3 @@
+move libreadline.so.5 to image.squ and remove from analylib.pkg & quagga.pkg (save 197832 bytes)
+remove db/db.pkg.d/BerkeleyDB/lib/libdb-4.7.a libdb-4.7.la libdb.a (save 3.4M bytes)
+To rebuild the quagga/strip .so/modify config file's path.

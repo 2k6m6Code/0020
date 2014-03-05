@@ -1,0 +1,639 @@
+########################################################################################################
+#                     NAT Subnet Config 
+########################################################################################################
+sub showNAT 
+{
+    my (%action)=@_;
+    my $XMLFILE=$gPATH.$action{viewpoint}.'net.xml';
+    my $netref=XMLread($XMLFILE);
+    my $allNats=$netref->{$action{viewpoint}}->[0]->{subnet}; 
+    my $natnets=$action{natnets};
+    my @sortedNats;
+    my $sortingKEY=$action{sortingkey};
+
+    my %titleWidth;
+    my @titleHeadList;
+    
+    if ( $action{viewpoint} eq "nat" )
+    {
+        %titleWidth=('Subnet'=>130, 'Request Services'=>130, 'Reply Services'=>'130', 'Status'=>100, 'Edit'=>100);
+        @titleHeadList=('Request Services', 'Reply Services', 'Status', 'Edit');
+    }
+    elsif ( $action{viewpoint} eq "lvs" )
+    {
+        %titleWidth=('Subnet'=>130, 'Reply Services'=>'130', 'Status'=>100, 'Edit'=>100);
+        @titleHeadList=('Reply Services', 'Status', 'Edit');
+    }
+    
+    print qq (<div class="divframe" style="width:100%">);
+    print qq (<table width="100%"  cellspacing="0" cellpadding="0" class="body" bgcolor="#332211" border="0"><tr>);
+    print qq (<td align="center" width="$titleWidth{'Subnet'}"><a href="javascript:sortNATSubnet('BYREGION')" title="Sort by Subnet" border="0">Subnet</a></td>);
+    
+
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+
+    print qq (<td align="center">);
+    print qq (<a href="javascript:delSubnet()"><image src="image/del.gif" title="Delete Checked Subnet(s)" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('natnets', this.checked)">);
+    print qq (</td>);
+    print qq (</tr></table>);
+    print qq (</div>);
+    
+    if ( !$sortingKEY )                         { $sortingKEY='BYREGION'; }
+    if ( $sortingKEY eq 'BYREGION' )            { @sortedNats=sort nat_net_sort_by_region @$allNats; } 
+    elsif ( $sortingKEY eq 'BYINTERFACE' )      { @sortedNats=sort nat_net_sort_by_interface @$allNats; } 
+    
+    print qq (<div class="divframe" style="height:250">);
+    print qq (<table id="natList" width="100%"  class="body" border="0">);
+    my $lineCount=0;
+    foreach my $nat ( @sortedNats ) 
+    {
+        if ( $nat->{region} eq 'system' ) { next; }
+        
+        my $natkey=$nat->{region};
+        my $dservice=$nat->{dservice};
+        my $sservice=$nat->{sservice};
+
+        #===================================================================      
+        # prepare display color
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        if ( $nat->{dirty} ) { $originalColor=$bgcolor='#bb6600' }; 
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+        
+        #===================================================================      
+        my $display=$nat->{region};
+        print qq (<td align="center" width="$titleWidth{'Subnet'}">$display</td>);
+        
+        if ( $action{viewpoint} eq "nat" )
+        {
+            #===================================================================      
+            print qq (<td align="center" width="$titleWidth{'Request Services'}">);
+            displayService( @$dservice );
+            print qq (</td>); 
+        }
+        
+        #===================================================================      
+        print qq (<td align="center" width="$titleWidth{'Reply Services'}">);
+        displayService( @$sservice );
+        print qq (</td>);
+        
+        #===================================================================      
+        my $imgSrc=( $nat->{dirty} ) ? ( '/image/alert.gif' ) : ( '/image/ok.gif' );
+        print qq (<td class="body" align="center" width="$titleWidth{Status}"><image src="$imgSrc" border="0"></td>);
+        
+        
+        #===================================================================      
+        print qq (<td class="body" align="center" width="$titleWidth{Edit}">);
+        print qq (<a href="javascript:editThisNAT('$natkey');selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit Nat properties" border="0"></a></td>);
+        
+        
+        #===================================================================      
+        #print checkbox and set its value
+        print qq (<td class="body" align="center">);
+        print qq (<input type="checkbox" name="natnets" value="$natkey">);
+        print qq (</td>);
+        print qq (</tr>);
+        
+        
+        #===================================================================      
+        if ( $natkey eq $action{focusednat} ) { print qq (<script>initSelect(natList.rows[$lineCount]);</script>); }
+        
+        $lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+}
+#showNAT
+
+#======================================================================================================================
+sub showNATScript 
+{
+    print << "SHOWNATSCRIPT";
+  
+  <script type="text/javascript" src="grid.js"></script>
+  <script language="javascript">
+   
+    var myform;
+    function cgi_dep_onload() {  myform=window.document.forms[0]; }
+    
+    function delSubnet() { if ( qbConfirm(2, 'Confirm Deletion?')==1 )  goSubmit('DELETESUBNET'); }
+    
+    function sortNATSubnet(key)
+    {
+        myform.sortingkey.value=key;
+        myform.submit();
+    }
+
+    function editThisNAT(nat)
+    {
+        var qstring='';
+        var viewpoint=myform.viewpoint.value;
+        qstring+='editnat.cgi?';
+        qstring+='viewpoint' + '=' + viewpoint;
+        qstring+='&focusednat' + '=' + nat;
+        window.top.mainFrame.edit.location.href=qstring;
+    }    
+    
+  </script>
+
+SHOWNATSCRIPT
+}
+#showNATScript
+
+
+#===============================================================================    
+sub editNAT
+{
+    my (%action)=@_;
+    my $XMLFILE=$gPATH.$action{viewpoint}.'net.xml';
+    my $netref=XMLread($XMLFILE);
+    my $temp=$netref->{$action{viewpoint}}->[0]->{subnet};
+    my $targetnat;
+    my $targetexist=0;
+    my $focusednat=$action{focusednat};
+
+    if ( $action{action}=~m/^APPENDSUBNET$|^UPDATE$/ ) { $focusednat=$action{nat_bind_sub}; }
+
+    my @fields=split(/\.|\//, $focusednat);
+    
+    print qq (<table cellspacing="0" cellpadding="0" bgcolor="#336699" width="100%" border="0">);
+    
+    print qq (<tr>);
+    print qq (<td><table cellspacing="0" cellpadding="0">);
+    print qq (<tr>);
+    print qq (<td class="body" valign="top">Subnet:</td> );
+    print qq (<td class="body">);
+    print qq (<input type="text" class="qb" maxlength="18" name="nat_bind_sub" value="$focusednat" style="width:120">(ex:192.168.1.0/24));
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #===========================================================================
+    foreach my $nat ( @$temp )
+    {
+        if ( $nat->{region} ne $focusednat ) { next; }
+        $targetnat=$nat;
+        $targetexist=1;
+        last;
+    }
+
+    print qq (<tr>);
+    print qq (<td align="left" colspan="2"> );
+    print qq (<table cellspacing="5" bgcolor="#667788" width="100%">);
+    print qq (<tr><td class="subtitle" colspan="3" align="left">Service: </td></tr>);
+    print qq (<tr>);
+
+    if ( $action{viewpoint} eq "nat")
+    {
+        my $dservices=$targetnat->{dservice};
+        print qq (<td class="body"  align="center" class="body">);
+        print qq (Request(s)<br>);
+        print qq (<select class="qbopt" name="dservices" size="5" multiple style="width:150">);
+        foreach my $dservice ( @$dservices )
+        {
+            if ( $dservice eq 'system' ) { next; }
+            print qq (<option>$dservice</optin>);
+        }
+        print qq (</select></td>);
+
+        print qq (<td class="body"  align="center" class="body">);
+        print qq (<input class="qb" type="button" value="<" onClick="add_options(allservices,dservices)" style="width:20"><br>);
+        print qq (<input class="qb" type="button" value=">" onClick="del_options(dservices)" style="width:20">);
+        print qq (</td>);
+    }
+
+    my @allservices=maintainService( action=>'GETALLSERVICE' );
+    if ( $action{viewpoint} eq 'lvs' ) { push( @allservices, 'others' ); }
+
+    print qq (<td class="body"  align="center" class="body">);
+    print qq (Option(s)<br>);
+    print qq (<select class="qbopt" multiple size="5" name="allservices" onblur="mark_select(this)"  onChange="own_select(this)" style="WIDTH:150px">);
+    foreach my $service ( @allservices ) 
+    { 
+        my $servicetxt=( $service eq "others" ) ?  ( 'ANY' ) : ( $service );
+        print qq (<option value="$service">[ ]$servicetxt</option>); 
+    }
+    print qq (</select></td>);
+
+    print qq (<td class="body"  align="center" class="body">);
+    print qq (<input class="qb" type="button" value="<" onClick="del_options(sservices)" style="width:20"><br>);
+    print qq (<input class="qb" type="button" value=">" onClick="add_options(allservices, sservices)" style="width:20">);
+    print qq (</td>);
+    
+    my $sservices=$targetnat->{sservice};
+    print qq (<td class="body"  align="center" class="body">);
+    print qq (Reply(s)<br>);
+    print qq (<select class="qbopt" name="sservices" size="5" multiple style="width:150">);
+    foreach my $service ( @$sservices )
+    {
+        if ( $service eq 'system' ) { next; }
+        my $servicetxt=( $service eq "others" ) ?  ( 'ANY' ) : ( $service );
+        print qq (<option value="$service">$servicetxt</option>);
+    }
+    print qq (</select></td>);
+    print qq (</tr>);
+
+    print qq (<tr><td colspan="3">&nbsp</td></tr>);
+    print qq (<tr>);
+    print qq (</table>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</td>);
+    
+    print qq (<td align="center" valign="bottom" class="body">);
+
+    if ( $action{viewpoint} eq "nat" )
+    {
+        print qq (<input class="qb" type="button" value="Add"    onClick="newnat(dservices, sservices)"    style="width:80"><br>);
+        print qq (<input class="qb" type="button" value="Save" onClick="update(dservices, sservices)" style="width:80"><br>);
+    }
+    elsif ( $action{viewpoint} eq "lvs" )
+    {
+        print qq (<input class="qb" type="button" value="Add"    onClick="newnat('', sservices)"    style="width:80"><br>);
+        print qq (<input class="qb" type="button" value="Save" onClick="update('', sservices)" style="width:80"><br>);
+    }
+
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (</table>);
+}
+#editNAT
+
+#======================================================================================================================
+sub editNATScript 
+{
+    print << "EDITNATSCRIPT";
+  
+  <script language="javascript">
+   
+    var myform;
+
+    function cgi_dep_onload() 
+    { 
+        setTimeout("informShowNAT()",500);
+        myform=window.document.forms[0];
+    }
+
+    function informShowNAT()
+    {
+        var action=myform.action.value;
+
+        if ( action=="APPENDSUBNET" || action=="UPDATE")
+        {
+            window.top.mainFrame.show.document.forms[0].focusednat.value=myform.focusednat.value;
+            window.top.mainFrame.show.document.forms[0].submit();
+        }          
+    }
+    
+    function newnat(dservices, sservices)
+    {
+        var subnet=myform.nat_bind_sub.value;
+        if ( !checkSubnet(subnet) ) { alert('Subnet format error'); return; } 
+        if ( dservices ) { for ( var i=0; i < dservices.options.length; i++ ) { dservices.options[i].selected=true; } }
+        if ( sservices ) { for ( var i=0; i < sservices.options.length; i++ ) { sservices.options[i].selected=true; } }
+        goSubmit('APPENDSUBNET');
+    }
+    
+    function update(dservices, sservices)
+    {
+        var subnet=myform.nat_bind_sub.value;
+        if ( !checkSubnet(subnet) ) { alert('Subnet format error'); return; } 
+        if ( dservices ) { for ( var i=0; i < dservices.options.length; i++ ) { dservices.options[i].selected=true; } }
+        if ( sservices ) { for ( var i=0; i < sservices.options.length; i++ ) { sservices.options[i].selected=true; } }
+        goSubmit('UPDATE');
+    }
+    
+  </script>
+
+EDITNATSCRIPT
+
+}
+#editNATScript
+
+#======================================================================================================================
+#maintainNAT(%action)
+sub maintainNAT 
+{ 
+    my (%action)=@_;
+
+    if ( !$action{action} ) { return; }
+
+    if ( !$action{viewpoint} ) { $action{viewpoint}='nat'; }
+
+    my $XMLFILE=$gPATH.$action{viewpoint}.'net.xml';
+    my $netref=XMLread($XMLFILE);
+
+    #make $temp initially point to the active subtree 
+    my $temp=$netref->{$action{viewpoint}}->[0]->{subnet};
+    my @tempsubnetarray;
+    my $natnets=$action{natnets};
+    my $focusednat=$action{focusednat};
+    my $subnet_to_append=$action{nat_bind_sub};
+
+    if( $action{action}=~m/^UPDATE$|^APPENDSUBNET$/ ) 
+    {
+        my $targetsub;
+        my $targetexist=0;
+        
+        #if ( !( $subnet_to_append=get_subnet($subnet_to_append) ) && $action{hostobj} ne '1' ) 
+        #allow hostobj
+        if ( $action{hostobj} ne '1' && !( $subnet_to_append=get_subnet($subnet_to_append) ) ) 
+        {
+            $gMSGPROMPT.=qq (ERROR:Invalid Subnet Format\\n); 
+            return; 
+        }
+
+        if( $action{action} eq "UPDATE" && !$focusednat ) { $gMSGPROMPT.=qq (Select a SUBNET first\\n); return; }
+    
+        foreach my $subnetitem ( @$temp ) 
+        {
+            if ( $subnetitem->{region} ne $subnet_to_append ) { next; }
+            else #If already exists, just do nothing and return
+            { 
+                if ( $focusednat ne $subnet_to_append || $action{action} eq 'APPENDSUBNET')
+                {
+                    $gMSGPROMPT.=qq ($subnet_to_append <==> EXIST:$subnetitem->{region}\\n);
+                    return; 
+                }
+            }   
+        }
+
+        foreach my $subnetitem ( @$temp ) 
+        {   
+            if ( $subnetitem->{region} ne $focusednat ) { next; }
+            $targetsub=$subnetitem;
+            $targetexist=1;
+            last;  
+        }
+
+
+        #check if this subnet has valid routing policy  
+        my $routeOK=maintainInterrt(action=>'CHECKROUTE', subnet=>$subnet_to_append);
+
+
+        my $dirtyORnot=0;
+        
+        if ( !$routeOK )
+        {
+           $dirtyORnot=1;
+           if ( $action{hostobj} ne '1' )
+           {
+               $gMSGPROMPT.=qq ( Warning !! No Route to $subnet_to_append \\n );
+           }
+        }
+        
+        if ( $action{action} eq "APPENDSUBNET" )
+        {
+            my %newsubnet=( region=>$subnet_to_append, dirty=>$dirtyORnot, dservice=>$action{dservices}, sservice=>$action{sservices}); 
+            push(@$temp, \%newsubnet);
+        }
+        else
+        {
+            $targetsub->{region}=$subnet_to_append;    
+            $targetsub->{dservice}=$action{dservices};
+            $targetsub->{sservice}=$action{sservices};
+            $targetsub->{dirty}=$dirtyORnot;
+        }
+
+
+        if ( $action{action} eq "UPDATE" && $focusednat ne $subnet_to_append ) 
+        { 
+            $gMSGPROMPT.=qq( Change: $focusednat  => To: $subnet_to_append);
+            
+            #@dep: iniroute.xml    
+            maintainIniroute( action=>'CHANGESOURCE', viewpoint=>$action{viewpoint}, source=>$focusednat, newsource=>$subnet_to_append); 
+        }
+    }
+    elsif ( $action{action}=~m/^SMARTAPPENDSUBNET$/ ) 
+    {
+        my $subnet_to_append=$action{subnet};
+        
+        if ( $action{viewpoint} eq 'nat' )
+        {
+            foreach my $subnetitem ( @$temp ) 
+            {
+                if ( $subnetitem->{region} ne $subnet_to_append ) { next; }
+                else { return; } #If already exists, just do nothing and return    
+            }
+
+            my %newsubnet=( region=>$subnet_to_append, dirty=>0, dservice=>['system'], sservice=>['system']); 
+            push(@$temp, \%newsubnet);
+        }
+        elsif ( $action{viewpoint} eq 'lvs' )
+        {
+            my $rservers=$action{rservers};
+            my $services=$action{service};
+
+            #==================================================
+            # step 1. construct hash of region and region:sservice
+            #==================================================
+            my %region_hash;
+            foreach my $subnetitem ( @$temp ) { $region_hash{$subnetitem->{region}}=$subnetitem; } 
+
+            foreach my $rserver ( @$rservers )
+            {
+                if ( $rserver=~m/localhost|system/ ) { next; }
+
+                #==========================================================================================
+                # add services into that region
+                #==========================================================================================
+                # Condition 1 : region does not exist, create a new record for $rserver.'/32'
+                if ( !exists($region_hash{$rserver.'/32'}) )
+                {
+                    my @newservices=@$services; 
+                    push(@newservices,'system');
+
+                    my %newsubnet=( region=>$rserver.'/32', dirty=>0, dservice=>['system'], sservice=>\@newservices); 
+                    push(@$temp, \%newsubnet);
+                }
+                # Condition 2 : region exists already, add new $services into its sservice set
+                else
+                {
+                    my $subnetitem=$region_hash{$rserver.'/32'};
+                    get_union_set($subnetitem->{sservice}, $services );
+                }
+            }
+        }
+    }
+    elsif ( $action{action} eq "autoDeleteSubnet" )
+    {
+        my %existingSubnetService=maintainVS( action=>"getHashOfAllRealServerAndService" );
+        my @newLVSNET;
+
+        foreach my $lvsnet ( @$temp ) 
+        {
+            if ( $lvsnet->{region} eq 'system' ) { push(@newLVSNET, $lvsnet); next;} 
+
+            if ( $lvsnet->{region}!~m/32$/ ) { push(@newLVSNET, $lvsnet); next; }
+
+            my @newsservices=('system');
+            my $lvssubnet=$lvsnet->{region};
+            my $sservices=$lvsnet->{sservice};
+
+            foreach my $service ( @$sservices )
+            {
+                my $checkkey=$lvssubnet.':'.$service;
+                if ( exists($existingSubnetService{$checkkey}) ) { push( @newsservices, $service ); }
+            }
+            
+            if ( @newsservices > 1 ) 
+            { 
+                $lvsnet->{sservice}=\@newsservices;
+                push(@newLVSNET, $lvsnet); 
+            }
+        }
+
+        $netref->{$action{viewpoint}}->[0]->{subnet}=\@newLVSNET;
+    }
+    elsif ( $action{action} eq "DELETESUBNET" ) 
+    { 
+        if( @$natnets <= 0 ) 
+        { 
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return; 
+        }
+    
+        foreach my $subnetitem ( @$temp ) 
+        {
+            if ( grep(/^$subnetitem->{region}$/, @$natnets) ) { next; }
+            push(@tempsubnetarray, $subnetitem);    
+        }
+        $netref->{$action{viewpoint}}->[0]->{subnet}=\@tempsubnetarray;
+         maintainIniroute(action=>'DELSUBNETRULES', source=>$natnets);
+    }
+    elsif ( $action{action} eq "DELSERVICE" )
+    {
+       my @serviceToDelete=("$action{service}");
+       
+       foreach my $subnet ( @$temp )
+       {
+            get_diff_set($subnet->{service}, \@serviceToDelete);   
+       } 
+    }
+    elsif ( $action{action} eq "CHECKNATOBSOLETE" )
+    {
+        my %routeoktab;
+        foreach my $subnet ( @$temp )  { $routeoktab{$subnet->{region}}=0; }
+        
+        maintainInterrt(action=>"BATCHECKROUTE", routeoktab=>\%routeoktab);
+
+        foreach my $subnet ( @$temp )
+        {
+            my $natOBS=1;
+
+            if ( $subnet->{region} eq 'system' ) { next; }
+
+            my $routeOK=$routeoktab{$subnet->{region}};
+
+            if ( $routeOK ) { $natOBS=0; }
+
+            $subnet->{dirty}=$natOBS;
+        }
+    }
+    elsif ( $action{action} eq "REPORT" )
+    {
+        print qq (<fieldset><legend><font class="subtitle">NAT Configuration</font></legend>);
+        print qq (<div class="reportdiv">);
+        foreach my $subnet ( @$temp )
+        {
+            if ( $subnet->{region} eq 'system' ) { next; }
+            foreach my $key ( keys %$subnet ) { if ( $key eq "service") { next; } print qq ( [ $key:$subnet->{$key} ] );  } 
+            print qq (<br>);
+
+            my $allservice=$subnet->{service};
+            foreach my $service ( @$allservice ) { if ( $service eq "system") { next; } print qq ( [ $service ] ); }
+            print qq (<br>);
+
+            print qq (<hr size="1">);
+        }
+        print qq (</div>);
+        print qq (</fieldset>);
+    }
+
+    #--------updating natnet.xml------------------------ 
+    XMLwrite($netref, $XMLFILE);
+
+    #=================================================
+    if( !($action{action}=~m/^APPENDSUBNET$/) )
+    {
+    #@dep
+    #update firewall mark value of zone
+    maintainFwmark(type=>$action{viewpoint});
+    }
+
+    if ( $action{viewpoint} eq "lvs" ) { maintainFwmark(type=>'lvslocalhost'); }
+}
+#maintainNAT
+
+#================================================================================================
+sub nat_net_sort_by_region 
+{
+    my ($avalue, $bvalue);
+    my @afields=split(/\.|\//,$a->{region});
+    my @bfields=split(/\.|\//,$b->{region});
+    
+    foreach my $index ( 0..4 )
+    {
+         $avalue=$afields[$index]; 
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+    
+    if ( $avalue == $bvalue )
+    {
+        @afields=split(/\.|\//,$a->{gateway});
+        @bfields=split(/\.|\//,$b->{gateway});
+        foreach my $index ( 0..3 )
+        {
+            $avalue=$afields[$index]; 
+            $bvalue=$bfields[$index];
+            if ( $avalue ne $bvalue ) { last; }
+        }
+    }
+    
+    $bvalue <=> $avalue;
+}
+#nat_net_sort_by_region
+
+#================================================================================================
+sub nat_net_sort_by_gateway 
+{
+    my ($avalue, $bvalue);
+    my @afields=split(/\.|\//,$a->{gateway});
+    my @bfields=split(/\.|\//,$b->{gateway});
+    foreach my $index ( 0..3 )
+    {
+         $avalue=$afields[$index]; 
+         $bvalue=$bfields[$index];
+         if ( $avalue ne $bvalue ) { last; }
+    }
+    
+    if ( $avalue == $bvalue )
+    {
+        @afields=split(/\.|\//,$a->{region});
+        @bfields=split(/\.|\//,$b->{region});
+        foreach my $index ( 0..4 )
+        {
+            $avalue=$afields[$index]; 
+            $bvalue=$bfields[$index];
+            if ( $avalue ne $bvalue ) { last; }
+        }
+    }
+    
+    $avalue <=> $bvalue;
+}
+#nat_net_sort_by_gateway
+
+#================================================================================================
+sub nat_net_sort_by_interface 
+{
+    my $avalue=$a->{dev}; $avalue=~s/eth//g;
+    my $bvalue=$b->{dev}; $bvalue=~s/eth//g; 
+    int($avalue) <=> int($bvalue);
+}
+#nat_net_sort_by_interface
+
+#
+1

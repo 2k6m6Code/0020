@@ -1,0 +1,18 @@
+set -x
+sleep 5
+tmpdir="/tmp/sslvpn"
+zipfile="sslvpn.zip"
+
+if [ -f /usr/local/apache/sslportal/$zipfile ]; then
+    rm -f  /usr/local/apache/sslportal/$zipfile
+fi
+
+mkdir $tmpdir 
+cp -a /etc/ssl/ca.crt $tmpdir 
+cp -a /etc/ssl/ta.key $tmpdir 
+cp -a /etc/ssl/client.ovpn $tmpdir 
+cp -a /mnt/setup.exe $tmpdir
+cd /tmp/ 
+zip -r $zipfile ./sslvpn/ca.crt ./sslvpn/ta.key ./sslvpn/client.ovpn ./sslvpn/setup.exe
+mv $zipfile /usr/local/apache/sslportal/
+rm -rf $tmpdir 

@@ -1,0 +1,4 @@
+<opt file="access" status="all_allow">
+  <access actiontype="system" destination="system" schedul="system" service="system" source="system" />
+  <access name="Default" actiontype="Allow" destination="all" source="all" />
+</opt>

@@ -1,0 +1,29 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<title>Setup Policy-Based Filter</title>
+</head>
+<body>
+
+<h2>Setup Policy-Based Filter</h2>
+<p>
+為Policy Routing中設定的policy給某筆在 class definition 裡面所設定的 class 來管理 
+</p>
+<ol>
+<li>瀏覽 Filters</li>
+<p>
+點選所設定的 policy 可知道流量走哪個 class
+</p>	 
+<li>設定 Filter</li>
+<p>
+如要對某筆 policy 頻寬加以限制，請 Edit 某筆 policy，下面欄位列出剛剛在 Class Definition 裡面所設定的 class。點選要交予管理的 class，再按 OK，這裡如果為外送的 Request流量選定了內送Inbound的Class定義，則系統會把這筆外送policy產生的內送流量導入該Class中
+</p>
+<li>解除 Filter</li> 
+<p>
+點選某筆要解除的 filter，把 ISP 皆設為 default class即可 
+</p>
+</ol>
+<p>
+當您點選一筆政策，欲設定該走的class 時，下面欄位所列出可供選擇的各個路徑，在這個情況下，只需選擇這個policy有走到路徑中的class定義就好了 
+</p>
+</body></html>

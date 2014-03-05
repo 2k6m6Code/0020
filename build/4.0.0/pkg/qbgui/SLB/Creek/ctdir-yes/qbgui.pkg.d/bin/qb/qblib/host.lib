@@ -1,0 +1,325 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showHost
+{
+    my (%action)=@_;
+#    $gMSGPROMPT.=qq( show keyword : $action{showkeyword} \\n);
+    my $hostref=XMLread($gPATH.'host.xml');
+    my $hostlist=$hostref->{host};
+    
+    my @titleHeadList=('Name', 'Address Detail', 'Edit', 'Used by policy', 'Used by GSLB');
+    my %titleWidth=('Name'=>150, 'Address'=>500, 'Edit'=>50);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0" style="table-layout:fixed;word-break:break-all">);
+	
+	# if ( $action{showkeyword} eq '1' )
+    # {}
+    # else
+    # {
+		# print qq (<tr>);
+		# print qq (<td align="center">);
+		# print qq (<fieldset id="ping" class="fieldset" style="width:95%">);
+		# print qq (<legend class="subtitle">Type</legend>);
+		# print qq (<table class="body" width="100%"><tr>);
+		# print qq (<td align="center"><a href="host.cgi?type=4"><button type=button style="width:100" hidefocus="true" class="menu">IPv4</button></a></td>);
+		# print qq (<td align="center"><a href="host.cgi?type=6"><button type=button style="width:100" hidefocus="true" class="menu">IPv6</button></td>);
+		# print qq (<td align="center"><a href="host.cgi?type=mac"><button type=button style="width:100" hidefocus="true" class="menu">Mac</button></td></tr></table></fieldset>);
+		# print qq (</td></tr>);
+    # }
+	
+    if ( $action{showkeyword} eq '1' )
+    {
+        print qq (<tr><td class="bigtitle">Keyword );
+	print qq (<input class="qb" type="button" width="100" value="$qblang[162]" onclick="Newhost(1);">);
+        if ($action{type} eq 'fqdn')
+        {
+	    print qq (<input class="qb" type="button" width="100" value="Import Default FQDN" onclick="MM_openBrWindow('object_link.php?action=host_import','Host',650,600);">);
+	}
+    }
+    else
+    {
+    print qq (<tr><td class="bigtitle">$qblang[160] <input class="qb" type="button" width="100" value="$qblang[162]" onclick="Newhost(0);"></td></tr>);
+        if ($action{type} eq 'fqdn')
+        {
+	    print qq (<input class="qb" type="button" width="100" value="Import Default FQDN" onclick="MM_openBrWindow('object_link.php?action=host_import','Host',650,600);">);
+	}
+    }
+    print qq (<tr><td>);
+    print qq (<table width="100%" cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+	
+	#print qq (<tr><td align="center"><input class="qb" type="button" align="left" width="100" value="$qblang[162]" onclick="Newhost(0);"></td></tr>);
+	
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (</tablee);
+
+    #==============================================================
+    # Print Title first
+    # show 
+    #===============================================================
+    #print qq (<div class="divframe" style="width:800">);
+    #print qq (<table bgcolor="#332211" width="100%" border="0" style="table-layout:fixed;word-break:break-all"><tr>);
+    # print qq (<div class="divframe" style="width: 100% !important;">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0" style="table-layout:fixed;word-wrap:break-word;"><tr>);
+    # foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    # print qq (<td align="center" width="100">);
+    # print qq (<a href="javascript:delhost()"><image src="image/del.gif" title="Delete Checked Host(s)" border="0"></a>);
+    # print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('host', this.checked)">);
+    # print qq (</tr></table>);
+    # print qq (</div>);
+	
+    print qq (<div class="divframe" style="height:200; width:800">);
+    print qq (<table id="hostList" width="100%"  class="body" border="0"><thead>);
+    print qq (<tr bgcolor="#332211"><th width="150" align="center">$qblang[29]</th>);
+    if ( $action{showkeyword} eq '1' )
+    {
+    #print qq (<th width="" align="center">$qblang[484]</th>);
+    print qq (<th width="" align="center">Keyword list</th>);
+    }
+    else
+    {
+    print qq (<th width="550" align="center">$qblang[161]</th>);
+    }
+	#print qq (<tr><td align="center"><input class="qb" type="button" width="100" value="$qblang[162]" onclick="Newhost(0);"></td></tr>);
+    print qq (<th width="50" align="center">$qblang[25]</th>);
+    
+    #print qq (<th width="110" align="center">Using By Policy);
+    #print qq (<input type="checkbox" CHECKED onclick="setAllCheckBoxValue('byPolicy', this.checked)" title="select or deselect all items"></th>);
+    #print qq (<th width="110" align="center">Using By GSLB);
+    #print qq (<input type="checkbox" onclick="setAllCheckBoxValue('byGSLB', this.checked)" title="select or deselect all items"></th>);
+    
+    print qq (<th width="50" align="center"><a href="javascript:delhost()">);
+    print qq (<img border="0" title="Delete Checked Host(s)" src="image/del.gif"></a>);
+    print qq (<input type="checkbox" onclick="setAllCheckBoxValue('host', this.checked)" title="select or deselect all items"></th>);
+    print qq (</tr></thead>);
+    my $lineCount=0;
+    foreach my $item ( @$hostlist )
+    {
+        if ( $item->{hostname} eq "system" || $item->{hide} eq "1" ) { next; }
+        if ( $action{showkeyword} eq '1' )
+        {
+            if ( $item->{hosttype} ne "weburl" ) { next; }
+        }
+        else
+        {
+            if ( $item->{hosttype} eq "weburl" ) { next; }
+        }
+		
+	if ( $action{type} eq "4" ) 
+	{
+	    if ( $item->{hostname}=~m/-IPv6-/ ) { next; }
+	    if ( $item->{type} && $item->{type} eq "mac" ) { next; }
+	    if ( $item->{type} && $item->{type} eq "fqdn" ) { next; }
+	    if ( !$item->{type} && $item->{hosttype} eq "mac" ) { next; }
+	    if ( !$item->{type} && $item->{hosttype} eq "fqdn" ) { next; }
+            my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+            print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+            my $showname=$item->{hostname};
+            $showname=~s/host-//g;
+            print qq (<td align="center" style="center: 0px; width: 150px; table-layout: fixed;  word-wrap: break-word;">$showname</td>);
+            print qq (<td align="center" style="center: 0px; width: 350px; table-layout: fixed;  word-wrap: break-word;">$item->{hostaddress}</td>);
+            print qq (<td align="center" width="50px" height="25">);
+	    if ( $action{showkeyword} eq '1' )
+	    {
+		print qq (<a href="newhost.cgi?hostname=$item->{hostname}&hosttype=$item->{hosttype}&hostaddress=$item->{hostaddress}";selectedColor(natList.rows[$lineCount])"><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+            }
+	    else
+	    {
+		print qq (<a href="#" onClick="MM_openBrWindow('newhost.cgi?hostname=$item->{hostname}&hosttype=iplist&hostaddress=$item->{hostaddress}&type=$action{type}','Host',650,350)" selectedColor(natList.rows[$lineCount])><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+	    }
+        
+            print qq (<td align="center" width="50px" height="25">);
+            print qq (<input type="checkbox" name="host" value="$item->{hostname}"></td>);
+            print qq (</tr>);
+            $lineCount++;
+	}
+		
+	if ( $action{type} eq "6" ) 
+	{
+	    if ( $item->{hosttype} eq "fqdn" ) { next; }
+	    if ($item->{hostname}=~m/-IPv6-/) 
+	    {
+	    	my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+	    	print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+	    	my $showname=$item->{hostname};
+	    	my $delname=$item->{hostname};
+	    	$showname=~s/host-//g;
+	    	$showname=~s/-IPv6-//g;
+	    	print qq (<td align="center" style="center: 0px; width: 150px; table-layout: fixed;  word-wrap: break-word;">$showname</td>);
+	    	print qq (<td align="center" style="center: 0px; width: 350px; table-layout: fixed;  word-wrap: break-word;">$item->{hostaddress}</td>);
+	    	print qq (<td align="center" width="50px" height="25">);
+	    	if ( $action{showkeyword} eq '1' )
+	    	{
+		    print qq (<a href="newhost.cgi?hostname=$showname&hosttype=$item->{hosttype}&hostaddress=$item->{hostaddress}";selectedColor(natList.rows[$lineCount])"><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+	    	}
+	    	else
+	    	{
+		    print qq (<a href="#" onClick="MM_openBrWindow('newhost.cgi?hostname=$showname&hosttype=iplist&hostaddress=$item->{hostaddress}&type=$action{type}','Host',650,350)" selectedColor(natList.rows[$lineCount])><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+	    	}
+	    	print qq (<td align="center" width="50px" height="25">);
+	    	print qq (<input type="checkbox" name="host" value="$delname"></td>);
+	    	print qq (</tr>);
+	    	$lineCount++;
+	    }
+	}
+	if ( $action{type} eq "mac" ) 
+	{
+	    if ( $item->{type} && $item->{type} ne "mac" ) { next; }
+	    if ( !$item->{type} && $item->{hosttype} ne "mac" ) { next; }
+	    my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+	    print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+	    my $showname=$item->{hostname};
+	    $showname=~s/host-//g;
+	    print qq (<td align="center" style="center: 0px; width: 150px; table-layout: fixed;  word-wrap: break-word;">$showname</td>);
+	    print qq (<td align="center" style="center: 0px; width: 350px; table-layout: fixed;  word-wrap: break-word;">$item->{hostaddress}</td>);
+	    print qq (<td align="center" width="50px" height="25">);
+	    if ( $action{showkeyword} eq '1' )
+	    {
+		print qq (<a href="newhost.cgi?hostname=$item->{hostname}&hosttype=$item->{hosttype}&hostaddress=$item->{hostaddress}";selectedColor(natList.rows[$lineCount])"><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+	    }
+	    else
+	    {
+		print qq (<a href="#" onClick="MM_openBrWindow('newhost.cgi?hostname=$item->{hostname}&hosttype=$item->{hosttype}&hostaddress=$item->{hostaddress}&type=$action{type}','Host',650,350)" selectedColor(natList.rows[$lineCount])><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+	    }
+	    print qq (<td align="center" width="50px" height="25">);
+	    print qq (<input type="checkbox" name="host" value="$item->{hostname}"></td>);
+	    print qq (</tr>);
+	    $lineCount++;
+	}
+	if ( $action{type} eq "fqdn" ) 
+	{
+	    if ( $item->{type} && $item->{type} ne "fqdn" ) { next;}
+	    if ( !$item->{type} && $item->{hosttype} ne "fqdn" ) { next; }
+            my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+            print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+            my $showname=$item->{hostname};
+	    my $delname=$item->{hostname};
+	    $showname=~s/host-//g;
+	    $showname=~s/-IPv6-//g;
+            print qq (<td align="center" style="center: 0px; width: 150px; table-layout: fixed;  word-wrap: break-word;">$showname</td>);
+            print qq (<td align="center" style="center: 0px; width: 350px; table-layout: fixed;  word-wrap: break-word;">$item->{hostaddress}</td>);
+            print qq (<td align="center" width="50px" height="25">);
+            #print qq (<a href="newhost.cgi?schname=$item->{hostname}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+	    if ( $action{showkeyword} eq '1' )
+	    {
+		print qq (<a href="newhost.cgi?hostname=$item->{hostname}&hosttype=$item->{hosttype}&hostaddress=$item->{hostaddress}";selectedColor(natList.rows[$lineCount])"><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+            }
+	    else
+	    {
+		print qq (<a href="#" onClick="MM_openBrWindow('newhost.cgi?hostname=$item->{hostname}&hosttype=$item->{hosttype}&hostaddress=$item->{hostaddress}&type=$action{type}','Host',650,350)" selectedColor(natList.rows[$lineCount])><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+	    }
+        
+            print qq (<td align="center" width="50px" height="25">);
+            print qq (<input type="checkbox" name="host" value="$delname"></td>);
+            print qq (</tr>);
+            $lineCount++;
+	}
+		if ( $action{type} eq "" ) 
+		{
+			my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+			print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+			my $showname=$item->{hostname};
+			$showname=~s/host-//g;
+			print qq (<td align="center" style="center: 0px; width: 150px; table-layout: fixed;  word-wrap: break-word;">$showname</td>);
+			print qq (<td align="center" style="center: 0px; width: 350px; table-layout: fixed;  word-wrap: break-word;">$item->{hostaddress}</td>);
+			print qq (<td align="center" width="50px" height="25">);
+			#print qq (<a href="newhost.cgi?schname=$item->{hostname}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+			if ( $action{showkeyword} eq '1' )
+			{
+				print qq (<a href="newhost.cgi?hostname=$item->{hostname}&hosttype=$item->{hosttype}&hostaddress=$item->{hostaddress}";selectedColor(natList.rows[$lineCount])"><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+			}
+			else
+			{
+				print qq (<a href="#" onClick="MM_openBrWindow('newhost.cgi?hostname=$item->{hostname}&hosttype=iplist&hostaddress=$item->{hostaddress}&type=$action{type}','Host',650,350)" selectedColor(natList.rows[$lineCount])><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+			}        
+			#print qq (<td align="center" width="50px" height="25">);
+			#print qq (<input type="checkbox" CHECKED id="byPolicy" name="byPolicy" value="$item->{hostname}"></td>);
+			#print qq (<td align="center" width="50px" height="25">);
+			#print qq (<input type="checkbox" id="byGSLB" name="byGSLB" value="$item->{hostname}"></td>);
+			
+			print qq (<td align="center" width="50px" height="25">);
+			print qq (<input type="checkbox" name="host" value="$item->{hostname}"></td>);
+			print qq (</tr>);
+			$lineCount++;
+		}
+    }
+                                            
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    if ( $action{showkeyword} eq '1' )
+    {
+    print qq (<input class="qb" type="button" width="100" value="$qblang[162]" onclick="Newhost(1);">);
+    }
+    else
+    {
+    print qq (<input class="qb" type="button" width="100" value="$qblang[162]" onclick="Newhost(0);">);
+    }
+    print qq (<input type="hidden" name="showkeyword" id="showkeyword" value="$action{showkeyword}" >);
+}
+#showHost
+    
+
+
+#=============================================================================================
+
+sub scriptHost 
+{
+    print << "scriptHost";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+	function MM_openBrWindow(theURL,winName,win_width,win_height) 
+	{
+		var PosX = (window.screen.availWidth-10-win_width)/2; 
+		var PosY = (window.screen.availHeight-30-win_height)/2; 
+		features = "width="+win_width+",height="+win_height+",top="+PosY+",left="+PosX+",status=no,location=no,status=no,menubar=no,toolbar=no,resizable=no,scrollbars=no"; 
+		var newwin = window.open(theURL,winName,features); 
+	}
+    function Newhost() 
+    {
+		if(document.getElementById('type').value)
+		{var type=document.getElementById('type').value;}
+        var showkeyword=document.getElementById('showkeyword').value;
+        //alert (showkeyword);
+        if ( showkeyword )
+    	window.top.mainFrame.location.href="newhost.cgi?hosttype=weburl"; 
+    	else
+		{
+			if(type=='mac')
+				MM_openBrWindow('newhost.cgi?hosttype=mac&type='+type,'Host',650,350);
+				//window.open ('newhost.cgi?hosttype=mac&type='+type, 'Host', 'height=350,width=650,toolbar=no,menubar=no,scrollbars=no,resizable=no,location=no,status=no');
+			else if(type=='fqdn')
+				MM_openBrWindow('newhost.cgi?hosttype=fqdnlist&type='+type,'Host',650,350);
+				//window.open ('newhost.cgi?hosttype=fqdnlist&type='+type, 'Host', 'height=350,width=650,toolbar=no,menubar=no,scrollbars=no,resizable=no,location=no,status=no');
+			else
+				MM_openBrWindow('newhost.cgi?hosttype=iplist&type='+type,'Host',650,350);
+				//window.open ('newhost.cgi?hosttype=iplist&type='+type, 'Host', 'height=350,width=650,toolbar=no,menubar=no,scrollbars=no,resizable=no,location=no,status=no');
+    	//window.top.mainFrame.location.href="newhost.cgi?hosttype=ip"; 
+		}
+    }
+    
+    function delhost()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }	
+    </script>
+    
+scriptHost
+}
+#hostScript
+#
+1

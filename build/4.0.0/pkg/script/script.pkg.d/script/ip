@@ -1,0 +1,17 @@
+#!/bin/sh
+
+ARGS=$*
+
+OBJECT=$1
+ACTION=$2
+
+#
+# 2005-0728 Hammer
+#	From Jesse, !!! DO NOT put iseq !!!
+#
+if [ "x$OBJECT" = "xtunnel" -a "x$ACTION" = "xadd" ]; then
+	/usr/local/sbin/ip.org $ARGS oseq
+else
+	/usr/local/sbin/ip.org $ARGS
+fi
+

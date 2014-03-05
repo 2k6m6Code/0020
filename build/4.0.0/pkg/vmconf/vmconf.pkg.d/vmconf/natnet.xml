@@ -1,0 +1,5 @@
+<opt status="lock" file="natnet">
+  <nat>
+    <subnet dirty="1" region="system" />
+  </nat>
+</opt>

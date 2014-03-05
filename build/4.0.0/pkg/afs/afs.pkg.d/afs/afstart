@@ -1,0 +1,71 @@
+#!/bin/sh
+# DeanSoft Co., Ltd.
+if [ -f /usr/afs/AFS1000-DA -o -f /usr/afs/AFS2000-DA -o -f /usr/afs/AFS2000-HC ] ;then
+	DA=1
+else
+	DA=0
+fi
+
+ps aux|grep -v grep|egrep 'afsd|afsdio|afsdio2' >/dev/null 2>&1
+if [ $? -eq 0 ] ;then
+	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	echo "!!                                                      !!"
+	echo "!!     AFS Daemon has already been started.             !!"
+	echo "!!                                                      !!"
+	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	exit 1
+fi
+
+echo "Start AFS system, afsd ..."
+/usr/afs/chkafs
+if [ $? -ne 0 ] ;then
+	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	echo "!!                                                      !!"
+	echo "!!    SOME FILES OF AFS SYSTEM ARE MISSING              !!"
+	echo "!!-------> unable to start AFS SYSTEM <-----------------!!"
+	echo "!!    Please re_install AFS SYSTEM and reboot machine.  !!"
+	echo "!!                                                      !!"
+	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	exit 1
+fi
+	 
+rm -f /tmp/afsa* /tmp/afsb*
+/usr/afs/afsinit
+if [ -f /usr/afs/AFS2000-HC ] ;then
+	/usr/afs/afsdio2
+else
+	/usr/afs/afsdio 
+fi
+#/usr/afs/afsd a nochksvc
+
+#2011/06/29 For NA-710
+QBREG_FILE=/opt/qb/registry
+AFS_ROLE=$(cat /mnt/qb/conf/ha/role)
+MODELNAME=$(awk  "/HARDWARE/ { print \$2 }" $QBREG_FILE)
+if  [ "$MODELNAME" = "NA710" ] && [ "$AFS_ROLE" != "1" ];then
+mv -f /usr/afs/afsd /usr/afs/afsd.org
+ln -s /usr/afs/afsd.na710 /usr/afs/afsd
+/usr/afs/afsd a
+else
+/usr/afs/afsd a
+fi
+
+if [ $DA = 1 ] ;then
+#	/usr/afs/afsd b nochksvc
+	/usr/afs/afsd b
+fi
+
+`ps aux|grep -v grep >/var/log/afsprocess.log`
+if ps aux|grep -v grep|grep 'afsd' >/dev/null 2>&1 && ps aux|grep -v grep|egrep 'afsdio|afsdio2' >/dev/null 2>&1 
+then
+: do nothing
+else
+	/usr/afs/afstop >/dev/null 2>&1
+	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	echo "!!                                                      !!"
+	echo "!!               AFS Daemon start fail                  !!"
+	echo "!!                                                      !!"
+	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	exit 1
+fi
+

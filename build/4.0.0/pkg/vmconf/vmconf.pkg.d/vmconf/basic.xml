@@ -1,0 +1,4 @@
+<opt file="basic" lastupdate="" state="reserved">
+  <isp alive="0" broadcast="" ddnschoice="www.dyndns.org" ddnsdomainname="your.domain.name" ddnsname="login" ddnspasswd="password" download="" dsip="1" enabled="0" enableddns="No" enableproxy="" gateway="" iid="system" ispname="" isptype="" local="" nic="" password="" pppoename="" pppoepasswd="" pppoeportdev="" proxyip="" proxyname="" remote="" state="NONE" subnet="" systemip="" type="fixed" upload="" username="" />
+  <isp alive="0" apn_name="" broadcast="" ddnschoice="" ddnsdomainname="" ddnsname="" ddnspasswd="" download="10240" dsip="1" enabled="1" enableddns="" enableproxy="" flag_3g="" gateway="255.255.255.254" iid="1" ispname="ISP1" isptype="normal" local="" nic="eth0" password="" pppoename="" pppoepasswd="" pppoeportdev="" proxyip="" proxyname="" remote="" state="FORMATOK" subnet="255.255.255.0/24" systemip="255.255.255.253" target="255.255.255.254" type="fixed" upload="10240" username="" />
+</opt>

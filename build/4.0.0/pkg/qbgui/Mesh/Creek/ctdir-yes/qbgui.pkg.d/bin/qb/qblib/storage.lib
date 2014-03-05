@@ -1,0 +1,132 @@
+###############################################################################################
+#                                           Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showStorage 
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[363]); 
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    print qq (<tr><td class="body" width="300" height="30" align="center" valign="center" >$qblang[364]:</td></tr>);
+    print qq (<tr><td class="body" width="300" height="30" align="center" valign="center" >);
+    print qq (<select class="qbopt" name="formattype" style="width:180">\n);
+    foreach my $types ( sort keys %gFSTYPE ) { print qq (<option value="$types" title="$types" >$gFSTYPE{$types}</option>/n); }
+    print qq (</select><br>);
+
+    my $deviceinfo=runCommand(command=>"ls", params=>'/dev/.udev/db/block@sd*');
+    my @devicerecord=split(/\n/, $deviceinfo);
+    my $partitioninfo=runCommand(command=>"cat", params=>'/proc/partitions');
+    my @partitionrecord=split(/\n/, $partitioninfo);
+    my @devicelist;
+    my @partitionlist;
+    my @deviceinfolist;
+
+    #20100415 Brian To collect USB Device info.
+    foreach my $record ( @partitionrecord ) 
+    {
+        if ( $record =~m/(sd[a-z]\d+)/ || $record =~m/(sd[a-z])/ )
+        {
+           my $Vendor_record;
+           my $Model_record;
+           my $Rev_record;
+           my @devicedata=split(/\s+/, $record);
+           my $partition=$devicedata[4]; 
+           $devicedata[4] =~s/(\d+)//g;
+           my $Deviceinfo;
+           if ( $record =~m/(sd[a-z]\d+)/ )
+           {
+             $Deviceinfo=runCommand(command=>"cat", params=>'/dev/.udev/db/block\@'.$devicedata[4].'\@'.$partition);
+           }else{
+             $Deviceinfo=runCommand(command=>"cat", params=>'/dev/.udev/db/block\@'.$devicedata[4]);
+           } 
+           my @deviceinforecord=split(/\n/, $Deviceinfo);
+           foreach my $inforecord ( @deviceinforecord ) 
+           { 
+             if ( grep(/ID_VENDOR/, $inforecord) )
+             {
+                $Vendor_record=$inforecord;
+                $Vendor_record=~s/E:ID_VENDOR=//g;
+             }
+             if ( grep(/ID_MODEL/, $inforecord) )
+             {
+                $Model_record=$inforecord;
+                $Model_record=~s/E:ID_MODEL=//g;
+             }
+             if ( grep(/ID_REVISION/, $inforecord) )
+             {
+                $Rev_record=$inforecord;
+                $Rev_record=~s/E:ID_REVISION=//g;
+             }
+            }
+           push ( @deviceinfolist, $Vendor_record.' '.$Model_record.' '.$Rev_record);
+           push ( @partitionlist, $partition.' Size:'.$devicedata[3].'(KB)');
+           push ( @devicelist, $partition);
+        }
+    }
+    #20090717 Brian To collect IDE Device info.
+    my $idedev=runCommand(command=>'cat', params=>qq('/tmp/idedev'\|awk \'\{print \$1\}\') );
+    $idedev=~s/Dev://g;
+    $idedev=~s/\n//g;
+    my $idesize=runCommand(command=>'cat', params=>qq('/tmp/idedev'\|awk \'\{print \$2\}\') );
+    my $ideinfo=runCommand(command=>'cat', params=>qq('/tmp/idedev'\|sed -e \"s\/Dev\.\*\.Name\://\") );
+
+    print qq (<select class="qbopt" name="devicename" style="width:180">\n);
+    my $devicelist_length=($#devicelist +1);
+    print qq (<option value="0">None</option>/n);
+    for ( $i = 0; $i<$devicelist_length; $i++)
+    {
+       print qq (<option value="$devicelist[$i]" title="$deviceinfolist[$i]; $partitionlist[$i]">$deviceinfolist[$i]</option>/n); 
+    }
+    if ( $idedev ne "" )
+    {
+    print qq (<option value="$idedev" title="$idedev $idesize(KB)">$ideinfo</option>/n); 
+    }
+    print qq (</select><br>);
+    print qq (<input type="button" class="qb" value="$qblang[364]" title="Format Hard Disk for Analyser or Proxy Server" onClick="formatHDD()" style="width:180px">);
+    print qq (</td>);
+    print qq (</tr>);
+    #************************************Brian 20090313 Select Analyzer HDD.********************************************
+    print qq (<tr>); 
+    print qq (<td class="body" width="300" height="30" align="center" valign="center" >);
+    print qq ($qblang[365]:);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<tr>);
+    print qq (<td class="body" width="300" height="30" align="center" valign="center" >);
+    print qq (<select class="qbopt" name="analydev" style="width:180">\n);
+    print qq (<option value="0">None</option>/n);
+    for ( $i = 0; $i<$devicelist_length; $i++)
+    {
+       my $status=($overview->{analydev} eq $devicelist[$i]) ? ('selected'): ('');
+       print qq (<option value="$devicelist[$i]" $status title="$deviceinfolist[$i]; $partitionlist[$i]">$deviceinfolist[$i]</option>/n); 
+    }
+    my $status=($overview->{analydev} eq $idedev) ? ('selected'): ('');
+    if ( $idedev ne "" )
+    {
+    print qq (<option value="$idedev" $status title="$idedev $idesize(KB)">$ideinfo</option>/n); 
+    }
+    print qq (</select><br>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (</table>);
+
+    
+    #************************************ Command Button  ********************************************
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body" width="300" height="30" align="center" valign="center" >);
+    print qq (<input class="qb" type="button" value="$qblang[54]" title="Save All Parameters" onClick="goSubmit('SAVE')" style="width:180">);
+    print qq (</td></tr>);
+ 
+    print qq (</table>);
+}
+#showConsole
+#
+1

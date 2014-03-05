@@ -1,0 +1,4 @@
+﻿<opt file="schedule">
+  <server days="system" description="system" schname="system" timestart="system" timestop="system" />
+  <user days="system" description="system" idle_time="43200" login_time="43200" schname="system" time_hr="15" time_sec="59" timestart="system" timestop="system" />
+</opt>

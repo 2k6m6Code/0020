@@ -1,0 +1,27 @@
+#ms-dns  192.168.1.1
+#ms-dns  192.168.1.3
+#ms-wins 192.168.1.2
+#ms-wins 192.168.1.4
+
+ipcp-accept-local
+ipcp-accept-remote
+noccp
+novj
+novjccomp
+opcomp
+oaccomp
+
+noauth
+crtscts
+idle 1800
+mtu 1410
+mru 1410
+nodefaultroute
+debug
+lock
+proxyarp
+connect-delay 5000
+
+logfd 2
+logfile /var/log/l2tpd.log
+

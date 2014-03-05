@@ -1,0 +1,193 @@
+#set -x
+action=$1
+device=$2
+
+case $action in
+   Reset )
+          case $device in
+             Hub )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATR01111111\r" >/dev/ttyS1
+                ;; # 
+             All )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATR10000000\r" >/dev/ttyS1
+                ;; # 
+          All_PW )
+  
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM0000000\r" >/dev/ttyS1
+                   sleep 4
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1000000\r" >/dev/ttyS1
+                   sleep 4
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1100000\r" >/dev/ttyS1
+                   sleep 4
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1110000\r" >/dev/ttyS1
+                   sleep 4
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1111000\r" >/dev/ttyS1
+                   sleep 4
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1111100\r" >/dev/ttyS1
+                   sleep 4
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1111110\r" >/dev/ttyS1
+                   sleep 4
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1111111\r" >/dev/ttyS1
+                   sleep 4                           
+                ;; # 
+               1 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATR11111110\r" >/dev/ttyS1
+                ;; # 
+               2 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATR11111101\r" >/dev/ttyS1
+                ;; # 
+               3 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATR11111011\r" >/dev/ttyS1
+                ;; # 
+               4 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATR11110111\r" >/dev/ttyS1
+                ;; # 
+               5 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATR11101111\r" >/dev/ttyS1
+                ;; # 
+               6 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATR11011111\r" >/dev/ttyS1
+                ;; # 
+               7 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATR10111111\r" >/dev/ttyS1
+                ;; # 
+               ttyUSB* )
+                   USBNO=`echo $device|sed 's/ttyUSB//g'|sed 's/\n//g'`
+                   if [ -f /tmp/usbdev.tab ];then
+                   Brand=`cat /tmp/usbdev.tab|grep "$device "|awk '{print $7}'`
+                   else
+                   Brand=`cat /tmp/usbdev.tab.bak|grep "$device "|awk '{print $7}'`
+                   fi
+                   case $Brand in
+                   Huawei )
+                             echo -ne "AT+CFUN=1,0\r" >/dev/$device
+                             sleep 10
+                             echo -ne "AT+CFUN=1,1\r" >/dev/$device
+                             sleep 20
+                         ;;
+                    Qisda )
+                             USBNO=`echo $device|sed 's/ttyUSB//g'|sed 's/\n//g'`
+                             AP_Port_NO=`expr $USBNO - 1`
+                             AP_device=ttyUSB$AP_Port_NO
+                             catty -r 0 -d /dev/$AP_device -b 460800 -w "at\$QCPWRDN\r\n"
+                         ;;
+                        * )
+                             echo -ne "AT+CFUN=1,0\r" >/dev/$device
+                             sleep 10
+                             echo -ne "AT+CFUN=1,1\r" >/dev/$device
+                             sleep 20
+                         ;;
+                    esac
+                  ;; # ex. Help
+               * )
+                   echo "Format: 3gctrl Reset [Hub/All/All_PW/1/2/3/4/5/6/7/ttyUSBx]"
+                   echo "               Pwon  [All/1/2/3/4/5/6/7]"
+                   echo "               Pwoff [All/1/2/3/4/5/6/7]"
+                  ;; # ex. Help
+          esac
+          ;; # 
+   Pwoff )
+          case $device in
+             All )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM0000000\r" >/dev/ttyS1
+                ;; # 
+               1 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM0111111\r" >/dev/ttyS1
+                ;; # 
+               2 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1011111\r" >/dev/ttyS1
+                ;; # 
+               3 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1101111\r" >/dev/ttyS1
+                ;; # 
+               4 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1110111\r" >/dev/ttyS1
+                ;; # 
+               5 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1111011\r" >/dev/ttyS1
+                ;; # 
+               6 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1111101\r" >/dev/ttyS1
+                ;; # 
+               7 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1111110\r" >/dev/ttyS1
+                ;; # 
+               * )
+                   echo "Format: 3gctrl Reset [Hub/All/All_PW/1/2/3/4/5/6/7/ttyUSBx]"
+                   echo "               Pwon  [All/1/2/3/4/5/6/7]"
+                   echo "               Pwoff [All/1/2/3/4/5/6/7]"
+                  ;; # ex. Help
+          esac
+          ;; # 
+    Pwon )
+          case $device in
+             All )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1111111\r" >/dev/ttyS1
+                ;; # 
+               1 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM1000000\r" >/dev/ttyS1
+                ;; # 
+               2 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM0100000\r" >/dev/ttyS1
+                ;; # 
+               3 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM0010000\r" >/dev/ttyS1
+                ;; # 
+               4 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM0001000\r" >/dev/ttyS1
+                ;; # 
+               5 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM0000100\r" >/dev/ttyS1
+                ;; # 
+               6 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM0000010\r" >/dev/ttyS1
+                ;; # 
+               7 )
+                   stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+                   echo -e -n "ATM0000001\r" >/dev/ttyS1
+                ;; # 
+               * )
+                   echo "Format: 3gctrl Reset [Hub/All/All_PW/1/2/3/4/5/6/7/ttyUSBx]"
+                   echo "               Pwon  [All/1/2/3/4/5/6/7]"
+                   echo "               Pwoff [All/1/2/3/4/5/6/7]"
+                  ;; # ex. Help
+          esac
+          ;; # 
+     * )
+           echo "Format: 3gctrl Reset [Hub/All/All_PW/1/2/3/4/5/6/7/ttyUSBx]"
+           echo "               Pwon  [All/1/2/3/4/5/6/7]"
+           echo "               Pwoff [All/1/2/3/4/5/6/7]"
+          ;; # ex. Help
+esac

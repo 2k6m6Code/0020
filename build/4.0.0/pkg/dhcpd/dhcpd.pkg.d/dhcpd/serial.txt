@@ -1,0 +1,15 @@
+
+------------------------------------------------
+serial = 002   Tue Oct 28 16:49:45 CST 2008
+component= DHCPD.PKG
+version=3.0.0.002
+notes:
+1.Support dhcp relay function.
+------------------------------------------------
+serial = 001   Mon Oct 15 17:50:08 CST 2007
+component= DHCPD.PKG
+version=3.0.0.001
+notes:
+1.First release for QB 3.0.0.
+2.The same as QB 2.5.0.
+------------------------------------------------

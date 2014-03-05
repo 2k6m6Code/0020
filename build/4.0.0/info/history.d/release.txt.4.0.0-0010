@@ -1,0 +1,7 @@
+   1.To add DHCP status and ARP tables in LAN Host page 
+    The modification include : dhcplog.cgi arptable.cgi english.xml
+   2.To fix DNS relay can not be edit .
+    The modification include : dns_relay.cgi editdns.lib qblanguage.cgi
+   3.To modify tree menu
+	The modification include : english.xml
+

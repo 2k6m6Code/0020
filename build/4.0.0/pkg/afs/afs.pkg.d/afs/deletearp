@@ -1,0 +1,11 @@
+#!/bin/sh
+PATH=$PATH:/bin:/usr/bin:/etc:/usr/etc:/usr/sbin:/sbin
+TMPFNM=/tmp/delarp.$$
+arp -an >$TMPFNM
+exec 3< $TMPFNM
+while read LINE <&3 ;do
+	if [ -n "$LINE" ] ;then
+		(IFS='()';set $LINE;arp -d $2 >/dev/null 2>&1)
+	fi
+done
+rm -f $TMPFNM

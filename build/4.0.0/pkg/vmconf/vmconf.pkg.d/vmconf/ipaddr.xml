@@ -1,0 +1,5 @@
+<opt file="ipaddress">
+  <ipaddress ip="system" isp="system" nic="system" />
+  <ipaddress ip="192.168.1.6" isp="nat1" nic="eth3" />
+  <ipaddress ip="255.255.255.253" isp="1" nic="eth0" />
+</opt>

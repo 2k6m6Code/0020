@@ -1,0 +1,16 @@
+#!/bin/sh
+
+SCRIPT_PREFIX=/opt/qb/bin/script
+QBWDT_PREFIX=/opt/qb/qbwdt
+XMLEZIOTOOLS=/opt/qb/qbwdt/xmlezio_tools
+mv /opt/qb/qbwdt/lib89* /usr/lib/
+mv /opt/qb/qbwdt/lib8a* /usr/lib/
+ln -s /opt/qb/qbwdt/lib93304.so.1.0.0 /usr/lib/lib93304.so.0
+for tool in $XMLEZIOTOOLS/*
+do
+    eziotool=$(basename $tool)
+    ln -s -f $XMLEZIOTOOLS/$eziotool $SCRIPT_PREFIX/$eziotool
+done
+
+$QBWDT_PREFIX/xmlezio  $QBWDT_PREFIX/xmlezio.xml &
+

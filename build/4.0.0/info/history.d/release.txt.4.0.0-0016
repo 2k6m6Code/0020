@@ -1,0 +1,3 @@
+   1.Add packet loss rate and latency for healthy check.
+   The modification include : hcconf.cgi,hcconf.lib,pppoechk.pl,rttraffic.cgi,qbserv,fileparse.C,fileparse.h,qbker22.h,qbping.c,newqbhc.c,qbserv.c,qbhc.h,qbping.h,newqbhc.h
+

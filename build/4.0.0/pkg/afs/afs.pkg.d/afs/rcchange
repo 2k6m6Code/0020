@@ -1,0 +1,51 @@
+#!/bin/sh
+usage () {
+	echo "usage: $0 -e service1 service2 ...   to enable services"      
+	echo "usage: $0 -d service1 service2 ...   to disable services"      
+	echo "ex: $0 -e httpd smb"
+	exit 1
+}	
+
+[ $# -gt 0 -a "$1" = "-e" -o "$1" = "-d" ] || usage
+OPT=$1 
+shift
+SERVICES=
+while [ $# -gt 0 ] ;do
+	SERVICES="$SERVICES $1"
+	shift
+done	
+[ ! -z "$SERVICES" ] || usage
+BASE=/etc/rc.d
+set $SERVICES
+if [ "$OPT" = "-e" ] ;then
+	while [ $# -gt 0 ] ;do
+		for DIR in $BASE/rc?.d ;do
+			cd $DIR
+			for FILE in [sk]*$1 ;do
+				NEWFILE=`echo $FILE|sed -e s/^s/S/|sed -e s/^k/K/`
+				if [ -f $DIR/$FILE ] ;then
+					mv $DIR/$FILE $DIR/$NEWFILE
+					echo change $DIR/$FILE to $NEWFILE
+				fi	
+			done	
+		done	
+		shift
+	done	
+elif [ "$OPT" = "-d" ] ;then 
+	while [ $# -gt 0 ] ;do
+		for DIR in $BASE/rc?.d ;do
+			cd $DIR
+			for FILE in [SK]*$1 ;do
+				NEWFILE=`echo $FILE|sed -e s/^S/s/|sed -e s/^K/k/`
+				if [ -f $DIR/$FILE ] ;then
+					mv $DIR/$FILE $DIR/$NEWFILE
+					echo change $DIR/$FILE to $NEWFILE
+				fi	
+			done	
+		done	
+		shift
+	done	
+else
+	usage
+fi
+

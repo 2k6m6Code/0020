@@ -1,0 +1,55 @@
+#!/bin/sh
+# Deansoft Co., Ltd.
+PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin
+CALLER=$1
+
+if [ -f "/usr/afs/AFS2000-DA" ] ;then
+	AFSMODEL=AFS2000DA
+elif [ -f "/usr/afs/AFS2000-HS" ] ;then
+	AFSMODEL=AFS2000HS
+elif [ -f "/usr/afs/AFS1000-HS" ] ;then
+	AFSMODEL=AFS1000HS
+elif [ -f "/usr/afs/AFS1000-DA" ] ;then
+	AFSMODEL=AFS1000DA
+elif [ -f "/usr/afs/AFS2000-HC" ] ;then
+	AFSMODEL=AFS2000HC
+else
+	AFSMODEL=UNKNOWN
+fi
+
+if [ -f "/usr/afs/A" ] ;then
+	AFSHOST=A
+elif [ -f "/usr/afs/B" ] ;then
+	AFSHOST=B
+else
+	AFSHOST=UNKNOWN
+fi
+
+ps aux|grep -v grep|grep afsd|while read LL ;do
+	set $LL
+	kill $2
+done
+
+if [ $AFSMODEL != UNKNOWN -a $AFSHOST != UNKNOWN -a "$CALLER" != QB ] ;then
+	AFSTAT=`/usr/afs/afstat A`
+	if [ "$AFSTAT" = ISP -o "$AFSTAT" = IPNR -o "$AFSTAT" = IPFCR ] ;then
+		/usr/afs/stopsvc $AFSMODEL $AFSHOST A
+	fi
+
+	if [ $AFSMODEL = AFS2000DA -o $AFSMODEL = AFS1000DA -o $AFSMODEL = AFS2000HC ] ;then
+		AFSTAT=`/usr/afs/afstat B`
+		if [ "$AFSTAT" = ISP -o "$AFSTAT" = IPNR -o "$AFSTAT" = IPFCR ] ;then
+			/usr/afs/stopsvc $AFSMODEL $AFSHOST B
+		fi
+	fi	
+fi
+
+ps aux|grep -v grep|grep afsping|while read LL ;do
+	set $LL
+	kill $2
+done
+sleep 5
+ps aux|grep -v grep|grep afsdio|while read LL ;do
+	set $LL
+	kill -9 $2
+done

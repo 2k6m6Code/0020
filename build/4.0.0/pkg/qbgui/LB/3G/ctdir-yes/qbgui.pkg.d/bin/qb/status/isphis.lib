@@ -1,0 +1,156 @@
+# #!/usr/local/sbin/perl
+
+require "his.lib";
+
+use POSIX;
+
+$CSVPATH = "/tmp";
+
+# key --  proto,srcip,dstip,srcprt,dstprt,sprts,dprts,icmpid
+# value --  pkts,bytes
+# CSV file format: key,value
+
+#--------------
+# $_[0]: Starting time in format ccyymmdd_hhmmss
+# $_[1]: Ends time in format ccyymmdd_hhmmss
+# hash key to form qry with: proto,srcip,dstip,srcprt,dstprt,sprts,dprts,icmpid, pkts, bytes
+# NOTICE: If query is not to be made, then leave the key empty
+# $_[2]:  A hash indexed by time that contain hashes indexed by ISP gateway, whose value is "outbound_traffic, inbound_traffic"
+sub query()
+{
+    my $a = '1057215900';
+    my %formattime = date($a);
+    print "formattime: $formattime{'date_ftag'}<br>\n";
+
+
+    my $retval = $_[2]; # hash to return to
+
+    # evaluate time
+    # Get time in the correct format
+
+    # string to match time for
+    # file is in epoch time
+    $_[0] =~ m#(....)(..)(..)_(..)(..)#;
+    print "var 1 : $_[0] <br>\n";
+    my $start_time = mktime(0,$5,$4,$3,$2-1,$1-1900);
+    print "start_time $start_time<br>\n";
+    %st = date($start_time);
+    print "start: " . $st{'date_ftag'} . "<br>\n";
+
+    $_[1] =~ m#(....)(..)(..)_(..)(..)#;
+    my $end_time = mktime(0,$5,$4,$3,$2-1,$1-1900);
+    print "end_time $end_time<br>\n";
+    %st = date($end_time);
+    print "end: " . $st{'date_ftag'} . "<br>\n";
+
+    # Loop through the 5 minutes increment, calculate the file it's suppose to be in
+    my $ctime = $start_time;
+    my $filelast; # file last opened
+    while ($ctime <= $end_time)
+    {
+        my $filetime = calcFileTime($ctime);
+
+        # --- if we've end up calculating the same file we had last time,
+        # --- it means it's over. Time you're looking for doesn't exist
+        # --- fill empty and return
+        if ($filetime == $filelast)
+        {
+            for (my $i = $ctime; $i <= $end_time; $i += 300)
+            {
+                my %rethash;
+                $rethash{'empty'} = 'empty';
+                $retval->{$i} = \%rethash;
+            }
+            print "Yahoo!<br>\n";
+            print "size of retval: " . scalar (keys %$retval) . "<br>\n";
+            return;
+        }
+
+        #print "filetime: $filetime<btr>\n";
+        # ------------------
+        # traverse through the file, find the appropriate time and parse
+        #
+        if (!open(FIN, "/mnt/log/ispnet/$filetime"))
+        {
+            # --- if such file doesn't exists, time you're looking for doesn't exists.
+            # --- fill empty, find the next time
+            my %rethash;
+            $rethash{'empty'} = 'empty';
+            $retval->{$ctime} = \%rethash;
+            $ctime += 300;
+            next;
+        }
+
+        # --- opened successfully, now find records
+        # --- read the next line
+        while(<FIN>)
+        {
+            my $current_line = $_;
+            # even if it's in the right file, you would still have to match the right time
+            $current_line =~ /(.*?)\|(.*)/;
+            my $ctime_thisline = $1;
+            my $rest_of_line = $2;
+
+            # --- this is for anytime a lookup is needed for the same line
+            while(1)
+            {
+                # --- is the time you're looking for currently on this line?
+                if ($ctime == $ctime_thisline)
+                {
+                    # --- yes, it's on this line.
+
+                    # --- splits different ISPs
+                    my @fields = split('\|', $rest_of_line);
+
+                    my %rethash;
+                    foreach $item (@fields)
+                    {
+                        $item =~ /(.*?),(.*)/;
+                        $rethash{$1} = $2;
+                    }
+                    $retval->{$ctime_thisline} = \%rethash;
+
+                    # --- now get the next time
+                    $ctime += 300;
+                    #print "here1<br>\n";
+                    last;
+                }
+                elsif ($ctime < $ctime_thisline)
+                {
+                    # --- Your time doesn't exist in file.
+                    # --- Therefore, the traffic would be 0 for this time.
+                    # --- use empty key, empty value to denote none recorded
+                    my %rethash;
+                    $rethash{'empty'} = 'empty';
+                    $retval->{$ctime} = \%rethash;
+                    #print "fi emp c: $ctime, ct: $ctime_thisline<br>\n";
+                    #print "size of retval4: " . scalar (keys %$retval) . "<br>\n";
+
+                    # --- time to move on to the next time.
+                    # --- incrment the time you're looking for
+                    # --- and see if it matches $ctime_thisline
+                    $ctime += 300;
+                    #print "here2<br>\n";
+                    next;
+                }
+                elsif ($ctime > $end_time) # time exceeded, return
+                {
+                    close(FIN);
+                    return;
+                }
+                else
+                {
+                    # haven't find it yet, try the next line
+                    # print "here ctime-> $ctime<br>\n";
+                    last;
+                }
+            }
+        }
+
+        # --- end of file, read next file
+        close(FIN);
+        $filelast = $filetime;
+    }
+}
+
+1;

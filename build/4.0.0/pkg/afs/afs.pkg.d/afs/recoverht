@@ -1,0 +1,15 @@
+#!/bin/sh
+# Dean Info.
+# recovery host table
+# Usage: recoverht <changed_host> <origin_host>
+
+F_HT=/etc/hosts
+F_SV_HT=/etc/hosts.afsv0
+F_TMP_HT=/tmp/afs_recoverht_$$
+
+HNM="AFS_@^~_${2}_2_${1}"
+grep -v "$HNM" $F_HT > $F_TMP_HT
+cp $F_HT $F_SV_HT
+cp $F_TMP_HT $F_HT
+rm -f $F_TMP_HT
+exit 0

@@ -1,0 +1,12 @@
+<opt mode="BTK">
+  <isp ispnum="system" priority="" weight="0">
+    <domain d_name="system" mx="mail" ns="dns" value="">
+      <host h_name="system" ttl="0" type="A" value="" />
+    </domain>
+  </isp>
+  <isp ispnum="1" priority="" weight="0">
+    <domain d_name="system" mx="mail" ns="dns" value="">
+      <host h_name="system" ttl="0" type="A" value="" />
+    </domain>
+  </isp>
+</opt>

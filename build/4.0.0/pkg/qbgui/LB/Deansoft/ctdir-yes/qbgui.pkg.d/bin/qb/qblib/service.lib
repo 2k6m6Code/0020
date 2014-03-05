@@ -1,0 +1,1120 @@
+#######################################################################################################################
+#                                           SERVICE Config
+#######################################################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showService 
+{
+    my (%action)=@_;
+    my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};
+    @$servicelist=sort service_sort_by_title @$servicelist;
+	
+	my $sergref=XMLread($gPATH.'sergroup.xml');
+    my $serglist=$sergref->{sergroup};
+    
+    if ( $action{action} eq 'DELSERVICE' )
+    {
+        my @allServices=maintainService(action=>'GETUSERSERVICE');
+        $action{service}=$allServices[0];
+    }
+	my %portlist2;#GET SERVICE DETAIL
+        #runCommand( command=>'echo', params=>$action{service}.' >/tmp/sss');
+        foreach $service3 ( @$servicelist ) 
+        {
+            if ( $service3->{type} eq 'layer7' ) { next; }
+                my $portlist=$service3->{port};
+                foreach my $port ( @$portlist )
+                {
+                    if ( $port->{protocol} eq 'system' ) { next; }
+                    # push(@portlist2, $port->{protocol}.':'.$port->{value});
+					if($port->{value} eq ""){
+					$portlist2{$service3->{title}} .=  'protocol:'.$port->{protocol}."\n";
+					}else{
+					$portlist2{$service3->{title}} .=  $port->{protocol}.':'.$port->{value}."\n";
+					}
+                }       
+        }
+    
+    my $targetservice;
+    my $focusedPort=$action{focusedport};
+    if ( $action{action}=~m/^ADDPORT$/ ) { $focusedPort=$action{protocol}.':'.$action{portvalue}; }
+    print qq (<table width="900" bgcolor="#336699" cellspacing="10" border="0">);
+    print qq (<tr><td class="bigtitle">$qblang[163] ); #<hr size="1">);
+	print qq (<a href="javascript:qbShowHelp('service')"><image src="image/help.gif" border="0" title="Help"></a>);
+	print qq (<input type="button" class="qb" value="Add a Service" title="Add a New Service" onclick="MM_openBrWindow('newservice.cgi','Add_a_New_Service','510','300')" style="width:150">);
+	print qq (<input type="button" class="qb" value="Add a Service Group" title="Add a New Service Grouping" onclick="MM_openBrWindow('newsergroup.cgi','Add_a_New_Service_Group','700','550')" onClick="new_sg()" style="width:150">);
+	print qq (<hr size="1"></td></tr>); 
+	
+    #********************************************************
+    #Interface for Service Edit and Select  
+    print qq (<tr><td>);
+    print qq (<table width="900" bgcolor="#336699" cellspacing="0" border="0">\n);
+    print qq (<tr>);
+    print qq (<td class="body" align="left" valign="top">);
+    
+    #=================================================
+    # Print Service Title first
+    print qq (<div class="divframe">);
+    print qq (<table bgcolor="#332211" width="900" border="0" cellspacing="0" cellpadding=0>);
+    print qq (<tr><td width="15%">$qblang[164]</td>);
+    print qq (<td width="10%">$qblang[153]</td>);
+	#print qq (<td width="15%">Protocol</td>);
+	#print qq (<td width="20%">Port</td>);
+	print qq (<td width="30%">Description</td>);
+	print qq (<td width="5%">Edit</td>);
+	print qq (<td width="5%"><a href="javascript:del_service()"><img border="0" title="Delete Checked Service" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('service_del', this.checked)" title="select or deselect all items"></td>);
+    print qq (</tr>);
+    #print qq (</div>);
+
+    #print qq (<div class="divframe">);
+    #print qq (<table id="servicelist" border="0" width=100% cellspacing="0" cellpadding=0>);
+    my $lineCount=0;
+    foreach my $service ( @$servicelist ) 
+    {
+		my $portlist=$service->{port};
+		my $sum_tcp='';
+		my $sum_udp='';
+		my $sum_protocol='';
+        if ( $service->{type} eq 'system' ) { next; }
+        if ( $service->{type} eq 'layer7' ) { next; }
+		if ( $service->{type} eq 'layer7group' ) { next; }
+		#if ( $service->{type} eq 'sergroup' ) { next; }
+        if ( $service->{tmvdefault} eq '1' ) { next; }
+		foreach my $port ( @$portlist )
+		{
+			if ( $port->{protocol} eq 'system' ) { next; }
+			if ( $port->{value} eq '' )	{ $sum_protocol .= $port->{protocol}.',';}
+			if ( $port->{protocol} eq 'tcp' ) { $sum_tcp .= $port->{value}.',';}
+			if ( $port->{protocol} eq 'udp' ) { $sum_udp .= $port->{value}.',';}
+		}
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$bgcolor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td title="$portlist2{$service->{title}}" alt="$portlist2{$service->{title}}">$service->{title}</td>);
+        print qq (<td>$service->{type}</td>);
+		
+		
+		if($service->{type} eq 'sergroup')
+		{
+			#print qq (<td>);
+			foreach my $item ( @$serglist )
+			{
+				if ( $item->{sergroup} eq "system" ) { next; }
+				if ( $item->{sergroup} eq $service->{title} )
+				{
+					if($item->{description} ne '')
+					{
+						print qq (<td>$item->{description}</td>);
+					}
+					else
+					{
+						print qq (<td>);
+						if($sum_protocol ne '')
+						{
+							$sum_protocol =~ s/,$//;
+							print qq (Protocol:$sum_protocol<br>);
+						}
+						if($sum_tcp ne '')
+						{
+							$sum_tcp =~ s/,$//;
+							print qq (tcp:$sum_tcp<br>);
+						}
+						if($sum_udp ne '')
+						{
+							$sum_udp =~ s/,$//;
+							print qq (udp:$sum_udp);
+						}
+						print qq (</td>);
+					}
+					print qq (<td><a href="#" onclick="MM_openBrWindow('newsergroup.cgi?sergroup=$item->{sergroup}&description=$item->{description}&serlist=$item->{serlist}','Service_Grouping_Setting','700','550')"><image src="image/edit.gif" title="Edit Service Grouping properties" border="0"></a></td>);
+				}	
+				
+				#print qq (<a href="#" onclick="MM_openBrWindow('newsergroup.cgi?sergroup=$item->{sergroup}&description=$item->{description}&serlist=$item->{serlist}','Service_Grouping_Setting','700','550')"><image src="image/edit.gif" title="Edit Service Grouping properties" border="0"></a>);
+			}#print qq (</td>);
+		}
+		if($service->{type} ne 'sergroup')
+		{
+			if($service->{description} ne '')
+			{
+				print qq (<td>$service->{description}</td>);
+			}
+			else
+			{
+				print qq (<td>);
+				if($sum_protocol ne '')
+				{
+					$sum_protocol =~ s/,$//;
+					print qq (Protocol:$sum_protocol<br>);
+				}
+				if($sum_tcp ne '')
+				{
+					$sum_tcp =~ s/,$//;
+					print qq (tcp:$sum_tcp<br>);
+				}
+				if($sum_udp ne '')
+				{
+					$sum_udp =~ s/,$//;
+					print qq (udp:$sum_udp);
+				}
+				print qq (</td>);
+			}
+			$sum_protocol =~ s/,$//;
+			$sum_tcp =~ s/,$//;
+			$sum_udp =~ s/,$//;
+			print qq (<td><a href="#" onclick="MM_openBrWindow('newservice.cgi?SN=$service->{title}&newtcp=$sum_tcp&newudp=$sum_udp&newprotocol=$sum_protocol&newdescription=$service->{description}&exist=1','Service_Setting','510','300')"><image src="image/edit.gif" title="Edit Service properties" border="0"></a></td>);
+		}
+
+		#print qq (<image src="image/edit.gif" title="Set Focus to this Service" border="0" onmousedown="setFocusService('$service->{title}')" onclick="selectedColor(this)"></td>);
+		print qq (<td><input type="checkbox" name="service_del" value="$service->{title}"></td>);
+        print qq (</tr>);
+		
+        if ( $service->{title} eq $action{service} ) 
+        {
+            $targetservice=$service; 
+            #print qq (<script>initSelect(servicelist.rows[$lineCount]);</script>); 
+        }
+        $lineCount++;    
+    }
+	# print qq (<tr><td colspan="2">Service Grouping</td>);
+	# print qq (<td colspan="2">List</td>);
+	# print qq (<td>Description</td>);
+	# print qq (<td>Edit</td>);
+	# print qq (<td><a href="javascript:DelServiceGroup()"><img border="0" title="Delete Checked Service" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('sergroupname', this.checked)" title="select or deselect all items"></td>);
+    # print qq (</tr>);
+	
+	# foreach my $item ( @$serglist )
+    # {
+        # if ( $item->{sergroup} eq "system" ) { next; }
+        # my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        # print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)" title="$item->{serlist}">); 
+        # print qq (<td align="center" colspan="2" height="25" >$item->{sergroup}</td>);
+		# print qq (<td align="center" colspan="2" height="25">$item->{serlist}</td>);
+        # print qq (<td align="center" height="25">$item->{description}</td>);
+        # print qq (<td align="center" height="25">);
+        # print qq (<a href onclick="MM_openBrWindow('newsergroup.cgi?sergroup=$item->{sergroup}&description=$item->{description}&serlist=$item->{serlist}','Service_Grouping_Setting','700','550')"><image src="image/edit.gif" title="Edit Service Grouping properties" border="0"></a></td>);
+        # print qq (<td align="center" height="25">);
+        # print qq (<input type="checkbox" name="sergroupname" value="$item->{sergroup}">);
+        # print qq (</tr>);
+        # $lineCount++;
+    # }	
+	
+    print qq (<input type="hidden" name="service" value="$action{service}">);
+    
+    print qq (</table>);
+    print qq (</div>);
+    print qq (</td>);
+	print qq (<table width="100%">);
+    print qq (<tr><td align="center"><hr size="1">);
+    #Important: if not User Defined Service, Edit mode will be disabled
+    my $enable=( $targetservice->{type} ne "user") ? ('disabled') : ('');
+    #print qq (<input type="button" class="qb" value="Add Service" title="Add a New Service" onclick="newwindow()" style="width:130">);
+    #print qq (<input type="button" $enable class="qb" value="$qblang[165]" title="Delete this Service" onClick="delService()" style="width:80">);
+	print qq (<input type="button" class="qb" value="Add a Service" title="Add a New Service" onclick="MM_openBrWindow('newservice.cgi','Add_a_New_Service','510','300')" style="width:150">);
+	print qq (<input type="button" class="qb" value="Add a Service Group" title="Add a New Service Grouping" onclick="MM_openBrWindow('newsergroup.cgi','Add_a_New_Service_Group','700','550')" onClick="new_sg()" style="width:150">);
+    print qq (<input name="newservice" type="hidden" value="">);
+    print qq (</td></tr>);
+    
+    print qq (</table>);
+
+    print qq (</td></tr>);
+    
+    # print qq (<tr><td valign="top">);
+    # #********************************************************
+    # #Interface for editing content of the selected Service
+    # my $portlist=$targetservice->{port};
+    # print qq (<table cellspacing="0" cellpadding="0" width="100%">);
+    # print qq (<tr><td align="center">);
+    
+    # #=================================================
+    # # Print Title first
+    # print qq (<div class="divframe">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    # print qq (<td width="50%">$qblang[166]</td>);
+    # #Brian for layer7
+    # if ($targetservice->{type} eq "layer7")
+    # { 
+        # print qq (<td width="50%">$qblang[167]</td>);
+    # }
+    # else
+    # {
+        # print qq (<td width="50%">$qblang[49]</td>);
+    # }
+    # print qq (</tr></table>);
+    # print qq (</div>);
+    
+    # print qq (<div class="divframe" style="width:450;height:80">);
+    # print qq (<table id="portlist" border="0" width=100% cellspacing="0" cellpadding=0>);
+    # my $lineCount=0;
+    # foreach my $port ( @$portlist ) 
+    # {
+        # if ( $port->{protocol} eq 'system' ) { next; }
+        # my $portvalue=$port->{protocol}.':'.$port->{value};
+        # my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        # print qq (<tr bgcolor="$bgcolor" originalColor="$bgcolor" onmousedown="setPortValue('$portvalue')" onclick="selectedColor(this)" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        # print qq (<td width="50%">$port->{protocol}</td>);
+        # print qq (<td width="50%">$port->{value}</td>);
+        # print qq (</tr>);
+        # if ( $focusedPort && $portvalue eq $focusedPort ) { print qq (<script>initSelect(portlist.rows[$lineCount]);</script>); }
+        # $lineCount++;    
+    # }
+    # print qq (<input type="hidden" name="port" value="$focusedPort">);
+    # print qq (</table></div>);
+    # print qq (</td></tr>);
+    # print qq (</table>);
+    # print qq (</td></tr>);
+    
+    # #****************************************************************
+    # #Set focus to the selected Protocol Port pair
+    # my $targetPort;
+    # foreach my $port ( @$portlist ) 
+    # {
+       # my $portkey=$port->{protocol}.':'.$port->{value};
+       # if ( $portkey ne $focusedPort ) { next; }
+       # $targetPort=$port;
+       # last;
+    # }
+
+    # print qq (<tr><td>);
+    # #****************************************************************
+    # #Interface to add or delete a specified Protocol
+    # print qq (<table border="0" cellpadding="0" cellspacing="0">);
+    # print qq (<tr><td  width="98%">);
+
+    # print qq (<table bgcolor="#667788" width="100%">);
+    # print qq (<tr>);
+    # #print qq (<td class="body">Protocol: </td>);
+    # print qq (<td class="body" align="left">);
+    
+    # my @protocalType=('tcp', 'udp', 'icmp', 'defined');
+    # my $targetType=$targetPort->{protocol};
+    # if ( !grep(/^$targetType$/, @protocalType) ) { $targetType='defined'; }
+    # foreach my $type ( @protocalType )
+    # {
+        # my $status; ( $type eq $targetType ) ? ( $status='checked' ) : ( $status='' );
+        # if( $type ne "defined"  && $type ne "icmp")
+        # {
+        # print qq (<input type="radio" name="protocol" $status value="$type" onclick="changeInterface()" >$type);
+        # }
+    # }
+    # print qq ( $qblang[49]:<input type="text" maxlength="15" class="qbtext" name="portvalue" value="$targetPort->{value}" style="width:120">(ex: 3344 or 1234:2345));
+    # print qq (</tr>);
+    
+    # print qq (<tr>);
+    # my $status; ( 'defined' eq $targetType ) ? ( $status='checked' ) : ( $status='' );
+    # my $showType=$targetPort->{protocol};
+    # if ( grep(/^$showType$/, @protocalType) ) { $showType=''; }
+    # print qq (<td class="body"><input type="radio" name="protocol" $status value="defined" onclick="changeInterface()" >$qblang[168]: <input type="text" class="qbtext" name="porttype" value="$showType" style="width:60"></td>);
+    # print qq (</tr>);
+    
+    # print qq (</table>);
+    # print qq (</td>);
+   
+    # print qq (<td valign="bottom">);
+    # #20080220 Brian To modify "+/-" button become "Add/Delete". 
+    # #print qq (<input type="button"  $enable class="qb" name="ADD" value="+" title="Add Port Described on the left-hand side" onClick="addPort()" style="width:20;height:20"><br>);
+    # #print qq (<input type="button"  $enable class="qb" name="DEL" value="-" title="Delete Select Port" onClick="delPort()" style="width:20;height:20">);
+    # print qq (<input type="button"  $enable class="qb" name="ADD" value="$qblang[57]" title="Add Port Described on the left-hand side" onClick="addPort()" style="width:50;height:20"><br>);
+    # print qq (<input type="button"  $enable class="qb" name="DEL" value="$qblang[165]" title="Delete Select Port" onClick="delPort()" style="width:50;height:20">);
+    # print qq (</td>);
+    # print qq (</tr>);
+    
+    # print qq (</table>);
+
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showService
+
+#======================================================================================================================
+sub service_script 
+{
+    print << "SERVICE_SCRIPT";
+ 
+    <script type="text/javascript" src="grid.js"></script>
+    <script language="javascript">
+    
+    var myform;
+    
+    function cgi_dep_onload() 
+    { 
+        myform=window.document.forms[0];
+        //changeInterface();
+    }
+    
+    function markall()
+    {
+        for(i=0;i<myform.elements.length;i++)
+        {
+            if(myform.elements[i].type=='checkbox')
+            {
+                myform.elements[i].checked=true;
+            }
+        }
+    }
+    
+    function changeInterface()
+    {
+        var obj=document.forms[0].protocol;
+        var pro='';
+        
+        for(var i=0;i<obj.length;i++) { if ( obj[i].checked ) { pro=obj[i].value; break; } }
+
+        switch(pro) 
+        { 
+            case 'icmp':
+                myform.portvalue.value='';
+                myform.portvalue.disabled=true;
+                myform.porttype.value='';
+                myform.porttype.disabled=true;
+            break;
+            case 'defined':
+                myform.portvalue.value='';
+                myform.portvalue.disabled=true;
+                myform.porttype.disabled=false;
+            break;
+            default:
+                myform.porttype.value='';
+                myform.porttype.disabled=true;
+                myform.portvalue.disabled=false;
+        }
+    }
+
+    function setPortValue(port)
+    {
+        myform.port.value=port;
+        myform.submit();
+    }
+
+    function setFocusService(servicename)
+    {
+        myform.service.value=servicename;
+        myform.submit();
+    }
+    
+    function addPort()
+    {
+        var msg='';
+        var OK=true;
+        var needPort=false;
+        var isUserDefined=false;
+        var obj=myform.protocol;
+        var pro='';
+        
+        myform.portvalue.disabled=false;
+        myform.porttype.disabled=false;
+        
+        for(var i=0;i<obj.length;i++) { if ( obj[i].checked ) { pro=obj[i].value; break; } }
+        
+        switch (pro)
+        {
+            case "tcp": needPort=true;break;
+            case "udp": needPort=true;break;
+            case "defined": isUserDefined=true; 
+        }
+        
+        if ( needPort ) 
+        { 
+            var portvalue=document.forms[0].portvalue.value;
+            if ( !isValidPort(portvalue) ) { msg+="Port Value NOT Valid\\n"; OK=false; }
+        }
+
+        if ( isUserDefined )
+        {
+            var porttype=document.forms[0].porttype.value;
+            if ( !porttype ) { msg+="User defined Port Type can not be EMPTY\\n"; OK=false;}
+        }
+
+        if ( !OK ) { changeInterface(); alert(msg); }
+        else { goSubmit('ADDPORT'); } 
+        
+
+    }
+    
+    function delPort() { if ( qbConfirm(2, "Confirm Deletion ?") ==1 ) { goSubmit('DELPORT');}   }
+    
+    function delService() { if ( qbConfirm(2, "Confirm Deletion ?") ==1 ) { goSubmit('DELSERVICE'); } }
+	
+	function del_service() { if ( qbConfirm(2, "Confirm Deletion ?") ==1 ) { goSubmit('DELET'); } }
+	
+	function DelServiceGroup() { if ( qbConfirm(2, "Confirm Deletion ?") ==1 ) { goSubmit('DELETSG'); } }
+    
+	function MM_openBrWindow(theURL,winName,win_width,win_height) 
+	{
+		var PosX = (window.screen.availWidth-10-win_width)/2; 
+		var PosY = (window.screen.availHeight-30-win_height)/2; 
+		features = "width="+win_width+",height="+win_height+",top="+PosY+",left="+PosX+",status=no,location=no,status=no,menubar=no,toolbar=no,resizable=no,scrollbars=no"; 
+		var newwin = window.open(theURL,winName,features); 
+	}
+	
+    function addService()
+    {
+        var servicename=qbPrompt('Input Name of New Service:');
+
+        
+        if ( typeof(servicename)!='string' ) { return; }
+        
+        if ( !servicename ) { alert("Please Give a Name of the New Service"); return; }
+        
+        var pattern=/-|\\+|\\*|\\:|\\s|\\/|\\\\|^\\d\+\$/g; 
+        var result=servicename.search(pattern); 
+        if ( result != -1 ) { alert("Invalid Service Name"); return; }
+        
+        for (var i=0; i < servicelist.rows.length; i++)
+        {
+            if (servicename==servicelist.rows[i].cells[0].innerText)
+            {   
+                var prmptmsg="Service:"+servicename+"Already Exists";
+                alert(prmptmsg); 
+                return; 
+            } 
+        }
+
+        myform.newservice.value=servicename;
+
+        goSubmit('NEWSERVICE');
+        
+    }
+    
+    </script>
+    
+SERVICE_SCRIPT
+
+}
+#service_script
+
+#======================================================================================================================
+sub maintainService 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};
+	my $sergref=XMLread($gPATH.'sergroup.xml');
+    my $serglist=$sergref->{sergroup};
+    
+    #ex:( action=>'GETALLSERVICE' )
+    if ( $action{action}=~m/^GETALLSERVICE$/ ) 
+    {
+        my %allservice;
+    
+        foreach my $service ( @$servicelist ) 
+        {
+            if ( $service->{title} eq 'system' )  { next; }
+            if ( $service->{type} eq 'system' )   { next; }
+            
+            $allservice{ $service->{title} }=1;
+        }
+        return sort keys ( %allservice );
+    }
+    if ( $action{action}=~m/^GETVSSERVICE$/ ) 
+    {
+        my %allservice;
+    
+        foreach my $service ( @$servicelist ) 
+        {
+            if ( $service->{title} eq 'system' )  { next; }
+            if ( $service->{type} eq 'system' )   { next; }
+            if ( $service->{type} eq 'layer7' )   { next; }
+            
+            $allservice{ $service->{title} }=1;
+        }
+        return sort keys ( %allservice );
+    }
+    #ex:( action=>'GETUSERSERVICE' )
+    if ( $action{action}=~m/^GETUSERSERVICE$/ ) 
+    {
+        my %userservice;
+    
+        foreach my $service ( @$servicelist ) 
+        {
+            if ( $service->{type} ne 'user' )  { next; }
+            $userservice{ $service->{title} }=1;
+        }
+        return sort keys ( %userservice );
+    }
+    #ex:( action=>'GETSERVICEBYTYPES' types=>'user, layer7')
+    elsif ( $action{action}=~m/^GETSERVICEBYTYPES$/ )
+    {
+        if ( !$action{types} ) { return; }
+        $action{types}=~s/\s//g;
+        my @types=split(/,/, $action{types}); 
+        my @getservice;
+        foreach my $type ( @types )
+        {
+            foreach my $service ( @$servicelist )
+            {
+                if ( $service->{type} eq $type )
+                {
+                    push(@getservice, $service->{title});
+                }
+            }
+        }
+        return @getservice; 
+    }
+    #ex:( action=>'NEWSERVICE', newservice=>'' )
+    elsif ( $action{action}=~m/^NEWSERVICE$/ ) 
+    {
+        my %newservice;
+        my @service_list_after_new;
+        foreach my $service ( @$servicelist ) 
+        {
+            if ( $service->{title} eq $action{newservice} ) 
+            { 
+               if ( $service->{type} eq 'layer7' || $service->{type} eq 'user' )
+               { 
+                  #$gMSGPROMPT.=qq(The service name $action{newservice} has been used.);
+               }
+                return;
+            }
+            if ( $service->{title} ne $action{newservice} ) { push(@service_list_after_new, $service);}
+            if ( $service->{title} eq 'system' ) { %newservice=%$service; }
+        }
+        
+        my %port=(protocol=>'system', value=>'system' );
+        $newservice{title}=$action{newservice};
+        #$newservice{type}='user';
+        $newservice{type}=( $action{group} )? $action{group} : 'user';
+        $newservice{port}=\%port;
+        $newservice{tmvdefault}=$action{tmvdefault};
+        
+        push( @service_list_after_new, \%newservice );
+        
+        $service->{service}=\@service_list_after_new;
+        
+        LogUserAction( action=>'ADDSERVICE', title=>$action{newservice} );
+    }
+    elsif ( $action{action}=~m/^DELSERVICE$/ ) 
+    {
+        my @serviceListAfterDel;
+        foreach my $service ( @$servicelist ) 
+        {
+            if ( $service->{title} ne $action{service} ) { push(@serviceListAfterDel, $service); }
+        }
+        
+        $service->{service}=\@serviceListAfterDel;
+
+        #@dep
+        maintainNAT(action=>"DELSERVICE", service=>$action{service}, );
+
+        #@dep:
+        maintainVS(action=>"DELSERVICE", service=>$action{service});
+
+        #@dep:
+        maintainDMZ(action=>"DELSERVICE", service=>$action{service});
+        
+        LogUserAction( action=>'DELSERVICE', title=>$action{service});
+        
+    }
+	elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{service_del};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+		my @serviceListAfterDel;
+		foreach my $service ( @$servicelist ) 
+        {
+			if ( grep(/^$service->{title}$/, @$delet) ) { LogUserAction( action=>'DELSERVICE', title=>$service->{title} ); next; }
+			push(@serviceListAfterDel, $service);
+        }
+		$service->{service}=\@serviceListAfterDel;
+		
+		my @temparray;
+        foreach my $item ( @$serglist )
+        {
+            if ( grep(/^$item->{sergroup}$/, @$delet) ) { LogUserAction( action=>'DELSERGROUP', sergroup=>$item->{sergroup} ); next; }
+            push(@temparray, $item);
+            
+        }
+        $sergref->{sergroup}=\@temparray;
+		
+		XMLwrite($sergref, $gPATH."sergroup.xml");
+		
+		#@dep
+        maintainNAT(action=>"DELSERVICE", service=>$action{service}, );
+
+        #@dep:
+        maintainVS(action=>"DELSERVICE", service=>$action{service});
+
+        #@dep:
+        maintainDMZ(action=>"DELSERVICE", service=>$action{service});
+        
+        LogUserAction( action=>'DELSERVICE', title=>$action{service});
+    }
+	elsif ( $action{action}=~m/^DELETSG$/ )
+    {
+        my $delet=$action{sergroupname};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        
+		my @serviceListAfterDel;
+		foreach my $service ( @$servicelist ) 
+        {
+			if ( grep(/^$service->{title}$/, @$delet) ) { LogUserAction( action=>'DELSERVICE', title=>$service->{title} ); next; }
+			push(@serviceListAfterDel, $service);
+        }
+		$service->{service}=\@serviceListAfterDel;
+		
+        my @temparray;
+        foreach my $item ( @$serglist )
+        {
+            if ( grep(/^$item->{sergroup}$/, @$delet) ) { LogUserAction( action=>'DELSERGROUP', sergroup=>$item->{sergroup} ); next; }
+            push(@temparray, $item);
+            
+        }
+        $sergref->{sergroup}=\@temparray;
+        foreach my $item ( @$delet ) 
+        {
+            maintainService( action=>'DELSERVICE', group=>'1', service=>$item);
+        }
+        
+        LogUserAction( action=>'DELSERGROUP', sergroup=>$action{sergroup} );
+		#@$serglist=sort byName @$serglist;
+		XMLwrite($sergref, $gPATH."sergroup.xml");
+    }
+    elsif ( $action{action}=~m/^ADDPORT$/ ) 
+    {
+        my $targetservice;
+    
+        foreach $service ( @$servicelist ) 
+        { 
+            if ( $service->{title} ne $action{service} ) { next; }
+            $targetservice=$service; 
+            last;
+        } 
+    
+        if ( !$targetservice ) { return; }
+    
+        my $portlist=$targetservice->{port};
+        my $chkportKey=$action{protocol}.':'.$action{portvalue};
+        foreach my $port ( @$portlist )
+        {
+            if ( $port->{protocol} eq 'system' ) { next;} 
+            my $portKey=$port->{protocol}.':'.$port->{value};
+            if ( $portKey eq $chkportKey ) { return; }
+        }
+            my %port=( protocol=>$action{protocol}, value=>$action{portvalue});
+            push( @$portlist, \%port );
+            
+        LogUserAction( action=>'ADDPORT', title=>$action{servicelist}, title=>$action{service}, protocol=>$action{protocol}, value=>$action{portvalue});
+    }
+    elsif ( $action{action}=~m/^DELPORT$/ ) 
+    {
+        my $targetservice;
+        my $focusedPort=$action{focusedport};
+        
+        foreach $service ( @$servicelist ) 
+        { 
+            if ( $service->{title} ne $action{service} ) { next; }
+            $targetservice=$service; 
+            last;
+        } 
+        if ( !$targetservice ) { return; }
+    
+        my $portlist=$targetservice->{port};
+        my @newPortList;
+        foreach my $port ( @$portlist )
+        {
+            if ( $port->{protocol} eq 'system' ) { push ( @newPortList, $port ); next;} 
+            my $portKey=$port->{protocol}.':'.$port->{value};
+            if ( $portKey eq $focusedPort ) { next; }
+            push ( @newPortList, $port );
+        }
+        
+        $targetservice->{port}=\@newPortList;
+        
+        LogUserAction( action=>'DELPORT', title=>$action{service}, protocol=>$action{protocol}, value=>$action{portvalue});
+    }
+    elsif ( $action{action}=~ m/^ADDISP$/ )
+    {
+        my $allService=$service->{service};
+        my $isp = $action{isp};
+        my $ispvalue=1000+$isp;
+            
+        my $ispvalue2=1000+100+$isp;
+            
+        my $tcpstart=10000+($isp-1)*100+1;
+        my $tcpend=10000+($isp-1)*100+100;
+            
+        my $udpstart=12000+($isp-1)*100+1;
+        my $udpend=12000+($isp-1)*100+100;
+
+        my $servicename='ISP'.$isp;
+        
+        my %icmpport=( protocol=>"icmp", icmpid=>$ispvalue);
+        my %udpport=( protocol=>"udp", value=>$ispvalue);
+        my %udpport2=( protocol=>"udp", value=>$ispvalue2);
+        my %tcpport=(protocol=>"tcp", value=>$ispvalue);
+        my %tcpreserved=(protocol=>"tcp", value=>$tcpstart.':'.$tcpend);
+        my %udpreserved=(protocol=>"udp", value=>$udpstart.':'.$udpend);
+
+        my %newservice;
+        $newservice{title}=$servicename;
+        $newservice{type}='system';
+        $newservice{port}=[\%icmpport, \%udpport, \%udpport2, \%tcpport, \%tcpreserved, \%udpreserved];
+        
+        push(@$allService, \%newservice);
+    }
+    elsif ( $action{action}=~ m/^DELISP$/ )
+    {
+        #runCommand(command=>'echo', params=>"$action{isp} >>/tmp/ddd");
+        my $allService=$service->{service};
+        my $isp = $action{isp};
+        my $del_index;
+        my $index = 0;
+        foreach my $ser ( @$allService )
+        {
+            if ( $ser->{title} eq 'ISP'.$action{isp} )
+            {
+                delete $service->{service}[$index];
+                last;
+            }
+            $index++;
+        }
+        #delete $allService[$del_index];
+    }
+    elsif ( $action{action}=~m/^ISPUPDATED$/ )
+    {
+        my @serviceAfterUpdated;
+        
+        my @iid_list=maintainBasic(action=>'GETGOODIIDLIST');
+        
+        my $allService=$service->{service};
+
+        foreach my $service ( @$allService ) 
+        { 
+            if ( $service->{title}=~m/^ISP/ ) { next; }
+            push( @serviceAfterUpdated, $service);
+        }
+         
+        foreach my $isp ( @iid_list )
+        {
+            my $ispvalue=1000+$isp;
+            
+            my $ispvalue2=1000+100+$isp;
+            
+            my $tcpstart=10000+($isp-1)*100+1;
+            my $tcpend=10000+($isp-1)*100+100;
+            
+            my $udpstart=12000+($isp-1)*100+1;
+            my $udpend=12000+($isp-1)*100+100;
+
+            my $servicename='ISP'.$isp;
+        
+            my %icmpport=( protocol=>"icmp", icmpid=>$ispvalue);
+            my %udpport=( protocol=>"udp", value=>$ispvalue);
+            my %udpport2=( protocol=>"udp", value=>$ispvalue2);
+            my %tcpport=(protocol=>"tcp", value=>$ispvalue);
+            my %tcpreserved=(protocol=>"tcp", value=>$tcpstart.':'.$tcpend);
+            my %udpreserved=(protocol=>"udp", value=>$udpstart.':'.$udpend);
+
+            my %newservice;
+            $newservice{title}=$servicename;
+            $newservice{type}='system';
+            $newservice{port}=[\%icmpport, \%udpport, \%udpport2, \%tcpport, \%tcpreserved, \%udpreserved];
+            
+            push( @serviceAfterUpdated, \%newservice);
+        }
+
+        $service->{service}=\@serviceAfterUpdated;
+    }
+    elsif ( $action{action} eq "REPORT" )
+    {
+        print qq (<fieldset><legend><font class="subtitle">User Defined Services</font></legend>);
+        print qq (<div class="reportdiv">);
+        
+        my $allService=$service->{service};
+
+        foreach my $service ( @$allService )
+        {
+            if ( $service->{type} eq 'known' ) { next; }
+
+            print qq ($service->{title} :);
+            my $portlist=$service->{port};
+            foreach my $port ( @$portlist ) 
+            { 
+                if ( $port->{value} eq "system") { next; } 
+                foreach my $key ( keys %$port ) { print qq ( [ $key:$port->{$key} ] ); }
+            }
+            print qq (<br>);
+
+            print qq (<hr size="1">);
+        }
+        print qq (</div>);
+        print qq (</fieldset>);
+        
+        print qq (<fieldset><legend><font class="subtitle">System Default Services</font></legend>);
+        print qq (<div class="reportdiv">);
+        
+        my $allService=$service->{service};
+
+        foreach my $service ( @$allService )
+        {
+            if ( $service->{type} eq 'user' ) { next; }
+            print qq ($service->{title} :);
+        }
+        print qq (</div>);
+        print qq (</fieldset>);
+    }
+    #ex:( action=>'GETSERVICEDETAIL', service=>'http' )
+    elsif ( $action{action}=~m/^GETSERVICEDETAIL$/ )
+    {
+        my @portlist;
+        #runCommand( command=>'echo', params=>$action{service}.' >/tmp/sss');
+        foreach $service ( @$servicelist ) 
+        {
+            if ( $service->{type} eq 'layer7' ) { next; }
+            if ( $service->{title} eq $action{service} )
+            {
+                my $portlist=$service->{port};
+                foreach my $port ( @$portlist )
+                {
+                    if ( $port->{protocol} eq 'system' ) { next; }
+                    push(@portlist, $port->{protocol}.':'.$port->{value});
+                }
+            }
+        }
+        return @portlist; 
+    }
+    
+    #--------updating service.xml------------------------ 
+    XMLwrite($service, $gPATH."service.xml");
+}
+#maintainService
+
+
+
+
+#==========================================================================================================================
+sub showGroup 
+{
+    my (%action)=@_;
+    my $service=XMLread($gPATH.'service.xml');
+    my $grouplist=$service->{group};
+    @$grouplist=sort service_sort_by_title @$grouplist;
+    
+    if ( $action{action} eq 'DELGROUP' )
+    {
+        my @allServices=maintainService(action=>'GETUSERSERVICE');
+        $action{service}=$allServices[0];
+    }
+    
+    my $targetgroup;
+    my $focusedPort=$action{focusedport};
+    if ( $action{action}=~m/^ADDPORT$/ ) { $focusedPort=$action{protocol}.':'.$action{portvalue}; }
+    print qq (<table bgcolor="#336699" cellspacing="10" border="0">);
+    print qq (<tr><td class="bigtitle">Basic &gt; Service Configuration<hr size="1"></td></tr>); 
+    
+    #********************************************************
+    # User Interface for Service Edit and Select  
+    print qq (<tr><td>);
+    print qq (<table width="100%" bgcolor="#336699" cellspacing="0" border="0">\n);
+    print qq (<tr>);
+    print qq (<td class="body" align="left" valign="top">);
+    
+    #=================================================
+    # Print Group Title first
+    print qq (<div class="divframe">);
+    print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    print qq (<td width="50%">Group Name</td>);
+    print qq (<td width="50%">Type</td>);
+    print qq (</tr></table>);
+    print qq (</div>);
+
+    print qq (<div class="divframe" style="width:450;height:130">);
+    print qq (<table id="grouplist" border="0" width=100% cellspacing="0" cellpadding=0>);
+    my $lineCount=0;
+    foreach my $group ( @$grouplist ) 
+    {
+        if ( $group->{value} eq 'system' ) { next; }
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$bgcolor" onmousedown="setFocusService('$service->{title}')" onclick="selectedColor(this)" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="50%">$group->{title}</td>);
+        print qq (<td width="50%">$group->{type}</td>);
+        print qq (</tr>);
+
+        if ( $service->{title} eq $action{service} ) 
+        {
+            $targetservice=$service; 
+            print qq (<script>initSelect(servicelist.rows[$lineCount]);</script>); 
+        }
+        $lineCount++;    
+    }
+
+    print qq (<input type="hidden" name="service" value="$action{service}">);
+    
+    print qq (</table>);
+    print qq (</div>);
+    print qq (</td>);
+
+    print qq (<tr><td align="center">);
+    #Important: if not User Defined Service, Edit mode will be disabled
+    my $enable=( $targetservice->{type} ne "user") ? ('disabled') : ('');
+    print qq (<input type="button" class="qb" value="Create" title="Create a New Service" onclick="addService()" style="width:80">);
+    print qq (<input type="button" $enable class="qb" value="Delete" title="Delete this Service" onClick="delService()" style="width:80">);
+    print qq (<input name="newservice" type="hidden" value="">);
+    print qq (</td></tr>);
+    
+    print qq (</table>);
+
+    print qq (</td></tr>);
+    
+    print qq (<tr><td valign="top">);
+    #********************************************************
+    #Interface for editing content of the selected Service
+    my $portlist=$targetservice->{port};
+    print qq (<table cellspacing="0" cellpadding="0" width="100%">);
+    print qq (<tr><td align="center">);
+    
+    #=================================================
+    # Print Title first
+    print qq (<div class="divframe">);
+    print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    print qq (<td width="50%">Protocol</td>);
+    print qq (<td width="50%">Port</td>);
+    print qq (</tr></table>);
+    print qq (</div>);
+    
+    print qq (<div class="divframe" style="width:450;height:80">);
+    print qq (<table id="portlist" border="0" width=100% cellspacing="0" cellpadding=0>);
+    my $lineCount=0;
+    foreach my $port ( @$portlist ) 
+    {
+        if ( $port->{protocol} eq 'system' ) { next; }
+        my $portvalue=$port->{protocol}.':'.$port->{value};
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$bgcolor" onmousedown="setPortValue('$portvalue')" onclick="selectedColor(this)" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="50%">$port->{protocol}</td>);
+        print qq (<td width="50%">$port->{value}</td>);
+        print qq (</tr>);
+        if ( $focusedPort && $portvalue eq $focusedPort ) { print qq (<script>initSelect(portlist.rows[$lineCount]);</script>); }
+        $lineCount++;    
+    }
+    print qq (<input type="hidden" name="port" value="$focusedPort">);
+    print qq (</table></div>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</td></tr>);
+    
+    #****************************************************************
+    #Set focus to the selected Protocol Port pair
+    my $targetPort;
+    foreach my $port ( @$portlist ) 
+    {
+       my $portkey=$port->{protocol}.':'.$port->{value};
+       if ( $portkey ne $focusedPort ) { next; }
+       $targetPort=$port;
+       last;
+    }
+
+    print qq (<tr><td>);
+    #****************************************************************
+    #Interface to add or delete a specified Protocol
+    print qq (<table border="0" cellpadding="0" cellspacing="0">);
+    print qq (<tr><td  width="98%">);
+
+    print qq (<table bgcolor="#667788" width="100%">);
+    print qq (<tr>);
+    print qq (<td class="body">Protocol: </td>);
+    print qq (<td class="body" align="left">);
+    
+    my @protocalType=('tcp', 'udp', 'icmp', 'defined');
+    my $targetType=$targetPort->{protocol};
+    if ( !grep(/^$targetType$/, @protocalType) ) { $targetType='defined'; }
+    foreach my $type ( @protocalType )
+    {
+        my $status; ( $type eq $targetType ) ? ( $status='checked' ) : ( $status='' );
+        print qq (<input type="radio" name="protocol" $status value="$type" onclick="changeInterface()" >$type);
+    }
+    
+    my $showType=$targetPort->{protocol};
+    if ( grep(/^$showType$/, @protocalType) ) { $showType=''; }
+    print qq (: <input type="text" class="qbtext" name="porttype" value="$showType" style="width:60">);
+    print qq (</tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body">Port: </td>);
+    print qq (<td class="body"><input type="text" maxlength="15" class="qbtext" name="portvalue" value="$targetPort->{value}" style="width:120">(ex: 3344 or 1234:2345)</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</td>);
+   
+    print qq (<td valign="bottom">);
+    print qq (<input type="button"  $enable class="qb" name="ADD" value="+" title="Add Port Described on the left-hand side" onClick="addPort()" style="width:20;height:20"><br>);
+    print qq (<input type="button"  $enable class="qb" name="DEL" value="-" title="Delete Select Port" onClick="delPort()" style="width:20;height:20">);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (</table>);
+
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showGroup
+#==============================================================================================================
+
+
+#==============================================================================================================
+sub prepareServiceInfo
+{
+    my $service = XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};
+    my $serg = XMLread($gPATH.'sergroup.xml');
+    my $serglist=$serg->{sergroup};
+
+    print qq (\n<script language="javascript">\n);
+    print qq (function SERVICE(){this.info=new Array(); this.port = new Array();} \n);
+    print qq (function PORT(protocol, port){this.protocol = protocol;this.port = port;} \n);
+    print qq (var allService = new Array(); \n);
+    foreach my $service ( @$servicelist )
+    {
+        #if ( $service->{type} eq 'system' || $service->{type} eq 'group' ) { next; }
+        #if ( $service->{type} eq 'system' || $service->{type} eq 'layer7' ) { next; }
+        if ( $service->{type} eq 'system' ) { next; }
+        my $type=$service->{type};
+        my $title=$service->{title};
+        if ( $title eq '' ) { next; }
+        
+        print qq (\n\nallService.push(new SERVICE());\n);
+        print qq (allService[allService.length-1].info=["$type","$title"]; \n);
+        
+        my $servicePorts=$service->{port};
+        foreach my $port ( @$servicePorts )
+        {
+            if ( $port->{value} eq 'system' ) { next; }
+            my ($protocol, $value)=($port->{protocol}, $port->{value});
+            print qq (allService[allService.length-1].port.push(new PORT("$protocol","$value")); \n);
+        }
+
+        print qq ( var $title=allService[allService.length - 1]; \n\n);
+    }
+=cut
+    foreach my $serg ( @$serglist )
+    {
+        my $showserg=$serg->{sergroup};
+        #$showserg=~s/sergobj-//g;
+        if ( $serg->{sergroup} eq 'system' ) { next; }
+        print qq (\n\nallService.push(new SERVICE());\n);
+        print qq (allService[allService.length-1].info=["group","$showserg"]; \n);
+        print qq (allService[allService.length-1].port.push(new PORT("","")); \n);
+        print qq ( var $showserg=allService[allService.length - 1]; \n\n);
+    }
+=cut
+    print qq ( </script> );
+}
+#prepareServiceInfo
+
+#================================================================================================
+sub service_sort_by_title 
+{
+    $a->{title}  cmp $b->{title};
+}
+#service_sort_by_title
+#
+1
+

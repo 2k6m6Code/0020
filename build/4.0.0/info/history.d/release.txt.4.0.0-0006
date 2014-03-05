@@ -1,0 +1,2 @@
+   1.To increase the IMQ device number to 3200 for TM.
+    The modification include :sysinit,imq.c,imq.h,imq.ko,ipt_IMQ.ko

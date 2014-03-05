@@ -1,0 +1,3 @@
+<opt file="host">
+  <host hostaddress="system" hostname="system" hosttype="system" />
+</opt>

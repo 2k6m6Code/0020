@@ -1,0 +1,27 @@
+#set -x
+QBREG_FILE=/opt/qb/registry
+MODEL=$(awk  "/MODEL/ { print \$2 }" $QBREG_FILE|head -n 1)
+case $MODEL in
+        50   )  SQL_Limit=10000 ;;   # ex. SG 50
+        100  )  SQL_Limit=30000 ;;   # ex. SG 100
+        150  )  SQL_Limit=50000 ;;   # ex. SG 150
+        250  )  SQL_Limit=50000 ;;   # ex. SG 250
+        500  )  SQL_Limit=50000 ;;   # ex. SG 500
+        1000 )  SQL_Limit=50000 ;;   # ex. SG 1000
+        2000 )  SQL_Limit=50000 ;;   # ex. SG 2000
+        1420 )  SQL_Limit=10000 ;;   # ex. LB 1420
+        1620 )  SQL_Limit=30000 ;;   # ex. LB 1620
+        2620 )  SQL_Limit=50000 ;;   # ex. LB 2620
+        3620 )  SQL_Limit=50000 ;;   # ex. LB 3620
+           * )  SQL_Limit=5000  ;;   # ex. Other QB
+esac
+flash_size=`df -m|grep tclog|awk '{print $2}'`
+if [ ! $flash_size ];then
+exit 1
+fi
+
+if [ "$SQL_Limit" -gt "$flash_size" ];then
+   echo $flash_size >/opt/qb/bin/script/sql_limit
+else
+   echo $SQL_Limit >/opt/qb/bin/script/sql_limit
+fi

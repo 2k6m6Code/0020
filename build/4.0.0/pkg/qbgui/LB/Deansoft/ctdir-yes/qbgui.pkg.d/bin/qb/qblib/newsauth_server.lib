@@ -1,0 +1,460 @@
+#=============================================================================================
+sub showNewSchedule
+{
+    my (%action)=@_;
+    my $schref=XMLread($gPATH.'auth.xml');
+    my $schlist=$schref->{server};
+    my $edit; 
+    if ($action{schname} eq 'Local Database'){$action{schname}='LD';}
+    foreach my $sh ( @$schlist )
+    {
+        if ( $sh->{schname} eq $action{schname} ) { $edit=$sh; }
+    }
+   
+    
+    my @titleHeadList=('IP', 'Port', 'Group', 'Domain');
+    my %titleWidth=('IP'=>100, 'Port'=>100, 'Group'=>100 , 'Domain'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Authentication Server);
+    print qq (<hr size=1>);
+    
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Type :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    if ($edit->{schname} eq 'LDAP' )
+    {
+        $LDAP = 'SELECTED';
+    }elsif ($edit->{schname} eq "Radius")
+    {
+        $RAD = 'SELECTED';
+    }
+    print qq (<select class="qbtext" id="schname_show" name="schname_show" style="WIDTH: 120px" onchange="change(this);">);
+    print qq (<option value="LD" $LDAP>Local Datebase</option>);
+    print qq (<option value="LDAP" $LDAP>LDAP</option>);
+    print qq (<option value="Radius" $RAD>Radius</option>);
+    print qq (<option value="AD" >AD</option></select>);
+    print qq (<input type="hidden" class="qbtext" id="schname" name="schname" value="$action{schname}" >);
+    print qq (</td></tr>);
+    print qq (<tr>);
+    print qq (</table>); 
+    print qq (<div class="divframe" style="width:600; height:150;display:none;">); 
+    print qq (<table id="scheduleList" style="width:600" border="0"><tr bgcolor="#332211">);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    print qq (<td>);
+    print qq (<a href="javascript:DeleteSchedule()"><image src="../image/del.gif" title="Delete Checked Schdule(s)" border="0"></a>);
+    print qq (<input type="checkbox" id="del" title="select or deselect all items" onClick="setAllCheckBoxValue('subschs', this.checked)">);
+    print qq (</td></tr>);
+    #my $index = 0;
+    print qq (<tr>); 
+    print qq (<td align="center" width="$titleWidth{Days}">$edit->{ip}</td>);
+    print qq (<td align="center" width="100">$edit->{port}</td>);
+    print qq (<td align="center" width="100">$edit->{group}</td>);
+    print qq (<td align="center" width="100">$edit->{domain}</td>);
+    print qq (<td><input type="checkbox" name="subschs" ></td>);
+    print qq (</tr>);
+    print qq (</table></div>);
+    
+    #print qq (<div class="divframe" style="height:150">);
+    #print qq (<table id="scheduleList" style="width:600;" >);
+    #print qq (</table>);
+    #print qq (</div>);
+    
+    print qq (<div id="note" style="position:absolute;left:50%;top:13%;width:300;height:50%;">);
+    print qq (<blockquote style="color:#000000;font-size:13px;background-color:#ffffcc;margin-left:0px;margin-right:0px;-webkit-box-shadow:#333333 4px 4px 6px;padding:0px;border:1px dashed #aabbcc;" >);
+    print qq (Please enter the IP of the selecting port!!);
+    print qq (</blockquote></div>);
+    
+    print qq (<table bgcolor="#667788" width="600" id="setting" >);
+    #-------------------------------------------------------------------------------------------
+    #  Schedule: Days , Start time , Stop Time
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (IP address:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="text" id="ip" name="opti" value="$edit->{ip}" >);
+    print qq (</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Port :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="text" id="port" name="alldays" value="$edit->{port}"></td><tr>);
+    
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Group :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="text" id="group" name="alldays" value="$edit->{group}"></td><tr>);
+    
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Domain :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="text" id="domain" name="alldays" value="$edit->{domain}"></td><tr>);
+    
+    #print qq (<td class="body"  valign="center" align="right" style="height: 30px; width: 80px">);
+    #print qq (<input class="qb" type="button" style="width: 40" value="Add" onclick="AddSchedule();">);
+    #print qq (</td></tr>);
+    print qq (</table>);
+    #print qq (<tr><hr size=1></tr>);
+    #print qq (<table>);
+    print qq (<tr><td><hr size=1></td></tr>);
+    #print qq (</table>);
+    #-------------------------------------------------------------------------------------------
+    #  Schedule: Name and Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Description :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<textarea class="qbtext" id="description" name="description" style="width:200;height:80" >$edit->{description}</textarea>);
+    print qq (</td></tr>);
+    
+    print qq (</table>);
+    #-----------------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 600px">);
+    print qq (<input class="qb" type="button" style="width:50" value="Save" onclick="SaveSchedule();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+}
+#showSchedule
+
+
+#=============================================================================================
+
+sub scriptNewSchedule
+{
+    print << "scriptNewSchedule";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="qb.js"></script>
+   <script language="javascript">
+
+    var myform;
+    document.getElementById('schname_show').onchange();
+    function change(oo)
+    {
+        if (oo.value != "LD")
+        {
+            document.getElementById('port').disabled = false;
+            document.getElementById('group').disabled = false;
+            document.getElementById('domain').disabled = false;
+            document.getElementById('note').style.display= "none";
+        }    
+        else
+        {
+            document.getElementById('port').disabled = true;
+            document.getElementById('group').disabled = true;
+            document.getElementById('domain').disabled = true;
+            document.getElementById('note').style.display= "block";
+        }    
+    }
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; checkState(); }
+    
+    function AddSchedule()
+    {
+        var subsch = document.getElementById('scheduleList').rows;
+        var total = subsch.length;
+        var ip=document.getElementById('ip').value;
+        var port=document.getElementById('port').value;
+        var group=document.getElementById('group').value;
+        var domain=document.getElementById('domain').value;
+        var days='';
+        var isOK=1;
+        
+        var color=(total % 2) ? ( "#556677" ) : ( "#334455" );
+        
+        for (var i = 0; i < total; i++)
+        {
+            if ( subsch[i].cells[0].innerHTML == ip && subsch[i].cells[1].innerHTML == port 
+                 && subsch[i].cells[2].innerHTML == group && subsch[i].cells[3].innerHTML == domain) {
+                 alert("schedule already exist");
+            	 isOK = 0;
+                 return false;
+            }   
+        }
+        if ( isOK == 1) 
+        {
+            var schedule = document.getElementById('scheduleList').insertRow(total);
+            var t_ip = schedule.insertCell(0);
+            var t_port = schedule.insertCell(1);
+            var t_group = schedule.insertCell(2);
+            var t_domain = schedule.insertCell(3);
+            var t_checkitem  = schedule.insertCell(4);
+            
+            //insertdays.setAttribute("style", "width:250");
+            t_ip.innerHTML=ip;
+            t_port.innerHTML=port;
+            t_group.innerHTML=group;
+            t_domain.innerHTML=domain;
+            var tochecked = '<input type=\"checkbox\" name=\"subschs\" >';
+            t_checkitem.innerHTML = tochecked;
+        }  
+        
+    }
+    function DeleteSchedule()
+    {
+        var sch = document.getElementsByName('subschs'); 
+        total = sch.length;
+        
+         
+        for (var i = total ; i > 0; i--)
+        {
+            if ( sch[i-1].checked == false )
+                document.getElementById('scheduleList').deleteRow(i);
+        }
+    }
+    
+
+    function SaveSchedule() 
+    {
+        DeleteSchedule()
+        AddSchedule()
+        //var daysarray = new Array();
+        //var timestartarray = new Array();
+        //var timestoparray = new Array();
+        var ip = document.getElementById('ip').value;
+        var port = document.getElementById('port').value;
+        var group = document.getElementById('group').value;
+        var domain = document.getElementById('domain').value;
+        
+  	var schname_show=document.getElementById('schname_show');
+        var schname=schname_show.value;
+        var description=document.getElementById('description').value;
+
+	if ( schname == '' )
+        {
+            alert('Schedule Name must be English or nember');
+            return;
+        }
+        
+
+	for (i = 0; i < schname.length; i++)
+        {
+            var ch = schname.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Schedule Name must be English or nember");
+               return;
+            }
+        }
+
+	for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Schedule Description must be English ");
+               return;
+            }
+        }
+        
+        if ( schname_show.disabled != true )
+            myform.schname.value = schname_show.value;
+        
+       
+        myform.action.value = 'SAVE';
+        myform.d_ip.value = ip;
+        myform.d_port.value = port;
+        myform.d_group.value = group;
+        myform.d_domain.value = domain;
+        myform.submit();
+    }
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var schname=document.getElementById('schname');
+        var schname_show=document.getElementById('schname_show');
+        
+        if ( schname.value != '' )
+            schname_show.disabled = true; 
+        
+        if ( action != '' || action == 'ENABLED')
+            window.top.mainFrame.location.href="auth_server.cgi";
+        
+    }
+    
+    </script>
+    
+scriptNewSchedule
+}
+#scheduleScript
+
+sub byName
+{
+    $a->{schname} cmp $b->{schname};
+}
+#byName
+
+sub maintainSchedule
+{
+    my (%action)=@_;
+    
+    my $schref=XMLread($gPATH.'auth.xml');
+    my $schlist=$schref->{server};
+    my $exist=0;
+    my @days;
+    my @timestart;
+    my @timestop;
+    my @subscharrary;
+    my %newschedule;
+    my $enabled=$action{enabled};
+    my $check = '0';
+
+    $action{schname}=~s/^\s*|\s*$//g;
+    
+    if ( !$action{action} ) { return; }
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        my $index=0;
+        my %newschedule;
+        $newschedule{ip}=$action{d_ip};
+        $newschedule{port}=$action{d_port};
+        $newschedule{group}=$action{d_group};
+        $newschedule{domain}=$action{d_domain};
+        $newschedule{schname}=$action{schname};
+        $newschedule{enabled}=($action{enabled})?($action{enabled}):('1');
+        $newschedule{description}=$action{description};
+
+        foreach my $sh ( @$schlist )
+        {
+            if ( $sh->{schname} eq $action{schname} )
+            {
+                $exist=1;
+                $sh=\%newschedule;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            push( @$schlist, \%newschedule); 
+            @$schlist=sort byName @$schlist;
+        }
+        #@$schlist=sort byName @$schlist;
+        
+        #if ($action{schname} eq 'LD' && $action{d_ip} ne '' )
+        #{
+        #    my $zonelist = XMLread($gPATH.'zonecfg.xml');
+        #    my $list=$zonelist->{nat};
+        #    my $natid = '1';
+        #    my $natnet = $action{d_ip};
+        #    $natnet =~ s/\.\d+$/\.0\/24/g;
+        #    foreach my $zone (@$list)
+        #    {
+        #        if ($zone->{natid} eq 'system'){next;}
+        #        if ($natid eq $zone->{natid})
+        #        {
+        #            $natid++;
+        #        } 
+        #    }
+        #    maintainZone(action=>'UPDATENAT',version=>'0',natid=>$natid,natnet=>$natnet,natnote=>'',natroute=>'ip',natip=>$action{d_ip},natnic=>'eth3');
+        #}
+        LogUserAction( action=>'SAVESCH', schname=>$action{schname}, days=>$action{days} );
+    }
+    elsif ( $action{action}=~m/^ENABLED$/ )
+    {
+        my $delet=$action{name};
+        foreach my $item ( @$schlist )
+        {
+            if ( $item->{schname} eq $delet ) 
+            { 
+               $item->{enabled} = $enabled;
+               $check = '1';
+            }
+        }
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{schedule};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        
+        my @temparray;
+        foreach my $item ( @$schlist )
+        {
+            if ($item->{schname} eq 'LD'){$item->{schname} = 'Local Database';}
+            if ( grep(/^$item->{schname}$/, @$delet) ) { LogUserAction( action=>'DELSCH', schname=>$item->{schname} ); next; }
+            push(@temparray, $item); 
+            
+        }
+        $schref->{server}=\@temparray;
+        
+    }
+    #@$schlist=sort byName @$schlist;
+    XMLwrite($schref, $gPATH."auth.xml");
+    
+    if ( $action{action}=~m/^ENABLED$/ )
+    {
+    
+        system("/bin/cp -a /usr/local/apache/conf/httpd.con.n /mnt/conf/httpd.con");
+        if ($check eq '1')
+        {
+            system("/bin/cp -a /usr/local/apache/conf/httpd.con.y /mnt/conf/httpd.con");
+            system("/usr/local/apache/qb/setuid/run /usr/bin/perl /usr/local/apache/qb/auth_open.pl"); 
+        }
+        system("sync");
+        system("sync");
+        system("sync");
+        system("sync");
+        #system("/sbin/service httpd restart >/dev/null");
+        #create new links
+        my $pid = fork();
+        if (!defined($pid))
+        {
+           print ("Fork process failured!\n");
+           exit();
+        }
+        if ($pid)
+        {
+          # This is the child process.
+          my $child = fork;
+          die "Can't fork: $!" unless      defined($child);
+          exit(0) if $child; # parent dies;
+          POSIX::setsid(); # become session leader(daemon)
+          open(STDIN,"</dev/null");
+          open(STDOUT,">/dev/null");
+          open(STDERR, '>&STDOUT');
+          umask(0); # forget file mode creation mask
+          system("/sbin/service httpd restart");
+          exit();
+        }    
+        
+    }
+}
+sub timeSelect()
+{
+    my $time=shift;
+   
+    foreach my $seq ( 0..23 )
+    {
+         my $tm=$seq.":00";
+         my $status = ( $time eq $tm ) ? ( "selected" ) : ( "" );
+         print qq (<option $status value="$tm" >$tm</option>);
+         my $tm=$seq.":30";
+         my $status = ( $time eq $tm ) ? ( "selected" ) : ( "" );
+         print qq (<option $status value="$tm" >$tm</option>);
+    }
+    my $status = ( $time eq "23:59" ) ? ( "selected" ) : ( "" );
+    print qq (<option $status value="23:59" >23:59</option>);
+}
+#timeSelect
+#
+1

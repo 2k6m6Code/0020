@@ -1,0 +1,138 @@
+sub showDnsPolicyTitle
+{
+    my (%action)=@_;
+    my $viewpoint=$action{viewpoint};
+    my @titleList=( 'Source', 'Rely', 'Schedul', 'Edit' );
+
+    my $inidns = XMLread($gPATH."inidns.xml");
+    my $classes = $inidns->{class};
+    
+    my %titleWidth=(Source=>'10%', Schedule=>'10%', Edit=>'5%', Del=>'5%');
+    print qq (<div class="divframe" style="height: 100%">);
+    
+    print qq (<table cellspacing="0" border="0">);
+    
+    print qq (<table id="ruleList" width="100%" class="body" border="0" style="table-layout:fixed;work-break-all" >);
+    print qq (<thead>);
+    print qq (<tr style="background-color:#332211;">);
+    print qq (<td width="$titleWidth{'Source'}" align="center">);
+    print qq (Source</td>);
+    print qq (<td width="$titleWidth{'Schedule'}" align="center">Schedule</td>);
+    print qq (<td width="$titleWidth{'Edit'}" align="center">Edit</td>);
+    print qq (<td width="$titleWidth{'Del'}" align="center"><a href="javascript:delPolicy()">);
+    print qq (<img border="0" title="Delete checked policies" src="image/del.gif"></a>);
+    print qq (<input type="checkbox" onclick="setAllCheckBoxValue('rule', this.checked)" title="select or deselect all items"></td>);
+    print qq (</tr>);
+    print qq (</thead>);
+    
+    my $lineCount=1;
+    
+    foreach my $class ( @$classes ) 
+    {
+        if ( $class->{source} eq 'system' ) { next; }
+        my $rulekey = $class->{source}.$class->{schedule};
+        
+        my ( $originalColor, $bgcolor ); $originalColor=$bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        my $display = $class->{source};
+        $display=~s/host-//g;
+        my $addresslist=maintainHost( action=>'GETADDRESSLIST', hostname=>$display);
+        print qq (<td class="body" align="center" width="$titleWidth{Source}" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$display</td>);
+        #print qq (<td class="body" align="center" width="$titleWidth{Source}" >$display</td>);
+        print qq (<td class="body" align="center" width="$titleWidth{Schedule}" >$class->{schedule}</td>);
+        print qq (<td class="body" align="center" width="$titleWidth{Edit}">);
+        
+        $key_for_shortcut = $class->{source}.'&'.$class->{schedule};
+        print qq (<a href="javascript:edit_this_rule('$key_for_shortcut', '$rulekey');selectedColor(ruleList.rows[$lineCount])" >);
+        print qq (<image src="image/edit.gif" title="Edit rule properties" border="0"></a></td>);
+        
+        print qq (<td class="body" align="center" width="100">);
+        print qq (<input type="checkbox" id="rule" name="rule" value="$rulekey">);
+        print qq (</td>);
+        
+        #
+        # Checkbox
+        #
+        #print qq (<td style="width:50" align="center">);
+        #if ( !($class->{source} eq 'all' && $class->{destination} eq 'all') ) # if target rule is "SYSTEM_RULE" hidden checkbox
+        #{print qq (<input type="checkbox" name="rule" value="$rulekey">);}
+        #print qq (</td></tr>);
+        
+        $lineCount++;
+    }
+    
+    print qq (</table>);
+}
+#showDnsPolicyTitle
+
+sub list_ini_rule_script
+{
+    print << "LIST_INI_RULE_SCRIPT";
+    
+    <div id="HostDiv" class="infodiv"></div>
+     
+    <script type="text/javascript" src="grid.js"></script>
+    <script language="javascript">
+    
+    var myform;
+    
+    function cgi_dep_onload()
+    { 
+        myform=window.document.forms[0];
+        //setTimeout("informProute()",500);
+    } 
+    
+    function delPolicy()
+    {
+        var setDeleteOn = false
+        var rules = document.getElementsByName('rule');
+        for (var i = 0; i < rules.length; i++)
+        {
+            if ( rules[i].checked == true )
+                setDeleteOn = true;
+        }
+        if (!setDeleteOn) { alert("There is No Policy Rule Checked"); }
+        if (setDeleteOn) { if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )  { goSubmit('DELRULES');} }
+    }
+    
+    function edit_this_rule(key_for_shortcut, rulekey)
+    {
+    
+        var params = key_for_shortcut.split('&');
+        var qstring = '';
+       
+        qstring += 'inidns.cgi';
+        qstring += '?source=' + params[0];
+        qstring += '&schedule=' + params[1];
+        qstring += '&rulekey=' + rulekey;
+        
+        window.top.mainFrame.mainframe.inidns.location.href=qstring;
+    }
+    
+    function showHostInfo(name, addresslist)
+    {
+        if ( addresslist == '' )
+        {
+            addresslist = (name == 'Anywhere') ? ('0.0.0.0/0') : (name);
+        }
+        HostDiv.innerText="<table class=infodivtable><tr><td>"+"Host Name:" + name + "</td></tr>";
+        HostDiv.innerText += "<tr><td>Address Detail:" + addresslist + "</td></tr>";
+        
+        with(HostDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop + event.y;
+            style.display="block";
+        }
+    }
+    
+    function hideHostInfo(){HostDiv.style.display="none";}
+    
+    
+    </script>
+LIST_INI_RULE_SCRIPT
+}
+#
+1

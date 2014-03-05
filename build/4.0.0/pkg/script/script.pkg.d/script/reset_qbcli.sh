@@ -1,0 +1,1 @@
+/opt/qb/qbwdt/xmlezio_tools/reset_qbcli.sh

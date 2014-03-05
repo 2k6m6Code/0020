@@ -1,0 +1,131 @@
+<opt>
+  <mime block="0" description="" mimetype="system" />
+  <mime block="0" description="3GPP" mimetype="audio/3gpp" />
+  <mime block="0" description="3GPP codec" mimetype="audio/x-rn-3gpp-amr" />
+  <mime block="0" description="3GPP encrypted video" mimetype="video/3gpp-encrypted" />
+  <mime block="0" description="3GPP video" mimetype="video/3gpp" />
+  <mime block="0" description="3GPP-AMR encrypted codec" mimetype="audio/x-rn-3gpp-amr-encrypted" />
+  <mime block="0" description="3GPP2 video" mimetype="video/3gpp2" />
+  <mime block="0" description="3gpp-AMR-WB codec" mimetype="audio/x-rn-3gpp-amr-wb" />
+  <mime block="0" description="3gpp-AMR_WB encrypted codec" mimetype="audio/x-rn-3gpp-amr-wb-encrypted" />
+  <mime block="0" description="4.3BSD tar archive" mimetype="application/x-tar" />
+  <mime block="0" description="8-bit u-law PCM" mimetype="audio/basic" />
+  <mime block="0" description="AIFF audio" mimetype="audio/aiff" />
+  <mime block="0" description="AIFF audio" mimetype="audio/x-aiff" />
+  <mime block="0" description="AIFF audio" mimetype="audio/x-pn-aiff" />
+  <mime block="0" description="AMR codec" mimetype="audio/amr" />
+  <mime block="0" description="AMR encrypted codec" mimetype="audio/amr-encrypted" />
+  <mime block="0" description="AMR-WB codec" mimetype="audio/amr-wb" />
+  <mime block="0" description="AMR-WB encrypted codec" mimetype="audio/amr-wb-encrypted" />
+  <mime block="0" description="Adobe Acrobat" mimetype="application/pdf" />
+  <mime block="0" description="Advanced Audio Coding" mimetype="audio/aac" />
+  <mime block="0" description="CMU Raster" mimetype="image/x-cmu-raster" />
+  <mime block="0" description="DOS executable" mimetype="application/dos-exe" />
+  <mime block="0" description="Graphics Interchange Format" mimetype="image/gif" />
+  <mime block="0" description="HTML" mimetype="text/html" />
+  <mime block="0" description="JPEG" mimetype="image/jpeg" />
+  <mime block="0" description="Java Applet" mimetype="application/x-java-applet" />
+  <mime block="0" description="JavaScript" mimetype="application/x-javascript" />
+  <mime block="0" description="LZH archive" mimetype="application/x-lzh" />
+  <mime block="0" description="MIDI audio" mimetype="audio/midi" />
+  <mime block="0" description="MP1 audio" mimetype="audio/mp1" />
+  <mime block="0" description="MP2 audio" mimetype="audio/mp2" />
+  <mime block="0" description="MP3 audio" mimetype="audio/mp3" />
+  <mime block="0" description="MP3 audio" mimetype="audio/x-mp3" />
+  <mime block="0" description="MPEG 4 audio" mimetype="audio/m4a" />
+  <mime block="0" description="MPEG audio" mimetype="audio/mpeg" />
+  <mime block="0" description="MPEG audio" mimetype="audio/mpg" />
+  <mime block="0" description="MPEG audio" mimetype="audio/rn-mpeg" />
+  <mime block="0" description="MPEG audio" mimetype="audio/x-mpeg" />
+  <mime block="0" description="MPEG audio" mimetype="audio/x-mpg" />
+  <mime block="0" description="MPEG audio URLs" mimetype="audio/mpegurl" />
+  <mime block="0" description="MPEG audio URLs" mimetype="audio/x-mpegurl" />
+  <mime block="0" description="MPEG video" mimetype="video/mpeg" />
+  <mime block="0" description="MS-DOS executable" mimetype="application/msdos-windows" />
+  <mime block="0" description="MS-DOS program" mimetype="application/x-msdos-program" />
+  <mime block="0" description="MacWrite Document" mimetype="application/macwriteii" />
+  <mime block="0" description="Macintosh BinHex" mimetype="application/mac-binhex40" />
+  <mime block="0" description="Macintosh Compact Pro" mimetype="application/mac-compactpro" />
+  <mime block="0" description="Macintosh File" mimetype="application/applefile" />
+  <mime block="0" description="Macintosh Stuffit archive" mimetype="application/x-stuffit" />
+  <mime block="0" description="Macromedia Authorware binary" mimetype="application/x-authorware-bin" />
+  <mime block="0" description="Macromedia Authorware shocked file" mimetype="application/x-authorware-map" />
+  <mime block="0" description="Macromedia Authorware shocked packet" mimetype="application/x-authorware-seg" />
+  <mime block="0" description="Macromedia Freehand" mimetype="image/x-freehand" />
+  <mime block="0" description="Macromedia FutureSplash" mimetype="application/futuresplash" />
+  <mime block="0" description="Macromedia Shockwave" mimetype="application/x-director" />
+  <mime block="0" description="Macromedia Shockwave" mimetype="application/x-shockwave-flash" />
+  <mime block="0" description="Microsoft ASF" mimetype="secure RealVideo" />
+  <mime block="0" description="Microsoft AVI" mimetype="video/x-msvideo" />
+  <mime block="0" description="Microsoft BMP" mimetype="image/bmp" />
+  <mime block="0" description="Microsoft Excel" mimetype="application/x-excel" />
+  <mime block="0" description="Microsoft OLE Object" mimetype="application/x-oleobject" />
+  <mime block="0" description="Microsoft OLE Object" mimetype="application/x-oleobject" />
+  <mime block="0" description="Microsoft Powerpoint" mimetype="application/mspowerpoint" />
+  <mime block="0" description="Microsoft WAV" mimetype="audio/wav" />
+  <mime block="0" description="Microsoft WAV" mimetype="audio/x-pn-wav" />
+  <mime block="0" description="Microsoft WAV" mimetype="audio/x-wav" />
+  <mime block="0" description="Microsoft Word" mimetype="application/msword" />
+  <mime block="0" description="Microsoft download" mimetype="application/x-msdownload" />
+  <mime block="0" description="Ogg Vorbis" mimetype="application/ogg" />
+  <mime block="0" description="Ogg Vorbis" mimetype="application/x-ogg" />
+  <mime block="0" description="POSIX cpio archive" mimetype="application/x-bcpio" />
+  <mime block="0" description="POSIX tar archive" mimetype="application/x-ustar" />
+  <mime block="0" description="Portable Network Graphics" mimetype="image/png" />
+  <mime block="0" description="Postscript" mimetype="application/postscript" />
+  <mime block="0" description="QuickTime" mimetype="video/quicktime" />
+  <mime block="0" description="RGB image" mimetype="image/x-rgb" />
+  <mime block="0" description="RealAudio" mimetype="audio/vnd.rn-realaudio" />
+  <mime block="0" description="RealAudio" mimetype="audio/x-realaudio" />
+  <mime block="0" description="RealAudio plug-in" mimetype="audio/x-pn-realaudio" />
+  <mime block="0" description="RealMedia" mimetype="application/vnd.rn-realmedia" />
+  <mime block="0" description="RealMedia VBR" mimetype="application/vnd.rn-realmedia-vbr" />
+  <mime block="0" description="RealPix" mimetype="image/vnd.rn-realpix" />
+  <mime block="0" description="RealSystem media" mimetype="application/vnd.rn-realsystem-rmj" />
+  <mime block="0" description="RealSystem secure media" mimetype="application/vnd.rn-realsystem-rmx" />
+  <mime block="0" description="RealText" mimetype="text/vnd.rn-realtext" />
+  <mime block="0" description="RealVideo" mimetype="video/vnd.rn-realvideo" />
+  <mime block="0" description="Rich Text Format" mimetype="application/rtf" />
+  <mime block="0" description="SGI movie" mimetype="video/x-sgi-mov" />
+  <mime block="0" description="SGML" mimetype="text/x-sgml" />
+  <mime block="0" description="SMIL" mimetype="application/smil" />
+  <mime block="0" description="Streaming Download Project" mimetype="application/sdp" />
+  <mime block="0" description="Streaming Download Project" mimetype="application/x-sdp" />
+  <mime block="0" description="Streaming Media" mimetype="application/streamingmedia" />
+  <mime block="0" description="Sun audio" mimetype="audio/x-pn-au" />
+  <mime block="0" description="System V cpio" mimetype="application/x-sv4cpio" />
+  <mime block="0" description="System V cpio with CRC" mimetype="application/x-sv4crc" />
+  <mime block="0" description="Tagged Image File Format" mimetype="image/tiff" />
+  <mime block="0" description="Tcl script" mimetype="application/x-tcl" />
+  <mime block="0" description="UNIX compressed" mimetype="application/x-compress" />
+  <mime block="0" description="UNIX csh script" mimetype="application/x-csh" />
+  <mime block="0" description="UNIX shell script" mimetype="application/x-sh" />
+  <mime block="0" description="Windows ACM" mimetype="audio/x-pn-windows-acm" />
+  <mime block="0" description="Windows Media" mimetype="audio/x-ms-wma" />
+  <mime block="0" description="Windows PCM" mimetype="audio/x-pn-windows-pcm" />
+  <mime block="0" description="Windows executable" mimetype="application/x-winexe" />
+  <mime block="0" description="Word Perfect" mimetype="application/wordperfect5.1" />
+  <mime block="0" description="XML" mimetype="text/xml" />
+  <mime block="0" description="XSL" mimetype="text/xsl" />
+  <mime block="0" description="ZIP" mimetype="application/zip" />
+  <mime block="0" description="block compressed" mimetype="application/x-bzip2" />
+  <mime block="0" description="cascading style sheet" mimetype="text/css" />
+  <mime block="0" description="encrypted 3GPP" mimetype="audio/3gpp-encrypted" />
+  <mime block="0" description="executable" mimetype="application/exe" />
+  <mime block="0" description="executable" mimetype="application/x-exe" />
+  <mime block="0" description="gzip compressed" mimetype="application/x-gzip" />
+  <mime block="0" description="gzipped tar archive" mimetype="application/x-gtar" />
+  <mime block="0" description="old cpio archive" mimetype="application/x-cpio" />
+  <mime block="0" description="plain text" mimetype="text/plain" />
+  <mime block="0" description="rich text" mimetype="text/richtext" />
+  <mime block="0" description="secure RealAudio" mimetype="application/vnd.rn-realaudio-secure" />
+  <mime block="0" description="secure RealAudio" mimetype="audio/x-realaudio-secure" />
+  <mime block="0" description="secure RealMedia" mimetype="application/vnd.rn-realmedia-secure" />
+  <mime block="0" description="secure RealVideo" mimetype="video/vnd.rn-realvideo-secure" />
+  <mime block="0" description="shell archive" mimetype="application/x-shar" />
+  <mime block="0" description="streaming mp3 playlists" mimetype="audio/scpls" />
+  <mime block="0" description="streaming mp3 playlists" mimetype="audio/x-scpls" />
+  <mime block="0" description="tab separated values" mimetype="text/tab-separated-values" />
+  <mime block="0" description="unspecified data" mimetype="application/octet-stream" />
+  <mime block="0" description="vCard" mimetype="text/x-vcard" />
+</opt>

@@ -1,0 +1,47 @@
+<html>
+<head><link rel="stylesheet" href="help.css" type="text/css"></head>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>High Availability</title>
+<body>
+
+<h2>High Availability</h2>
+<ol>
+<li>HA Topology</li><!-- 1 -->
+<p>
+In HA mode, the primary initially works as an active, the secondary works as a standby. When the primary one fails, the secondary will turns to active mode. And then the original primary becomes the standby. Console cable and Ethernet cable are needed to detect the operation of Q-balancer.
+</p>
+<li>Setup High Availability</li><!-- 2 -->
+<p>
+The primary one has the configuration files for the active mode and standby mode. So does the secondary. This means four configuration files are need when setting up HA for Q-Balancer. The files between the primary and the secondary are identical. The active one, the primary or the secondary, communicates with others with the floating IP. When the equipment turns to the standby, it will use the standby IP, such as standby IP of primary and standby IP of secondary.
+</p>
+<p>
+<table>
+<tr><td>Launch HA on Boot:</td><td>Launch HA</td></tr>
+<tr><td class="light">Play the Role of:</td><td class="light">What role does this equipment play? The primary? Or the secondary?</td></tr>
+<tr><td>Auto Fail Over:</td><td>Use RS-232 to detect the another equipment</td></tr>
+<tr><td class="light">Auto Switch Back:</td><td class="light">Return the failed Q-Balancer to the active mode when it finishes reboot</td></tr>
+<tr><td>Fail on LAN Interface:</td><td>Use network to detect the another.</td></tr>
+<tr><td class="light">Host FAILOVER Timeout:</td><td class="light">Timeout for RS-232 detection</td></tr>
+<tr><td>Network FAILOVER Timeout:</td><td>Timeout for network detection</td></tr>
+<tr><td class="light">Enable Virtual MAC:</td><td class="light">Enable the "Virtual MAC" function over the port connecting to LAN</td></tr>
+<tr><td>Config Set:</td><td>The configuration for the active and the standby.</td></tr>
+<tr><td class="light">Floating IP:</td><td class="light">IP for the active</td></tr>
+<tr><td>Standby IP of Primary:</td><td>IP for the primary working as the standby</td></tr>
+<tr><td class="light">Standby IP of Secondary:</td><td class="light">IP for the secondary working as the standby</td></tr>
+<tr><td>HA LAN Check Targets:</td><td>Setup the target IPs to prevent the switching between the primary and the secondary from ISP disconnection</td></tr>
+</table></p>
+<p>
+The following steps are the procedure for setup:<br>
+<ol>
+<li>In the Primary, config a file for the active mode and save as "PRACT."
+<li>In the Primary, config a file for the standby mode and save as "PRSTD."
+<li>In "CONFIG SET" on UI, assign the file "PRACT" for Active and assign the file "PRSTD" for standby.
+<li>Setup the Floating IP, standby IP of primary, and standby IP of secondary.
+<li>In the Secondary, config a file for the active mode and save as "SECACT."
+<li>In the primary, config a file for the active mode and save as "SECSTD."
+<li>In "CONFIG SET" on UI, assign the file "SECACT" for Active and assign the file "SECSTD" for standby.
+<li>Setup the Floating IP, standby IP of primary, and standby IP of secondary
+</ol>
+</p>
+</ol>
+</body></html>

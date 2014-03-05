@@ -1,0 +1,185 @@
+#=============================================================================================
+sub showMIME
+{
+    my (%action)=@_;
+    my $mimeref=XMLread($gPATH.'mime.xml');
+    my $mimelist=$mimeref->{mime};
+    
+    my @titleHeadList=('MIME', 'Block','Description', 'Edit');
+    my %titleWidth=('MIME'=>250, 'Block'=>100, 'Description'=>250, 'Edit'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">MIME Types);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    #==============================================================
+    # Print Title first
+    # show 
+    #===============================================================
+    #print qq (<link rel="stylesheet" href="style.css" />);
+    
+    #print qq (<div class="divframe" style="width:800">);
+    #print qq (<table bgcolor="#332211" width="100%" border="0" id="table" class="sortable"><tr>); 
+    #print qq (<table cellpadding="0" cellspacing="0" border="0" id="table" class="sortable" width="100%">);
+    #print qq (<table cellpadding="0" cellspacing="0" border="0" width="100%">);
+    #print qq (<thead><tr>);
+    
+    print qq (<div class="divframe" style="width:800">);
+    print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    print qq (<td>);
+    print qq (<a href="javascript:delmime()"><image src="image/del.gif" title="Delete Checked MIME Type(s)" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('mimetypes', this.checked)">);
+    print qq (</td></tr></table></div>);
+    
+    #foreach my $title ( @titleHeadList ) { print qq (<th>$title</th>); }
+    
+    #print qq (<td align="center" width="100">);
+    #print qq (<th>) ;
+    #print qq (<a href="javascript:goSubmit('DELET')"><image src="image/del.gif" title="Delete Checked MIME Type(s)" border="0"></a>);
+    #print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('mimetypes', this.checked)">);
+    #print qq (</th>);
+    #print qq (</tr></table>);
+    #print qq (</tr></thead>);
+    #print qq (<tbody>);
+    #print qq (</tr>);
+    #print qq (</div>);
+    print qq (<div class="divframe" style="height:400; width:800">);
+    print qq (<table id="mimeList" width="100%"  class="body" border="0">);
+    my $lineCount=0;
+    foreach my $item ( @$mimelist )
+    {
+        if ( $item->{mimetype} eq "system" ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+        print qq (<td align="center" width="$titleWidth{MIME}" height="25" >$item->{mimetype}</td>);
+        print qq (<td align="center" width="$titleWidth{Block}" height="25" >);
+        my $status = ( $item->{block} eq '1' ) ? ( 'checked' ) : ( '' );
+        print qq (<input type="checkbox" name="block_mimes" value="$item->{mimetype}" $status>);
+        print qq (</td>);
+        print qq (<td align="center" width="$titleWidth{Description}" height="25">$item->{description}</td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<a href="editmime.cgi?mimetype=$item->{mimetype}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit Schedule properties" border="0"></a></td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<input type="checkbox" name="mimetypes" value="$item->{mimetype}">);
+        print qq (</tr>);
+        $lineCount++;
+    
+    }
+    print qq (</tbody>);  
+    print qq (</table>);
+    print qq (</div>);
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body" >);
+=cut
+    print << "CONTROLS";
+
+	<div id="controls">
+                <div id="perpage">
+                        <select onchange="sorter.size(this.value)">
+                        	<option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="20" selected="selected">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                        </select>
+                        <span>Entries Per Page</span>
+                </div>
+                <div id="navigation">
+                        <img src="images/first.gif" width="16" height="16" alt="First Page" onclick="sorter.move(-1,true)" />
+                        <img src="images/previous.gif" width="16" height="16" alt="First Page" onclick="sorter.move(-1)" />
+                        <img src="images/next.gif" width="16" height="16" alt="First Page" onclick="sorter.move(1)" />
+                        <img src="images/last.gif" width="16" height="16" alt="Last Page" onclick="sorter.move(1,true)" />
+                </div>
+                <div id="text">Page <span id="currentpage"></span> of <span id="pagelimit"></span></div>
+        </div>
+
+CONTROLS
+=cut
+
+    print qq (</tr></td>);
+    print qq (</table>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="right" width="500">);
+    print qq (<input class="qb" type="button" width="100" value="Select All" onclick="checkmime(true);">);
+    print qq (<input class="qb" type="button" width="100" value="Clear All" onclick="checkmime(false);">);
+    print qq (<input class="qb" type="button" width="100" value="Apply" onclick="goSubmit('APPLY');">);
+    print qq (</td>);
+    print qq (<td align="right" >);
+    print qq (<input class="qb" type="button" width="100" value="Add mime Type" onclick="Newmime();">);
+    print qq (</td>);
+}
+#showMIME
+    
+
+
+#=============================================================================================
+=cut
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="script.js"></script>
+   <script type="text/javascript">
+   var sorter = new TINY.table.sorter("sorter");
+   sorter.head = "head";
+   sorter.asc = "asc";
+   sorter.desc = "desc";
+   sorter.even = "evenrow";
+   sorter.odd = "oddrow";
+   sorter.evensel = "evenselected";
+   sorter.oddsel = "oddselected";
+   sorter.paginate = true;
+   sorter.currentid = "currentpage";
+   sorter.limitid = "pagelimit";
+   sorter.init("table",1);
+
+    var myform;
+=cut
+sub scriptMIME
+{
+    print << "scriptMIME";
+    
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript">
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+    
+    function checkmime(action)
+    {
+        
+        var block_mimes = document.getElementsByName('block_mimes');
+        
+        for (var i = 0; i < block_mimes.length; i++)
+        {
+            block_mimes[i].checked = action;
+        }
+    }
+    function Newmime() 
+    {
+        window.top.mainFrame.location.href="editmime.cgi";
+    }
+    
+    function delmime()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+    
+    </script>
+    
+scriptMIME
+}
+#
+#
+1

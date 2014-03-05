@@ -1,0 +1,780 @@
+<html>
+<!--
+Last Modify  20031112
+-->
+<head>
+<link rel="stylesheet" href="../gui.css" type="text/css">
+
+<title>Auto Query</title>
+<style>
+v\:*{behavior:url(#default#vml)}
+body
+{
+    background:#336699;
+    text-align:center;
+    scrollbar-base-color:#336699;
+    font:12 Verdana;
+    color:white;
+}
+</style>
+<script language="javascript" type="text/javascript" src="../qbjs/excanvas.min.js"></script>
+<script type="text/javascript" language="javascript" src="../qbjs/jquery.js"></script>
+<script type="text/javascript" language="javascript" src="../qbjs/jquery.flot.js"></script>
+<script type="text/javascript" language="javascript" src="../qbjs/jquery.flot.selection.js"></script>
+
+<script>
+//PolyMaster
+//PolyMaster.add()
+//PolyMaster.show()
+//PolyMaster.showmycard()
+//PolyMaster.chmode()
+//PolyMaster.clear()
+
+
+function polymaster(element_id,name){
+
+	var PA;
+	
+	if(!(PA=document.all[element_id]))
+		return null;
+	
+	while(PA.childNodes.length){
+		PA.firstChild.parentNode.removeChild(PA.firstChild);
+	}
+	
+	//definition
+	
+	this.name = name;
+	this.maxValue = 64;
+	this.unitIndex = 0;
+	this.cards = new Array();
+	this.today = new Date();
+	this.mode = 1;
+	this.count = 0;
+	this.obj = document.createElement("TABLE");
+	this.ispselobj = document.createElement("SELECT");
+	this.ispselobj.style.font = "10 Verdana";
+	this.ispselobj.style.background = "#336699";
+	this.ispselobj.style.color = "white";
+	this.mycard = new polycard(this,0);		
+
+	PA.appendChild(this.obj);
+
+	PA = null;
+}
+
+
+
+polymaster.prototype.setTime = function setTime(yy,mm,dd,hh,mi){
+
+	this.today.setYear(parseInt(yy));
+	this.today.setMonth(parseInt(mm));
+	this.today.setDate(parseInt(dd));
+	this.today.setHours(parseInt(hh));
+	this.today.setMinutes(parseInt(mi));
+}
+
+polymaster.prototype.add=function add(ispname,path,bound){
+	/*alert(path);
+	if(this.cards.length <= this.count){
+		var PCARD = new polycard(this,1);
+		this.cards.push(PCARD);
+		if(this.mode)
+			PCARD.construct();
+		this.ispselobj.options.add(new Option(ispname,this.count));
+	}
+	else{
+		var PCARD = this.cards[this.count];
+		if(this.mode && !PCARD.mount)
+			PCARD.construct();
+		if(!this.mode && PCARD.mount)
+			PCARD.deconstruct();
+		this.ispselobj.options[this.count] = new Option(ispname,this.count);
+	}
+	PCARD.index = this.count;
+	PCARD.set(ispname,path,bound);
+	this.count++;
+	PCARD = ispname = polydata = path = null;
+	*/
+	var diviid1 = "#placeholder"+ispname;
+	var diviid2 = "#overview"+ispname;
+	$(diviid1).remove();
+	$(diviid2).remove();
+	$('#hischart').append('<div style="width:280px;height:280px;background-color:#FFFFFF;float: left;margin: 1px;" onclick="writeConsole(this)" id="placeholder'+ispname+'"></div>');
+	$('#hischart').append('<div style="margin: 0 auto 10px;width:400px;height:50px;background-color:#FFFFFF;display: none;" id="overview'+ispname+'"></div>');
+	
+	
+	var ts = Math.round((new Date()).getTime());
+	var sspath = path.split(",");
+var dwq = new Array();
+for(var ww=0 ;ww<sspath.length;ww++){
+dwq[ww]=new Array((ts-((sspath.length-ww)*300*1000))+28800000, parseInt(sspath[ww]/300));
+
+
+}
+if(ispname.search("-outbound")>0){
+var ttname = ispname.replace("-outbound","</b>-outbound");
+}else{
+var ttname = ispname.replace("-inbound","</b>-inbound");
+}
+var labelname = "<b>"+ttname+"-"+bound+"(KBits)";
+ var d = {label : labelname,data:dwq};
+    // first correct the timestamps - they are recorded as the daily
+    // midnights in UTC+0100, but Flot always displays dates in UTC
+    // so we have to add one hour to hit the midnights in the plot
+  //  for (var i = 0; i < d.length; ++i)
+ //     d[i][0] += 60 * 60 * 1000;
+
+    // helper for returning the weekends in a period
+    function weekendAreas(axes) {
+        var markings = [];
+        var d = new Date(axes.xaxis.min);
+        // go to the first Saturday
+        d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7))
+        d.setUTCSeconds(0);
+        d.setUTCMinutes(0);
+        d.setUTCHours(0);
+        var i = d.getTime();
+        do {
+            // when we don't set yaxis, the rectangle automatically
+            // extends to infinity upwards and downwards
+            markings.push({ xaxis: { from: i, to: i + 2 * 24 * 60 * 60 * 1000 } });
+            i += 7* 24 * 60 * 60 * 1000;
+        } while (i < axes.xaxis.max);
+
+        return markings;
+    }
+    if(bound == "in"){
+    var options = {
+	series: {
+            lines: { show: true, lineWidth: 1 ,fill: true,fillColor: "#336699" },
+            shadowSize: 0
+        },
+	colors: [ "#0000FF"],
+	yaxis: { min: 0, autoscaleMargin: 0.001 },
+        xaxis: { mode: "time", tickLength: 5 },
+        
+        grid: { markings: weekendAreas
+ 
+          
+        	}
+    };
+    }else{
+	var options = {
+	series: {
+            lines: { show: true, lineWidth: 1 ,fill: true,fillColor: "#AFEEEE" },
+            shadowSize: 0
+        },
+	colors: [ "#48D1CC"],
+	yaxis: { min: 0, autoscaleMargin: 0.001 },
+        xaxis: { mode: "time", tickLength: 5 },
+        
+        grid: { markings: weekendAreas
+ 
+          
+        	}
+    };
+	}
+    var plot = $.plot($(diviid1),[d],options);
+    
+    var overview = $.plot($(diviid2), [d], {
+        series: {
+            lines: { show: true, lineWidth: 1  },
+            shadowSize: 0
+        },
+	legend: {
+    show: 0},
+	colors: [ "#FF0000"],
+        xaxis: { ticks: [], mode: "time" },
+        yaxis: { ticks: [], min: 0, autoscaleMargin: 0.05 },
+        selection: { mode: "x" }
+    });
+
+    // now connect the two
+    
+    $(diviid1).bind("plotselected", function (event, ranges) {
+        //zooming min ranges 10 Minutes
+	if(ranges.xaxis.to - ranges.xaxis.from<600000){
+	alert("Min ranges 10 Minutes");
+	return 0;
+	}
+	// do the zooming	
+        plot = $.plot($(diviid1), [d],
+                      $.extend(true, {}, options, {
+                          xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
+                      }));
+
+        // don't fire event on the overview to prevent eternal loop
+        overview.setSelection(ranges, true);
+    });
+    
+    $(diviid2).bind("plotselected", function (event, ranges) {
+        plot.setSelection(ranges);
+    });
+
+    
+    
+}
+
+
+polymaster.prototype.show=function show(){
+	
+	//balance
+	while(this.count < this.cards.length){
+		this.cards[this.count].del();
+		this.ispselobj.options.remove(this.count);
+	}
+	//執行每個 PolyCard 的 Show() : 秀圖
+	for(var i=0;i<this.cards.length;i++){
+		this.cards[i].show();
+	}
+	if(!this.mode)
+		this.showmycard();
+	i = null;
+}
+
+polymaster.prototype.showmycard=function showmycard(){
+	
+	if(!this.ispselobj.options.length)
+		return null;
+	this.mycard.set(this.cards[this.ispselobj.value].ispname.innerText,this.cards[this.ispselobj.value].data.toString());
+	this.mycard.show();
+}
+
+polymaster.prototype.chmode=function chmode(num){
+	if(num){
+		if(this.mode)
+			return null;
+		this.mycard.deconstruct();
+		for(var i=0;i<this.cards.length;i++){
+			this.cards[i].construct();
+		}
+		this.mode = 1;
+		i = null;
+	}
+	else{
+		if(!this.mode)
+			return null;
+		for(var i=this.cards.length-1;i>=0;i--){
+			this.cards[i].deconstruct();
+		}
+		this.mycard.construct();
+		this.mode = 0;
+		i = BT = TR = TD = null;
+	}
+	this.show();
+}
+
+polymaster.prototype.clear= function clear(){
+	this.count = 0;
+}
+
+//PolyCard
+//PolyCard.set()
+//PolyCard.del()
+//PolyCard.show()
+//PolyCard.showRow()
+//PolyCard.showColumn()
+//PolyCard.showPoly()
+//PolyCard.showUnit()
+//PolyCard.construct()
+//PolyCard.deconstruct()
+
+function polycard(masterObj,mode){
+
+	this.index = 0;
+	this.parent = masterObj;
+	this.mount = 0;
+	this.unitIndex = 0;
+	this.ispname = document.createElement("span");
+	this.maxValue = null;
+	this.data = null;
+	this.path = null;
+	this.unit_height = 16;
+	this.blockwidth = 0;
+	this.blocknum = 0;
+	this.unitselobj = document.createElement("select");
+	this.unitselobj.style.font = "10 Verdana";
+	this.unitselobj.style.background = "#336699";
+	this.unitselobj.style.color = "white";
+	for(var i=0;i<3;i++)
+		this.unitselobj.options.add(new Option(this.parent.unitdata[i].text,i));
+	this.showbut = document.createElement("button");
+	this.showbut.innerHTML = "Show";	
+	this.showbut.style.font = "10 Verdana";
+
+	//流量圖中的 PolyLine 物件
+	this.poly = document.createElement("v:polyline");
+	this.poly.strokecolor = '#ccffcc';
+	this.poly.strokeweight = '2px';
+	this.poly.fillcolor = '#000000';
+	//this.poly.style.position = 'absolute';
+	this.poly.style.zIndex = 5;
+	this.poly.style.top = this.unit_height >> 1;
+	this.poly.style.left = 0;
+
+	//流量圖中的水平背景線 TABLE 物件
+	this.Trow = document.createElement("TABLE");
+	this.Trow.cellSpacing = 0;
+	this.Trow.cellPadding = 0;
+	this.Trow.border = 0;
+	this.Trow.style.fontSize = 1;
+	//this.Trow.style.position = 'absolute';
+	this.Trow.style.zIndex = 7;
+	this.Trow.style.top = this.unit_height >> 1;
+	this.Trow.style.left = 0;
+
+	//流量圖中的垂直背景線 TABLE 物件
+	this.Tcolumn = document.createElement("TABLE");
+	this.Tcolumn.cellSpacing = 0;
+	this.Tcolumn.cellPadding = 0;
+	this.Tcolumn.style.color = "white";
+	this.Tcolumn.style.font = "10 Verdana";
+	//this.Tcolumn.style.position = 'absolute';
+	this.Tcolumn.style.zIndex = 6;
+	this.Tcolumn.style.top = this.unit_height >> 1;
+	this.Tcolumn.style.left = 0;
+	this.Tcolumn.border = 0;
+
+	//流量圖中的流量標記 TABLE 物件
+	this.Tunit = document.createElement("TABLE");
+	this.Tunit.width = "100%";
+	this.Tunit.style.color = "white";
+	this.Tunit.style.font = "10 Verdana";
+	this.Tunit.style.textAlign = 'right';
+	this.Tunit.cellSpacing = 0;
+	this.Tunit.cellPadding = 0;
+	this.Tunit.border = 0;
+	
+	for(var i=0;i<9;i++)
+		this.Tunit.insertRow(-1).insertCell(-1);
+
+	//包含流量圖的 DIV 物件
+	this.viewer = document.createElement("DIV");
+	this.viewer.style.width = 450 - 50;
+	this.viewer.style.height = "100%";
+	this.viewer.style.background = "#000000";
+	this.viewer.style.overflowX = "scroll";
+	
+	/*
+	this.viewer.onscroll = function(){			//捲軸統一
+		for(var i = 0 ; i < this.parent.cards.length; i++)
+			this.parent.cards[i].viewer.scrollLeft = event.srcElement.scrollLeft;
+	};
+	*/
+
+
+	//錯誤訊息視窗
+	this.errorobj = document.createElement("TABLE");
+	this.errorobj.style.width = "100%";
+	this.errorobj.style.height = "100%";
+	this.errorobj.style.textAlign = "center";
+	this.errorobj.style.font = "20 Verdana";
+	this.errorobj.insertRow(-1);
+	this.errorobj.rows[0].insertCell(-1);
+	this.errorobj.rows[0].cells[0].style.color = "white";
+
+	//本身的 TABLE 物件
+	this.obj = document.createElement("TABLE");
+	this.obj.width = 450;
+	this.obj.height = 20 + this.unit_height * 8.5 + 30 + 20;
+	this.obj.border = '1';
+	this.obj.cellSpacing = 0;
+	this.obj.cellPadding = 0;
+	this.obj.insertRow(-1);
+	this.obj.insertRow(-1);
+	this.obj.rows[0].insertCell(-1);
+	this.obj.rows[1].insertCell(-1);
+	this.obj.rows[1].insertCell(-1);
+	this.obj.rows[0].cells[0].appendChild(document.createTextNode("Unit : Kbps "));
+	if(mode){
+		this.obj.rows[0].cells[0].appendChild(this.ispname);
+		this.obj.rows[0].cells[0].appendChild(document.createTextNode("  "));
+	}
+	else
+		this.obj.rows[0].cells[0].appendChild(this.parent.ispselobj);
+	
+	this.obj.rows[0].cells[0].appendChild(this.unitselobj);
+	this.obj.rows[0].cells[0].appendChild(this.showbut);
+	this.obj.rows[0].cells[0].style.font = "11 Verdana";
+	this.obj.rows[0].cells[0].style.color = "white";
+	this.obj.rows[0].cells[0].colSpan = 2;
+	this.obj.rows[0].cells[0].height = 20;
+
+	this.obj.rows[1].cells[0].width = 50;
+	this.obj.rows[1].cells[0].height = 200 - 20;
+	this.obj.rows[1].cells[0].appendChild(this.Tunit);
+	this.obj.rows[1].cells[0].vAlign = 'top';
+
+	this.obj.rows[1].cells[1].width = 450 - 50;
+	this.obj.rows[1].cells[1].appendChild(this.viewer);
+	
+}
+
+polycard.prototype.construct=function construct(){
+	var TR = this.parent.obj.insertRow(-1);
+	var TD = TR.insertCell(-1);
+	TD.appendChild(this.obj);
+	this.mount = 1;
+	TR = TD = null;
+}
+
+polycard.prototype.deconstruct=function deconstruct(){
+	//從 PolyMaster.obj 中移除
+	this.parent.obj.rows[this.index].parentNode.removeChild(this.parent.obj.rows[this.index]);
+	this.mount = 0;
+}
+
+polycard.prototype.del=function del(){
+
+	//從 polymaster.cards 中移除
+	this.parent.cards.splice(this.index,1);
+	for(var i=this.index;i<this.parent.cards.length;i++)
+		this.parent.cards[i].index=i;
+	this.obj.parentNode.removeChild(this.obj);
+	if(this.parent.mode)
+		this.deconstruct();
+	i = null;
+}
+
+polycard.prototype.set=function set(ispname,path,bound){
+	//將點數字串存成陣列
+	this.data = path.split(",");
+	
+	for(var i=0;i<this.data.length;i++){
+		if(isNaN(this.data[i] = parseInt(this.data[i]))||this.data[i]<0)
+			this.data[i]=0;
+	}
+	
+	//處理 ispname
+	this.ispname.innerText =ispname;
+        this.poly.strokecolor = bound == "in" ? "#88AAEE" : "#FF8080" ;
+	if(this.parent.mode)
+		this.showbut.onclick = new Function("eval(" + this.parent.name + ".cards[" +this.index+ "]).show();");	
+	else
+		this.showbut.onclick = new Function("eval(" + this.parent.name + ").showmycard();");
+}
+
+polycard.prototype.show=function show(){
+	
+	var UD = this.parent.unitdata[this.unitselobj.value];
+	var loop = UD.base / 5;
+        var period=UD.base*60;
+	var count = loop;
+	var tmp = 0;
+	this.path = new Array();
+	this.maxValue = 64;
+	
+	//依照所選之單位計算出資料長度
+	//同時算出 maxValue
+	for(var i=0;i<this.data.length;i++){
+		tmp += this.data[i];
+		count--;
+		if(count<=0){
+
+                        //translate traffic volume to traffic rate 
+                        tmp/=period; 
+
+			if(tmp > this.maxValue)
+				this.maxValue = tmp;
+			this.path.push(tmp);
+		 	tmp=0;
+		 	count = loop;
+		}
+	}
+	
+	//對 maxValue 處理
+	i = 64;
+	
+	while(i < this.maxValue){
+	i= i <<1;
+		
+	}
+	this.maxValue = i;
+	
+	//underflow check
+	if(this.path.length<1){
+		this.Trow= [];
+		this.Tcolumn= [];
+		this.poly= [];
+		this.errorobj.rows[0].cells[0].innerText = "Underflow!!";
+		this.viewer.appendChild(this.errorobj);
+	}
+	else{
+		if(this.errorobj.parentElement)
+			this.errorobj.parentNode.removeChild(this.errorobj);
+		this.blockwidth = UD.range * UD.nodewidth;
+		this.blocknum = Math.ceil(this.path.length / UD.range );
+		this.showRow();
+		this.showColumn();
+		this.showPoly();
+	}
+	this.showUnit();
+}
+
+polycard.prototype.showPoly=function showPoly(){
+	
+	//從網頁中移除 ( polyline 需移除才能設定 )
+	if(this.poly.parentElement)
+		this.poly.parentNode.removeChild(this.poly);
+	
+	//設定
+	var height = this.unit_height << 3;
+	var UD = this.parent.unitdata[this.unitselobj.value];
+	var path = new Array();
+	var temp = 0;
+	var const1 = height / this.maxValue;
+	var const2 = height - 1;
+
+	for(var i=0;i<this.path.length;i++){			//every node
+		path.push(temp);				//x position
+		path.push(const2 - this.path[i]*const1);	//y position
+		temp += UD.nodewidth;
+	}
+
+	this.poly.points = path.join();
+
+	//擺回網頁中
+	if(!this.poly.parentElement)
+		this.viewer.appendChild(this.poly);
+
+	height = UD = temp = path = null;
+}
+
+polycard.prototype.showRow = function showRow(){
+
+	var i;
+	
+	//是否重建 (只有第一次需要重建)
+	if(!this.Trow.rows.length){
+		for(i=0;i<8;i++){
+			TD = this.Trow.insertRow(-1).insertCell(-1);
+			TD.innerHTML = '&nbsp;';
+			switch(i){
+			case 0:TD.style.borderBottom='1px solid #444444';		TD.style.borderTop="1px solid red";break;
+			case 1:TD.style.borderBottom='1px solid gray';		break;
+			case 3:TD.style.borderBottom='1px solid lightblue';	break;
+			case 5:TD.style.borderBottom='1px solid gray';		break;
+			case 7:TD.style.borderBottom='1px solid white';		break;
+			default:TD.style.borderBottom='1px solid #444444';	break;
+			}
+		}
+	}
+
+	//設定
+	for(var i=0;i<8;i++)
+		this.Trow.rows[i].cells[0].height = this.unit_height;
+
+	this.Trow.width = this.blocknum * this.blockwidth;
+	
+	if(!this.Trow.parentElement)
+		this.viewer.appendChild(this.Trow);
+	
+	i = null;
+}
+
+polycard.prototype.showColumn=function showColumn(){
+	
+	while(this.Tcolumn.rows.length){
+		this.Tcolumn.rows[0].parentNode.removeChild(this.Tcolumn.rows[0]);
+	}
+	this.Tcolumn.insertRow(-1);
+	this.Tcolumn.insertRow(-1);
+
+	//設定
+
+	var today = new Date();
+
+	today.setYear(this.parent.today.getYear());
+	today.setMonth(this.parent.today.getMonth());
+	today.setDate(this.parent.today.getDate());
+	today.setHours(this.parent.today.getHours());
+	today.setMinutes(this.parent.today.getMinutes());
+
+	this.Tcolumn.width = this.blocknum * this.blockwidth;
+	
+	var UD = this.parent.unitdata[this.unitselobj.value];	
+	m = UD.base * UD.range;
+
+	for(var i=0 ; i < this.blocknum ; i++){
+		
+		this.Tcolumn.rows[0].insertCell(-1);
+		this.Tcolumn.rows[1].insertCell(-1);
+
+		this.Tcolumn.rows[0].cells[i].innerHTML='&nbsp;';
+		this.Tcolumn.rows[0].cells[i].style.borderLeft='1px solid threedface';
+		
+		if(i) today.setMinutes( today.getMinutes() + m);
+		tmp1 = today.getMonth()+1;
+		tmp2 = today.getDate();
+		tmp3 = today.getHours();
+		tmp4 = today.getMinutes();
+		this.Tcolumn.rows[1].cells[i].innerHTML = (tmp1)+'/'+tmp2+'<br>'+(parseInt(tmp3/10)?tmp3:'0'+tmp3)+':'+(parseInt(tmp4/10)?tmp4:'0'+tmp4);
+	}
+
+	//高度
+	this.Tcolumn.rows[0].height = this.unit_height << 3
+
+	if(!this.Tcolumn.parentElement)
+		this.viewer.appendChild(this.Tcolumn);
+}
+
+polycard.prototype.showUnit= function showUnit(){
+	//設定高
+	this.Tunit.height = this.unit_height * 9;
+
+	//設定值
+	
+	tmp = parseInt(this.maxValue >> 3);
+	tmp2 = 0;
+	
+	for(var i=0;i<9;i++){
+		this.Tunit.rows[8-i].cells[0].innerHTML = tmp2;
+		tmp2+=tmp;
+	}
+	
+	i = null;
+}
+
+
+
+//宣告 Unit 相關資料
+function unitdataObj(range,width,minutes,text,value){
+	this.range = range;		//點群數 (說明多少點為一區間單位)
+	this.nodewidth = width;		//點間距
+	this.minwidth = width;		//最小點間距 (for zoonin)
+ 	this.inoutsize = width;		//縮放差距
+	this.base = minutes;		//將單位換算為分鐘
+	this.text = text;		//select 中的 text
+	this.value = value;		//select 中的 value
+}
+polymaster.prototype.unitdata = new Array();
+polymaster.prototype.unitdata.push(new unitdataObj(12,5,5,'5 Minutes','mins'));
+polymaster.prototype.unitdata.push(new unitdataObj(12,5,60,'1 Hour','hours'));
+polymaster.prototype.unitdata.push(new unitdataObj(7,8,1440,'1 Day','days'));
+//
+
+function rpt(text,char,num){
+	text = text.toString();
+	while(text.length<num) text=char+text;
+	return text;
+}
+
+
+function query(){
+	var today = new Date();
+	var form = document.forms['form1'];
+	
+	var yy = today.getFullYear();
+	var mm = today.getMonth()+1;
+	var dd = today.getDate();
+	var hh = today.getHours();
+	var mu = parseInt(today.getMinutes() / 5) * 5;
+	form.elements['to_yy'].value = yy;
+	form.elements['to_mm'].value = mm-1;
+	form.elements['to_dd'].value = dd;
+	form.elements['to_hh'].value = hh;
+	form.elements['to_min'].value = mu;
+
+	today.setHours(hh-parseInt(showtime.value));
+	yy = today.getFullYear();
+	mm = today.getMonth()+1;
+	dd = today.getDate();
+	hh = today.getHours();
+	mu = parseInt(today.getMinutes() / 5) * 5;
+	form.elements['from_yy'].value = yy;
+	form.elements['from_mm'].value = mm-1;
+	form.elements['from_dd'].value = dd;
+	form.elements['from_hh'].value = hh;
+	form.elements['from_min'].value = mu;
+
+        pmaster.setTime(yy, mm-1, dd, hh, mu);
+
+	form.submit();
+}
+timer = null;
+function fresh(){
+	query();
+	timer = setTimeout("fresh()",parseInt(refreshtime.value));
+}
+
+function writeConsole(content) {
+
+    consoleRef = window.open('autoquery2.htm'+'#'+content.id, 'myconsole', 'width=800 ,height=650,menubar=0 ,toolbar=0 ,status=0 ,resizable=1,scrollbars=1,location=0')
+
+
+ //   consoleRef.document.write('<html><head><title>Console</title></head>');
+ //   consoleRef.document.write('<body onLoad="self.focus()">');
+ //   consoleRef.document.write(content);
+ //   consoleRef.document.write('<br>');
+ //   consoleRef.document.write('<div id="placeholderSparq-inbound" onclick="writeConsole(this)" style="width: 295px; height: 295px; background-color: rgb(255, 255, 255); float: left; margin: 1px; padding: 0px; position: relative;"><canvas class="base" width="295" height="295"></canvas><canvas class="overlay" width="295" height="295" style="position: absolute; left: 0px; top: 0px;"></canvas><div style="font-size:smaller" class="tickLabels"><div style="color:#545454" class="xAxis x1Axis"><div style="position:absolute;text-align:center;left:49px;top:282px;width:36px" class="tickLabel">7:00</div><div style="position:absolute;text-align:center;left:92px;top:282px;width:36px" class="tickLabel">8:00</div><div style="position:absolute;text-align:center;left:135px;top:282px;width:36px" class="tickLabel">9:00</div><div style="position:absolute;text-align:center;left:177px;top:282px;width:36px" class="tickLabel">10:00</div><div style="position:absolute;text-align:center;left:220px;top:282px;width:36px" class="tickLabel">11:00</div><div style="position:absolute;text-align:center;left:263px;top:282px;width:36px" class="tickLabel">12:00</div></div><div style="color:#545454" class="yAxis y1Axis"><div style="position:absolute;text-align:right;top:264px;right:267px;width:28px" class="tickLabel">0</div><div style="position:absolute;text-align:right;top:226px;right:267px;width:28px" class="tickLabel">500</div><div style="position:absolute;text-align:right;top:188px;right:267px;width:28px" class="tickLabel">1000</div><div style="position:absolute;text-align:right;top:150px;right:267px;width:28px" class="tickLabel">1500</div><div style="position:absolute;text-align:right;top:112px;right:267px;width:28px" class="tickLabel">2000</div><div style="position:absolute;text-align:right;top:74px;right:267px;width:28px" class="tickLabel">2500</div><div style="position:absolute;text-align:right;top:36px;right:267px;width:28px" class="tickLabel">3000</div><div style="position:absolute;text-align:right;top:-2px;right:267px;width:28px" class="tickLabel">3500</div></div></div><div class="legend"><div style="position: absolute; width: 140px; height: 20px; top: 9px; right: 9px; background-color: rgb(255, 255, 255); opacity: 0.85;"> </div><table style="position:absolute;top:9px;right:9px;;font-size:smaller;color:#545454"><tbody><tr><td class="legendColorBox"><div style="border:1px solid #ccc;padding:1px"><div style="width:4px;height:0;border:5px solid rgb(0,0,255);overflow:hidden"></div></div></td><td class="legendLabel">Sparq-inbound-in(KBits)</td></tr></tbody></table></div></div>');
+ //   consoleRef.document.write('</body></html>');
+    
+    consoleRef.document.close()
+
+}
+</script>
+
+
+</head>
+
+
+<body>
+
+<div style="text-align:center">
+
+Auto refresh every: <select class="qbopt" style="width:100" id="refreshtime" onchange="clearTimeout(timer);fresh()">
+<option value="300000">5 Minutes</option>
+<option value="600000">10 Minutes</option>
+<option value="1800000">30 Minutes</option>
+<option value="3600000">60 Minutes</option>
+<option value="7200000">120 Minutes</option>
+</select>
+
+from: <select id="showtime" class="qbopt" style="width:100">
+<option value="6">6 hours</option>
+<option value="12">12 hours</option>
+<option value="18">18 hours</option>
+<option value="24">24 hours</option>
+<option value="30">30 hours</option>
+<option value="36">36 hours</option>
+<option value="48">2 days</option>
+<option value="72">3 days</option>
+<option value="96">4 days</option>
+<option value="120">5 days</option>
+<option value="144">6 days</option>
+<option value="168">7 days</option>
+<option value="336">14 days</option>
+<option value="504">21 days</option>
+<option value="672">28 days</option>
+</select> before
+&nbsp;
+<button type="button" class="qb" onclick="query()">Apply</button>
+</div>
+
+<form name="form1" target="polyif" action="mrtg.cgi">
+<input type="hidden" name="action" value="query">
+<input type="hidden" name="from_yy" value="">
+<input type="hidden" name="from_mm" value="">
+<input type="hidden" name="from_dd" value="">
+<input type="hidden" name="from_hh" value="">
+<input type="hidden" name="from_min" value="">
+<input type="hidden" name="to_yy" value="">
+<input type="hidden" name="to_mm" value="">
+<input type="hidden" name="to_dd" value="">
+<input type="hidden" name="to_hh" value="">
+<input type="hidden" name="to_min" value="">
+</form>
+<div id="hischart"  style="padding-left: 30px;"></div>
+    <!--<div id="placeholder" style="width:600px;height:300px;background-color:#FFFFFF;margin: auto;"></div> -->
+
+
+    <!--<div id="overview" style="margin: auto;width:400px;height:50px;background-color:#FFFFFF;"></div>-->
+<div id="myspace"></div> 
+<script>var pmaster = new polymaster("myspace","pmaster");pmaster.chmode(1);</script>
+<iframe name="polyif" src="" style="display:none"></iframe>
+<script>fresh()</script>
+</body>
+
+
+</html>

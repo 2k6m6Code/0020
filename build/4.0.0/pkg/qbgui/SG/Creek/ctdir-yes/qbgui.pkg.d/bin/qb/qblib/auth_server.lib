@@ -1,0 +1,109 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showSchedule
+{
+    my (%action)=@_;
+    my $schref=XMLread($gPATH.'auth.xml');
+    my $schlist=$schref->{server};
+    
+    my @titleHeadList=('Name', 'Description', 'Edit');
+    my %titleWidth=('Name'=>300, 'Description'=>300, 'Edit'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Authentication Server);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    print qq (<div class="divframe" style="height:200; width:800">);
+    print qq (<table id="scheduleList" width="100%"  class="body" border="0">);
+    print qq (<thead><tr bgcolor="#332211">);
+    print qq (<th width="60" align="center">Enabled</th>);
+    print qq (<th width="300" align="center">$qblang[29]</th>);
+    print qq (<th width="300" align="center">$qblang[169]</th>);
+    print qq (<th width="100" align="center">$qblang[25]</th>);
+    print qq (<th width="100" align="center"><a href="javascript:delSchedule()"><img border="0" title="Delete Checked Schdule(s)" src="../image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('schedule', this.checked)" title="select or deselect all items"></th></tr></thead>);
+    my $lineCount=0;
+    foreach my $item ( @$schlist )
+    {
+        if ( $item->{schname} eq "system" ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        if ($item->{enabled} eq '1')
+        {
+            print qq (<td align="center" width="50" height="25" ><input type="checkbox" onclick="powerswitch(this);" value="$item->{schname}" checked/></td>);
+        }else
+        {
+            print qq (<td align="center" width="50" height="25" ><input type="checkbox" onclick="powerswitch(this);" value="$item->{schname}" /></td>);
+        }     
+        if ($item->{schname} eq 'LD'){$item->{schname} = 'Local Database';} 
+        print qq (<td align="center" width="$titleWidth{Name}" height="25" >$item->{schname}</td>);
+        print qq (<td align="center" width="$titleWidth{Description}" height="25">$item->{description}</td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<a href="newsauth_server.cgi?schname=$item->{schname}";selectedColor(natList.rows[$lineCount])" ><image src="../image/edit.gif" title="Edit Schedule properties" border="0"></a></td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<input type="checkbox" name="schedule" value="$item->{schname}">);
+        print qq (</tr>);
+        $lineCount++;
+    }
+                                            
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<input type="hidden" name="name" value="">);
+    print qq (<input type="hidden" name="enabled" value="">);
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="$qblang[162]" onclick="NewSchedule();">);
+}
+#showSchedule
+    
+
+
+#=============================================================================================
+
+sub scriptSchedule
+{
+    print << "scriptSchedule";
+
+   <script type="text/javascript" src="../grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function NewSchedule() { window.top.mainFrame.location.href="../newsauth_server.cgi"; }    
+    
+    function powerswitch(oo)
+    {
+        myform.action.value='ENABLED';
+        if (oo.checked == true)
+            myform.enabled.value= '1';
+        else
+            myform.enabled.value= '0';
+        
+        myform.name.value=oo.value;
+        myform.submit();
+    }
+    
+    function delSchedule()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+    </script>
+    
+scriptSchedule
+}
+#scheduleScript
+#
+1

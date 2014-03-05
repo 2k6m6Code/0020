@@ -1,0 +1,391 @@
+###############################################################################################
+#                                           Pptpinit Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showPptpinit 
+{
+    my (%action)=@_;
+    my $pptpinit=XMLread($gPATH.'pptpinit.xml');
+    
+    # Initializing Variables
+    my $table_num=shift;
+    my $rtable  = XMLread($gPATH.'rtable.xml');
+    my $ispinfo = XMLread($gPATH.'basic.xml' );
+    my @rtablelist=maintainRtable( action=>'GETREDIRECTLIST' );
+    my $temptables=$rtable->{table};
+    my @sortedTables=sort sort_table_by_id @$temptables;
+    my $target;
+    my $allpath;
+    my $allisp=$ispinfo->{isp};
+    my $backup_table;
+    my $measure_time;
+
+    if (!$table_num ) { $table_num=$rtablelist[0]; }
+
+    foreach my $table ( @$temptables ) { if ( $table->{table_num} eq $table_num ) { $target=$table; last; } }
+    
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[204] ); #</td></tr>);
+    #print qq (<a href="javascript:qbShowHelp('pptpinit')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[205]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $pptpinit->{enableppd} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="enableppd"  $status >); 
+    print qq (</td>);
+    print qq (</tr>);  
+=cut
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (BSD Compression (LZW alg.));
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $pptpinit->{bsdcompress} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="bsdcompress"  $status >); 
+    print qq (</td>);
+    print qq (</tr>); 
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Deflate Compression (gzip alg.));
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $pptpinit->{deflatecompress} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="deflatecompress"  $status >); 
+    print qq (</td>);
+    print qq (</tr>); 
+=cut
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[206]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $pptpinit->{encryption} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="encryption"  $status >); 
+    print qq (</td>);
+    print qq (</tr>); 
+ 
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[207]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $pptpinit->{compression} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="compression"  $status >); 
+    print qq (</td>);
+    print qq (</tr>); 
+ 
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[208]);
+    print qq (</td>);
+                    
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<select class="qbopt"  name="pptpauthmethod" style="width:130">);
+    foreach my $authmethod ( CHAP,MSCHAP,MSCHAPV2,PAP )
+    {
+       my $status=($authmethod eq $pptpinit->{pptpauthmethod}) ? ( 'selected' ) : ( '' );
+       my $showtable=( $authmethod eq "MSCHAP" ) ? ( 'MS-CHAP' ) : ($authmethod);
+       $showtable=( $authmethod eq "MSCHAPV2" ) ? ( 'MS-CHAPV2' ) : ($showtable);
+       print qq (<option $status value="$authmethod">$showtable</option>\n);
+    }
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+ 
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[209]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text" maxlength="3" class="qbtext" name="maxclient" value="$pptpinit->{maxclient}" onChange="checkAndSetidletime()">);
+    print qq (</td>);
+    print qq (</tr>); 
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[210]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text" maxlength="10" class="qbtext" name="idletime" value="$pptpinit->{idletime}" onChange="checkAndSetidletime()">);
+    print qq (($qblang[1]));
+    print qq (</td>);
+    print qq (</tr>); 
+=cut
+    #****************************************************************************************
+    #Local IP
+    my @normalsystemiplist=maintainBasic(action=>'GETNORMALSYSTEMIPLIST');
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Server Local IP:);
+    print qq (</td>);
+    print qq (<td class="body"  colspan="2" valign="top" align="left">);
+    print qq (<select class="qbopt" multiple name="pptplocalip" style="WIDTH: 120px" size="3">\n);
+                                
+    foreach my $pptplocalip ( @normalsystemiplist )
+    {
+        my $status=( $pptpinit->{pptplocalip} ) ? ('selected') : ('');
+        print qq (<option $status value="$portvalue">$pptplocalip</option>\n);
+    }
+                                                                            
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+=cut
+    #****************************************************************************************
+    #Server Local IP
+    #my $siplist=$pptpinit->{sip};
+           
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Server Local IP:);
+    #print qq (</td>);
+    #print qq (<td class="body"  colspan="2" valign="top" align="left">);
+    #==== sip infomation  ========================================================
+    #my @iidlist=maintainBasic(action=>'GETGOODIIDLIST');
+    #print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:160"> );
+    #print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:360"> );
+    #foreach my $iid ( @iidlist)
+    #{
+    #     my @natips=maintainIPBank(action=>'READPUBLICIP', isp=>$iid);
+    #     my $targetsip;
+    #     foreach my $sip ( @$siplist ) { if ( $sip->{isp} eq $iid ) { $targetsip=$sip; } }
+    #     foreach my $natip ( @natips )
+    #     {
+    #         my $sipip=$iid.'j'.$natip;
+    #         my $status=( grep(/^$natip$/, $targetsip->{ip}) ) ? ( 'selected' ) : ('');
+    #         #print qq (<option $status value="$sipip">ISP $iid [ $natip ][ $targetsip->{ip} ][$status]</option>);
+    #         print qq (<option $status value="$sipip">ISP $iid [ $natip ]</option>);
+    #     }
+    #
+    #}
+    #print qq (</select><br>);
+    #print qq (</td>);
+    #print qq (</tr>);
+                                                                                                                                                                     
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[211]); 
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text"  class="qbtext" name="dnsip1" value="$pptpinit->{dnsip1}" span title="The first DNS IP" onchange="checkAndSetDNS1()" style="width:130">);
+    print qq ( );
+    print qq (<INPUT type="text"  class="qbtext" name="dnsip2" value="$pptpinit->{dnsip2}" span title="The first Second DNS IP" onchange="checkAndSetDNS2()" style="width:130">);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #****************************************************************************************
+    #my $range=$pptpinit->{rangelist}; $range=~s/\;/\;\n/g;
+    #print qq (<tr><td>Client IP Range</td><td><textarea name="rangelist" span title="Expample:192.168.1.1-8" class="qbtext" style="width:240;height:30">$range</textarea></td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[212]); 
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text"  class="qbtext" name="iprange1" value="$pptpinit->{iprange1}" onchange="iprange_dep()" style="width:130">);
+    print qq (-);
+    print qq (<INPUT type="text"  class="qbtext" name="iprange2" value="$pptpinit->{iprange2}"  style="width:130">);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+            
+    #************************************ Command Button  ********************************************
+    print qq (<tr>);
+    print qq (<td colspan="2" align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[139]" title="Apply All Parameters now !" onClick="goSubmit('SAVE')" style="width:120">);
+    print qq (</td></tr>);
+    print qq (</table>);
+
+}
+#showConsole
+
+
+#======================================================================================================================
+sub pptpinitScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+                                                            
+    function checkAndSetidletime()
+    {
+        if ( !isValidPort(myform.idletime.value) ) 
+        { 
+            myform.idletime.value=""; 
+            alert("Time format Error");
+        }
+    }
+    function checkAndSetDNS1()
+    {
+       if (myform.dnsip1.value && !isValidIP(myform.dnsip1.value))
+       {
+          myform.dnsip1.value=""; 
+          alert('Invalid Address!!');
+       }
+    }
+    function checkAndSetDNS2()
+    {
+       if (myform.dnsip2.value && !isValidIP(myform.dnsip2.value))
+       {
+          myform.dnsip2.value=""; 
+          alert('Invalid Address!!');
+       }
+    }
+    function iprange_dep()
+    {
+        var iprange = myform.iprange1.value;
+        var array = iprange.split('\.');
+        myform.iprange2.value = array[0] + '\.' + array[1] + '\.' + array[2] + '\.';
+    }
+
+
+                                                                                                                                    
+    </script>
+SCRIPT
+}
+#pptpinitScript
+
+
+#======================================================================================================================
+#maintainPptpinit( %action )
+sub maintainPptpinit 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $pptpinit=XMLread($gPATH.'pptpinit.xml');
+    my $overview=XMLread($gPATH.'overview.xml');
+    my $maillist=$overview->{mail};
+    my $IS_EVERYTHING_OK=1;
+    foreach my $mail ( @$maillist )
+    {
+         my $mailValue=$mail->{value};
+         if ( $mailValue eq 'system' ) { next; }
+         $action{pptpadmmail}=$mailValue;
+     }
+    if ( $action{action}=~m/^SAVE$/ ) 
+    {
+        $pptpinit->{enableppd}=$action{enableppd};
+        $pptpinit->{bsdcompress}=$action{bsdcompress};
+        $pptpinit->{deflatecompress}=$action{deflatecompress};
+        $pptpinit->{encryption}=$action{encryption};
+        $pptpinit->{compression}=$action{compression};
+        $pptpinit->{sip}=$action{sip};
+        if ( $pptpinit->{encryption})
+        {
+            $pptpinit->{pptpauthmethod}="MSCHAPV2";
+        }
+        else
+        {
+            $pptpinit->{pptpauthmethod}=$action{pptpauthmethod};
+        }
+        $pptpinit->{maxclient}=$action{maxclient};
+        #$pptpinit->{rangelist}=$action{rangelist};
+        $pptpinit->{idletime}=$action{idletime};
+        $pptpinit->{dnsip1}=$action{dnsip1};
+        $pptpinit->{dnsip2}=$action{dnsip2};
+        $pptpinit->{iprange1}=$action{iprange1};
+        $pptpinit->{iprange2}=$action{iprange2};
+        if ( !isValidIP($pptpinit->{iprange1}) )
+        {
+            $gMSGPROMPT.=qq ( ERROR:IP Release Range Format Error\\n);
+            $IS_EVERYTHING_OK=0;
+        }
+        if ( !isValidIP($pptpinit->{iprange2}) )
+        {
+            $gMSGPROMPT.=qq ( ERROR:IP Release Range Format Error\\n);
+            $IS_EVERYTHING_OK=0;
+        }
+	my @subnet1=split(/\./, $pptpinit->{iprange1});
+        my @subnet2=split(/\./, $pptpinit->{iprange2});
+        if ( $subnet1[0].$subnet1[1].$subnet1[2] ne $subnet2[0].$subnet2[1].$subnet2[2] )
+        {
+            $gMSGPROMPT.=qq ( ERROR:IPrange Must be the same subnet\\n);
+            $IS_EVERYTHING_OK=0;
+        }
+
+        @SUBNET=maintainZone(action=>'GETNATZONES');
+        my $islan = 0;
+        my $ip1=$pptpinit->{iprange1}.'/32';
+        my $ip2=$pptpinit->{iprange2}.'/32';
+        foreach my $lan ( @SUBNET )
+        {
+            #if ( $lan eq $subnet1[0]."\.".$subnet1[1]."\.".$subnet1[2]."\.0/24" )
+            if ( subnet_belong_check($lan, $ip1) eq '2' && subnet_belong_check($lan, $ip2) eq '2' )
+            {
+                $islan = 1;
+                last;
+            }
+        }
+        if ( $islan eq '0' )
+        {
+            $gMSGPROMPT.=qq ( ERROR:IPrange Must be the LAN subnet\\n);
+            $IS_EVERYTHING_OK=0;
+        }
+        if ( $subnet1[3] > $subnet2[3] )
+        {
+            $gMSGPROMPT.=qq ( ERROR:IP Release Range Format Error\\n);
+            $IS_EVERYTHING_OK=0;
+        }
+        
+        LogUserAction( action=>'APPLYPPTP', maxclient=>$action{maxclient}, idletime=>$action{idletime}, iprange1=>$action{iprange1}, iprange2=>$action{iprange2} );
+    }
+    
+    #-------updating pptpinit.xml------------------------ 
+    if ( $IS_EVERYTHING_OK eq '1' )
+    {
+        XMLwrite($pptpinit, $gPATH."pptpinit.xml");
+    }
+
+    #@dep
+    runCommand(command=>"/etc/pptpd.iprule", params=>'');
+    runCommand(command=>'do_qbpptpinit.pl', params=>'');
+
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    qbSync();
+=cut
+    if ( $action{enableppd}==0 )
+    { 
+    # stop pptp server
+    my $result=runCommand(command=>'service', params=>'pptpd stop');
+    if ( $result==0 ) { $gMSGPROMPT.=qq ( Success to stop pptp server!!!\\n);  }
+    if ( $result==1 ) { $gMSGPROMPT.=qq ( Fail to stop pptp server!!!\\n);  }
+    my $result=runCommand(command=>'rm', params=>'-f /usr/local/apache/qbconf/pptp.sh');
+    }
+    else
+    {   
+    # restart squid
+    my $result=runCommand(command=>'service', params=>'pptpd restart');
+    if ( $result==0 ) { $gMSGPROMPT.=qq ( Success to restart pptp server!!!\\n);  }
+    if ( $result==1 ) { $gMSGPROMPT.=qq ( Fail to restart pptp server!!!\\n);  }
+    }
+=cut
+}
+#maintainPptpinit
+#
+1

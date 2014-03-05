@@ -1,0 +1,173 @@
+###############################################################################################
+#                                           TCP Optimization
+###############################################################################################
+sub showTCPopt 
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    my $zone=XMLread($gPATH.'zonecfg.xml');
+    my $natarray=$zone->{nat};
+    
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[371]);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #************************************Brian 20100401 For TCP Optimization.********************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq ($qblang[372]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    my $status=( $overview->{enabletcpopt} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="enabletcpopt" $status onchange="TCP_change()">);
+    print qq (</td>);
+    print qq (</tr>);
+=cut   
+    #************************************Brian 20100401 For TCP Optimization.********************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (TCP Optimization:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<select class="qbopt" name="tcp_opt" style="width:180" onchange="TCP_change()">\n);
+    foreach my $algs ( sort keys %gTCP_OPT )
+    {
+      if ( $overview->{tcp_opt} )
+      {    
+        my $status=( $algs eq $overview->{tcp_opt} ) ? ('selected'):('');
+        print qq (<option $status value="$algs" >$gTCP_OPT{$algs}</option>/n);
+      }
+      else
+      {
+        my $status=( $algs eq "none" ) ? ('selected'):('');
+        print qq (<option $status value="$algs" >$gTCP_OPT{$algs}</option>/n);
+      }
+    }
+    print qq (</select><br>);
+    print qq (</td>);
+    print qq (</tr>);
+=cut   
+    print qq (<input type="hidden" name="tcp_opt" value="westwood">);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" height="30">$qblang[150]</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<select class="qbopt" name="tcp_source" style="width:180">\n);
+    #my $status=( $overview->{tcp_source} eq 'None' ) ? ('selected'):('');
+    #print qq (<option $status value="None" >None</option>/n);
+    foreach my $nat ( @$natarray )
+    {
+        if ( $nat->{network} eq '' ) { next; }
+        my $status=( $nat->{network} eq $overview->{tcp_source} ) ? ('selected'):('');
+        print qq (<option $status value="$nat->{network}" >$nat->{network}</option>/n);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" height="30">$qblang[373]</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<input class="qbtext" name="tcp_destination" style="WIDTH: 120px" value="$overview->{tcp_destination}">);
+    print qq (</td></tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" height="30">$qblang[374]</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<input class="qbtext" name="tcp_dest_port" style="WIDTH: 120px" value="$overview->{tcp_dest_port}">);
+    print qq (</td></tr>);
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (</table>);
+
+
+    #************************************ Command Button  ********************************************
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td align="center">);
+    #print qq (<input class="qb" type="button" value="Save" title="Save All Parameters" onClick="goSubmit('SAVE')" style="width:180">);
+    print qq (<input class="qb" type="button" value="$qblang[54]" title="Save All Parameters" onClick="SAVE()" style="width:180">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showAdvance
+
+sub TCPoptScript
+{
+    print << "ADVANCE_SCRIPT";
+    
+    <script type="text/javascript" src="grid.js"></script>
+    <script language="javascript">
+        
+    var myform;
+    
+    function cgi_dep_onload() {  myform=window.document.forms[0]; TCP_change(); } 
+
+/*    
+    function TCP_change()
+    {
+        var tcp_opt = document.getElementById('tcp_opt').value;
+        var tcp_source = document.getElementById('tcp_source');
+        var tcp_destination = document.getElementById('tcp_destination');
+        var tcp_dest_port = document.getElementById('tcp_dest_port');
+        
+        if (tcp_opt == 'none')
+        {
+            //tcp_source.value = 'none'; 	tcp_source.disabled = true;
+            tcp_source.disabled = true;
+            tcp_destination.value = ''; tcp_destination.disabled = true;
+            tcp_dest_port.value = ''; 	tcp_dest_port.disabled = true;
+        }
+        else
+        {
+            //tcp_source.value = 'none'; tcp_source.disabled = false;
+            tcp_source.disabled = false;
+            tcp_destination.disabled = false;
+            tcp_dest_port.disabled = false;
+        }
+    }
+*/    
+    function TCP_change()
+    {
+        var enabletcpopt = document.getElementById('enabletcpopt').value;
+        var tcp_source = document.getElementById('tcp_source');
+        var tcp_destination = document.getElementById('tcp_destination');
+        var tcp_dest_port = document.getElementById('tcp_dest_port');
+        
+        if (enabletcpopt == '0')
+        {
+            tcp_source.disabled = true;
+            tcp_destination.value = ''; tcp_destination.disabled = true;
+            tcp_dest_port.value = ''; 	tcp_dest_port.disabled = true;
+        }
+        else
+        {
+            tcp_source.disabled = false;
+            tcp_destination.disabled = false;
+            tcp_dest_port.disabled = false;
+        }
+    }
+
+    function SAVE()
+    {
+        var tcp_opt = document.getElementById('tcp_opt').value;
+        var enabletcpopt = document.getElementById('enabletcpopt').value;
+        var tcp_destination = document.getElementById('tcp_destination').value;
+        var tcp_dest_port = document.getElementById('tcp_dest_port').value;
+        
+        //if (tcp_opt != 'none' && (!checkIP(tcp_destination) || !checkPort(tcp_dest_port)))
+        if (enabletcpopt != '0' && (!checkIP(tcp_destination) || !checkPort(tcp_dest_port)))
+        {
+        	alert("ip or port error!!")
+        	return;
+        }
+        myform.action.value = 'SAVE';
+	myform.submit();        
+    }
+    
+    </script> 
+ADVANCE_SCRIPT
+}
+#
+1

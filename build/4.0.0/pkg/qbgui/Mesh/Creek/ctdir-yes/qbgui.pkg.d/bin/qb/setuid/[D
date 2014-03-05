@@ -1,0 +1,5 @@
+#!/bin/bash
+num=$1
+echo "Select number $num"
+
+mv /tmp/tmpupg/*.upg /tmp/$num

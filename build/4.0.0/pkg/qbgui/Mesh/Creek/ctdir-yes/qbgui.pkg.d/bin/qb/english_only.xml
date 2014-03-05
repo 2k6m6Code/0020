@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="big5"?>
+
+<treemenu>
+<menu>
+<name>Link Setup</name>
+<title></title>
+<child>
+	<menu>
+	<name>Link Config.</name>
+        <title>Configure ISP link</title>
+	<link>basic.cgi</link>
+	</menu>
+
+	<menu>
+	<name>Link Health Check</name>
+        <title>Sensitivity parameters for wan link health check</title>
+	<link>hcconf.cgi</link>
+	</menu>
+
+        <menu>
+        <name>Link IP Binding</name>
+        <title>IP binding for Network Address Translation</title>
+        <link>vsvip.cgi</link>
+        </menu>
+
+        <menu>
+        <name>MPV</name>
+        <title></title>
+        <link>mpv.cgi</link>
+        </menu>
+
+        <menu>
+        <name>TMV</name>
+        <title></title>
+        <link>tmv.cgi</link>
+        </menu>
+
+        <menu>
+        <name>IPSec</name>
+        <title></title>
+        <link>ipsec.cgi</link>
+        </menu>
+</child>
+</menu>
+
+<menu>
+<name>LAN Setup</name>
+<child>
+	<menu>
+	<name>Static Routes Setting</name>
+        <title>LAN IP binding, static routes setting, DHCP setting</title>
+	<link>zone.cgi?viewpoint=nat</link>
+	</menu>
+
+        <menu>
+        <name>Static ARP Setting</name>
+        <title>Static ARP Setting</title>
+        <link>arp.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Wireless LAN Setting</name>
+        <title>Wireless LAN Setting</title>
+        <link>wireless.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Transparent Setting</name>
+        <child>
+
+          <menu>
+          <name>Subnet on DMZ</name>
+          <title>Setup DMZ IPs</title>
+          <link>zone.cgi?viewpoint=dmz</link>
+          </menu>
+
+          <menu>
+          <name>Subnet on WAN</name>
+          <title>Setup external IP/Subnet which are not behind QB</title>
+          <link>extroute.cgi</link>
+          </menu>
+
+        </child>
+        </menu>
+
+	<menu>
+	<name>Vlan Setting</name>
+        <title>Virtual Local Area Network Setting</title>
+	<link>vlan.cgi</link>
+	</menu>
+</child>
+</menu>
+
+<menu>
+<name>Bandwidth Shaper</name>
+<child>
+        <menu>
+        <name>MPV</name>
+        <title></title>
+        <link>qosisp.cgi</link>
+        </menu>
+
+        <menu>
+        <name>IP</name>
+        <title></title>
+        <link>qoslan.cgi</link>
+        </menu>
+</child>
+</menu>
+
+<menu>
+<name>Policy Object</name>
+<child>
+	<menu>
+        <name>Host</name>
+        <title></title>
+        <link>host.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Service Config.</name>
+        <title>Configure user-defined services</title>
+        <link>service.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Service Grouping</name>
+        <title></title>
+        <link>sergroup.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Schedule</name>
+        <title></title>
+        <link>schedule.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Outbound Pool</name>
+        <title>Configure outbound routing pool</title>
+        <link>rtable.cgi</link>
+        </menu>
+
+        <menu>
+        <name>QoS Class</name>
+        <title></title>
+        <link>qos.cgi</link>
+        </menu>
+</child>
+</menu>
+
+<menu>
+<name>Server Mapping</name>
+<title>Configure server mapping rules</title>
+<link>vs.cgi</link>
+</menu>
+
+<menu>
+<name>Policy Routing</name>
+<child>
+        <menu>
+        <name>Outbound Policy</name>
+        <title>Configure routing policies of internal subnet</title>
+        <link>policy.cgi?viewpoint=nat</link>
+        </menu>
+	<menu>
+        <name>Inbound Policy</name>
+        <title>Configure routing policies for real servers</title>
+        <link>policy.cgi?viewpoint=lvs</link>
+        </menu>
+</child>
+</menu>
+
+<menu>
+<name>Application Filtering</name>
+<child>
+        <menu>
+        <name>Application Grouping</name>
+        <title></title>
+        <link>appgroup.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Filtering</name>
+        <title>Policy for Application Filtering</title>
+        <link>appfilter.cgi</link>
+        </menu>
+</child>
+</menu>
+
+<menu>
+<name>VPN</name>
+<child>
+	<menu>
+	<name>L2TP IPsec VPN</name>
+	<child>
+		<menu>
+		<name>L2TP IPsec Configuration</name>
+		<title>L2TP IPsec Configuration</title>
+        	<link>l2tpinit.cgi</link>
+		</menu>
+        	<menu>
+        	<name>L2TP IPsec Authentication</name>
+        	<title>Create user login accounts</title>
+        	<link>l2tplogin.cgi</link>
+        	</menu>
+	</child>
+	</menu>
+	<menu>
+	<name>PPTP Server</name>
+	<child>
+        	<menu>
+        	<name>PPTP Server Configuration</name>
+        	<title>PPTP Server Configuration</title>
+        	<link>pptpinit.cgi</link>
+        	</menu>
+        	<menu>
+        	<name>PPTP User Authentication</name>
+        	<title>Create user login accounts</title>
+        	<link>ppdlogin.cgi</link>
+        	</menu>
+	</child>
+	</menu>
+	<menu>
+	<name>SSL Server</name>
+	<child>
+        	<menu>
+        	<name>SSL Server Configuration</name>
+        	<title>SSL Server Configuration</title>
+        	<link>sslinit.cgi</link>
+        	</menu>
+        	<menu>
+        	<name>SSL User Authentication</name>
+        	<title>Create user login accounts</title>
+        	<link>ssllogin.cgi</link>
+        	</menu>
+		<menu>
+        	<name>SSL Portal Setting</name>
+        	<title>SSL Portal Setting</title>
+        	<link>sslportal.cgi</link>
+        	</menu>
+	</child>
+	</menu>
+</child>
+</menu>
+
+<menu>
+<name>Inbound Multi-DNS</name>
+<title>configure Multi-DNS</title>
+<link>dns.cgi</link>
+</menu>
+
+<menu>
+<name>DoS Prevention</name>
+<title>A set of tools to ensure bandwidth and security</title>
+<link>dqos.cgi</link>
+</menu>
+
+<menu>
+<name>HA</name>
+<title></title>
+<link>ha.cgi</link>
+</menu>
+
+<menu>
+<name>System</name>
+<child>
+	<menu>
+        <name>Administration</name>
+        <title></title>
+        <link>admin.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Appliance Registration</name>
+        <title></title>
+        <link>regist.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Configuration</name>
+        <title></title>
+        <link>rmconfig.cgi?viewpoint=config</link>
+        </menu>
+
+        <menu>
+        <name>DNS</name>
+        <title></title>
+        <link>sysdns.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Dynamic Routing</name>
+        <title></title>
+        <link>dynroute.cgi</link>
+        </menu>
+
+        <menu>
+        <name>External Storage</name>
+        <title></title>
+        <link>storage.cgi</link>
+	</menu>
+
+	<menu>
+        <name>Firmware</name>
+        <title></title>
+        <link>rmconfig.cgi?viewpoint=firmware</link>
+        </menu>
+
+	<menu>
+        <name>Miscellaneous</name>
+        <title></title>
+        <link>advance.cgi</link>
+        </menu>
+
+	<menu>
+        <name>TCP Optimization</name>
+        <title></title>
+        <link>tcpopt.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Time</name>
+        <title></title>
+        <link>time.cgi</link>
+        </menu>
+
+        <menu>
+        <name>SNMP</name>
+        <title></title>
+        <link>snmp.cgi</link>
+        </menu>
+        
+        <menu>
+        <name>VOIP</name>
+        <title></title>
+        <link>voip.cgi</link>
+        </menu>
+                                        
+	<menu>
+        <name>Web Proxy</name>
+        <title>Proxy Configuration</title>
+        <link>pxyinit.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Reboot</name>
+        <title></title>
+        <link>reboot.cgi</link>
+        </menu>
+</child>
+</menu>
+
+<menu>
+<name>Status</name>
+<child>
+        <menu>
+        <name>System</name>
+        <title>Show status of system</title>
+        <link>/status/sys_status.php</link>
+        </menu>
+
+        <menu>
+        <name>Link</name>
+        <title>Show status of linkage</title>
+        <link>/status/traffic.htm</link>
+        </menu>
+
+        <menu>
+        <name>LAN Host</name>
+        <title>Show the bandwidth usage of hosts</title>
+        <link>lantraffic.cgi</link>
+        </menu>
+
+        <menu>
+        <name>Sessions</name>
+        <title>Display TOP-N real-time connections</title>
+        <link>/status/report.htm</link>
+        </menu>
+</child>
+</menu>
+
+<menu>
+<name>Diagnostic Tools</name>
+<title>Analyze behavior of this box</title>
+<link>diagnose.cgi</link>
+</menu>
+
+<menu>
+<name>Logs and Reports</name>
+<child>
+	<menu>
+	<name>Layer 7 log Configuration</name>
+	<title>To keep layer7 log for analyzer or syslog server</title>
+	<link>l7log.cgi</link>
+	</menu>
+    
+	<menu>
+	<name>System Logs</name>
+	<title>Display internal logs</title>
+	<link>loganalysis.cgi</link>
+	</menu>
+
+	<menu>
+	<name>Syslog Server</name>
+	<title></title>
+	<link>syslog.cgi</link>
+	</menu>
+</child>
+</menu>
+
+<menu>
+<name>Central Management</name>
+<child>
+        <menu>
+        <name>CMS Key</name>
+        <title></title>
+        <link>rmconfig.cgi?viewpoint=cms</link>
+        </menu>
+
+        <menu>
+        <name>Firmware</name>
+        <title>Firmware management</title>
+        <child>
+          <menu>
+          <name>Upload</name>
+          <title>Upload firmware from center</title>
+          <link>rmconfig.cgi?viewpoint=managerUPG</link>
+          </menu>
+
+          <menu>
+          <name>Upgrade</name>
+          <title>Upgrade firmware and collect info from clients</title>
+          <link>upgmanager.cgi</link>
+          </menu>
+        </child>
+        </menu>
+
+        <menu>
+        <name>Config</name>
+        <title>Config Dispatch</title>
+        <child>
+          <menu>
+          <name>Upload</name>
+          <title>Dispatch the config between client and center</title>
+          <link>rmconfig.cgi?viewpoint=managerconfig</link>
+          </menu>
+
+          <menu>
+          <name>Dispatch</name>
+          <title>Dispatch the config between client and center</title>
+          <link>sendData.cgi</link>
+          </menu>
+        </child>
+        </menu>
+
+</child>
+</menu>
+
+</treemenu>

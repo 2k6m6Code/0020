@@ -1,0 +1,1746 @@
+#######################################################################################################################
+#                         Zone Config
+#######################################################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showZone 
+{
+    my (%action)=@_;
+    my $zone=XMLread($gPATH.'zonecfg.xml');
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    my $temp; 
+    print qq (<input type="hidden" name="viewpoint" value="$action{viewpoint}">);
+    
+    #****************************************************************************************
+    #generating presentation format in TABLE 
+    print qq (<div align="center"><table cellspacing="0" border="0" width="50%">);
+ 
+    if ( $action{viewpoint}=~m/^dmz$/ )
+    {
+        #************************************ DMZ ********************************************
+        my %ispname=maintainBasic( action=>'GETISPNAMEHASH');
+        my %ispnic=maintainBasic( action=>'GETISPNICHASH'); ##20100622 For MPV bridge
+        my @dmzidlist=sort num_sort keys %ispname;
+        my $dmzarray=$zone->{dmz}; @$dmzarray=sort dmz_sort_by_isp @$dmzarray;
+        my $targetdmz;
+        if ( !$action{dmzid} ) { $action{dmzid}=$dmzidlist[0]; }
+        
+        #****************************************************************************************
+        # DMZ selection
+        #****************************************************************************************
+        print qq (<tr><td class="bigtitle" colspan="4" align="center">$qblang[140] );
+        
+        #****************************************************************************************
+        # DMZ ARP MODE
+        #******************************** List selection of NICs ********************************
+        print qq (<select  class="qbopt" name="dmzmode" style="WIDTH: 100px;display:none;" onChange="goSubmit('switchTransMode')">\n);
+        foreach my $mode ( 'ARPPROXY') 
+        { 
+            my $showmode=( $mode eq 'BRIDGE' ) ? ( 'Bridge' ) : ('ARP Proxy') ;
+            my $status=( $mode eq $zone->{dmzmode} ) ? ( 'selected' ) : ( '' ); 
+            print qq (<option $status value="$mode">$showmode</option>\n); 
+        }
+        print qq (</select>  );
+        print qq (<a href="javascript:qbShowHelp('zone_dmz')"><image src="image/help.gif" border="0" title="Help"></a><hr size=1></td></tr>);
+
+        print qq (<hr size=1><tr>);
+       print qq (<td class="body" colspan="4" align="center">);
+        
+       # ----------------------------
+       # Print Title first
+       # ----------------------------
+       
+        print qq (<div class="divframe">);
+        #print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+        print qq (<table class="sortable" width="100%" border="0"><tr bgcolor="#332211">);
+        print qq (<td width="20%">$qblang[24]</td>);
+        print qq (<td width="10%">$qblang[29]</td>);
+        print qq (<td width="10%">$qblang[65]</td>);
+        print qq (<td width="10%">$qblang[28]</td>);
+        print qq (<td width="20%">$qblang[483]</td>);
+        #print qq (<td width="20%">ARP Mode</td>);
+        print qq (</tr>);
+
+       # ----------------------------
+       # Print DMZ Content 
+       # ----------------------------
+       
+        my $lineCount=0;
+        foreach my $dmz ( @$dmzarray ) 
+        {
+            if ( $dmz->{isp} eq 'system' || $dmz->{name} ne ''  || $ispnic{$dmz->{isp}} =~m/mpv/ || $ispnic{$dmz->{isp}} =~m/tmv/ ) { next;}
+
+            my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+ 
+	    print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmousedown="setFocusDMZ('$dmz->{isp}')" onclick="selectedColor(this)" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+
+            ##20100622 For MPV bridge
+            my $onoff=($dmz->{enabled}) ? ($qblang[100]) : ($qblang[101]);
+            print qq (<td width:20px;>$onoff</td>);
+            
+            print qq (<td width="10%">$ispname{$dmz->{isp}}</td>);
+            
+            if ($ispnic{$dmz->{isp}} =~m/ppp/){print qq (<td width="10%">PPPoE $dmz->{isp}</td>);}
+            elsif ($ispnic{$dmz->{isp}} =~m/mpv/){print qq (<td width="10%">MPV $dmz->{isp}</td>);}
+            else {print qq (<td width="10%">ISP $dmz->{isp}</td>);}
+            
+            foreach my $isp (@$isplist)
+            {
+                if($isp->{ispname} ne $ispname{$dmz->{isp}}){next;} 
+                $isp->{nic}=~s/eth//g;
+                my $aa=$isp->{nic}+1;
+                my $nic = "Port$aa";
+                print qq (<td width="10%">$nic</td>);
+            }
+            
+            my $port=$dmz->{nic}; $port=~s/eth//; $port=(!$port && $port ne "0" ) ? ($qblang[104]):('PORT '.++$port); 
+            print qq (<td width="20%">$port</td>);
+            
+            print qq (</tr>);
+            if ( $dmz->{isp} eq $action{dmzid} ) 
+            { 
+                $targetdmz=$dmz;
+                print qq (<script>initSelect(dmzinfo.rows[$lineCount])</script>); 
+            }    
+        
+            $lineCount++;    
+        }
+        print qq (<input type="hidden" name="dmzid" value="$action{dmzid}">);
+        print qq (</table></div>);
+
+        print qq (</td></tr>);
+        
+        #****************************************************************************************
+        # DMZ Enable Setting 
+        #****************************************************************************************
+        print qq (<tr bgcolor="#667788"><td class="body"  align="center" width="29%">);
+        my $status=( $targetdmz->{enabled}==1 ) ? ( 'checked' ) : (''); print qq (<INPUT type="radio" name="dmzenabled" $status value="1">$qblang[100]);
+        $status=( $targetdmz->{enabled}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="dmzenabled"  $status value="0">$qblang[101]);
+        print qq (</td>);  
+        
+        #****************************************************************************************
+        # DMZ ID
+        #****************************************************************************************
+        print qq (<td class="body"  align="center" width="43%">ISP $targetdmz->{isp}</td>);
+        
+        #****************************************************************************************
+        # DMZ NIC number
+        #******************************** List selection of NICs ********************************
+        print qq (<td class="body"  align="right" width="28%">);
+        print qq (<select class="qbopt" name="dmznic" style="WIDTH: 120px">\n);
+        if ( !($targetdmz->{nic}) ) { print qq (<option selected value="">None</option>\n); }
+        
+        my @ethlist=( $gRESERVEDLANPORT ) ? ( ($gNUMOFPORT-$gRESERVEDLANPORT..$gNUMOFPORT-1) ) : ( (0..$gNUMOFPORT-1) );
+        my @vlandev=editVlan(action=>'GETVLANDEVLIST'); 
+#        foreach my $nicitem ( @ethlist,@vlandev ) 
+#        { 
+#            $nicitem=~s/eth//;
+#            my $portnum=$nicitem+1; 
+#            ( 'eth'.$nicitem eq $targetdmz->{nic} ) ? ( $status='selected' ) : ( $status='' ); 
+#            print qq (<option $status value="eth$nicitem">PORT $portnum</option>\n); 
+#        }
+        my $wirelessdev=( $gENABLEWIRELESS ) ? ( 'ra0' ) : ( '' );
+        foreach my $nicitem ( @ethlist,@vlandev,$wirelessdev )
+        {
+            if ( $nicitem ne $wirelessdev ){
+            $nicitem=~s/eth//;
+            my $portnum=$nicitem+1;
+            ( 'eth'.$nicitem eq $targetdmz->{nic} ) ? ( $status='selected' ) : ( $status='' );
+            print qq (<option $status value="eth$nicitem">PORT $portnum</option>\n);
+            }else{
+            $nicitem=~s/ra//;
+            my $portnum=$nicitem+1;
+            ( 'ra'.$nicitem eq $targetdmz->{nic} ) ? ( $status='selected' ) : ( $status='' );
+            print qq (<option $status value="ra$nicitem">Wireless $portnum</option>\n);
+            }
+        }
+        print qq (</select>);
+        print qq (</td>);
+        print qq (</tr>);
+
+        my $dmzmode=( $zone->{dmzmode} eq $qblang[141]  ) ? ($qblang[141]) : ($qblang[142]);
+        my $showvalue=( $zone->{dmzmode} eq $qblang[141]  ) ? ($qblang[143]) : ($qblang[144]);
+
+        print qq (<tr><td colspan="4"  align="center"><input type="button" class="qb" value="$showvalue" onClick="registerTransparentIP('$dmzmode')" style="width:450"></td></tr>);
+        print qq (<tr><td colspan="4"  align="center"><input type="button" class="qb" value="$qblang[54]" onClick="goSubmit('UPDATEDMZ')" style="width:250"></td></tr>);
+    }
+    elsif ( $action{viewpoint}=~m/^nat$|^lvs$/ )
+    {
+        my $natarray=$zone->{nat};
+        @$natarray=sort zone_sort_by_id @$natarray;
+        my $targetNAT;
+        
+        if ( $action{natid} ) { foreach my $nat ( @$natarray ) { if ( $nat->{natid} eq $action{natid} ) { $targetNAT=$nat;} } }
+        if ( $action{action} eq 'DELNATZONE' || !$action{natid} ) { foreach my $nat ( @$natarray ) { if ( $nat->{natid} ne 'system' && $nat->{type} eq $action{viewpoint} ) { $targetNAT=$nat; $action{natid}=$nat->{natid}; last;} } }
+        
+        #************************************ NAT ********************************************
+        # NAT 
+        #************************************************************************************
+        my $zoneTitle=( $action{viewpoint} eq "nat" ) ? ('Internal Zone'):('Server Mapping');
+        print qq (<tr><td class="bigtitle" colspan="2" align="left" >$qblang[95] );
+        print qq (<a href="javascript:qbShowHelp('zone_nat')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+        
+        print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+        #************************************************************************************
+        # NAT zone Data Grid
+        #************************************************************************************
+        print qq (<tr><td class="body"  align="center" colspan="2">);
+        
+        # Print Title first
+        print qq (<div class="divframe" style="width:800">);
+        # print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+        # print qq (<td width="10%">Status</td>);
+        # print qq (<td width="10%" align="center">Related ISP</td>);
+        # if ( $gENABLEDHCP ) 
+        # { 
+            # print qq (<td width="10%">DHCP</td>); 
+        # }
+        # print qq (<td style="left: 0px; width:160px; table-layout: fixed; word-break: normal; word-wrap: break-word;">Network</td>);
+        # print qq (<td width="15%">Interface</td>);
+        # print qq (<td style="left: 0px; width:160px; table-layout: fixed; word-break: normal; word-wrap: break-word;">IP</td>);
+        # print qq (<td style="left: 0px; width:155px; table-layout: fixed; word-break: normal; word-wrap: break-word;">Gateway</td>);
+        # print qq (<td width="10%">Edit</td>);
+        # print qq (<td width="5%">IPver</td>);
+        # print qq (<td align="center">);
+        # print qq (<a href="javascript:delZone()"><image src="image/del.gif" title="Delete checked zones" border="0"></a>);
+	# print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('zonetodel', this.checked)">);
+        # print qq (</td>);
+
+        # print qq (</tr></table>);
+        print qq (</div>);
+        
+        # Print NAT Content 
+        print qq (<div class="divframe" style="width:800;height:200">);
+        print qq (<table id="natinfo" border="0" width="100%" >);
+	#print qq (<thead><tr style="background-color:#332001" >);
+	print qq (<thead><tr bgcolor="#332211" >);
+print qq (<table class="sortable" id="natinfo" width="100%" border="0"><tr bgcolor="#332211">);
+        
+        print qq (<td align="center">);
+        print qq (<a href="javascript:delZone()"><image src="image/del.gif" title="Delete checked zones" border="0"></a>);
+	print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('zonetodel', this.checked)">);
+        print qq (</td>);
+        print qq (<td width="10%">$qblang[25]</td>);
+        print qq (<td width="10%">$qblang[24]</td>);
+        print qq (<td width="10%" align="center">$qblang[96]</td>);
+        if ( $gENABLEDHCP ) 
+        { 
+            print qq (<td width="10%">$qblang[97]</td>);
+        }
+        print qq (<td style="left: 0px; width:160px; table-layout: fixed; word-break: normal; word-wrap: break-word;">$qblang[98]</td>);
+        print qq (<td width="15%">Interface</td>);
+        print qq (<td style="left: 0px; width:160px; table-layout: fixed; word-break: normal; word-wrap: break-word;">IP</td>);
+        print qq (<td style="left: 0px; width:155px; table-layout: fixed; word-break: normal; word-wrap: break-word;">$qblang[30]</td>);
+        print qq (<td width="5%">$qblang[99]</td>);
+
+        print qq (</tr></thead>);
+        my $lineCount=1;
+        foreach my $nat ( @$natarray ) 
+        {
+            if ( $nat->{natid} eq 'system' ) { next; }
+            
+            my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+            if ( $nat->{dirty} ) { $originalColor=$bgcolor='#bb6600' }; 
+            
+	    print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+            
+            #print checkbox and set its value
+            print qq (<td class="body" align="center"><input type="checkbox" name="zonetodel" value="$nat->{natid}"></td>);
+            
+            print qq (<td class="body" align="center" width="10%">);
+            print qq (<a href="javascript:setNATid('$nat->{natid}');selectedColor(natinfo.rows[$lineCount])" ><image src="image/edit.gif" title="Edit zone properties" border="0"></a></td>);
+             
+            my $onoff=($nat->{enabled}) ? ($qblang[100]) : ($qblang[101]);
+            #print qq (<td width="10%">$onoff</td>);
+            print qq (<td width="10%">$onoff</td>);
+            
+            my $ispid=( $nat->{ispid} ) ? ( 'ISP '.$nat->{ispid} ) : ( $qblang[102] );
+            print qq (<td width="10%">$ispid</td>);
+            
+            if ( $gENABLEDHCP )
+            {
+                my $dhcp=( $nat->{dhcp} ) ? ($qblang[64]) : ($qblang[103]);
+                print qq (<td width="10%">$dhcp</td>);
+            }
+
+            print qq (<td style="left: 0px; width:90px; table-layout: fixed; word-break: normal; word-wrap: break-word;">$nat->{network}</td>);
+            
+            my $port=$nat->{nic}; $port=~s/eth//; $port=(!$port && $port ne "0" ) ? ($qblang[104]):('PORT '.++$port); 
+            if ( $port=~m/eth/ )
+            {
+               $port=~s/eth//; $port=(!$port && $port ne "0" ) ? ($qblang[104]):('PORT '.++$port);
+            }elsif ($port =~m/ra/)
+            {
+               $port=~s/ra//; $port=(!$port && $port ne "0" ) ? ($qblang[104]):('Wireless '.++$port);
+            }
+            print qq (<td width="15%">$port</td>);
+            my $ip=( $nat->{ip} ) ? ( $nat->{ip} ) : ( '&nbsp;'); 
+            print qq (<td style="left: 0px; width="15%" table-layout: fixed; word-break: normal; word-wrap: break-word;">$ip</td>);
+           
+            my $gateway=( $nat->{gateway} ) ? ( $nat->{gateway} ) : ( '&nbsp;'); 
+            print qq (<td style="left: 0px; width="15%" table-layout: fixed; word-break: normal; word-wrap: break-word;">$gateway</td>);
+            
+            my $IPver=( $nat->{version} ) ? ( 'IPv6' ) : ( 'IPv4');
+            print qq (<td width="5%">$IPver</td>);
+            
+            
+            print qq (</tr>);
+            if ( $nat->{natid} eq $action{natid} ) { print qq (<script>initSelect(natinfo.rows[$lineCount])</script>); }    
+
+            $lineCount++;    
+        }
+        print qq (<input type="hidden" name="natid" value="$targetNAT->{natid}">);
+        print qq (<input type="hidden" name="type" value="$action{viewpoint}">);
+        print qq (</table></div>);
+        print qq (</td></tr>);  
+
+        #************************************************************************************
+        # NAT zone Network
+        #************************************************************************************
+        my $ispid=( $targetNAT->{ispid} ) ? ( 'ISP '.$nat->{ispid} ) : ( $qblang[102] );
+        print qq (<tr bgcolor="gray"><td class="body" align="center" colspan="2">$qblang[105] [ $targetNAT->{network} ] $qblang[106] [ $ispid ]</td></tr>);  
+        
+        print qq (<tr><td width="70%"><table width="100%">);
+        #************************************************************************************
+        # NAT Enable Setting 
+        #************************************************************************************
+        print qq (<tr><td class="body"  align="left">$qblang[64]: </td>);
+        print qq (<td class="body"  align="center">);
+        ( $targetNAT->{enabled}==1 ) ? print qq (<INPUT type="radio" name="natenabled"  checked  value="1">$qblang[100]) : print qq (<INPUT type=radio name="natenabled"  value="1" >$qblang[100]);
+        ( $targetNAT->{enabled}==0 ) ? print qq (<INPUT type="radio" name="natenabled"  checked value="0" >$qblang[101]) : print qq (<INPUT type=radio name="natenabled"  value="0">$qblang[101]);
+        print qq (</td></tr>);  
+	#****************************************************************************************
+	#NAT IP Version IPv4/IPv6
+	#****************************************************************************************
+	print qq (<tr><td class="body"  align="left">$qblang[107]:</td>);
+	print qq (<td class="body"  align="center">);
+	( $targetNAT->{version}==0 ) ? print qq (<INPUT type="radio" name="version"  checked  value="0" onclick="change();">IPv4) : print qq (<INPUT type="radio" name="version"  value="0" onclick="change();">IPv4);
+	( $targetNAT->{version}==1 ) ? print qq (<INPUT type="radio" name="version"  checked  value="1" onclick="change();">IPv6) : print qq (<INPUT type="radio" name="version"  value="1" onclick="change();">IPv6);
+	print qq (</td></tr>);
+        #****************************************************************************************
+        # NAT Network belong ISP
+        #****************************************************************************************
+        my @iidlist=maintainBasic(action=>'GETIIDLIST');
+
+        print qq (<tr><td class="body"  align="left" >$qblang[96]:</td>);
+        print qq (<td class="body" align="center">);
+        print qq (<select class="qbopt"  name="ispid" style="WIDTH:160">);
+        print qq (<option value="0" selected >$qblang[102]</option>); 
+        foreach my $ispid ( sort num_sort @iidlist ) 
+        { 
+            my $status=($ispid eq $targetNAT->{ispid}) ? ('selected') : ('');
+            print qq (<option value="$ispid" $status>ISP $ispid</option>); 
+        }
+        print qq (</select>);
+        print qq (</td></tr>);
+
+        #****************************************************************************************
+        # NIC Speed
+        #****************************************************************************************
+        print qq (<tr><td class="body"  align="left" >$qblang[108]:</td>);
+        print qq (<td class="body" align="center">);
+        print qq (<select class="qbopt" name="nic_speed" style="width:160">\n);
+        foreach my $types ( sort keys %gNIC_speed_hash )
+        {
+            my $status=( $types eq $targetNAT->{nic_speed} ) ? ('selected'):('');
+            if ( !$targetNAT->{nic_speed} && $types eq "Auto" ) { $status="selected"; }
+            my $showvalue=$gNIC_speed_hash{$types};
+            print qq (<option $status value="$types" title="$gNIC_speed_hash{$types}" >$showvalue</option>/n);
+        }
+        print qq (</select>);
+        print qq (</td>);
+        print qq (</tr>);
+
+        #****************************************************************************************
+        # NAT Network
+        #****************************************************************************************
+        print qq (<tr><td class="body"  align="left" >$qblang[33]: </td>);
+        print qq (<td class="body" align="center">);
+        print qq (<input class="qbtext" type="text" name="natnet" style="WIDTH:160px" value="$targetNAT->{network}">);
+        print qq (</td></tr>);
+
+        #****************************************************************************************
+        # NAT NIC number
+        #****************************************************************************************
+        print qq (<tr>);
+        print qq (<td class="body"  align="left" >$qblang[28]: </td> );
+        print qq (<td class="body"  align="center"><select class="qbopt" name="natnic"  style="WIDTH: 160px">\n);
+        if ( !($targetNAT->{nic}) ) { print qq (<option selected value="">$qblang[104]</option>\n); }
+        
+        my @ethlist=( $gRESERVEDLANPORT ) ? ( ($gNUMOFPORT-$gRESERVEDLANPORT..$gNUMOFPORT-1) ) : ( (0..$gNUMOFPORT-1) );
+        my @vlandev=editVlan(action=>'GETVLANDEVLIST');        
+#        foreach my $nicitem ( @ethlist,@vlandev ) 
+#        { 
+#            $nicitem=~s/eth//;
+#            my $portnum=$nicitem+1; 
+#            my $status; ( 'eth'.$nicitem eq $targetNAT->{nic} ) ? ( $status='selected' ):( $status='' );
+#            print qq (<option $status value="eth$nicitem">PORT $portnum</option>\n);
+#        }
+        my $wirelessdev=( $gENABLEWIRELESS ) ? ( 'ra0' ) : ( '' );
+        foreach my $nicitem ( @ethlist,@vlandev,$wirelessdev )
+        {
+            if ( $nicitem ne $wirelessdev ){
+            $nicitem=~s/eth//;
+            my $portnum=$nicitem+1;
+            ( 'eth'.$nicitem eq $targetNAT->{nic} ) ? ( $status='selected' ) : ( $status='' );
+            print qq (<option $status value="eth$nicitem">PORT $portnum</option>\n);
+            }else{
+            $nicitem=~s/ra//;
+            my $portnum=$nicitem+1;
+            ('ra'.$nicitem eq $targetNAT->{nic} ) ? ( $status='selected' ) : ( $status='' );
+            print qq (<option $status value="ra$nicitem">Wireless $portnum</option>\n);
+            }
+        }
+        print qq (</select></td></tr>);
+
+        #判斷用 IP 或  GATEWAY 來作 routing
+        $action{natroute}=( $targetNAT->{ip} ) ?  ( "ip" ) : ( "gateway" );
+        #****************************************************************************************
+        # NAT IP
+        #****************************************************************************************
+        print qq (<tr><td class="body"  align="left" >);
+        ( $action{natroute} eq "ip" )   ?  print qq (<input type="radio" checked name="natroute" value="ip">)
+                                        :  print qq (<input type="radio" name="natroute" value="ip">);
+        print qq (Interface IP: </td>);  
+        print qq (<td class="body"  align="center">);
+        print qq (<input class="qbtext" type="text" name="natip" style="WIDTH:160px"  value="$targetNAT->{ip}" onFocus="change_natroute_radio('ip')">);
+        print qq (</td></tr>);
+        
+        #****************************************************************************************
+        # NAT Gateway
+        #****************************************************************************************
+        print qq (<tr><td class="body"  align="left" >);
+        ( $action{natroute} eq "gateway" )  ?   print qq (<input type="radio" checked name="natroute" value="gateway">)
+                                            :   print qq (<input type="radio" name="natroute" value="gateway">);
+        print qq (Gateway: </td>);
+        print qq (<td class="body"  align="center" textcolor="#003366">);
+        print qq (<input class="qbtext" type="text" name="natgateway" style="WIDTH:160px" value="$targetNAT->{gateway}" onFocus="change_natroute_radio('gateway')">);
+        print qq (</td></tr>);
+
+        #****************************************************************************************
+        # NAT Note
+        #****************************************************************************************
+        print qq (<tr><td class="body"  valign="top" align="left" >$qblang[110]: </td>);
+        print qq (<td class="body"  align="center" textcolor="#003366">);
+        print qq (<textarea class="qbtext" name="natnote" style="width:160;height:40">$targetNAT->{note}</textarea>);
+        print qq (</td></tr>);
+
+        print qq (</table></td>);
+        
+        #****************************************************************************************
+        # NAT Command Buttons
+        #****************************************************************************************
+        print qq (<td align="right" valign="bottom"><table>);
+        print qq (<tr><td><input type="button" class="qb"   value="$qblang[111]"        onClick="goSubmit('CREATENATZONE')" style="width:120"></td></tr>);
+        print qq (<tr><td><input type="button" class="qb"   value="$qblang[112]"  onClick="createBatchNatZone('$gNUMOFPORT')" style="width:120"></td></tr>);
+        if ( $gENABLEDHCP )
+        {
+            print qq (<tr><td><input type="button" class="qb"   value="$qblang[113]"      onClick="setDHCP($action{natid})" style="width:120"></td></tr>);
+        }
+        print qq (<tr><td><input type="button" class="qb"   value="$qblang[54]"          onClick="updateNAT('$action{natid}')" style="width:120"></td></tr>);
+        print qq (<input type="hidden" value="" name="batcrtdata">);
+        print qq (<input type="hidden" value="" name="dhcpinfo">);
+        print qq (</table></td></tr>);
+    }
+    
+    print qq (</table></div>);
+}
+#showZone
+
+
+#==================================================================================================
+sub zone_script 
+{
+    print << "ZONE_SCRIPT";
+    
+    <script type="text/javascript" src="grid.js"></script>
+    <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+
+    <script language="javascript">
+        
+    var myform;
+    function change()
+    {
+        if (document.getElementById('version').checked == true)
+        {    
+            \$("input[name='natnet']").attr("maxLength",18);
+            \$("input[name='natip']").attr("maxLength",15);
+            \$("input[name='natgateway']").attr("maxLength",15);
+            if (document.getElementById('natnet').value.length > 18)
+            {
+                document.getElementById('natnet').value = "";
+                document.getElementById('natip').value = "";
+                document.getElementById('natgateway').value = "";
+            }
+        }
+        
+        if (document.getElementById('version').checked == false)
+        {
+            \$("input[name='natnet']").attr("maxLength",43);
+            \$("input[name='natip']").attr("maxLength",39);
+            \$("input[name='natgateway']").attr("maxLength",39);
+                                    
+            if (document.getElementById('natnet').value.length < 19)
+            {
+                document.getElementById('natnet').value = "";
+                document.getElementById('natip').value = "";
+                document.getElementById('natgateway').value = "";
+            }
+        }
+    }
+    function cgi_dep_onload() 
+    { 
+        myform=document.forms[0]; 
+    }
+    
+    function change_lvsroute_radio(method)
+    {
+        if(method=='ip'){myform.lvsgateway.value='';}
+        if(method=='gateway'){myform.lvsip.value='';}     
+        if(myform.lvsroute.length)
+        {
+            for(var i=0;i<myform.lvsroute.length;i++)
+            {
+                if(myform.lvsroute[i].value==method)
+                {
+                    myform.lvsroute[i].checked=true;
+                }
+            }
+        }
+    }
+
+    function change_natroute_radio(method)
+    {
+        if(method=='ip'){myform.natgateway.value='';}
+        if(method=='gateway'){myform.natip.value='';}     
+        if(myform.natroute.length)
+        {
+            for(var i=0;i<myform.natroute.length;i++)
+            {
+                if(myform.natroute[i].value==method)
+                {
+                    myform.natroute[i].checked=true;
+                }
+            }
+        }
+    }
+
+    function updateNAT(id)
+    {
+        if (!id) { alert('Invald Zone ID'); return; }
+        goSubmit('UPDATENAT');
+    }
+
+    function setFocusDMZ(isp)
+    {
+        myform.dmzid.value=isp;
+        myform.submit();
+    }
+
+    function setNATid(id)
+    {
+        myform.natid.value=id;
+        myform.submit();
+    }
+
+    function setDHCP(natid)
+    {
+        myform.natid.value=natid;
+        var dhcpinfo=qbDHCP(natid);
+        if ( typeof(dhcpinfo)!='string' ) { return; }
+        myform.dhcpinfo.value=dhcpinfo;
+        goSubmit('SETDHCP');
+    }
+
+    function delZone()
+    {
+        if (!myform.zonetodel) return;
+        var setDeleteOn=false;
+        if ( !myform.zonetodel.length ) setDeleteOn=myform.zonetodel.checked;
+        for(var i=0;i<myform.zonetodel.length;i++) { if (myform.zonetodel[i].checked) { setDeleteOn=true; break; } }
+        if (!setDeleteOn) { alert("No zone Checked to delete"); }
+        if (setDeleteOn) { if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )  { goSubmit('DELNATZONE');} }
+    }
+
+    function createBatchNatZone(portnum)
+    {
+        var str2crtzone=qbCreateBatchNatZone(portnum);
+        
+        if (str2crtzone =='' ) { return; }
+
+        myform.batcrtdata.value=str2crtzone;
+
+        goSubmit('BATCRTNATZONE'); 
+    }
+
+    function registerTransparentIP(mode)
+    {
+        var privilege=getcookie('privilege');
+        if(privilege!=1) { alert('You do not have Privilege'); return; }
+        window.top.mainFrame.location.href="dmzreg.cgi"+"?mode="+mode;
+    }
+    
+    </script>
+    
+ZONE_SCRIPT
+}
+#zone_script
+
+sub showDHCP
+{
+    my ($natid)=@_;
+    my $zone=XMLread($gPATH.'zonecfg.xml');
+    my $ispinfo=XMLread($gPATH.'basic.xml');
+    my $allisp=$ispinfo->{isp};
+    my $natarray=$zone->{nat};
+    my $targetnat;
+    foreach my $nat ( @$natarray ) { if ( $nat->{natid} eq $natid ) { $targetnat=$nat; last; } }
+    #my $IPsec =( $nat->{version} )?('IPv6'):('IPv4');
+    my $status=( $targetnat->{dhcp} ) ? ('Enabled') : ('Disabled');
+    print qq (<div valign="center"><br><br><br>);
+    print qq (<table bgcolor="#224488" class="body" border="0">);
+    print qq (<tr bgcolor="112233"><td>Network</td><td>$targetnat->{network}</td></tr>);
+    print qq (<tr><td>Status</td><td>$status</td></tr>);
+
+    my %hsdftlease= ( "600"=>"10 minutes", "1800"=>"30 minutes", "3600"=>"1  hour", "10800"=>"3  hours", "28800"=>"8  hours", "86400"=>"1  day", "259200"=>"3  day");
+    print qq (<tr><td>Default-lease-time</td><td><select name="dftlease" class="qbopt" style="width:300">);
+    foreach my $dftleasevalue (sort num_sort keys %hsdftlease) 
+    {
+        my $status=($targetnat->{dftlease} eq $dftleasevalue) ? ('selected'): ('');
+        print qq (<option value="$dftleasevalue" $status>$hsdftlease{$dftleasevalue}</option>);
+    }
+
+    my %hsmaxlease= ( "1800"=>"30 minutes", "3600"=>"1  hour", "10800"=>"3  hours", "28800"=>"8  hours", "86400"=>"1  day", "259200"=>"3  day", "604800"=>"7  days");
+    print qq (<tr><td>Max-lease-time</td><td><select name="maxlease" class="qbopt" style="width:300">);
+    foreach my $maxleasevalue (sort num_sort keys %hsmaxlease) 
+    {
+        my $status=($targetnat->{maxlease} eq $maxleasevalue) ? ('selected'): ('');
+        print qq (<option value="$maxleasevalue" $status>$hsmaxlease{$maxleasevalue}</option>);
+    }
+
+    my $range=$targetnat->{rangelist}; $range=~s/\;/\;\n/g;
+    print qq (<tr><td>Range</td><td><textarea name="rangelist" class="qbtext" style="width:300;height:50" title="a list of range for the specified subnet -- seperated by semicolon. Example:x.x.x.a-x.x.x.b; x.x.x.c-x.x.x.d" >$range</textarea></td></tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    ## for dhcp-DNS setting...nancy 20040901
+    print qq (<tr bgcolor="112233"><td colspan="2">Option:</td></tr>);
+    my $dname=$targetnat->{dname};
+    print qq (<tr><td>Domain-name</td><td><input name="dname" type="text" class="qbtext" style="width:300" value="$dname" title="the name of the domain for the specified subnet"></td></tr>);
+    my $dnss=$targetnat->{dnslist}; $dnss=~s/\;/\;\n/g; 
+    print qq (<tr><td>Domain-name-servers</td><td><textarea name="dnslist" class="qbtext" style="width:300;height:50" title="a list of name server(s) for the specified subnet -- seperated by comma. Example:168.95.1.1, 8.8.8.8" >$dnss</textarea></td></tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    ##  DHCP relay setting...Brian 20081028
+    #****************************************************************************************
+    # Listen Interface
+    #****************************************************************************************
+    print qq (<tr bgcolor="112233"><td colspan="2">DHCP Relay:</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  align="left" >Listen on Interface: </td> );
+    print qq (<td class="body"  align="right"><select class="qbopt" name="dhcprelayinterface"  style="WIDTH: 300px">\n);
+    if ( !($targetnat->{dhcprelayinterface}) ) { print qq (<option selected value="">None</option>\n); }
+        
+        my @ethlist=( $gRESERVEDLANPORT ) ? ( ($gNUMOFPORT-$gRESERVEDLANPORT..$gNUMOFPORT-1) ) : ( (0..$gNUMOFPORT-1) );
+        my @vlandev=editVlan(action=>'GETVLANDEVLIST');        
+#        foreach my $nicitem ( @ethlist,@vlandev ) 
+#        { 
+#            $nicitem=~s/eth//;
+#            my $portnum=$nicitem+1; 
+#            my $status; ( 'eth'.$nicitem eq $targetnat->{dhcprelayinterface} ) ? ( $status='selected' ):( $status='' );
+#            print qq (<option $status value="eth$nicitem">PORT $portnum </option>\n);
+#        }
+        my $wirelessdev=( $gENABLEWIRELESS ) ? ( 'ra0' ) : ( '' );
+        foreach my $nicitem ( @ethlist,@vlandev,$wirelessdev )
+        {
+            if ( $nicitem ne $wirelessdev ){
+            $nicitem=~s/eth//;
+            my $portnum=$nicitem+1;
+            ( 'eth'.$nicitem eq $targetnat->{nic} ) ? ( $status='selected' ) : ( $status='' );
+            print qq (<option $status value="eth$nicitem">PORT $portnum</option>\n);
+            }else{
+            $nicitem=~s/ra//;
+            my $portnum=$nicitem+1;
+            ( 'ra'.$nicitem eq $targetnat->{nic} ) ? ( $status='selected' ) : ( $status='' );
+            print qq (<option $status value="ra$nicitem">Wireless $portnum</option>\n);
+            }
+        }
+        foreach my $isp ( @$allisp ) 
+        {
+            if ( $isp->{iid} eq 'system' ) { next; }
+            if ( $isp->{isptype} ne 'tunnel' ) { next; } 
+            my $status; ( $isp->{nic} eq $targetnat->{dhcprelayinterface} ) ? ( $status='selected' ):( $status='' );
+            print qq (<option $status value="$isp->{nic}">PORT $isp->{nic} </option>\n);
+        }
+        print qq (</select></td></tr>);
+=cut
+
+    ##  DHCP relay setting...Brian 20081028 #Listen on multi port=>unfinished
+    #****************************************************************************************
+    # Listen Interface
+    #****************************************************************************************
+    print qq (<tr bgcolor="112233"><td colspan="2">DHCP Relay:</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  align="left" >Listen on Interface: </td> );
+    #print qq (<td class="body"  align="right"><select class="qbopt" name="dhcprelayinterface"  style="WIDTH: 240px">\n);
+    print qq (<td class="body"  align="right"><select class="qbopt"  multiple  name="dhcprelayinterface" style="WIDTH:300">\n);
+    #print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:160"> );
+    if ( !($targetnat->{dhcprelayinterface}) ) { print qq (<option selected value="">None</option>\n); }
+        
+        my @ethlist=( $gRESERVEDLANPORT ) ? ( ($gNUMOFPORT-$gRESERVEDLANPORT..$gNUMOFPORT-1) ) : ( (0..$gNUMOFPORT-1) );
+        my @vlandev=editVlan(action=>'GETVLANDEVLIST');        
+        foreach my $nicitem ( @ethlist,@vlandev ) 
+        { 
+            $nicitem=~s/eth//;
+            my $portnum=$nicitem+1; 
+            my $status; ( 'eth'.$nicitem eq $targetnat->{dhcprelayinterface} ) ? ( $status='selected' ):( $status='' );
+            print qq (<option $status value="eth$nicitem">PORT $portnum</option>\n);
+        }
+        print qq (</select></td></tr>);
+    my $siplist=$pptpinit->{sip};
+
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Server Local IP:);
+    print qq (</td>);
+    print qq (<td class="body"  colspan="2" valign="top" align="left">);
+    #==== sip infomation  ========================================================
+    my @iidlist=maintainBasic(action=>'GETGOODIIDLIST');
+    print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:160"> );
+    #print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:360"> );
+    foreach my $iid ( @iidlist)
+    {
+         my @natips=maintainIPBank(action=>'READPUBLICIP', isp=>$iid);
+         my $targetsip;
+         foreach my $sip ( @$siplist ) { if ( $sip->{isp} eq $iid ) { $targetsip=$sip; } }
+         foreach my $natip ( @natips )
+         {
+             my $sipip=$iid.'j'.$natip;
+             my $status=( grep(/^$natip$/, $targetsip->{ip}) ) ? ( 'selected' ) : ('');
+             #print qq (<option $status value="$sipip">ISP $iid [ $natip ][ $targetsip->{ip} ][$status]</option>);
+             print qq (<option $status value="$sipip">ISP $iid [ $natip ]</option>);
+         }
+
+    }
+    print qq (</select><br>);
+    print qq (</td>);
+    print qq (</tr>);
+=cut                                                                                                                             
+    my $relayip=$targetnat->{dhcprelayip}; $relayip=~s/\;/\;\n/g; 
+    print qq (<tr><td>Relay to Server's IP</td><td><textarea name="dhcprelayip" class="qbtext" style="width:300;height:20" title="Relay to which dhcp server? Keep this field empty can disable this relay function.Specify dhcp servers,please seperate ips by comma" >$relayip</textarea></td></tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    print qq (<tr><td align="center" colspan="2">);
+    print qq (<input type="button" class="qb" value="Enable" onClick="returnResult()" style="width:60">);
+    print qq (<input type="button" class="qb" value="Disable" onClick="returnDisable()" style="width:60">);
+    print qq (<input type="button" class="qb" value="Cancel" onClick="returnCancel()" style="width:60"></td></tr>);
+    print qq (</table>);
+    print qq (</div>);
+}
+
+sub showDHCPScript
+{
+    print  << "SHOWDHCPSCRIPT";    
+        
+        <script language="javascript">
+            
+            var myform=window.document.forms[0];
+            
+            function returnResult() 
+            {
+                var info='';
+                 
+                // info=myform.dftlease.value+':'+myform.maxlease.value+':'+myform.rangelist.value;
+                if (!myform.rangelist.value) { // make sure [range] existed....nancy 20040901
+                    alert("Range required !"); 
+                    return;
+                }
+                // for dhcp-DNS setting...nancy 20040823
+                info=myform.dftlease.value+':'+myform.maxlease.value+':'+myform.rangelist.value+':'+myform.dname.value+':'+myform.dnslist.value+':'+myform.dhcprelayinterface.value+':'+myform.dhcprelayip.value;
+
+                // needed seperate each line with ';'...FIXME.
+
+                window.returnValue=info;
+                window.close();
+            }
+            
+            function returnCancel() { window.close(); }
+
+            function returnDisable() 
+            { 
+                //for dhcp relay
+                info=myform.dhcprelayinterface.value+':'+myform.dhcprelayip.value+': disabled';
+                //window.returnValue='disabled';
+                window.returnValue=info;
+                window.close();
+            }
+            
+        </script>
+        
+SHOWDHCPSCRIPT
+}
+
+#===========================================================================================
+sub maintainZone
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $zone=XMLread($gPATH.'zonecfg.xml');
+    my $rtable=XMLread($gPATH.'rtable.xml');
+    
+    #( action=>'', host=>'' )
+    if ( $action{action}=~m/^GETNICBYHOST$/ )
+    {
+        my $natarray=$zone->{nat};
+        foreach my $nat ( @$natarray ) { if ( $nat->{ip} eq $action{host} ) { return; } }
+        foreach my $nat ( @$natarray ) { if ( isSubnetUsableIP($action{host}, $nat->{network})==1 ) { return $nat->{nic}; } }
+        return;
+    }
+    elsif ( $action{action}=~m/^GETNATBYNIC$/ )
+    {
+        my $natarray=$zone->{nat};
+        foreach my  $nat ( @$natarray ) {   if ( $nat->{nic} eq $action{nic} ) { return $nat->{natid}; } }
+        return;
+    }
+    elsif ( $action{action}=~m/^getTransparentMode$/ )
+    {
+        my $mode=$zone->{dmzmode};
+        if ( !$mode ) { $mode="ARPPROXY"; }
+        return $mode;
+    }
+    elsif ( $action{action}=~m/^GETNAT2ISP$/ )
+    {
+        my %nat2isp;
+        my $natarray=$zone->{nat};
+        foreach my $nat ( @$natarray )
+        {
+            if ( $nat->{ispid} ) { $nat2isp{$nat->{network}}=$nat->{ispid}; }
+        }
+        return %nat2isp;
+    }
+    elsif ( $action{action}=~m/^GETISPIDOFBELONGNAT$/ )
+    {
+        my $natarray=$zone->{nat};
+        my $target;
+
+        foreach my  $nat ( @$natarray ) 
+        {   
+            my $result=subnet_belong_check($nat->{network}, $action{subnet}); 
+            if ( $result==2 || $result==3 ) { $target=$nat; last; } 
+        }
+        
+        if ( $target->{ispid} ) 
+        {
+            return $target->{ispid};
+        }
+        else
+        { 
+            return;
+        }
+    }
+    elsif ( $action{action}=~m/^GETBELONGNAT$/ )
+    {
+        my $natarray=$zone->{nat};
+        foreach my  $nat ( @$natarray ) 
+        {   
+            my $result=subnet_belong_check($nat->{network}, $action{subnet}); 
+            if ( $result==2 || $result==3 ) { return $nat->{natid}; } 
+        }
+        return;
+    }
+    elsif ( $action{action}=~m/^GETNATZONES$/ )
+    {
+        my @natzones;
+        my $natarray=$zone->{nat};
+        foreach my $nat ( @$natarray ) 
+        { 
+            if ( $nat->{natid} eq 'system' ) { next; }
+            if ( $nat->{network} ) { push( @natzones, $nat->{network} ); }
+        }
+
+        return @natzones;
+    }
+    elsif ( $action{action}=~m/^GETNATNOTE$/ )
+    {
+    	my %natzones;
+    	my $natarray=$zone->{nat}; 
+    	foreach my $nat ( @$natarray )
+    	{
+    	   if ( $nat->{natid} eq 'system' ) { next; }
+    	   $natzones{"$nat->{natid}"}="$item->{note}";
+    	}
+    	return %natzones;
+    }
+    elsif ( $action{action}=~m/^GETSTATUS$/ )
+    {
+        my %natzones;
+        my $natarray=$zone->{nat};
+        foreach my $nat ( @$natarray )
+        {
+           if ( $nat->{natid} eq 'system' ) { next; }
+           $natzones{"$nat->{natid}"}="$nat->{enabled}";
+        }
+        return %natzones;
+    }
+    elsif ( $action{action}=~m/^GETNATNIC$/ )
+    {
+        my $natarray=$zone->{nat};
+        foreach my  $nat ( @$natarray ) { if ( $nat->{natid}==$action{natid} ) { return $nat->{nic}; } }
+        return;
+    }
+    elsif ( $action{action}=~m/^GETLANNIC$/ )
+    {
+        my $natarray=$zone->{nat};
+        my @nic;
+        foreach my $nat ( @$natarray )
+        {
+            if ( $nat->{natid} eq 'system' || grep(/^$nat->{nic}$/, @nic)) { next; }
+            push(@nic, $nat->{nic});
+        }
+        return @nic;
+    }
+    elsif ( $action{action}=~m/^GETNATIDLIST$/ )
+    {
+        my $natarray=$zone->{nat};
+        my %lvsIDList;
+        foreach my $nat ( @$natarray ) { if ($nat->{natid} ne 'system' ) { $lvsIDList{$nat->{natid}}=1; } }
+        return sort num_sort keys %lvsIDList; 
+    }
+    elsif ( $action{action}=~m/^GETRIPLIST$/ )
+    {
+        my $natarray=$zone->{nat};
+        my $targetNAT;
+        my @allRips;
+        foreach my $nat ( @$natarray ) { if ($nat->{natid} == $action{natid} ) { $targetNAT=$nat; last;} }
+        if ( $targetNAT->{network} ) { @allRips=get_allocated_ip($targetNAT->{network}); pop(@allRips); shift(@allRips); }
+        return @allRips; 
+    }
+    elsif ( $action{action}=~m/^GETDMZNIC$/ ) 
+    {
+        my $dmzarray=$zone->{dmz};
+        foreach my $dmz ( @$dmzarray ) { if ( $dmz->{isp}==$action{isp} ) { return $dmz->{nic}; } }
+        return;
+    }
+    elsif ( $action{action}=~m/^GETDMZSTATUS$/ ) 
+    {
+        my $dmzarray=$zone->{dmz};
+        foreach my $dmz ( @$dmzarray ) { if ( $dmz->{isp}==$action{isp} ) { return $dmz->{enabled}; } }
+        return;
+    }
+    elsif ( $action{action}=~m/^GETDMZSTATUSBYSUBNET$/ )
+    {
+         my $dmzarray=$zone->{dmz};
+         foreach my $dmz ( @$dmzarray ) { if ( $dmz->{subnet}==$action{subnet} ) { return $dmz->{enabled}; } }
+         return;
+    }
+    elsif ( $action{action}=~m/^GETALLDMZSTATUS$/ )
+    {
+        my %onoff;
+        my $dmzarray=$zone->{dmz};
+        foreach my $dmz ( @$dmzarray ) { $onoff{$dmz->{isp}}=$dmz->{enabled}; }
+        return %onoff; 
+    }
+    elsif ( $action{action}=~m/^IFNICUSED$/ ) 
+    {
+        #check if nat use this NIC
+        my $natlist=$zone->{nat};
+        foreach my $nat ( @$natlist ) { if ( $nat->{nic} eq $action{nic} ) { return 1;} }
+        
+        #check if dmz use this NIC
+        my $dmzlist=$zone->{dmz};
+        foreach my $dmz ( @$dmzlist ) { if ( $dmz->{nic} eq $action{nic} ) { return 1;} }
+        
+        return;
+    }
+    elsif ( $action{action}=~m/^ADDISPOFDMZ$|^DELISPOFDMZ$/ ) 
+    {
+        my $dmzarray=$zone->{dmz};
+        my @updated_dmz_array;
+        
+        foreach my $dmz ( @$dmzarray ) 
+        { 
+            if ( $dmz->{isp} ne $action{dmzid} ) { push(@updated_dmz_array, $dmz); } 
+        }
+        
+        if ( $action{action} eq 'ADDISPOFDMZ' ) 
+        { 
+            my %newispdmz=(isp=>$action{dmzid}, nic=>'', enabled=>"0", mode=>'');
+            push(@updated_dmz_array, \%newispdmz); 
+        }
+
+        $zone->{dmz}=\@updated_dmz_array;
+    }
+    elsif ( $action{action}=~m/^CREATENATZONE$/ ) 
+    {
+        my $natarray=$zone->{nat};
+        my %newNAT; $gNEWNATID;
+        my %allNAT;
+
+        foreach my $nat ( @$natarray ) 
+        { 
+            if ( $nat->{natid} eq 'system' ) { %newNAT=%$nat; } 
+            if ( $nat->{natid} ne 'system' ) { $allNAT{$nat->{natid}}=1; }
+        }
+
+        foreach my $id (1..$gMAXNAT) { if (!exists($allNAT{$id})) { $gNEWNATID=$id; last;} }
+        
+        if ( !$gNEWNATID )
+        {
+            $gMSGPROMPT.=qq(Upper bound of Internal Network is $gMAXNAT\\n);
+            return 0;
+        }
+        
+        $newNAT{natid}=$gNEWNATID;
+        $newNAT{type}=$action{type};
+        
+        push ( @$natarray, \%newNAT);
+    }
+    elsif ( $action{action}=~m/^UPDATENAT$/ ) 
+    { 
+        my $natarray=$zone->{nat};
+        my $dmzarray=$zone->{dmz};
+        my $rtables=$rtable->{table};
+        my $targetNAT;
+	my $dirty=0;
+	my $warning=0;
+	if ($action{version})
+	{
+	    my @aa=split(/:/,$action{natnet});
+	    if ($aa[0] eq "2002" || $aa[0] eq "fe80" || $aa[0] eq "FE80")
+	    {
+	    
+	        my $subnet_v4 = subnet_6to4($action{natnet});
+	        if ($action{natgateway})
+	        {
+	            my $ip_v4=ip_6to4($action{natgateway});
+	            $action{natnote}="Subnet:$subnet_v4   Gateway:$ip_v4";
+	        }
+	        if ($action{natip})
+	        {
+	            my $ip_v4=ip_6to4($action{natip});
+	            $action{natnote}="Subnet:$subnet_v4  SystemIP:$ip_v4";
+	        }
+	    
+	    }
+	    if ($#aa ne 7)
+	    {
+	        my $bb=8-$#aa;
+	        for (my $y=0;$y<$bb;$y++)
+	        {
+	            $cc.=":0";
+	        }
+	        $cc.=":";
+	        $action{natnet} =~ s/::/$cc/;
+	        if ($action{natip}){ $action{natip} =~ s/::/$cc/;}
+	        if ($action{natgateway}){ $action{natgateway} =~ s/::/$cc/;}
+	    }
+	}
+	if (!$action{version})
+	{
+	    my $subnet_v6 = subnet_4to6($action{natnet});
+	    if ($action{natgateway})
+	    {
+	        my $ip_v6=ip_4to6($action{natgateway});
+	        $action{natnote}="Subnet:$subnet_v6   Gateway:$ip_v6";
+	    }
+	    if ($action{natip})
+	    {
+	        my $ip_v6=ip_4to6($action{natip});
+	        $action{natnote}="Subnet:$subnet_v6  SystemIP:$ip_v6";
+	    }
+	}
+        if ( !$action{natid} ) { $gMSGPROMPT.=qq (Invalid NAT ID); return; }
+        if (!$action{version}){$action{natnet}=get_subnet($action{natnet});}
+        if ($action{version}){$action{natnet}=get_subnet_v6($action{natnet});}
+        
+        if ($action{version} eq '0')
+        {
+            maintainOverview( action=>'SAVEWARNING' , warning=>'0');
+            foreach my $table ( @$rtables )
+            {
+                if ( $table->{redirect} && isSubnetIP( $table->{redirect} , $action{natnet}) !=1)
+                {
+                    $gMSGPROMPT.=qq ( Warning: No entry in Static Routes Setting for Redirect To Transparent Proxy!!\\n );
+                    maintainOverview( action=>'SAVEWARNING' , warning=>'1');
+                }
+            }
+        }
+        # check if user write Note in Chinese
+        if ( $action{natnote}=~m/$gBIG5/ ) 
+        { 
+            $gMSGPROMPT.=qq(Note must be written in English Only\\n);
+            return;
+        }
+        
+        # set focus on target NAT
+        foreach my $nat ( @$natarray ) { if ( $nat->{natid}==$action{natid} ) { $targetNAT=$nat; last;} }
+        
+        #check if  given network  conflicts with other NAT
+        foreach my $nat ( @$natarray ) 
+        {
+            if ( $nat->{natid} eq $action{natid} )  { next; }
+            if ( $nat->{natid} eq 'system' )        { next; }
+
+            if (!$action{version}){my $belong=subnet_belong_check( $action{natnet}, $nat->{network} );}
+            if ($action{version}){my $belong=subnet_belong_check_v6( $action{natnet}, $nat->{network} );} 
+            if ( $belong > 0 )
+            {
+                $gMSGPROMPT.=qq (Warning:Network Overlaps with Zone [ $nat->{natid} ] \\n);  
+                $dirty=1;
+            }
+        }
+
+        if ( $action{natroute} eq "ip" )
+        {
+            $action{natgateway}='';
+            if (!$action{version})
+            {
+                if ( $action{natnet} && isSubnetIP($action{natip}, $action{natnet}) !=1 )
+                {
+                    $gMSGPROMPT.=qq ( ERROR: IP $action{natip} must be in Network $action{natnet} of Zone [ $action{natid} ] \\n);
+                    return;
+                }
+            }
+            if ($action{version})
+            {
+                if ( $action{natnet} && isSubnetIP_v6($action{natip}, $action{natnet}) !=1 )
+                {
+                    $gMSGPROMPT.=qq ( ERROR: IP $action{natip} must be in Network $action{natnet} of Zone [ $action{natid} ] \\n);
+                    return;
+                }
+            }
+        }
+        elsif ( $action{natroute} eq "gateway" )
+        {
+            # check which NAT  or  VS  or DMZ the assigned Gateway is within
+            # 1. check other NAT except this NAT
+            my $otherNATCoverThisNATGateway;
+            foreach my $nat ( @$natarray )
+            {
+                if ( $nat->{natid} eq $action{natid} || $nat->{natid} eq 'system' ) { next; }
+                if (!$action{version})
+                { 
+                    if ( $nat->{network} && isSubnetUsableIP($action{natgateway}, $nat->{network})==1 )
+                    {
+                        $otherNATCoverThisNATGateway=$nat; last;
+                    }
+                }
+                if ($action{version})
+                {
+                    if ( $nat->{network} && isSubnetUsableIP_v6($action{natgateway}, $nat->{network})==1 )
+                    {
+                        $otherNATCoverThisNATGateway=$nat; last;
+                    }
+                }
+            }
+
+            # I use the property {nic} to recognize whether or not $otherNATCoverThisNATGateway exists
+            if ( $otherNATCoverThisNATGateway->{nic} ) 
+            {
+                if ( $action{natgateway} eq $otherNATCoverThisNATGateway->{ip} ) 
+                {
+                    $gMSGPROMPT.=qq (Gateway IP $action{natgateway} has been assigned to Zone [ $otherNATCoverThisNATGateway->{natid} ]\\n);
+                    return;
+                }
+                
+                #$gMSGPROMPT.=qq (Gateway $action{natgateway} belongs to Zone [ $otherNATCoverThisNATGateway->{natid} ] \\n);
+                
+                $action{natnic}=$otherNATCoverThisNATGateway->{nic};
+                $action{gwnatid}='nat'.$otherNATCoverThisNATGateway->{natid};
+            }
+
+
+            # 2. if no  $otherNATCoverThisNATGateway exists, check DMZ host
+            if ( !($otherNATCoverThisNATGateway->{nic}) ) 
+            {
+                my $DMZCoverThisNATGateway;
+                my $dmzisp=maintainDMZreg(action=>'GETISPOFDMZIP', dmzip=>$action{natgateway} );
+
+                if ( $dmzisp )
+                {
+                    foreach my $dmz ( @$dmzarray )
+                    {
+                        if ( $dmz->{isp} eq $dmzisp ) { $DMZCoverThisNATGateway=$dmz; last; }
+                    }
+                }
+                
+                if ( $DMZCoverThisNATGateway->{nic} )
+                {
+                    # if user want to use Auto , we find isp for user automatically 
+                    if ( !$action{ispid} ) { $action{ispid}=$DMZCoverThisNATGateway->{isp}; }
+                    $action{natnic}=$DMZCoverThisNATGateway->{nic};
+                    $action{gwnatid}='';
+                } 
+                
+                if ( !($DMZCoverThisNATGateway->{nic}) )
+                {
+                    $gMSGPROMPT.=qq (Warning 1: Gateway must be any Host in configured Zone or a DMZ Host\\n);
+                    $gMSGPROMPT.=qq (Warning 2: Maybe DMZ Zone of ISP $dmzisp is disabled \\n);
+                    $dirty=1;
+                }
+            }
+            
+        }
+
+        # check $action{natnic}
+        if ( $action{natenabled} && !$action{natnic} )
+        {
+            $gMSGPROMPT.=qq(ERROR: Wrong NIC Setting \\n);
+            return;
+        }
+
+        # check if $action{natnic} has been taken by any of ISPs
+        if ( $action{natnic} && (my $nic_got_iid=maintainBasic( action=>"IFNICUSED", nic=>$action{natnic}) ) )
+        {
+            my $port=$action{natnic}; $port=~s/eth//; $port+=1;
+            $dirty=1;
+            $gMSGPROMPT.=qq (ERROR: PORT $port has already been used as ISP [ $nic_got_iid ] port);
+        }
+        
+        #****************************************************
+        #@dep
+        #update interrt  or binded IP of nat zone in interrt.xml
+        # 拿掉舊的 IP 
+        if ( $targetNAT->{ip} ) 
+        { 
+            maintainIPaddress(action=>"DEL", ip=>$targetNAT->{ip}, nic=>$targetNAT->{nic}, isp=>"nat$action{natid}"); 
+            #del ssl available or lease subnet
+            #maintainSslnet(action=>"DEL", viewpoint=>"ava", network=>$targetNAT->{network});
+            #maintainSslnet(action=>"DEL", viewpoint=>"lea", network=>$targetNAT->{network});
+        } 
+        # 拿掉舊的 Routing
+        if ( $targetNAT->{enabled} )
+        {
+            if ( $targetNAT->{ip} ) { maintainInterrt(action=>'DEL', isp=>"nat$action{natid}", nic=>$targetNAT->{nic}, subnet=>$targetNAT->{network}, gateway=>''); }
+            if ( $targetNAT->{gateway} ) { maintainInterrt(action=>'DEL', isp=>"nat$action{natid}", nic=>$targetNAT->{nic}, subnet=>$targetNAT->{network}, gateway=>$targetNAT->{gateway}); }
+        }
+        elsif ( !($targetNAT->{enabled}) )
+        {
+            #drop
+            if ( $targetNAT->{ip} )       { maintainInterrt(action=>'DEL', isp=>"nat$action{natid}", nic=>'', subnet=>$targetNAT->{network}, gateway=>''); }
+            if ( $targetNAT->{gateway} )  { maintainInterrt(action=>'DEL', isp=>"nat$action{natid}", nic=>'', subnet=>$targetNAT->{network}, gateway=>$targetNAT->{gateway}); }
+        }
+=cut        
+        #20111121 Brian This function can't be used here.It will clear all policies.
+        if ( $targetNAT->{network} )
+        {
+            my @temp;
+            push(@temp, $targetNAT->{network});
+            #maintainIniroute(action=>'DELSUBNETRULES', source=>\@temp);
+            maintainNAT(action=>'DELETESUBNET', natnets=>\@temp);
+            maintainQoSLAN(action=>'AUTODEL', source=>$targetNAT->{network});
+        }
+=cut
+        # 增加新的 IP and  增加新的 Routing
+        if ( $action{natenabled} )
+        {
+            #檢查 network 是否正確
+                if ( !$action{natnet} ) 
+                {
+                    $gMSGPROMPT.=qq ( ERROR:NETWORK is Empty or Wrong format !);
+                    return;
+                }
+            if ( $action{natip} )       
+            { 
+                maintainIPaddress(action=>"ADD", ip=>$action{natip}, nic=>$action{natnic}, isp=>"nat$action{natid}"); 
+            	#add ssl available subnet
+                #maintainSslnet(action=>"ADD", viewpoint=>"ava", network=>$action{natnet});
+                #maintainSslnet(action=>"ADD", viewpoint=>"lea", network=>$action{natnet});
+            } 
+            if ( $action{natip} )       { maintainInterrt(action=>'ADD', isp=>"nat$action{natid}", nic=>$action{natnic}, subnet=>$action{natnet}, gateway=>''); }
+            if ( $action{natgateway} )  { maintainInterrt(action=>'ADD', isp=>"nat$action{natid}", gwnatid=>$action{gwnatid}, nic=>$action{natnic}, subnet=>$action{natnet}, gateway=>$action{natgateway}); }
+        }
+        elsif ( !$action{natenabled} )
+        {
+            if ( !$action{natnet} ) { $action{natnic}=''; }
+            else
+            {
+                if ( $action{natip} )       { maintainInterrt(action=>'ADD', isp=>"nat$action{natid}", nic=>'', subnet=>$action{natnet}, gateway=>''); }
+                if ( $action{natgateway} )  { maintainInterrt(action=>'ADD', isp=>"nat$action{natid}", gwnatid=>$action{gwnatid}, nic=>'', subnet=>$action{natnet}, gateway=>$action{natgateway}); }
+            }
+        }
+       
+        #===========================================================================================
+        #@dep
+        # 寫入 zonecfg.xml     
+        $targetNAT->{enabled}=$action{natenabled};
+        $targetNAT->{nic}=$action{natnic};
+        $targetNAT->{ip}=$action{natip};
+        $targetNAT->{network}=$action{natnet};
+        $targetNAT->{gateway}=$action{natgateway};
+        $targetNAT->{gwnatid}=($action{gwnatid}) ? ($action{gwnatid}) : ('');
+        $targetNAT->{note}=$action{natnote};
+        $targetNAT->{type}='nat';
+        $targetNAT->{ispid}=$action{ispid};
+        $targetNAT->{nic_speed}=$action{nic_speed};
+        $targetNAT->{version}=$action{version};
+        $targetNAT->{dirty}=$dirty;
+
+        if ( $targetNAT->{natgateway} )
+        {
+            $targetNAT->{dhcp}=0;
+            $targetNAT->{dftlease}='';
+            $targetNAT->{maxlease}='';
+            $targetNAT->{rangelist}='';
+
+            ## for dhcp-DNS setting...nancy 20040823
+            $targetNAT->{dname}='';
+            $targetNAT->{dnslist}='';
+            $targetNAT->{dhcprelayinterface}='';
+            $targetNAT->{dhcprelayip}='';
+        }
+        LogUserAction( action=>'SAVENAT', nic=>$action{natnic}, ip=>$action{natip}, network=>$action{natnet}, gateway=>$action{natgateway} );
+    }
+    elsif ( $action{action}=~m/^BATCRTNATZONE$/ )
+    {
+        my @failid;
+    
+        my $batcrtdata=$action{batcrtdata};
+        my @allentries=split(/;/,$batcrtdata);
+        foreach my $entry ( @allentries )
+        {
+            my ($network, $nic, $ver,$ver1, $ip, $gateway)=split(/:/, $entry);
+            if ( $nic ) { $nic='eth'.$nic; }
+
+            if ( !( $network && $nic && ($ip || $gateway) ) ) { next; }
+
+            if ($ver==4){$ver1=0;if ( $ip && isSubnetUsableIP($ip, $network) !=1 ) { next; }}
+            if ($ver==6){$ver1=1;if ( $ip && isSubnetUsableIP_v6($ip, $network) !=1 ) { next; }}
+
+            my $natroute=( $ip ) ? ('ip') : ('gateway');
+
+            my $newnatid=maintainZone(action=>'CREATENATZONE', type=>'nat', caller=>'BATCRTNATZONE');
+
+            if ( !$newnatid ) { next; }
+
+            my %newnat=(
+                action=>'UPDATENAT',
+                natid=>$newnatid,
+                natenabled=>1,
+                natroute=>$natroute,
+                natnic=>$nic,
+                natnet=>$network,
+                natip=>$ip,
+                ispid=>0,
+                version=>$ver1,
+                nic_speed=>'Auto',
+                natgateway=>$gateway,
+                natnote=>''
+            );
+
+            my $result=maintainZone(%newnat);
+
+            if ( !$result ) { push(@failid, $newnatid); }
+        }
+
+        if ( @failid >= 1 ) 
+        {   
+            maintainZone(action=>'DELNATZONE', zonetodel=>\@failid); 
+        }
+
+        #===========================================================================================
+        #@dep
+        #check if routing of NAT Subnet in natnet.xml is Obsolete
+        maintainNAT(action=>"CHECKNATOBSOLETE", viewpoint=>'nat');
+        maintainNAT(action=>"CHECKNATOBSOLETE", viewpoint=>'lvs');
+        
+        #===========================================================================================
+        #@dep
+        #check if any real server is Obsolete
+        maintainVS(action=>'CHECKREALSERVERS'); 
+
+        return 1;
+    }
+    elsif ( $action{action}=~m/^DELNATZONE$/ ) 
+    {
+        my @newnatarray;
+        my $zonetodel=$action{zonetodel};
+        my $natarray=$zone->{nat};
+        my $targetNAT;
+
+        foreach my $zoneid ( @$zonetodel )
+        {        
+            foreach my $nat ( @$natarray ) { if ( $nat->{natid} eq $zoneid ) { $targetNAT=$nat; last;} }
+            
+            #****************************************************
+            # @dep 
+            # Update interrt or binded IP of nat zone in interrt.xml
+            #my $checkipsec=maintainBasic(action=>"CHECKIPSEC", localsubnet=>$targetNAT->{network});
+            #if ( $checkipsec ne 'nomatch' ) 
+            #{
+            #   $gMSGPROMPT.=qq (WARNING:$targetNAT->{network} is set for $checkipsec ipsec tunnel \\n);
+            #}
+            # 拿掉舊的 IP 
+            if ( $targetNAT->{ip} ) 
+            { 
+            	maintainIPaddress(action=>"DEL", ip=>$targetNAT->{ip}, nic=>$targetNAT->{nic}, isp=>"nat$zoneid");
+                #maintainSslnet(action=>"DEL", viewpoint=>"ava", network=>$targetNAT->{network});
+                #maintainSslnet(action=>"DEL", viewpoint=>"lea", network=>$targetNAT->{network});
+            } 
+
+            # 拿掉舊的 Routing
+            if ( $targetNAT->{enabled} )
+            {
+                if ( $targetNAT->{ip} ) { maintainInterrt(action=>'DEL', isp=>"nat$zoneid", nic=>$targetNAT->{nic}, subnet=>$targetNAT->{network}, gateway=>''); }
+                if ( $targetNAT->{gateway} ) { maintainInterrt(action=>'DEL', isp=>"nat$zoneid", nic=>$targetNAT->{nic}, subnet=>$targetNAT->{network}, gateway=>$targetNAT->{gateway}); }
+            }
+            elsif ( !($targetNAT->{enabled}) )
+            {
+                #drop
+                if ( $targetNAT->{ip} )       { maintainInterrt(action=>'DEL', isp=>"nat$zoneid", nic=>'', subnet=>$targetNAT->{network}, gateway=>''); }
+                if ( $targetNAT->{gateway} )  { maintainInterrt(action=>'DEL', isp=>"nat$zoneid", nic=>'', subnet=>$targetNAT->{network}, gateway=>$targetNAT->{gateway}); }
+            }
+            if ( $targetNAT->{network} )
+            {
+                my @temp;
+                push(@temp, $targetNAT->{network});
+                #maintainIniroute(action=>'DELSUBNETRULES', source=>\@temp);
+                maintainNAT(action=>'DELETESUBNET', natnets=>\@temp);
+                maintainQoSLAN(action=>'AUTODEL', source=>$targetNAT->{network});
+            }
+        }
+
+        foreach my $nat ( @$natarray )
+        {
+            if ( grep(/^$nat->{natid}$/, @$zonetodel) ) { next; }
+            push (@newnatarray, $nat);
+        }
+
+        $zone->{nat}=\@newnatarray;
+        LogUserAction( action=>'DELNAT',nic=>$action{natnic}, ip=>$action{natip}, network=>$action{natnet}, gateway=>$action{natgateway} );
+    }
+    elsif ( $action{action}=~m/^UPDATEDMZ$/ )  
+    {
+        my $natarray=$zone->{nat};
+
+        # 如果 ISP 的 STATUS 是 FORMATCHECK 就不能設定 
+        my $ispstatus=maintainBasic( action=>'GETSTATE', iid=>$action{dmzid}  );
+        if ( $ispstatus eq 'FORMATCHECK' ) 
+        {
+            $gMSGPROMPT.=qq ( ERROR: Can not update DMZ when ISP $action{dmzid} is in FORMATCHECK state.);
+            return;
+        }
+        
+        # 檢查 $action{dmznic} 是否已經被 ISP 佔用了
+        if ( my $nic_got_iid=maintainBasic( action=>"IFNICUSED", nic=>$action{dmznic} ) ) 
+        {
+            my $port=$action{dmznic};  $port=~s/eth//; $port+=1;
+            $gMSGPROMPT.=qq ( ERROR: PORT $port has already been Assigned as ISP PORT);
+            return;
+        }
+        
+        my $dmzarray=$zone->{dmz};
+        my $targetdmz;
+        foreach my $dmzref (@$dmzarray) 
+        {
+            if ($dmzref->{mode} eq 'BRIDGE' && $action{dmznic} eq $dmzref->{nic} && $action{dmzenabled} eq '1')
+            {
+                $gMSGPROMPT.=qq ( ERROR: PORT has already been Assigned as Bridge PORT);
+                return;
+            }
+        }
+        my $gateway=maintainBasic(action=>"GETISPGATEWAY",iid=>$action{dmzid} );
+        my $ispnic=maintainBasic(action=>"GETISPNIC", iid=>$action{dmzid} );
+        my @allDmzIPs=maintainIPBank(from=>"isp".$action{dmzid}."dmz", action=>"read");
+
+        foreach my $dmz ( @$dmzarray ) { if ( $dmz->{isp}==$action{dmzid} ) { $targetdmz=$dmz; last;} }
+        
+        my $subnet=maintainBasic(action=>'GETISPSUBNET', iid=>$action{dmzid} );
+        
+        # If this DMZ is turned ON
+        if ( $action{dmzenabled} ) 
+        {
+##20100622 For MPV bridge
+#            foreach my $dmz ( @$dmzarray ) 
+#            { 
+#                if ( $dmz->{isp} eq 'system' ) { next; }
+#                if ( $action{dmzmode} eq "BRIDGE" &&  $dmz->{isp} ne $action{dmzid} && $dmz->{enabled} )  
+#                {
+#                    $gMSGPROMPT.=qq ( ERROR: Bridge can only be enabled on one isp);
+#                    return;
+#                }
+#            }
+
+            #check if $action{dmznic} is Set
+            if ( !$action{dmznic} ) 
+            {
+                $gMSGPROMPT.=qq ( ERROR: Interface Must be Assigned when DMZ is On);
+                return;
+            }
+
+            # only when dmz port is changed should we update the port doing ARP Proxy for Gateway IP
+            if ( $targetdmz->{nic} ne $action{dmznic}  )
+            {
+                #****************************************************
+                # @dep Update ARP Proxy of ISP Gateway for DMZ on DMZ Network Interface
+                # 刪掉舊的 ipneigh
+                if ( $gateway ) { maintainIPneigh( action=>"DEL", nic=>$targetdmz->{nic}, ip=>$gateway, isp=>$action{dmzid}); }
+            
+                # 加入新的 ipneigh
+                if ( $gateway ) { maintainIPneigh( action=>"ADD", nic=>$action{dmznic}, ip=>$gateway, isp=>$action{dmzid}); }
+
+                #****************************************************
+                # @dep 
+                #  delete old interrt
+                maintainInterrt( action=>"DEL", isp=>$action{dmzid}, nic=>$targetdmz->{nic}, subnet=>$subnet, gateway=>""); 
+                
+                #  add new interrt
+		maintainInterrt( action=>"ADD", isp=>$action{dmzid}, nic=>$action{dmznic}, subnet=>$subnet, gateway=>"");
+
+		my $alias_subnet1=maintainBasic(action=>'ALIASSUBNET1', iid=>$action{dmzid} );
+		my $alias_subnet2=maintainBasic(action=>'ALIASSUBNET2', iid=>$action{dmzid} );
+		if ($alias_subnet1){ maintainInterrt( action=>"ADD", isp=>$action{dmzid}, nic=>$action{dmznic}, subnet=>$alias_subnet1, gateway=>"");}
+		if ($alias_subnet2){ maintainInterrt( action=>"ADD", isp=>$action{dmzid}, nic=>$action{dmznic}, subnet=>$alias_subnet2, gateway=>"");}
+            }
+            
+            # only if the original status of this dmz is off should we do all ARP Proxy for all dmz ip on isp port 
+            if ( !$targetdmz->{enabled} )
+            {
+                #****************************************************
+                # @dep                
+                # add back DMZ IPs 的 ipneigh
+                my %dmziptoaddtoipneigh;
+                foreach my $dmzip ( @allDmzIPs ) { $dmziptoaddtoipneigh{$dmzip}=1; }
+                maintainIPneigh( action=>"BATADD", nic=>$ispnic, isp=>$action{dmzid}, ip=>\%dmziptoaddtoipneigh);
+                maintainIPaddress( action=>"BATDEL", nic=>$ispnic, isp=>$action{dmzid}, ip=>\%dmziptoaddtoipneigh);
+            }
+            
+
+        }
+        # If this DMZ is turned OFF
+        elsif ( !$action{dmzenabled} ) 
+        {
+            my @sysandpubip=maintainIPBank(action=>'READSYSTEMANDPUBLICIP', isp=>$action{dmzid});
+
+            #****************************************************
+            #  @dep
+            #  刪掉舊的 ipneigh
+            if ( $gateway ) { maintainIPneigh( action=>"DEL", nic=>$targetdmz->{nic}, ip=>$gateway, isp=>$action{dmzid}); }
+            
+            #****************************************************
+            # @dep                
+            # 刪除DMZ IPs 的 ipneigh
+            my %dmziptodelfromipneigh;
+            my %iptoaddtoipaddr;
+            foreach my $dmzip ( @allDmzIPs ) 
+            { 
+                $dmziptodelfromipneigh{$dmzip}=1; 
+                if ( grep ( /^$dmzip$/, @sysandpubip ) ) { $iptoaddtoipaddr{$dmzip}=1; }
+            }
+            
+            maintainIPneigh( action=>"BATDEL", nic=>$ispnic, isp=>$action{dmzid}, ip=>\%dmziptodelfromipneigh);
+            maintainIPaddress( action=>"BATADD", nic=>$ispnic, isp=>$action{dmzid}, ip=>\%iptoaddtoipaddr);
+
+            #****************************************************
+            # @dep 
+            # 刪掉舊的interrt
+            maintainInterrt( action=>"DEL", isp=>$action{dmzid}, nic=>$targetdmz->{nic}, subnet=>$subnet, gateway=>"");
+
+            my $alias_subnet1=maintainBasic(action=>'ALIASSUBNET1', iid=>$action{dmzid} );
+            my $alias_subnet2=maintainBasic(action=>'ALIASSUBNET2', iid=>$action{dmzid} );
+            if ($alias_subnet1){ maintainInterrt( action=>"DEL", isp=>$action{dmzid}, nic=>$targetdmz->{nic}, subnet=>$alias_subnet1, gateway=>"");}
+            if ($alias_subnet2){ maintainInterrt( action=>"DEL", isp=>$action{dmzid}, nic=>$targetdmz->{nic}, subnet=>$alias_subnet2, gateway=>"");}
+
+            $action{dmznic}='';
+        }
+
+        if ( $targetdmz->{nic} ne $action{dmznic}  )
+        {
+            # @dep : update the nic and interrt of NAT zone if the gateway of this NAT zone is a DMZ host
+            foreach my $nat ( @$natarray )
+            {   
+                if ( ! ( isSubnetUsableIP($nat->{gateway}, $subnet)==1 ) ) { next; }
+            
+                $nat->{dirty}=0;
+        
+                if ( !$action{dmznic} ) { $nat->{dirty}=1; next; }
+
+                if ( $nat->{enabled} )  
+                { 
+                    maintainInterrt(action=>'DEL', isp=>"nat$nat->{natid}", nic=>$nat->{nic}, subnet=>$nat->{network}, gateway=>$nat->{gateway}); 
+                    maintainInterrt(action=>'ADD', isp=>"nat$nat->{natid}", nic=>$action{dmznic}, subnet=>$nat->{network}, gateway=>$nat->{gateway}); 
+                }
+
+                $nat->{nic}=$action{dmznic};
+            }
+        }
+
+        #****************************************************
+        # @dep 
+        # 刪掉舊的 interrt for dmz IPs ( del all dmz host routing entry, which is designed for old versions
+        my %routetodel;
+        foreach my $dmzip ( @allDmzIPs ) { $routetodel{$dmzip.'/32'}=1; }
+        maintainInterrt( action=>"BATDEL", route=>\%routetodel);
+        
+        #寫入新的設定值
+        $targetdmz->{enabled}=$action{dmzenabled};
+        $targetdmz->{mode}=( $action{dmzenabled} ) ? $action{dmzmode} : ('');
+        $targetdmz->{nic}=$action{dmznic};
+        
+        LogUserAction( action=>'UPDATEDMZ', iid=>$action{dmzid}, nic=>$action{dmznic}, enabled=>$action{dmzenabled}, mode=>$action{dmzmode}, isp=>$action{isp} );
+    }
+    elsif ( $action{action}=~m/^switchTransMode$/ )  
+    {
+        my $dmzarray=$zone->{dmz};
+        my $trans_count=0;
+        
+        foreach my $dmz ( @$dmzarray )
+        {
+            if ( $dmz->{isp} eq "system" )  { next; }
+            if ( $dmz->{enabled} )   { $trans_count++; }
+        }
+
+        if ( $action{dmzmode} eq "BRIDGE" && ($trans_count > 1) )
+        {
+            $gMSGPROMPT.=qq(Error: only one transparent zone can be set to BRIDGE mode \\n); 
+            $gMSGPROMPT.=qq(Before you switch to Bridge mode, please turn off some transparent zone first !!);
+            return;
+        }
+        
+        foreach my $dmz ( @$dmzarray )
+        {
+            if ( $dmz->{isp} eq "system" )    {  $dmz->{mode}=''; next; }
+            if ( $dmz->{enabled} )            { $dmz->{mode}=$action{dmzmode}; }
+        }
+
+        $zone->{dmzmode}=$action{dmzmode};
+    }
+    elsif ( $action{action}=~m/SETDHCP/ )
+    {
+        my $natarray=$zone->{nat};
+        my $targetnat;
+        foreach my $nat ( @$natarray ) { if ( $nat->{natid} eq $action{natid} ) { $targetnat=$nat; last; } }
+        
+        if ( $action{dhcpinfo}=~/disabled/ )
+        {
+            $targetnat->{dhcp}=0;
+            my @dhcpinfo=split(/:/, $action{dhcpinfo});
+            $targetnat->{dhcprelayinterface}=(!$dhcpinfo[0]? "" : $dhcpinfo[0] );
+            $targetnat->{dhcprelayip}=(!$dhcpinfo[1]? "" : $dhcpinfo[1]);
+        }
+        else
+        {
+            my @dhcpinfo=split(/:/, $action{dhcpinfo});
+            if ( $targetnat->{gateway} ) 
+            {
+                $gMSGPROMPT.=qq( DHCP cannot work on the network which is not in the collision domain of QB \\n);
+                $targetnat->{dhcp}=0;
+            }
+            else
+            {
+                $targetnat->{dhcp}=1;
+            }
+
+            $targetnat->{dftlease}=$dhcpinfo[0];
+            $targetnat->{maxlease}=$dhcpinfo[1];
+            $targetnat->{rangelist}=$dhcpinfo[2];
+
+            ## for dhcp-DNS setting...nancy 20040901
+            $targetnat->{dname}=(!$dhcpinfo[3]? "" : $dhcpinfo[3] );
+            $targetnat->{dnslist}=(!$dhcpinfo[4]? "" : $dhcpinfo[4]);
+            $targetnat->{dhcprelayinterface}=(!$dhcpinfo[5]? "" : $dhcpinfo[5] );
+            $targetnat->{dhcprelayip}=(!$dhcpinfo[6]? "" : $dhcpinfo[6]);
+        }
+    }
+    elsif ( $action{action} eq "REPORT" )
+    {
+        print qq (<fieldset><legend><font class="subtitle">Zone Configuration</font></legend>);
+        print qq (<div class="reportdiv">);
+        foreach my $view ('nat', 'dmz', 'lvs')
+        {
+            my $idfield;
+            if ( $view eq 'nat') { $idfield='natid'; }
+            elsif ( $view eq 'dmz') { $idfield='isp'; }
+            elsif ( $view eq 'lvs') { $idfield='lvsid'; }
+            
+            my $zonelist=$zone->{$view};
+            
+            foreach my $zone ( @$zonelist )
+            {
+                if ( $zone->{$idfield} eq 'system' ) { next; }
+                foreach my $key ( keys %$zone ) { print qq ( [ $key:$zone->{$key} ] );  } 
+                print qq (<br>);
+            }
+
+            print qq (<hr size="1">);
+        }
+        print qq (</div>);
+        print qq (</fieldset>);
+    }
+
+    #-------updating zonecfg.xml------------------------ 
+    XMLwrite($zone, $gPATH."zonecfg.xml");
+    
+    if( $action{action}=~m/^UPDATENAT$|^DELNATZONE$/ && $action{caller}!~m/^BATCRTNATZONE$/ ) 
+    { 
+        #===========================================================================================
+        #@dep
+        #check if routing of NAT Subnet in natnet.xml is Obsolete
+        maintainNAT(action=>"CHECKNATOBSOLETE", viewpoint=>'nat');
+        maintainNAT(action=>"CHECKNATOBSOLETE", viewpoint=>'lvs');
+        
+        #===========================================================================================
+        #@dep
+        #check if any real server is Obsolete
+        maintainVS(action=>'CHECKREALSERVERS'); 
+
+        #===========================================================================================
+        #@dep
+        maintainProute( action=>'UPDATEQBROUTE' );
+    }
+
+    #@dep:
+    if ( $action{action}=~m/^UPDATEDMZ$/ )
+    {
+        #===========================================================================================
+        #@dep
+        #check if any real server is Obsolete
+        maintainVS(action=>'CHECKREALSERVERS'); 
+        #LogUserAction( action=>'UPDATEDMZ', iid=>$action{dmzid}, nic=>$action{dmznic} );
+
+        #===========================================================================================
+        #@dep
+        
+        maintainProute( action=>'UPDATEQBROUTE' );
+        
+        if ( $action{dmzenabled} )
+        {
+            my $subnet=maintainBasic(action=>'GETISPSUBNET', iid=>$action{dmzid} );
+            if ( $subnet ) ##20100622 For MPV bridge
+            {
+            maintainNAT(action=>'SMARTAPPENDSUBNET', viewpoint=>"nat", subnet=>$subnet);
+            maintainIniroute(action=>'SMARTADD', viewpoint=>'nat', isp=>$action{dmzid}, source=>$subnet);
+            maintainIniroute( action=>'ADD' , destination=>'system' ,source=>$subnet, service=>'others:s' ,viewpoint=>'nat' ,table=>'100' ,qos=>'None',schedule=>'All Week' ,priority=>'1' ,method=>'none' ,enables=>'1');
+            }
+        }
+    }
+    
+    if ( $action{action}=~m/^CREATENATZONE$/ )  { return $gNEWNATID; }
+
+    #@dep:
+    if ( $action{action}=~m/^UPDATENAT$/ ) 
+    { 
+        maintainNAT(action=>'SMARTAPPENDSUBNET', viewpoint=>"nat", subnet=>$action{natnet});
+        maintainIniroute(action=>'SMARTADD', viewpoint=>'nat', source=>$action{natnet});
+        maintainBasic(action=>'SMARTCHANGENIC', localsubnet=>$action{natnet}, nic=>$action{natnic}, systemip=>$action{natip});
+        return 1; 
+        
+    }    
+}
+#maintainZone
+
+sub dmz_sort_by_isp
+{
+    $a->{isp} <=> $b->{isp}
+}
+#dmz_sort_by_isp
+
+sub zone_sort_by_id
+{
+    $a->{natid} <=> $b->{natid}
+}
+#zone_sort_by_id
+
+
+#
+1

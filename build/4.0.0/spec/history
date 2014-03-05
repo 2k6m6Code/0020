@@ -1,0 +1,2 @@
+2011/01/10 Brian Change the MAXIMUMUSER for GUI
+find . -name registry|xargs sed -i -e '{s/MAXIMUMUSER 3/MAXIMUMUSER 5/g}'

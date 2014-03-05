@@ -1,0 +1,45 @@
+<html>
+
+<head>
+
+<style>
+
+button.menu{
+	width:auto;
+	height:18px;
+	font:10px Verdana;
+	color:white;
+	background:#336699;	
+	border:1px solid black;
+	cursor:hand;
+}
+
+</style>
+
+<script type="text/javascript" src="../qb.js"></script>
+</head>
+
+<body scroll="no" style="margin:0" bgcolor="#336699">
+<table height="100%" width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr height="25"><td>
+
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/total_io.php';"     >Quick View</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/io1.php';"     >Traffic Trend</button>
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/io2.php';"    >Top-N Session</button>
+<!--button class="menu" hidefocus="true" onclick="mainframe.location='advrttraffic.htm';"  style="width:120">Advanced Real Time</button-->	
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/io3.php';"      >Top-N Applications</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/io4.php?pa=1';"      >Dst. for Inbound</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/io4.php?pa=2';"      >Src. for Inbound</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/io4.php?pa=3';"      >Dst. for Outbound</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/io4.php?pa=4';"     >Src. for Outbound</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/io5.php';"      >Custom Report</button>	
+<button class="menu" hidefocus="true" onclick="mainframe.location='analyser_web/user_setting.php';"      >Parameter Setup</button>	
+
+</td></tr>
+<tr><td>
+<iframe name="mainframe" src="analyser_web/total_io.php" style="height:100%;width:100%" frameborder="0"></iframe>
+</td></tr>
+
+</body>
+
+</html>

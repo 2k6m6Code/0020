@@ -1,0 +1,25 @@
+#!/bin/sh
+# starting A
+# Use for starting engineA
+# use to register in conf/sprog
+#
+PROC=$1
+SYS=$2
+
+EZIO_PRINT="/opt/qb/qbwdt/ezio -c 1 -t "
+QBSERV_DONE_FLAG_FILE=/var/run/qbserver_is_done
+POLLING_INTERVAL=1
+
+while [ ! -f $QBSERV_DONE_FLAG_FILE ]
+do
+    sleep $POLLING_INTERVAL
+done
+
+rm -rf $QBSERV_DONE_FLAG_FILE
+
+# make sure there is just only one running instance of $PROC 
+killall -9 $PROC
+
+/usr/afs/$PROC $SYS 
+
+( /opt/qb/bin/script/qb_start_afs.sh ; sleep 10 ; $EZIO_PRINT "< active >:network monitor" ) &

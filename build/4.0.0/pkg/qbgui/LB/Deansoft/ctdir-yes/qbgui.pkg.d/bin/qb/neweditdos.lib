@@ -1,0 +1,669 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showEditDos
+{
+    my (%action)=@_;
+    my $dosref=XMLread($gPATH.'newdos.xml');
+    my $doslist=$dosref->{newdos};
+    my $edit;
+	
+	my $hostref=XMLread($gPATH.'host.xml');
+    my $hostlist=$hostref->{host};
+    
+    foreach my $sh ( @$doslist )
+    {
+        if ( $sh->{dosip} eq $action{dosip} ) { $edit=$sh; }
+    }
+	
+	print qq (<input class="qb" type="button" style="display: none;" id="AutoSubmit" value="load" onclick=");
+	foreach my $show ( @$doslist )
+    {
+		if ( $show->{dosip} eq $action{dosip} )
+		{
+			print qq (mytest('$show->{enable}','$show->{ipnum}','$show->{portnum}','$show->{port}','$show->{logset}','$show->{timenumber}','$show->{time}','$show->{logprefix}'););
+		}
+	}
+	print qq (">);
+	
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Add New);
+
+    print qq (<hr size=1>);
+
+    print qq (<table bgcolor="#667788" width="600">);
+    #-------------------------------------------------------------------------------------------
+    #  Connection Overflow: Setting
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (IP :);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+	
+	print qq (<select sytle="width:200px" id="type" name="type" value="$action{dosip}" onChange="select_type();">);
+	print qq (<option value="ip">Custom</option>);
+	my $ispref = XMLread('/usr/local/apache/qbconf/zonecfg.xml');
+	my $isplist = $ispref->{nat};
+    foreach my $list (@$isplist)
+    {
+        if ($list->{network} eq ''){next;}
+        foreach my $listiref (@$doslist)
+		{
+			if ($list->{network} eq $listiref->{list}){$prt = "1";}
+		}
+		if ($prt ne '1')
+		{
+			if($action{dosip} eq $list->{network})
+			{
+				print qq (<option value="ip" Selected>);
+			}
+			else{print qq (<option value="ip">);}
+			
+			print qq ($list->{network}</option>);
+		}
+    }
+	
+	foreach my $item (@$hostlist )
+    {
+		if ( $item->{hostname} eq "system" || $item->{hide} eq "1" ) { next; }
+		if ( $action{showkeyword} eq '1' )
+		{
+			if ( $item->{hosttype} ne "weburl" ) { next; }
+		}
+		else
+        {
+			if ( $item->{hosttype} eq "weburl" ) { next; }
+        }
+		if($action{dosip} eq $item->{hostname})
+		{
+			print qq (<option value="host" Selected>);
+		}
+		else{print qq (<option value="host">);}
+		
+		print qq ($item->{hostname}</option>);
+    }
+	
+    print qq (<input type="text" class="qbtext" style="width:50%; display: true;" id="dosip" name="dosip" value="$action{dosip}">);
+	print qq (<input type="hidden" class="qbtext" id="dosip_hidden" name="dosip_hidden" value="$action{dosip}" >);
+    print qq (</td></tr>);
+	
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+	print qq (<input type="checkbox" id="enable" name="enable" onClick="setEnable('enable',this.checked)">Enable);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+#=====================================================================	
+    print qq (<a>Limit</a>);
+	print qq (<input type="text" class="qbtext" id="ipnum" name="ipnum" value="50" style="width:25%" disabled="true"><a>Connections per IP</a><p>);
+    print qq (<a>Limit</a>);
+    print qq (<input type="text" class="qbtext" id="portnum" name="portnum" value="50" style="width:10%" disabled="true">);
+	print qq (<a>Connections for Port</a><input type="text" class="qbtext" id="port" name="port" style="width:15%" value="80" disabled="true"></td>);
+#=====================================================================
+    print qq (</td></tr>);
+	
+	print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+	
+	#-------------------------------------------------------------------------------------------
+    #  Connection Overflow: Log Rate
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Log Rate :);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input type="checkbox" id="logset" name="logset" onclick="setLog('logset',this.checked)">Enable);
+	print qq (<p><a>Save per.</a><input type="text" class="qbtext" id="timenumber" name="timenumber" style="width:50" value="1" disabled="true"> / );
+	print qq (<select id="time" name="time" disabled="true">);
+	print qq (<option value="h">Hours);
+	print qq (<option value="m" selected>Minute);
+	print qq (<option value="s">Second);
+	print qq (</select><p>);
+	print qq (<a>Log Prefix :</a><br><input type="text" class="qbtext" id="logprefix" name="logprefix" style="width:60%" value="cod:connectionoverflow" disabled="true"></td>);
+    print qq (</td></tr>);
+	
+    print qq (</table>);
+    #print qq (<tr><hr size=1></tr>);
+    #print qq (<table>);
+    print qq (<tr><td><hr size=1></td></tr>);
+    #print qq (</table>);
+    #-------------------------------------------------------------------------------------------
+    #  Connection Overflow: Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Description :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<textarea class="qbtext" id="description" name="description" style="width:200;height:80" >$edit->{description}</textarea>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    #-----------------------------------------------------------------------------------------------------
+
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 600px">);
+    print qq (<input class="qb" type="button" style="width:50" value="Save" onclick="SaveCOD();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showEditDos
+    
+
+
+#=============================================================================================
+
+sub scriptEditDos
+{
+    print << "scriptEditDos";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+	
+    function cgi_dep_onload() { myform=window.document.forms[0]; checkState(); showclick();}
+
+	function newCancel() { window.top.mainFrame.location.href="./dos.cgi"; }
+
+	function setEnable(checkboxname,boolvalue)
+	{
+		var enable=document.getElementById(checkboxname);
+		var ipnum=document.getElementById('ipnum');
+		var portnum=document.getElementById('portnum');
+		var port=document.getElementById('port');
+		//alert(boolvalue);
+		if(enable.checked==true)
+		{
+			ipnum.disabled=false;
+			portnum.disabled=false;
+			port.disabled=false;
+		}
+		else
+		{
+			ipnum.disabled=true;
+			portnum.disabled=true;
+			port.disabled=true;
+		}
+	}
+	
+	function setLog(checkboxname,boolvalue)
+	{
+		var logset=document.getElementById(checkboxname);
+		var timenumber=document.getElementById('timenumber');
+		var time=document.getElementById('time');
+		var logprefix=document.getElementById('logprefix');
+		if(logset.checked==true)
+		{
+			timenumber.disabled=false;
+			time.disabled=false;
+			logprefix.disabled=false;
+		}
+		else
+		{
+			timenumber.disabled=true;
+			time.disabled=true;
+			logprefix.disabled=true;
+		}
+	}
+	
+	function mytest(dosenable,dosipnum,dosportnum,dosport,doslogset,dostimenumber,dostime,doslogprefix)
+	{
+		var enable=document.getElementById('enable');
+		var ipnum=document.getElementById('ipnum');
+		var portnum=document.getElementById('portnum');
+		var port=document.getElementById('port');
+		var logset=document.getElementById('logset');
+		var timenumber=document.getElementById('timenumber');
+		var time=document.getElementById('time');
+		var logprefix=document.getElementById('logprefix');
+		if(dosenable=='true')
+		{
+			enable.checked=true;
+		}
+		if(dosenable=='false')
+		{
+			enable.checked=false;
+		}
+		setEnable('enable',dosenable);
+		ipnum.value=dosipnum;
+		portnum.value=dosportnum;
+		port.value=dosport;
+		if(doslogset=='true'){logset.checked=true;}
+		if(doslogset=='false'){logset.checked=false;}
+		setLog('logset',doslogset);
+		timenumber.value=dostimenumber;
+		time.value=dostime;
+		logprefix.value=doslogprefix;
+		//alert(dosenable+'.'+dosipnum+'.'+dosportnum+'.'+dosport+'.'+doslogset+'.'+dostimenumber+'.'+dostime+'.'+doslogprefix+"."+enable.checked);
+	}
+	
+	function SaveCOD() 
+    {
+		var type=document.getElementById('type').value;
+        var enable=document.getElementById('enable').checked;
+		var ipnum=document.getElementById('ipnum').value;
+		var portnum=document.getElementById('portnum').value;
+		var port=document.getElementById('port').value;
+		var logset=document.getElementById('logset').checked;
+		var timenumber=document.getElementById('timenumber').value;
+		var time=document.getElementById('time').value;
+		var logprefix=document.getElementById('logprefix').value;
+        
+		var n_dosip=document.getElementById('dosip');
+		var dosip=n_dosip.value;
+        var description=document.getElementById('description').value;
+
+		if ( dosip == '' )
+        {
+            alert('IP must be English or nember');
+            return;
+        }
+
+		//for (i = 0; i < schname.length; i++)
+        //{
+        //    var ch = schname.charCodeAt(i);
+        //    if ( ch < 32 || ch > 126 )
+        //    {
+        //       alert("Schedule Name must be English or nember");
+        //       return;
+        //    }
+        //}
+
+		for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Description must be English ");
+               return;
+            }
+        }
+        if ( n_dosip.disabled != true )
+            myform.dosip.value = n_dosip.value;
+        
+        myform.action.value = 'SAVE';
+		myform.newtype.value=type;
+		myform.newenable.value=enable;
+		myform.newipnum.value=ipnum;
+		myform.newportnum.value=portnum;
+		myform.newport.value=port;
+		myform.newlogset.value=logset;
+		myform.newtimenumber.value=timenumber;
+		myform.newtime.value=time;
+		myform.newlogprefix.value=logprefix;
+		//alert(enable);
+        myform.submit();
+    }
+	
+	function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var dosip=document.getElementById('dosip');
+        var dosip_hidden=document.getElementById('dosip_hidden');
+        if ( dosip.value != '' ){
+            dosip_hidden.disabled = true; }
+        
+        if ( action != '' ){
+            //window.top.mainFrame.location.href="newdos.cgi";
+			history.go(-2); 
+			location.replace('newdos.cgi');
+	}
+        
+    }
+
+	function showclick() 
+	{
+		document.getElementById('AutoSubmit').click();
+	}
+	
+	function select_type() 
+	{
+		var type=document.getElementById('type');
+		var dosip=document.getElementById('dosip');
+		
+		if (type.selectedIndex != -1)
+		{
+			dosip.value = type.options[type.selectedIndex].text;
+			if(type.options[type.selectedIndex].text=='Custom')
+			{
+				dosip.value = '';
+				dosip.readonly=true;
+			}else
+			{
+				dosip.value = type.options[type.selectedIndex].text;
+				dosip.readonly = false;
+			}
+			
+			
+		}
+	}
+	
+    </script>
+    
+scriptEditDos
+}
+#scriptEditDos
+
+sub byName
+{
+    $a->{schname} cmp $b->{schname};
+}
+#byName
+
+sub maintainCOD
+{
+    my (%action)=@_;
+
+    my $dosref=XMLread($gPATH.'newdos.xml');
+    my $doslist=$dosref->{newdos};
+    my $exist=0;
+	my $exist2=0;
+    my %newdos;
+	my %newdoss;
+	
+	my $dqos=XMLread('/usr/local/apache/qbconf/dqos.xml');
+    my $hostList=$dqos->{list};
+	
+	@type=$action{newtype};
+	@enable=$action{newenable};
+	@ipnum=$action{newipnum};
+	@portnum=$action{newportnum};
+	@port=$action{newport};
+	@logset=$action{newlogset};
+	@timenumber=$action{newtimenumber};
+	@time=$action{newtime};
+	@logprefix=$action{newlogprefix};
+    
+    $action{dosip}=~s/^\s*|\s*$//g;
+    if ( !$action{action} ) { return; }
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+		@type=$action{newtype};
+		@enable=$action{newenable};
+		@ipnum=$action{newipnum};
+		@portnum=$action{newportnum};
+		@port=$action{newport};
+		@logset=$action{newlogset};
+		@timenumber=$action{newtimenumber};
+		@time=$action{newtime};
+		@logprefix=$action{newlogprefix};
+		
+		$newdos{type}=$type[0];
+        $newdos{dosip}=$action{dosip};
+        $newdos{description}=$action{description};
+		$newdos{enable}=$enable[0];
+		$newdos{ipnum}=$ipnum[0];
+		$newdos{portnum}=$portnum[0];
+		$newdos{port}=$port[0];
+		$newdos{logset}=$logset[0];
+		$newdos{timenumber}=$timenumber[0];
+		$newdos{time}=$time[0];
+		$newdos{logprefix}=$logprefix[0];
+		
+		$newdoss{list}=$action{dosip};
+		
+        foreach my $sh ( @$doslist )
+        {
+            if ( $sh->{dosip} eq $action{dosip} )
+            {
+                $exist=1;
+                $sh=\%newdos;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            #delete($action{action});
+            push( @$doslist, \%newdos); 
+            @$doslist=sort byName @$doslist;
+        }
+	foreach my $sh ( @$hostList )
+	{
+		if ( $sh->{list} eq $action{dosip} )
+		{
+			$exist2=1;
+			$hostList=\%newdoss;
+		}
+	}
+	if ( $exist2 eq '0' ){push( @$hostList, \%newdoss);}
+        LogUserAction( action=>'SAVECOD', dosip=>$action{dosip});
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{newdos};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        
+        my @temparray;
+		my @temparray2;
+        foreach my $item ( @$doslist )
+        {
+            if ( grep(/^$item->{dosip}$/, @$delet) ) { LogUserAction( action=>'DELCOD', dosip=>$item->{dosip} ); next; }
+            push(@temparray, $item); 
+        }
+		foreach my $item ( @$hostList )
+        {
+            if ( grep(/^$item->{list}$/, @$delet) ) { LogUserAction( action=>'DELCOD', list=>$item->{list} ); next; }
+            push(@temparray2, $item); 
+        }
+        $dosref->{newdos}=\@temparray;
+		$dqos->{list}=\@temparray2;
+        
+    }
+	elsif ( $action{action}=~m/^ENABL$/ )
+    {
+		my $enable=$action{enable};
+		my @temparray;
+        foreach my $item ( @$doslist )
+        {
+			if ( $item->{dosip} eq "system" ) { next; }
+			if ( grep(/^$item->{dosip}$/, @$enable) )
+            {
+                $item->{enable}=true;
+				$item->{logset}=true;
+            }
+			else{$item->{enable}=false; $item->{logset}=false;}
+            push(@temparray, $item); 
+        }
+        $dosref->{newdos}=\@temparray;
+    }
+	XMLwrite($dqos, $gPATH."dqos.xml");
+    XMLwrite($dosref, $gPATH."newdos.xml");
+    makeshell();
+}
+
+sub makeshell    
+{
+    my $DQOSSHELL="/usr/local/apache/qbconf/dqos.sh";
+    my $IPTCMD="/usr/local/sbin/iptables -t mangle";
+    my $SHELLHEAD="#!/bin/sh ";
+    my $LOGLEVEL="--log-level alert ";
+    my $LIMITBURST=5;
+
+    open(DQOS, ">$DQOSSHELL");
+                
+    my $dqos=XMLread('/usr/local/apache/qbconf/dqos.xml');
+	my $newdos=XMLread('/usr/local/apache/qbconf/newdos.xml');
+	
+	my $doslist=$newdos->{newdos};
+	
+	my $host=XMLread('/usr/local/apache/qbconf/host.xml');
+	my $hostlist=$host->{host};
+	
+    print DQOS qq ($SHELLHEAD \n\n);
+
+    my $dosref=$dqos->{dos};
+    print DQOS qq ($IPTCMD -X DEF \n);
+    print DQOS qq ($IPTCMD -N DEF \n);
+    
+    print DQOS qq ($IPTCMD -X COD \n);
+    print DQOS qq ($IPTCMD -N COD \n);                
+    
+    print DQOS qq ($IPTCMD -X PSD \n);
+    print DQOS qq ($IPTCMD -N PSD \n);
+        
+    print DQOS qq ($IPTCMD -X ICMP \n);
+    print DQOS qq ($IPTCMD -N ICMP \n);
+		if ( $ip->{dosip} eq "system" ) { next; }
+		my $CMD=$IPTCMD." -A PREROUTING";
+		my $CMD2=$IPTCMD." -A COD";
+       	my $LOGPREFIX=( $dos->{log} ) ? ( qq(--log-prefix $ip->{logprefix}) ) : ('');
+            
+		#default not change
+            	print DQOS qq($CMD -p tcp --syn -m connlimit --connlimit-above 50 -m limit -j LOG $LOGLEVEL --log-prefix cod:connectionoverflow \n);
+		my $count=0;
+		foreach my $ip(@$doslist)
+		{
+			if($ip->{enable} eq 'true')
+			{
+				$count+=1;
+				#print DQOS qq($ip->{enable} \n);
+				#print DQOS qq($count \n);
+			}
+		}
+		
+		if ( $count eq 0 ) { print DQOS qq($CMD2 -j ICMP \n\n); }
+		else
+		{
+			foreach my $ip (@$doslist)
+			{
+				if($ip->{type} eq 'ip')
+				{
+					#if logset=true write
+					if ( $ip->{logset} eq 'true' ) 
+					{ 
+						print DQOS qq($CMD -p tcp -s $ip->{dosip} --syn -m connlimit --connlimit-above $ip->{ipnum} -m limit --limit $ip->{timenumber}/$ip->{time} --limit-burst $LIMITBURST -j LOG --log-level alert $LOGPREFIX \n); 
+						print DQOS qq($CMD -p tcp -s $ip->{dosip} --syn --dport $ip->{port} -m connlimit --connlimit-above $ip->{portnum} -m limit --limit $ip->{timenumber}/$ip->{time} --limit-burst $LIMITBURST -j LOG --log-level alert --log-prefix $ip->{logprefix} \n);
+						print DQOS qq($CMD -p tcp -d $ip->{dosip} --syn -m connlimit --connlimit-above $ip->{ipnum} -m limit --limit $ip->{timenumber}/$ip->{time} --limit-burst $LIMITBURST -j LOG --log-level alert $LOGPREFIX \n); 
+						print DQOS qq($CMD -p tcp -d $ip->{dosip} --syn --dport $ip->{port} -m connlimit --connlimit-above $ip->{portnum} -m limit --limit $ip->{timenumber}/$ip->{time} --limit-burst $LIMITBURST -j LOG --log-level alert --log-prefix $ip->{logprefix} \n);
+					}
+					#if enable=true write
+					if($ip->{enable} eq 'true')
+					{
+						print DQOS qq($CMD -p tcp -s $ip->{dosip} --syn -m connlimit --connlimit-above $ip->{ipnum} -j DROP \n);
+						print DQOS qq($CMD -p tcp -s $ip->{dosip} --dport $ip->{port} --syn -m connlimit --connlimit-above $ip->{portnum} -j DROP \n);
+						print DQOS qq($CMD -p tcp -d $ip->{dosip} --syn -m connlimit --connlimit-above $ip->{ipnum} -j DROP \n);
+						print DQOS qq($CMD -p tcp -d $ip->{dosip} --dport $ip->{port} --syn -m connlimit --connlimit-above $ip->{portnum} -j DROP \n);
+					}
+				}
+				if($ip->{type} eq 'host')
+				{
+					#if logset=true write
+					if ( $ip->{logset} eq 'true' ) 
+					{ 
+						foreach my $hostip(@$hostlist)
+						{
+							if ( $hostip->{hostname} eq "system" ) { next; }
+							if ( $hostip->{hostname} eq $ip->{dosip})
+							{
+								my @splithost=split(',', $hostip->{hostaddress});
+								foreach my $splitlist ( @splithost )
+								{
+									print DQOS qq($CMD -p tcp -s $splitlist --syn -m connlimit --connlimit-above $ip->{ipnum} -m limit --limit $ip->{timenumber}/$ip->{time} --limit-burst $LIMITBURST -j LOG --log-level alert $LOGPREFIX \n); 
+									print DQOS qq($CMD -p tcp -s $splitlist --syn --dport $ip->{port} -m connlimit --connlimit-above $ip->{portnum} -m limit --limit $ip->{timenumber}/$ip->{time} --limit-burst $LIMITBURST -j LOG --log-level alert --log-prefix $ip->{logprefix} \n);
+									print DQOS qq($CMD -p tcp -d $splitlist --syn -m connlimit --connlimit-above $ip->{ipnum} -m limit --limit $ip->{timenumber}/$ip->{time} --limit-burst $LIMITBURST -j LOG --log-level alert $LOGPREFIX \n); 
+									print DQOS qq($CMD -p tcp -d $splitlist --syn --dport $ip->{port} -m connlimit --connlimit-above $ip->{portnum} -m limit --limit $ip->{timenumber}/$ip->{time} --limit-burst $LIMITBURST -j LOG --log-level alert --log-prefix $ip->{logprefix} \n);
+								}
+							}
+						}
+					}
+					if($ip->{enable} eq 'true')
+					{
+						foreach my $hostip(@$hostlist)
+						{
+							if ( $hostip->{hostname} eq "system" ) { next; }
+							if ( $hostip->{hostname} eq $ip->{dosip})
+							{
+								my @splithost=split(',', $hostip->{hostaddress});
+								foreach my $splitlist ( @splithost )
+								{
+									print DQOS qq($CMD -p tcp -s $splitlist --syn -m connlimit --connlimit-above $ip->{ipnum} -j DROP \n);
+									print DQOS qq($CMD -p tcp -s $splitlist --dport $ip->{port} --syn -m connlimit --connlimit-above $ip->{portnum} -j DROP \n);
+									print DQOS qq($CMD -p tcp -d $splitlist --syn -m connlimit --connlimit-above $ip->{ipnum} -j DROP \n);
+									print DQOS qq($CMD -p tcp -d $splitlist --dport $ip->{port} --syn -m connlimit --connlimit-above $ip->{portnum} -j DROP \n);
+								}
+							}
+						}
+					}
+				}
+			}
+			#print DQOS qq($CMD -j PSD \n\n);
+		}
+		
+    foreach my $dos (@$dosref)
+    {	
+        if ($dos->{type} eq 'PSD')
+        {
+    	    print DQOS qq($CMD -m psd --psd-weight-threshold 21 --psd-delay-threshold 5 --psd-lo-ports-weight 3 --psd-hi-ports-weight 1 -m limit --limit 1/m --limit-burst $LIMITBURST -j LOG --log-level alert --log-prefix psd: \n); 
+    	    if ( !$dos->{match} ) { print DQOS qq($CMD  -j DEF \n\n); }
+    	    else
+    	    {
+    	        my @avoidlist=split(/:/, $dos->{ip});
+    	        foreach my $avoid ( @avoidlist )
+    	        {
+    	            print DQOS qq($CMD -s $avoid -j ICMP \n);
+    	            print DQOS qq($CMD -d $avoid -j ICMP \n);
+    	        }
+    	        if ( $dos->{log} )
+    	        {
+    	            @opt = split(/:/,$dos->{match});
+    	            print DQOS qq($CMD -m psd --psd-weight-threshold $opt[0] --psd-delay-threshold $opt[3] );
+    	            print DQOS qq(--psd-lo-ports-weight $opt[2] --psd-hi-ports-weight $opt[1] );
+    	            print DQOS qq(-m limit --limit $dos->{time} --limit-burst $LIMITBURST -j LOG --log-level alert $LOGPREFIX \n);
+    	        }
+    	        print DQOS qq($CMD -m psd --psd-weight-threshold $opt[0] --psd-delay-threshold $opt[3] );
+    	        print DQOS qq(--psd-lo-ports-weight $opt[2] --psd-hi-ports-weight $opt[1] -j DROP \n);
+    	        print DQOS qq($CMD  -j ICMP \n\n);
+    	    }        
+        }
+        if ($dos->{type} eq 'ICMP')
+        {
+            print DQOS qq($CMD -p icmp --icmp-type echo-request -m limit --limit 50/s -j LOG $LOGLEVE --log-prefix icmp_flood:\n);
+            if ( !$dos->{syn} || !$dos->{icmp}) { print DQOS qq($CMD  -j DEF \n\n); }
+            else
+            {
+                my @avoidlist=split(/:/, $dos->{ip});
+                foreach my $avoid ( @avoidlist )
+                {
+                    print DQOS qq($CMD -s  $avoid -j DEF \n);
+                    print DQOS qq($CMD -d  $avoid -j DEF \n);
+                }
+                if ( $dos->{icmp} )
+                {
+                    print DQOS qq($CMD -p icmp --icmp-type echo-request -m limit --limit $dos->{icmp}/s --limit-burst $LIMITBURST -j ACCEPT\n);
+                    print DQOS qq($CMD -p icmp --icmp-type echo-request -m limit --limit $dos->{icmp}/s --limit-burst $LIMITBURST -j LOG --log-level alert $LOGPREFIX\n);
+                    print DQOS qq($CMD -p icmp --icmp-type echo-request -j DROP \n);
+                }
+                if ( $dos->{syn} )
+                {
+                    print DQOS qq($CMD -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT \n);
+                    print DQOS qq($CMD -p tcp --syn -m limit --limit $dos->{syn}/s --limit-burst $LIMITBURST -j ACCEPT\n);
+                    print DQOS qq($CMD -p tcp --syn -m limit --limit $dos->{syn}/s --limit-burst $LIMITBURST -j LOG --log-level alert $LOGPREFIX\n);
+                    print DQOS qq($CMD -p tcp -j DROP\n);
+                     
+                }
+                    
+             print DQOS qq($CMD  -j DEF \n); 
+             print DQOS qq($CMD  -j DROP \n\n);
+             }
+        }
+    }
+    
+    print DQOS qq ($IPTCMD -A DEF -j ACCEPT \n\n);
+    
+    print DQOS qq ($IPTCMD -A INPUT -p icmp -j ICMP \n\n);
+    
+    print DQOS qq ($IPTCMD -A INPUT -p tcp -j COD \n\n);
+}
+
+#
+1

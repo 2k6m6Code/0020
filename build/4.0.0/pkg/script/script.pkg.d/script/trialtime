@@ -1,0 +1,35 @@
+#!/bin/bash
+#set -x
+days=`uptime|grep day`
+if [ "$days" != "" ];then
+    days=`uptime|awk '{print $3}'|sed s/,//g`
+    time=`uptime|awk '{print $5}'|sed s/,//g`
+else
+    days="0"
+    time=`uptime|awk '{print $3}'|sed s/,//g`
+fi
+min=`echo $time|grep ':'`
+if [ "$min" != "" ];then
+    hour=`echo $time|awk -F":" '{print $1}'`
+    min=`echo $time|awk -F":" '{print $2}'`
+else
+    hour="0"
+    min=`echo $time`
+fi
+
+if [ ! -f /mnt/conf/timeup ]; then
+  let trialdays=44-$days
+  let trialhour=23-$hour
+  let trialmin=59-$min
+  
+  echo "$trialdays Day $trialhour Hour $trialmin Min"
+else
+  let trialdays=6-$days
+  let trialhour=23-$hour
+  let trialmin=59-$min
+  
+  echo "$trialdays Day $trialhour Hour $trialmin Min"
+fi
+
+
+#echo $time

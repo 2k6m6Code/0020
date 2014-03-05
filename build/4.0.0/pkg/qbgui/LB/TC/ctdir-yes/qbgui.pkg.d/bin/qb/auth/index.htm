@@ -1,0 +1,449 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<!-- saved from url=(0014)about:internet -->
+<HEAD>
+
+<META HTTP-EQUIV="pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,must-revalidate">
+<META HTTP-EQUIV="expires" CONTENT="0">
+<TITLE></TITLE> <LINK href="login.css" rel="stylesheet" type="text/css">
+</HEAD> 
+<BODY class="body" onkeypress="onKeydownOper(event)" onload="init()">
+<DIV class="background-img">
+<DIV class="primary-zone">
+<DIV class="logo">
+</DIV>
+<DIV class="banner">
+<iframe src="message.htm" width="100%" height="100%">
+
+</iframe>
+</DIV>
+<DIV class="login">
+<TABLE width="400" align="center" border="0" cellspacing="0" cellpadding="1">
+  <TBODY>
+  <TR>
+    <TD></TD>
+    <TD height="5" colspan="2"><SPAN class="prompt"><STRONG><LABEL id="err_info"></LABEL></STRONG></SPAN>
+      <DIV class="prompt" id="alarm" style="display: none;">Warning: The user is 
+      not authorized! <BR>Declaration</DIV>
+      <DIV class="prompt" id="authInfo" style="display: none;"><SPAN id="authUser" 
+      style="color: white;">Authorized User:</SPAN><BR>Declaration</DIV></TD></TR>
+      </DIV></TD></TR>
+  <TR>
+    <TD width="80" align="right">
+      <P class="txt">Username</P>
+      <P class="txt">Password</P></TD>
+    <TD width="204">
+      <P class="user_on" id="user_a"><INPUT name="user" class="user" id="user" 
+      onfocus="change_user_off()" onblur="change_user_on()" type="text" 
+      maxlength="95">             </P>
+      <P class="password_on" id="password_a"><INPUT name="password" class="user" 
+      id="password" onfocus="this.value='';change_pw_off()" onblur="change_pw_on()" 
+      type="password" maxlength="49">             </P></TD>
+    <TD width="145" align="left" valign="middle"><INPUT name="button" class="buttons" id="button" onclick="JavaScript:if(KeyDownTime==0)onDo();" onfocus="this.className='buttons_off buttons'" onblur="this.className='buttons_on buttons'" type="button" value="Login"> 
+                </TD></TR>
+  <TR>
+    <TD></TD>
+    <TD height="20" align="right"><A id="mail_view" href="mailto:sales@creek.com.tw">Contact Us
+    </A></TD> 
+    <TD></TD></TR></TBODY></TABLE></DIV></DIV></DIV>
+<SCRIPT type="text/javascript" language="javascript">
+
+function setClass(obj_id,_class)
+{
+	var obj=document.getElementById(obj_id);
+	obj.setAttribute("class",_class);
+	obj.setAttribute("className",_class);
+}
+
+function change_user_off()
+{
+	setClass("user_a", "user_off");
+}
+
+function change_user_on()
+{
+	setClass("user_a", "user_on");
+}
+
+function change_pw_off()
+{
+	setClass("password_a", "password_off");
+}
+
+function change_pw_on()
+{
+	setClass("password_a", "password_on");
+}
+</SCRIPT>
+ 
+<SCRIPT type="text/javascript" language="javascript">
+var KeyDownTime = 0;
+var version = "AC";
+
+function json_decode(str){
+	var obj;
+	try{
+		obj = eval('(' + str + ')');
+	}
+	catch(exception){
+		obj = null;
+	}
+	return obj;
+}
+
+/*
+*	@ will be called on html body load
+*/
+function init()
+{
+	document.getElementById("user").focus();
+	if(window.top != window)
+	{
+		window.top.location.href = window.location.href;
+	}
+
+	getVersion();
+}
+
+function rep_err(txt)
+{
+	var obj = json_decode(txt);
+	
+	if(obj && obj.success){
+		return false;
+	}
+	else{
+		return true;
+	}
+	
+}
+
+function rep_err_msg(txt)
+{
+	var obj = json_decode(txt);
+	
+	if(obj && obj.msg){
+		var str = obj.msg;
+		if(str.indexOf("Cookie") >= 0 || str.indexOf("cookie") >= 0 )
+			return "Please restart the browser or clear the history record";
+		else
+			return obj.msg;
+	}
+	else{
+		return '';
+	}
+	
+}
+
+
+function cb_version(txt)
+{
+	if( rep_err(txt) )
+	{
+		version = "Submit Asynchronous Obtaining successfully, but obtaining version information failed";
+	}
+	else
+	{
+		var obj = json_decode(txt);
+		
+		if(obj && (obj.text || obj.text=='')){
+			version = obj.text;
+			
+			if(obj.authInfoErr){
+				alert('Login page error');
+			}
+			
+		}
+		
+	}
+}
+
+function ver_errhandler()
+{
+	version = "Submitting [Obtain Version Information] request failed";
+}
+
+function getVersion()
+{ 
+	var str = '{"opr":"version"}';
+	asyncReq("POST", "", str, cb_version, ver_errhandler );
+}
+
+
+
+
+//在TT下，按一次Enter键会响应两次
+function onKeydownOper(e)
+{
+	var kn ;
+	if(window.event)
+		kn = e.keyCode;
+	else if( e.which )
+		kn = e.which;
+
+	if (kn == 13)
+	{
+		KeyDownTime ++;
+		if (KeyDownTime > 1)
+		{
+			return;
+		}
+
+		KeyDownTime = 0;
+		onDo();
+	}
+}
+
+function updateTips(msg)
+{
+	var l = document.getElementById("err_info");
+	l.innerHTML = 'Prompt: ' + msg;
+}
+
+function getQueryString()
+{
+	var href = window.location.href,
+        ps = href.indexOf('?');
+	if (ps != -1) {
+		return href.substring(ps + 1);
+	} else {
+		return '';
+	}
+}
+
+function cb_login(txt)
+{
+	//if( rep_err(txt) )
+	//{
+	//	var msg = rep_err_msg(txt);
+	//	updateTips(msg);
+	//}
+	//else
+	//{
+	var repeat = new Array;
+	repeat = txt.split(/,/);
+	if (repeat[1] == '1')
+	{
+		alert("Welcome " + repeat[0] + " !!");
+		//var qs = getQueryString();
+		
+		//var url=location.href;
+		//document.cookie="locale=en_US";
+		//qs = (qs == '') ? '' : '?' + qs;
+		//window.location.href = url;
+		window.open('','_self','');
+		window.close();
+	}
+	else
+	{
+	    alert("Your IP(" + repeat[0] + ") or Password have a problem!!");
+	    return;
+	}
+	//}
+}
+
+function encodeString(s){
+	var m = {
+        "\b": '\\b',
+        "\t": '\\t',
+        "\n": '\\n',
+        "\f": '\\f',
+        "\r": '\\r',
+        '"' : '\\"',
+        "\\": '\\\\'
+    };
+    if (/["\\\x00-\x1f]/.test(s)) {
+        return '"' + s.replace(/([\x00-\x1f\\"])/g, function(a, b) {
+            var c = m[b];
+            if(c){
+                return c;
+            }
+            c = b.charCodeAt();
+            return "\\u00" +
+                Math.floor(c / 16).toString(16) +
+                (c % 16).toString(16);
+        }) + '"';
+    }
+    return '"' + s + '"';
+}
+
+function onDo()
+{
+	try{
+		var pu = document.getElementById("user");
+		var pp = document.getElementById("password");
+		var tt = document.getElementById("type");
+		
+		var str = ' {"opr":"login", "data":{"user": ';
+		str += encodeString(pu.value);
+		str += ' , "pwd": ';
+		str += encodeString(pp.value);
+		str += '}} ';
+		updateTips('Logging in, please wait...')
+		asyncReq("POST", "index.cgi", str, cb_login );
+	
+
+	}
+	catch(e){
+		alert("The ActiveX does not run normally. \n-Please check if it is downloaded or the version is correct\n-Please check the Internet Options and set security level to medium or lower\n-Please refresh the page after setting");
+	}
+}
+
+
+function onVer()
+{
+	winObj=window.open("","winObj","left=300,top=200,width=320,height=340;");
+	var objcontent="<html><head><meta http-equiv=Content-Type content=text/html; charset=UTF-8><title>Version Information</title>";
+	objcontent+="</head>";
+	objcontent+="<body class='body3'><form><table><tr><td class=errorinfo>";	
+	objcontent+='Q-Balancer Information:\n';
+	objcontent+="</td></tr></table></form></body></html>";
+	winObj.document.open();
+	winObj.document.write(objcontent);	
+	winObj.document.close();
+}
+
+
+var activex = ['MSXML2.XMLHTTP.3.0','MSXML2.XMLHTTP','Microsoft.XMLHTTP'];
+
+function releaseObject(o) 
+{
+    o.conn = null;
+    o = null;
+}
+
+	
+function asyncReq(method, uri, postdata, cb, errhandler)
+{
+	var o = getConnectionObject() || null;
+
+	if(o)
+	{
+		o.conn.onreadystatechange = function handleReadyState()
+		{
+			if( o.conn.readyState != 4 )
+				return;
+
+			var httpStatus, responseObject;
+				
+			try{
+				if( o.conn.status !== undefined && o.conn.status != 0 ){
+				    httpStatus = o.conn.status;
+				}else{
+				    httpStatus = 13030;
+				}
+			}catch(e){
+				httpStatus = 13030;
+			}
+
+			if( httpStatus >= 200 && httpStatus < 300 ){
+				var rlt = o.conn.responseText;
+				if(cb)
+				    cb(rlt);
+			}else{
+				if(errhandler)
+				    errhandler();
+			}
+
+			releaseObject(o);
+		}
+		o.conn.open(method, uri, true);
+		o.conn.send(postdata || null);
+	}
+
+    return o;
+}
+
+function getConnectionObject(){
+		var o;
+		 
+		 try{
+			  o = createXhrObject();
+		 }catch(e){
+		 }finally{
+			 return o;
+		 }
+}
+
+	function createXhrObject(){
+		var http;
+		try{
+			http = new XMLHttpRequest();
+		}catch(e){
+			for( var i=0; i<activex.length; i++ ){
+				try{
+					http = new ActiveXObject(activex[i]);
+					break;
+				}catch(e){}
+			}
+		}finally{
+			return {conn : http};
+		}
+	}
+	
+	function mailread()
+	{
+		var url = "overview.xml"; // 檔案路徑
+		var aryLength = 0;
+		var xmlDoc;
+		// code for IE
+		if (window.ActiveXObject) {
+			xmlDoc = new ActiveXObject('Microsoft.XMLDOM');
+			xmlDoc.async = false;
+			xmlDoc.load(url);
+		} else if (document.implementation && document.implementation.createDocument){
+		// code for Mozilla, etc.
+			//xmlDoc = document.implementation.createDocument("","",null);
+			//xmlDoc.async = false;  //You need this
+			//xmlDoc.load(url);
+			var xmlhttp = new window.XMLHttpRequest();  
+			xmlhttp.open("GET",url,false);  
+			xmlhttp.send(null);  
+			xmlDoc = xmlhttp.responseXML.documentElement;
+		} else {
+			alert('您的瀏覽器不支持xml文件讀取,於是本頁面禁止您的操作,推薦使用IE5.0以上可以解決此問題!');
+		return null;
+		}
+		//var a = xmlDoc.getElementsByTagName("mail")[0].getAttribute("value");
+		var maillist = new Array();
+		for(var i=0;i<xmlDoc.getElementsByTagName("mail").length;i++)
+		{
+			if(xmlDoc.getElementsByTagName("mail")[i].getAttribute("value") != 'system'){maillist.push(xmlDoc.getElementsByTagName("mail")[i].getAttribute("value"))}
+		}
+		var mail_view=document.getElementById('mail_view');
+		mail_view.href='mailto:'+maillist.join();
+	}
+mailread();
+// async finished
+
+
+
+</SCRIPT>
+ <!--
+<div style="display:none"> 
+<OBJECT classid="clsid:A84B7610-6469-4639-913D-A066BBF8B031"
+id=active
+width=0
+height=0
+codebase="html/acnowin.cab#Version=1,0,0,0">
+</OBJECT>
+--> <!--[if IE 6]>
+<script type="text/javascript">
+	var js_version = ScriptEngineBuildVersion();
+	if (js_version < 8834) {
+		/*Load jQuery if not already loaded*/ 
+		if(typeof jQuery == 'undefined'){ 
+			document.write("<script type=\"text/javascript\" src=\"jquery-1.9.1.min.js\"></" + "script>"); 
+			var __noconflict = true; 
+		}
+		var IE6UPDATE_OPTIONS = {
+			icons_path: "",
+			url: "http://support.microsoft.com/kb/942840/",
+			message: "You are using IE6 browser. To get better user experience, please click here to download the patch...(or upgrade it to IE7 to abvove version directly)",
+			preload: false
+		}
+		document.write("<script type=\"text/javascript\"   src=\"\"></" + "script>");
+	} 
+</script>
+<![endif]--> 
+</BODY></HTML>

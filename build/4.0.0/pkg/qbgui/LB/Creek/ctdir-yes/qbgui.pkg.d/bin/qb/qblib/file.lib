@@ -1,0 +1,115 @@
+#=============================================================================================
+sub showFile
+{
+    my (%action)=@_;
+    my $fileref=XMLread($gPATH.'file.xml');
+    my $filelist=$fileref->{file};
+    
+    my @titleHeadList=('File', 'Block','Description', 'Edit');
+    my %titleWidth=('File'=>250, 'Block'=>100, 'Description'=>250, 'Edit'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">File Types);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    #==============================================================
+    # Print Title first
+    # show 
+    #===============================================================
+    print qq (<div class="divframe" style="width:800">);
+    print qq (<table bgcolor="#332211" width="100%" border="0"><tr>); 
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    print qq (<td align="center" width="100">);
+    print qq (<a href="javascript:delFile()"><image src="image/del.gif" title="Delete Checked Schdule(s)" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('files', this.checked)">);
+    print qq (</tr></table>);
+    print qq (</div>);
+    print qq (<div class="divframe" style="height:400; width:800">);
+    print qq (<table id="fileList" width="100%"  class="body" border="0">);
+    my $lineCount=0;
+    foreach my $item ( @$filelist )
+    {
+        if ( $item->{filename} eq "system" ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+        print qq (<td align="center" width="$titleWidth{File}" height="25" >$item->{filename}</td>);
+        print qq (<td align="center" width="$titleWidth{Block}" height="25" >);
+        my $status = ( $item->{block} eq '1' ) ? ( 'checked' ) : ( '' );
+        print qq (<input type="checkbox" name="block_files" value="$item->{filename}" $status>);
+        print qq (</td>);
+        print qq (<td align="center" width="$titleWidth{Description}" height="25">$item->{description}</td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<a href="editfile.cgi?filename=$item->{filename}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit Schedule properties" border="0"></a></td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<input type="checkbox" name="files" value="$item->{filename}">);
+        print qq (</tr>);
+        $lineCount++;
+    
+    }
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="right" width="500">);
+    print qq (<input class="qb" type="button" width="100" value="Select All" onclick="checkfile(true);">);
+    print qq (<input class="qb" type="button" width="100" value="Clear All" onclick="checkfile(false);">);
+    print qq (<input class="qb" type="button" width="100" value="Apply" onclick="goSubmit('APPLY');">);
+    print qq (</td>);
+    print qq (<td align="right" >);
+    print qq (<input class="qb" type="button" width="100" value="Add File Type" onclick="NewFile();">);
+    print qq (</td>);
+}
+#showFile
+    
+
+
+#=============================================================================================
+
+sub scriptFile
+{
+    print << "scriptFile";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+    
+    function checkfile(action)
+    {
+        
+        var block_files = document.getElementsByName('block_files');
+        
+        for (var i = 0; i < block_files.length; i++)
+        {
+            block_files[i].checked = action;
+        }
+    }
+    function NewFile() 
+    {
+        window.top.mainFrame.location.href="editfile.cgi";
+    }
+    
+    function delFile()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+    
+    </script>
+    
+scriptFile
+}
+#scheduleFile
+#
+1

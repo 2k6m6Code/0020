@@ -1,0 +1,12 @@
+#!/bin/sh
+/sbin/setkey -f /etc/racoon/dell2tpipsec.conf
+killall -9 xl2tpd
+if [ -f /etc/racoon/iprule ];then
+    /etc/racoon/iprule
+fi
+isipsec=`grep "isptype=\"ipsec\"" /usr/local/apache/active/basic.xml`
+isencrypt=`grep "enc=\"1\"" /usr/local/apache/active/basic.xml`
+if [ "$isipsec" = "" ] && [ "$isencrypt" = "" ]; then
+    killall -9 racoon
+fi
+

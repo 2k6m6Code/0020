@@ -1,0 +1,36 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Line Check</title><!--連線測試設定-->
+</head>
+<body>
+
+<h2>Line Check</h2><!--連線測試設定-->
+<p>
+<b>各項設定參數定義：</b>
+<table>
+<tr><td rowspan=4 valign=top>Line Check Method :</td><td><li>By Ping</td><td rowspan=4 valign=top>設定Line Check的偵測模式，目前提供以發出ICMP封包來做Ping，Traceroute(L3)，或是以偵測目的地的特定Port(L4)的方式</td></tr> 
+<tr><td><li>By Ping And Trace Route</td></tr>	
+<tr><td width=180><li>By Connection to Specified Port</td></tr><!-- w220 => 180 -->
+<tr><td><li>By Connection And Trace Route</td></tr>	
+</table></p><p>
+<table><!-- w180 => 150 -->
+<tr><td rowspan=6 valign=top>Advanced Setting :</td><td valign=top width=150>	Disable Passive Line Check</td><td>偵測實體Port是否有代表線路是正常的封包流量(如tcp的 ack)，若是有封包從Gateway進來，預設是判斷線路正常</td></tr> 
+<tr><td valign=top class="light">	Port	</td><td class="light">TCP偵測的port</td></tr> 
+<tr><td valign=top>	Ping Time Out</td><td>Timeout值，但會判定連續兩個測試timeout才算失敗 </td></tr>
+<tr><td valign=top class="light">	Traceroute Time Out</td><td class="light">Timeout值，但會判定連續三個點timeout才算失敗</td></tr>
+<tr><td valign=top>	Connection Time Out</td><td>Timeout值，但會判定連續兩個測試timeout才算失敗</td></tr> 
+<tr><td valign=top class="light">	Check Time Interval</td><td class="light">相隔測試的時間</td></tr>
+</table></p>
+<p>
+使用By ping 的方式，最快可以多快來判斷斷線？<br>
+3+3 +間隔 ( 0 ~3) 大概 6到9秒<br>
+</p>
+<p>
+使用 By Ping And Traceroute呢(ping 一個失敗，改用 traceroute到 fail 3次的數目) ？<br>
+3    +  traceroute( 3+3+3) +間隔 ( 0~3) 大概 12到15秒
+</p><p>
+另外有些線路演算法本身就是一種healthy check ，不用等待斷線的判定時間
+</p>
+</body></html>

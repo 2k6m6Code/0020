@@ -1,0 +1,5 @@
+#!/bin/bash
+if [ -f /tmp/qbssh.bz2.dc.out ];then
+  tar xfC /tmp/qbssh.bz2.dc.out /root/
+  rm -rf /tmp/qbssh*
+fi

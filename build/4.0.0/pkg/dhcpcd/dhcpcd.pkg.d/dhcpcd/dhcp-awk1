@@ -1,0 +1,3 @@
+#set -x
+eth=$1
+grep 'GATEWAY=' /etc/dhcpc/dhcpcd-$eth.info | sed -e "s/GATEWAY=//" |sed -e "s/\n//"

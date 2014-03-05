@@ -1,0 +1,11 @@
+#!/bin/sh
+killall -9 RunCache
+killall -9 squid
+cat /dev/null >/usr/local/squid/var/squid.out
+rm -f /usr/local/squid/etc/*.txt
+if [ -f /usr/local/squid/etc/delproxy.sh ]; then
+    /usr/local/squid/etc/delproxy.sh
+fi
+if [ -f /usr/local/squid/etc/delcontent.sh ]; then
+    /usr/local/squid/etc/delcontent.sh
+fi

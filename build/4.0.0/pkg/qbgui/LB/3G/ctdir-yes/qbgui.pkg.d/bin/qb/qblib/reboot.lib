@@ -1,0 +1,85 @@
+###############################################################################################
+#                                           Snmp Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showReboot 
+{
+    my (%action)=@_;
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2" >$qblang[404]); 
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq ($qblang[405]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<select class="qbopt"  name=reboot_time style="width:100">);
+    my $reboot_time_cfg=runCommand(command=>'cat', params=>'/tmp/reboot_time');
+    $reboot_time_cfg=~s/\n//g;
+    foreach my $time ( 24, 0..23 , Clear )
+    {
+         my $showvalue;
+         my $status=( $time eq $reboot_time_cfg ) ? ('selected'):('');
+         if ( $time ne 'Clear' ){$showvalue=( $time eq "24" ) ? ($qblang[406]) : ($time.':00');}
+         else { $showvalue="Clear"; }
+         print qq (<option $status value="$time">$showvalue</option>);
+    }
+    print qq (/select);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (</table>);
+    print qq (<table><tr><td align="center">);
+    print qq (<input type="button" class="qb" value="$qblang[407]" style="width:50px;width:50px" onClick="go();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showTime
+sub reboot
+{
+    my (%action) = @_;
+    
+    if ( $action{action} eq 'REBOOT' )
+    {
+        LogUserAction( action=>'Reboot', reboot_time=>$action{reboot_time} );
+        if ( $action{reboot_time} eq '24' )
+        {
+            runCommand(command=>'/opt/qb/bin/script/rebootqb', params=>''); 
+        }
+        else
+        {
+            runCommand(command=>'/opt/qb/bin/script/rebootqb', params=>qq($action{reboot_time}));
+        }
+    }
+    
+}
+
+
+#======================================================================================================================
+sub rebootScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+    
+    function go()
+    {
+        myform.action.value = 'REBOOT';
+        myform.submit();
+    }
+
+    </script>
+SCRIPT
+}
+#TimeScript
+#
+1

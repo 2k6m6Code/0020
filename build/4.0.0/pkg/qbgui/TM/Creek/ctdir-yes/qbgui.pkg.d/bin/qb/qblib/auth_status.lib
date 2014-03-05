@@ -1,0 +1,100 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showSchedule
+{
+    my (%action)=@_;
+    my $schref=XMLread($gPATH.'auth.xml');
+    my $schlist=$schref->{user};
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Auth Status);
+    print qq (<tr><td>);
+    print qq (<input type="button" class="qbopt" d="stop" value="STOP">);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    print qq (<div class="divframe" style="height:200; width:800">);
+    print qq (<table id="scheduleList" width="100%"  class="body" border="0">);
+    print qq (<thead><tr bgcolor="#332211">);
+    print qq (<th width="100" align="center"><a href="javascript:kickSchedule()"><img border="0" title="Kick Checked Schdule(s)" src="../image/kick.png"></a><input type="checkbox" onclick="setAllCheckBoxValue('kick', this.checked)" title="select or deselect all items">);
+    print qq (<th width="120" align="center">IP</th>);
+    print qq (<th width="120" align="center">Name</th>);
+    print qq (<th width="120" align="center">Time</th>);
+    my $lineCount=0;
+    foreach my $item ( @$schlist )
+    {
+        if ( $item->{schname} eq "system" ) { next; }
+        my $list = $item->{member};
+        foreach my $tem (@$list)
+        {
+            if ($tem->{idd} eq ''){next;}
+            my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+            print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+            print qq (<td align="center" width="100" height="25" ><input type="checkbox" name="kick" value="$tem->{schname}"></td>);
+            print qq (<td align="center" width="120" height="25" >$tem->{ip}</td>);
+            print qq (<td align="center" width="120" height="25" >$tem->{idd}</td>);
+            my $time = gmtime($tem->{time});
+            print qq (<td align="center" width="120" height="25" >$time</td>);
+            print qq (</tr>);
+            $lineCount++;
+        }
+    }
+                                            
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+}
+#showSchedule
+    
+
+
+#=============================================================================================
+
+sub scriptSchedule
+{
+    print << "scriptSchedule";
+
+   <script type="text/javascript" src="../grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function auto_refresh()
+    {
+        setTimeout("Ajax();",(parseInt(\$("#refreshtime").val())-1)*1000); 
+    }
+    
+    function powerswitch(oo)
+    {
+        myform.action.value='ENABLED';
+        myform.submit();
+    }
+    
+    function delSchedule()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+    
+    auto_refresh();
+    
+    </script>
+    
+scriptSchedule
+}
+#scheduleScript
+#
+1

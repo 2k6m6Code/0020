@@ -1,0 +1,48 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Create QOS Class ID</title><!--頻寬類別定義-->
+</head>
+<body>
+
+<h2>Create QOS Class ID</h2><!--頻寬類別定義-->
+<table>
+<tr><td width=80>Bandwidth:	</td><td>線路 or Interface的總頻寬</td></tr> 
+<tr><td class="light">Class ID:	</td><td class="light">Class ID的代號，只能使用數字</td></tr> 
+<tr><td>Area:	</td><td>Area 即 ISP 或者是 Port</td></tr> 
+<tr><td class="light">Max:	</td><td class="light">最大放任頻寬</td></tr>
+<tr><td>Min:	</td><td>最小保證頻寬</td></tr>
+<tr><td valign=top class="light">Priority:	</td><td class="light">當多個 class 所保證頻寬相衝時，流量決定的優先權 (數字越小越高) </td></tr>
+</table>
+<ol>
+<li>瀏覽 classes</li> <!--1-->
+<p>
+Basic ISP 裡所設的 ISP 及 physical ports 會以 tab 的方式呈現，點選可瀏覽各個 ISP 或 ports 裡面 class 的設定 
+</p>
+<li>新增 class</li> <!--2-->
+<p>
+首先先確認 ISP1 Bandwidth 已經設定。ISP1 Bandwidth 是設定ISP的流量，新增 class，先填入Class ID (限數字)，選 Area (Area 即 ISP 或者是 port)。Max 是最大放任頻寬，Min 是最小保證頻寬。Priority 是當多個 class 所保證頻寬相衝時，流量決定的優先權 (數字越小越高)。填完之後點選 Add
+</p> 
+<li>編輯 class</li> <!--3-->
+<p>
+點選要編輯之 class 項目的 Edit 鍵，此時該筆資料會在下方出現以供編輯，更改資料後再按 Update 
+</p><p>
+針對舉例所欲達成的目的，我們做出相關設定：<br>
+<ul><li>
+首先我們在 ISP1 bandwidth 裡設定該家 ISP outbound 的流量，此例為 512，這樣才能確定總共流量分配不超過 512kbit 
+</li><li>
+設定三個 class，分別是 class 1，class 2，及 class 3。192.168.1.15 必須保證有頻寬，但又不讓他佔線，因此我們設了 class 2，確保他最少有 128 Kbit，但最多也不超過 128 kbit。192.168.1.22 必須反應速度快但又不能佔太多頻寬，因此我們讓他走 class 1，但流量大到超過一定程度，我們會讓他走 class 3 (在 service-filter 詳述)。剩餘未分類的流量我們都讓他走 class 1，因此在這邊我們點選 class 1 為 default 
+</li><li>
+Class min，max 設定的意義如下：假如 class 1 現有 512kbit 的流量，可以適切的佔滿 512 kbit，但如果 mail server 走 class 2 有 200 kbit 的流量的需求，此時 class 1 會減速至 384 kbit 而讓 class 2佔有128kbit。但 mail server 速率無法超過 128 kbit，因為 class 2 的 maximum 值為 128kbit 
+</li><li>
+設定完成之後一定得點選一個 class 作為 default class，Default class 是讓未被 filter 所指定者所走的 class 
+</li>
+</ul>
+</p>
+<li>Inbound QoS</li> <!--4-->
+<p>
+該設定可以針對 User設過對外 Request的policy，來選擇回應服務時會導入的內送流量的Class ID
+</p>
+</ol>
+</body></html>

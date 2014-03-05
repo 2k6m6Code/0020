@@ -1,0 +1,72 @@
+<html>
+<head>
+<title></title>
+<link rel="stylesheet" href="../gui.css" type="text/css">
+<style>
+body{
+	background:#336699;
+	text-align:center;
+}
+</style>
+
+<script for="gmaster" event="onreadystatechange">
+
+	//1.scriptlet test	
+	try{		gmaster.init(gmaster);	}
+	catch(e){	alert("Scriptlet loaded faile ..");return false;	}
+	
+	//3.other code
+	gmaster.setColor("background","#336699");
+	/*demo
+	gmaster.setColor("inline",255,0,128);
+	gmaster.setColor("outline",0,0,255);
+	gmaster.setColor("inpoly",255,255,0);
+	gmaster.setColor("outpoly",0,255,255);
+	*/
+	auto_refresh();
+</script>
+<script>
+
+var timer;
+var basepath = window.location.href.replace(/[^/]+$/gi,"");
+var cgipath="rate.cgi";
+//    cgipath="inner.htm";
+
+
+function runURL(url){
+	try{
+		var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+		xmlhttp.open("GET",url,false);
+		xmlhttp.send();
+				
+		window.execScript(xmlhttp.responseText.replace(/<.+>|window\.parent\./gi,""));
+		return true;
+	}
+	catch(e){return false}
+}
+function refresh(){
+	runURL(basepath+cgipath);
+}
+function resetVolumn(){
+	runURL(basepath+cgipath+"?action=reset");
+	auto_refresh();
+}
+function auto_refresh(){
+	refresh();
+	if(timer)clearInterval(timer);
+	timer = setInterval("refresh()",3000);
+}
+
+</script>
+
+</head>
+<body>
+
+<OBJECT ID="gmaster" TYPE="text/x-scriptlet" data="../qbjs/daslt_rttraffic.htm" style="border:0 solid black;" width="560" height="370">
+</OBJECT>
+
+<br>
+<button class="qb" style="font:12 Verdana;width:70" onclick="resetVolumn();">Reset</button>
+<br>
+
+</html>

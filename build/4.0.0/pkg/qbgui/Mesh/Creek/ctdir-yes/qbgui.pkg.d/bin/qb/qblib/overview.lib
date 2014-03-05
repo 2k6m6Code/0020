@@ -1,0 +1,1047 @@
+sub showDate
+{
+    print qq (<table>);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    #************************************ Set Date ********************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Date:);
+    print qq (</td>);
+
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (YY:<select name="year" class="qbopt">);
+    foreach my $year ( 2002..2012 ) 
+    {
+        my $status=( $year == (1900+(localtime)[5]) ) ? ( 'selected' ) : ( '' );
+        print qq (<option value="$year" $status >$year</option>); 
+    } 
+    print qq (</select>);
+    
+    print qq (MM:<select name="month" class="qbopt">);
+    foreach my $month ( 1..12 ) 
+    { 
+        my $status=( $month  ==  ((localtime)[4] + 1) ) ? ( 'selected' ) : ( '' );
+        print qq (<option value="$month" $status >$month</option>); 
+    } 
+    print qq (</select>);
+
+    print qq (DD:<select name="day" class="qbopt">);
+    foreach my $day ( 1..31 ) 
+    { 
+        my $status=( $day  ==  (localtime)[3] ) ? ( 'selected' ) : ( '' );
+        print qq (<option value="$day" $status >$day</option>); 
+    } 
+    print qq (</select>);
+
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    #************************************ Set Time ********************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Time:);
+    print qq (</td>);
+
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (HH:<select name="hour" class="qbopt">);
+    foreach my $hour ( 0..23 ) 
+    { 
+        my $status=( $hour  ==  (localtime)[2] ) ? ( $status='selected' ) : ( $status='' );
+        print qq (<option value="$hour" $status >$hour</option>); 
+    } 
+
+    print qq (</select>);
+
+    print qq (MM:<select name="min" class="qbopt">);
+    foreach my $min ( 0..59 ) 
+    { 
+        my $status=( $min  ==  (localtime)[1] ) ? ( $status='selected' ) : ( $status='' );
+        print qq (<option value="$min" $status >$min</option>); 
+    } 
+    print qq (</select>);
+    
+    print qq (SS:<select name="sec" class="qbopt">);
+    foreach my $sec ( 0..59 ) 
+    { 
+        my $status=( $sec  ==  (localtime)[0] ) ? ( $status='selected' ) : ( $status='' );
+        print qq (<option value="$sec" $status >$sec</option>); 
+    } 
+    print qq (</select>);
+    
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    #************************************ Command Button  ********************************************
+    print qq (<tr>);
+    print qq (<td colspan="2" align="center">);
+    print qq (<input class="qb" type="button" value="Set" title="Set Time and Date" onClick="returnResult()" style="width:80">);
+    print qq (<input class="qb" type="button" value="Cancel" title="Cancel this Setting" onClick="returnCancel()" style="width:80">);
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (</table>);
+}
+#showDate
+
+
+#=====================================================================================
+sub showDateScript
+{
+print  << "SHOWDATESCRIPT";    
+    
+    <script language="javascript">
+        
+        var myform=window.document.forms[0];
+        
+        function returnResult() 
+        {
+            var dateinfo='';
+            dateinfo+=myform.year.value+' ';
+            dateinfo+=myform.month.value+' ';
+            dateinfo+=myform.day.value+' ';
+            dateinfo+=myform.hour.value+' ';
+            dateinfo+=myform.min.value+' ';
+            dateinfo+=myform.sec.value+' ';
+            
+            window.returnValue=dateinfo;
+            window.close();
+        }
+        
+        function returnCancel() 
+        {
+            window.close();
+        }
+    </script>
+
+SHOWDATESCRIPT
+}
+#showDateScript
+        
+
+###############################################################################################
+#                                           Management Console
+###############################################################################################
+sub showConsole 
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">Administrative Console ); #</td></tr>);
+    print qq (<a href="javascript:qbShowHelp('console')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Express Mode:);
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #my $status=( $overview->{express}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="express"  $status value="1">On);
+    #$status=( $overview->{express}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="express"  $status value="0">Off);
+    #print qq (</td>);
+    #print qq (</tr>); 
+    
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Truly Aggregate:);
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #my $status=( $overview->{aggregate}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="aggregate"   $status value="1">On); 
+    #$status=( $overview->{aggregate}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="aggregate"  $status value="0">Off);
+    #print qq (</td>);
+    #print qq (</tr>);  
+  
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Measurement Method:);
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #my $status=( $overview->{measure} eq "WLT" ) ? ('checked') : (''); print qq (<INPUT type="radio" name="measure"   $status value="WLT"><span title="Weighted Least Traffic">WLT</sapn>); 
+    #$status=( $overview->{measure} eq "BTK") ? ('checked') : (''); print qq (<INPUT type="radio" name="measure"  $status value="BTK"><span title="Bottle Neck Monitor">BTK</span>);
+    #print qq (</td>);
+    #print qq (</tr>);  
+    
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<span title="Reset ARP cache of Public IP on ISP Gateways">Reset ARP cache ...</span>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $overview->{sendarp}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="sendarp"  $status value="1">On); 
+    $status=( $overview->{sendarp}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="sendarp"  $status value="0">Off); 
+    print qq (</td>);
+    print qq (</tr>);  
+  
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<span title="Set ARP Entries of Interanl Gateways Permanent">Set Gateway Permanent ...</span>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $overview->{igwpermnt}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="igwpermnt"  $status value="1">On); 
+    $status=( $overview->{igwpermnt}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="igwpermnt"  $status value="0">Off); 
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (</td>);
+    print qq (</tr>);  
+    
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<span title="Modify MSS to 1428">Modify MSS ...</span>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $overview->{mssmodify}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="mssmodify"  $status value="1">User define );
+    print qq (<INPUT type="text" maxlength="4" style="width:40" class="qbtext" name="mssmodify_value" value="$overview->{mssmodify_value}">);
+    $status=( $overview->{mssmodify}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="mssmodify"  $status value ="0">Default);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #**********************************  Get Max User   *******************************************
+    my $maxuser=authenticate( action=>'GETMAXUSER' );
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Maximum User:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<select class="qbopt" name="maximumuser" style="width:60px">);     
+    foreach my $numofuser ( 1..$gMAXIMUMUSER ) 
+    { 
+        my $status=( $numofuser eq $maxuser ) ? ( 'selected' ) : ( '' );
+        print qq (<option value='$numofuser' $status>$numofuser</option>);
+    }
+    print qq (</select>);
+    print qq (<input type="button" class="qb" value="Edit User Account" title="Edit User Name and Password" onClick="editUserAccount()" style="width:120px">);
+    print qq (</td>);
+    print qq (</tr>);
+
+    #************************************ Give Resolver ********************************************
+    print qq (<tr>);
+    print qq (<td align="center" class="bigtitle" clospan="2"> DNS Resolver ); 
+    print qq (<input class="qbtext" type="text" maxlength="15" class="qbtext" name="resolve" value="$overview->{resolve}" style="width:180" onChange="checkAndSetDNS(this.value)">);
+    print qq (<tr><td clospan="2"><he size="1"></td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+#    print qq (<span title="Work as ">Work as </span>);
+    print qq (</td>);
+#    print qq (Domain Name Resolver:);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $overview->{dnsserver} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" name="dnsserver" $status onClick="switchDnsServerIP()>QB work as DNS Server );
+    print qq (<input class="qbtext" type="text" maxlength="15" class="qbtext" name="dnsserverip" value="$overview->{dnsserverip}" style="width:180" onChange="checkAndSetDNS(this.value)">);
+    print qq (<br>DNS relay to );
+    print qq (<input class="qbtext" type="text" maxlength="15" class="qbtext" name="relay" value="$overview->{relay}" style="width:180" onChange="checkAndSetDNS(this.value)">);
+#    print qq (<INPUT type="text" maxlength="15" class="qbtext" name="dnsproxyport" value="$overview->{dnsproxyport}">);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+#    print qq (<input class="qbtext" type="text" maxlength="15" class="qbtext" name="resolve" value="$overview->{resolve}" style="width:180" onChange="checkAndSetDNS(this.value)">);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #************************************ Remote Config.********************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Remote Config. & Firmware:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input type="button" class="qb" value="Config. & Firmware Upgrade" title="Remote Configuration Management" onClick="remoteConfig()" style="width:180px">);
+    print qq (</td>);
+    print qq (</tr>);
+    if ( $gENABLEANALYSER)
+    {    
+    #************************************Brian 20081125 Format HDD.********************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Format Hard Disk:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<hr size="1">);
+
+    print qq (<select class="qbopt" name="formattype" style="width:180">\n);
+    foreach my $types ( sort keys %gFSTYPE ) { print qq (<option value="$types" title="$types" >$gFSTYPE{$types}</option>/n); }
+    print qq (</select><br>);
+
+    my $deviceinfo=runCommand(command=>"ls", params=>'/dev/.udev/db/block@sd*');
+    my @devicerecord=split(/\n/, $deviceinfo);
+    my $partitioninfo=runCommand(command=>"cat", params=>'/proc/partitions');
+    my @partitionrecord=split(/\n/, $partitioninfo);
+    my @devicelist;
+    my @partitionlist;
+    my @deviceinfolist;
+
+    #20100415 Brian To collect USB Device info.
+    foreach my $record ( @partitionrecord ) 
+    {
+        if ( $record =~m/(sd[a-z]\d+)/)
+        {
+           my $Vendor_record;
+           my $Model_record;
+           my $Rev_record;
+           my @devicedata=split(/\s+/, $record);
+           my $partition=$devicedata[4]; 
+           $devicedata[4] =~s/(\d+)//g;
+           my $Deviceinfo=runCommand(command=>"cat", params=>'/dev/.udev/db/block\@'.$devicedata[4].'\@'.$partition);
+           my @deviceinforecord=split(/\n/, $Deviceinfo);
+           foreach my $inforecord ( @deviceinforecord ) 
+           { 
+             if ( grep(/ID_VENDOR/, $inforecord) )
+             {
+                $Vendor_record=$inforecord;
+                $Vendor_record=~s/E:ID_VENDOR=//g;
+             }
+             if ( grep(/ID_MODEL/, $inforecord) )
+             {
+                $Model_record=$inforecord;
+                $Model_record=~s/E:ID_MODEL=//g;
+             }
+             if ( grep(/ID_REVISION/, $inforecord) )
+             {
+                $Rev_record=$inforecord;
+                $Rev_record=~s/E:ID_REVISION=//g;
+             }
+            }
+           push ( @deviceinfolist, $Vendor_record.' '.$Model_record.' '.$Rev_record);
+           push ( @partitionlist, $partition.' Size:'.$devicedata[3].'(KB)');
+           push ( @devicelist, $partition);
+        }
+    }
+    #20090717 Brian To collect IDE Device info.
+    my $idedev=runCommand(command=>'cat', params=>qq('/tmp/idedev'\|awk \'\{print \$1\}\') );
+    $idedev=~s/Dev://g;
+    $idedev=~s/\n//g;
+    my $idesize=runCommand(command=>'cat', params=>qq('/tmp/idedev'\|awk \'\{print \$2\}\') );
+    my $ideinfo=runCommand(command=>'cat', params=>qq('/tmp/idedev'\|sed -e \"s\/Dev\.\*\.Name\://\") );
+
+    print qq (<select class="qbopt" name="devicename" style="width:180">\n);
+    my $devicelist_length=($#devicelist +1);
+    print qq (<option value="0">None</option>/n);
+    for ( $i = 0; $i<$devicelist_length; $i++)
+    {
+       print qq (<option value="$devicelist[$i]" title="$deviceinfolist[$i]; $partitionlist[$i]">$deviceinfolist[$i]</option>/n); 
+    }
+    if ( $idedev ne "" )
+    {
+    print qq (<option value="$idedev" title="$idedev $idesize(KB)">$ideinfo</option>/n); 
+    }
+    print qq (</select><br>);
+    print qq (<input type="button" class="qb" value="Format Hard Disk" title="Format Hard Disk for Analyser or Proxy Server" onClick="formatHDD()" style="width:180px">);
+    print qq (</td>);
+    print qq (</tr>);
+    #************************************Brian 20090313 Select Analyzer HDD.********************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Analyser Hard Disk:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<hr size="1">);
+    print qq (<select class="qbopt" name="analydev" style="width:180">\n);
+    print qq (<option value="0">None</option>/n);
+    for ( $i = 0; $i<$devicelist_length; $i++)
+    {
+       my $status=($overview->{analydev} eq $devicelist[$i]) ? ('selected'): ('');
+       print qq (<option value="$devicelist[$i]" $status title="$deviceinfolist[$i]; $partitionlist[$i]">$deviceinfolist[$i]</option>/n); 
+    }
+    my $status=($overview->{analydev} eq $idedev) ? ('selected'): ('');
+    if ( $idedev ne "" )
+    {
+    print qq (<option value="$idedev" $status title="$idedev $idesize(KB)">$ideinfo</option>/n); 
+    }
+    print qq (</select><br>);
+    print qq (</td>);
+    print qq (</tr>);
+
+    }
+    #************************************Brian 20100401 For TCP Optimization.********************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (TCP Optimization:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<hr size="1">);
+
+    print qq (<select class="qbopt" name="tcp_opt" style="width:180">\n);
+    foreach my $algs ( sort keys %gTCP_OPT )
+    {
+      if ( $overview->{tcp_opt} )
+      {    
+        my $status=( $algs eq $overview->{tcp_opt} ) ? ('selected'):('');
+        print qq (<option $status value="$algs" >$gTCP_OPT{$algs}</option>/n);
+      }
+      else
+      {
+        my $status=( $algs eq "none" ) ? ('selected'):('');
+        print qq (<option $status value="$algs" >$gTCP_OPT{$algs}</option>/n);
+      }
+    }
+
+    print qq (</select><br>);
+    print qq (</td>);
+    print qq (</tr>);
+
+=cut
+    if ( $gENABLEANALYSER)
+    {    
+    #************************************Brian 20081125 Format HDD.********************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Format Hard Disk:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input type="button" class="qb" value="Format Hard Disk" title="Format Hard Disk for Analyser or Proxy Server" onClick="formatHDD()" style="width:180px">);
+    print qq (</td>);
+    print qq (</tr>);
+    }
+    #************************************ XML upgrade .********************************************
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Config. Upgrade:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input type="button" class="qb" value="Config. Upgrade" title="Upgrading Configuration Set" onClick="xmlUpgrade()" style="width:180px">);
+    print qq (</td>);
+    print qq (</tr>);
+
+    #************************************ Remote Log Server.********************************************
+
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (History Export FTP Server: );
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<hr size="1">);
+    print qq (<input name="rmlogserver" class="qbtext" type="text" maxlength="15" title="Remote LOG Configuration" value="$overview->{rmlogserver}" style="width:100px">server address<br>);
+    print qq (<input name="rmusername" class="qbtext" type="text" maxlength="15" title="" onChange="" style="width:100px" value="$overview->{rmusername}">username<br>);
+    print qq (<input name="rmpassword" class="qbtext" type="password" maxlength="15" title="" onChange="" style="width:100px" value="$overview->{rmpassword}">password);
+    print qq (<hr size="1">);
+    print qq (</td>);
+    print qq (</tr>);
+
+=cut    
+
+    #******************************Export Config file to remote ftp server************************
+    #20081226 Brian Export config file to ftp server
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Export Config File to FTP Server);
+    print qq (Export Config. to FTP Server);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<hr size="1">);
+    my $status=( $overview->{enablecfgftpserver} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" name="enablecfgftpserver"  $status title="When you save a config file,the file will be exported to remote ftp server automatically." onClick="switchCfgFTPServerIP()">Enable<br>);
+    print qq (<input name="cfgftpserverip" class="qbtext" type="text" title="FTP server address" value="$overview->{cfgftpserverip}" style="width:100px">Server address<br>);
+    print qq (<input name="cfgftpusername" class="qbtext" type="text" title="FTP login username" onChange="" style="width:100px" value="$overview->{cfgftpusername}">Login username<br>);
+    print qq (<input name="cfgftppassword" class="qbtext" type="password" title="FTP login password" onChange="" style="width:100px" value="$overview->{cfgftppassword}">Login password<br>);
+    print qq (<input name="cfgftpdirectory" class="qbtext" type="text" title="Support one layer directory can be created automatically!!! For example:If you type /aaa/bbb/ccc ,qb will create a directory ccc in /aaa/bbb,then upload config file to /aaa/bbb/ccc/" onChange="" style="width:100px" value="$overview->{cfgftpdirectory}">Upload directory);
+    print qq (<hr size="1">);
+    print qq (</td>);
+    print qq (</tr>);
+
+    my $registered_date_sec;
+    if (open(INSDATE, "/mnt/conf/insdate"))
+    {
+                                                                            
+    #******************************Register Information************************
+    #20090902 Brian Register Information
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Register Information);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<hr size="1">);
+    
+    my $registered_name=runCommand(command=>"cat", params=>'/mnt/conf/insdate');
+    my $registered_sn=runCommand(command=>"cat", params=>'/mnt/conf/qbsn');
+    my $registered_mail=runCommand(command=>"cat", params=>'/mnt/conf/contact');
+    runCommand(command=>"rm", params=>'-f /mnt/conf/dtstamp.dc');
+    runCommand(command=>"mcrypt", params=>'-d /mnt/conf/dtstamp -k 2k6m6');
+    $registered_date_sec=runCommand(command=>"cat", params=>'/mnt/conf/dtstamp.dc');
+    #date -d "1970-01-01 UTC xxxxxxxxxx seconds"
+    if ( $registered_date_sec ne '' )
+    {
+      $registered_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $registered_date_sec seconds\"));
+    }
+    print qq (<input name="registername" class="qbtext" type="text" title="Name of the company" value="$registered_name" style="width:100px">Company Name<br>);
+    print qq (<input name="registermail" class="qbtext" type="text" title="Contact E-mail" value="$registered_mail" onChange="checkMail(this.value)" style="width:100px">Contact E-mail<br>);
+    print qq (<input name="registersn" class="qbtext" type="text" title="Serial number of the QB" value="$registered_sn" readonly="readonly" style="width:100px">Serial Number<br>);
+    print qq (<input name="registerdate" class="qbtext" type="text" title="Registered Date" value="$registered_date" readonly="readonly" style="width:100px">Registered Date<br>);
+    print qq (<input type="button" class="qb" value="Register" title="Register Company Information"  onClick="regName()" style="width:180px">);
+    print qq (<hr size="1">);
+    print qq (</td>);
+    print qq (</tr>);
+    }
+    else
+    {
+    #20100310 Brian To show QB Serial Number
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (QB Serial Number);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $registered_sn=runCommand(command=>"cat", params=>'/mnt/conf/qbsn');
+    print qq (<input name="registersn" class="qbtext" type="text" title="Serial number of the QB" value="$registered_sn" readonly="readonly" style="width:100px">Serial Number<br>);
+    print qq (<hr size="1">);
+    print qq (</td>);
+    print qq (</tr>);
+       
+    }
+     close(INSDATE);
+    #************************************ Set Date ********************************************
+#    print qq (<tr>); 
+#    print qq (<td class="body"  valign="top" align="left">);
+#    print qq (Set Date:);
+#    print qq (</td>);
+#    print qq (<td class="body"  valign="top" align="left">);
+#    print qq (<input type="button" class="qb" value="Set Date" title="Set Date and Time" onClick="setDate()" style="width:180px">);
+#    print qq (<input type="hidden" value="" name="dateinfo">);
+#    print qq (</td>);
+#    print qq (</tr>);
+
+    print qq (<tr>); 
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Local Time:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+#    my $local_time=localtime(time());
+    my $local_time=runCommand(command=>'date', params=>'');
+    print qq ($local_time);
+    print qq (</td>);
+    print qq (</tr>);
+
+    runCommand(command=>"rm", params=>'-f /tmp/init*');
+    runCommand(command=>"cp", params=>'-f /mnt/conf/init.dat /tmp/init.nc');
+    runCommand(command=>"mcrypt", params=>'-d /tmp/init.nc -k 2k6m6$');
+    my $Warranty_time=runCommand(command=>'cat', params=>qq('/tmp/init'\|grep Warranty\|tail -n 1\|awk \'\{print \$2\}\'));
+    my $Reg_Warranty_time;
+    $Warranty_time=~s/\n//g;
+    if ( $registered_date_sec ne '' )
+    {
+      $Reg_Warranty_time=365 * 86400 + $registered_date_sec;
+    }
+    #date -d "1970-01-01 UTC xxxxxxxxxx seconds"
+    if ( $Warranty_time ne '' )
+    {
+      $Warranty_time_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $Warranty_time seconds\"));
+      if ( $Reg_Warranty_time >= $Warranty_time )
+      {
+       $Warranty_time_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $Reg_Warranty_time seconds\"));
+      }
+      else
+      {
+       $Warranty_time_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $Warranty_time seconds\"));
+      }
+      print qq (<tr>); 
+      print qq (<td class="body"  valign="top" align="left">);
+      print qq (Firmware Warranty Expired:);
+      print qq (</td>);
+      print qq (<td class="body"  valign="top" align="left">);
+      print qq ($Warranty_time_date);
+      print qq (</td>);
+      print qq (</tr>);
+    } 
+    #************************************ Set TimeZone  ********************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Time Zone:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $presentzone=runCommand(command=>"cat", params=>$gCLOCK);
+    my $zoneinfo=runCommand(command=>"cat", params=>$gZONEINFO);
+    my @zonerecord=split(/\n/, $zoneinfo);
+    my @zonelist;
+    foreach my $record ( @zonerecord ) 
+    {
+        if ( $record=~m/^#/) { next; }
+        my @zonedata=split(/\s+/, $record);
+        push ( @zonelist, $zonedata[2]);
+    }
+
+    print qq(<select name="timezone" class="qbopt" style="width:180">);
+    foreach my $zone ( sort @zonelist ) 
+    {
+        my $status=( $presentzone=~m/$zone/ ) ? ( $status="selected" ) : ( $status="" );
+        print qq (<option value="$zone" $status >$zone</option>\n); 
+    } 
+    print qq (</select>);
+    print qq (</td>);
+    
+    #************************************ NTP Time Server ********************************************
+    #20081204 Brian for NTP Time Server            
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (NTP Time Server:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input class="qbtext" name="ntptimeserver" type="text" value="$overview->{ntptimeserver}" style="width:120">);
+    print qq (<input class="qb" type="button" value="Sync" title="Sync the NTP Server" onClick="goSubmit('SYNC')" style="width:60">);
+    print qq (<hr size="1">);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #************************************ User Define Https Port ********************************************
+    #20080925 Brian for Https port            
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Https Port Number:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input class="qbtext" name="httpsport" type="text" value="$overview->{httpsport}" onChange="checkPort(this.value)" style="width:180"><br>);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #************************************ User Define Hostname ********************************************
+    #20080925 Brian for Hostname            
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Hostname:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input class="qbtext" name="hostname" type="text" value="$overview->{hostname}" style="width:180"><br>);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #************************************ User Define Hostname on LCM********************************************
+    #20110425 Brian for Hostname on LCM           
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Hostname on LCM:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input class="qbtext" name="hostname_lcm" maxlength="17" type="text" value="$overview->{hostname_lcm}" style="width:180"><br>);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #************************************ Alarm E-mail ********************************************
+    my $maillist=$overview->{mail};
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Alarm E-mail:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $count=1;
+    foreach my $mail ( @$maillist )
+    {
+        my $mailValue=$mail->{value}; 
+        if ( $mailValue eq 'system' ) { $mailValue=''; }
+        print qq (<input class="qbtext" name="mail$count" type="text" value="$mailValue" onChange="checkMail(this.value)" style="width:180"><br>);
+        $count++;
+    } 
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #************************************ Command Button  ********************************************
+    print qq (<tr>);
+    print qq (<td></td><td align="left">);
+    print qq (<input class="qb" type="button" value="Save" title="Save All Parameters" onClick="goSubmit('SAVE')" style="width:180">);
+    print qq (</td></tr>);
+ 
+    print qq (</table>);
+}
+#showConsole
+
+
+#======================================================================================================================
+sub consoleScript 
+{
+    print << "CONSOLE_SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0];    
+        //switchTrueAggregation();
+    }
+
+    function switchTrueAggregation()
+    {
+        if ( myform.express[0].checked ) { myform.aggregate[0].disabled=myform.aggregate[1].disabled=false; }
+        if ( myform.express[1].checked ) { myform.aggregate[0].disabled=myform.aggregate[1].disabled=true; }
+    }
+
+    function switchCfgFTPServerIP()
+    {
+                myform.cfgftpserverip.disabled=( myform.enablecfgftpserver.checked ) ? (false) : (true);
+    }
+
+    function checkAndSetDNS(resolver)
+    {
+        if ( !isValidIP(resolver) ) { myform.resolve.value='127.0.0.1';}
+    }
+    
+    function checkAndSetDNS(dnsserverip)
+    {
+        if ( !isValidIP(dnsserverip) ) { myform.dnsserverip.value='127.0.0.1';}
+    }
+    
+    function checkAndSetDNS(relay)
+    {
+        if ( !isValidIP(relay) ) { myform.relay.value='127.0.0.1';}
+    }
+    
+    function checkMail(mail)
+    {
+        if ( !mail ) { return;}
+        if ( !isValidMail(mail) ) { alert('Invalid E-mail Format'); }
+    }
+
+    function editUserAccount()
+    {
+        var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to Edit User Account'); return;}
+        window.top.mainFrame.location.href="edituser.cgi";
+    }
+    
+    function setDate()
+    {
+        var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to Set Date'); return;}
+        
+        var dateinfo='';
+        dateinfo=qbSetDate();
+        
+        if ( typeof(dateinfo)!='string' ) { return; }
+        myform.dateinfo.value=dateinfo;
+
+        goSubmit('SETDATE');
+    }
+
+    function formatHDD()
+    {
+        var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to Format HDD'); return;}
+        if ( qbConfirm(2, 'Confirm format HDD ?') == 1 )   goSubmit('FORMATHDD');    
+    }
+
+    function regName()
+    {
+        var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to register company name!'); return;}
+        if ( myform.registername.value == '' ){ alert('Company name can not be empty!'); return; }        
+        if ( myform.registersn.value  == ''){ alert('Serial Nymber can not be empty!'); return; }        
+        if ( myform.registerdate.value != ""){alert('You have registered!');return;}
+        if ( qbConfirm(2, 'Confirm to register company name ?') == 1 )   goSubmit('REGNAME');    
+    }
+
+    function remoteConfig()
+    {
+        var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to Do Remote Config'); return;}
+        window.top.mainFrame.location.href="rmconfig.cgi";
+    }
+
+    function xmlUpgrade()
+    {
+        var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to Do Config Upgrade'); return;}
+        window.top.mainFrame.location.href="xmlupgrade.cgi";
+    }
+
+    </script>
+CONSOLE_SCRIPT
+}
+#consoleScript
+
+
+#======================================================================================================================
+#maintainOverview( %action )
+sub maintainOverview 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $overview=XMLread($gPATH.'overview.xml');
+    &GetCookies('username');  my $username=$Cookies{username};
+    my $local_time=localtime(time());
+    
+    if ( $action{action} eq "UPDATE" ) 
+    {
+	if ($overview->{warning} eq '1'){$gMSGPROMPT.=qq ( ERROR: No entry in Static Routes Setting and Redirect To Transparent Proxy!! );return;}
+        LogUserAction( action=>'UPDATE' );                    
+        my $update_result=&callPserver( action=>'UPDATE' );
+        if ( $update_result==-1 ) { $gMSGPROMPT.=qq ( Update Time Out\\n);  }
+        if ( $update_result==0 ) { $gMSGPROMPT.=qq ( Update Failed\\n); }
+        else { $gMSGPROMPT.=qq ( Update Completed \\n ); }
+        LogUserAction( action=>'UPDATE_DONE' );                    
+        
+        return;
+    }
+    elsif ( $action{action} eq "UPDATEANDWAIT" ) 
+    {
+        my $update_result=&callPserver( action=>'UPDATEANDWAIT' );
+        if ( $update_result==-1 ) { $gMSGPROMPT.=qq ( Update Time Out\\n);  }
+        if ( $update_result==0 ) { $gMSGPROMPT.=qq ( Update Failed\\n); }
+        else { $gMSGPROMPT.=qq ( Update Completed\\n ); }               
+        
+        return;
+    }
+    elsif ( $action{action}=~m/^GETDESTINATION$/ ) 
+    {
+        my $destlist=$overview->{destination}->[0]->{opt};       
+        my %dest_to_return;
+        foreach my $dest ( @$destlist ) { if ( $dest ne 'system' ) { $dest_to_return{$dest}=1; }  }
+        return keys ( %dest_to_return );
+    }
+    #( action=>'', host=>'' )
+    elsif ( $action{action}=~m/^GETNICBYHOST$/ )
+    {
+        my $natarray=$overview->{nat};
+        foreach my $nat ( @$natarray ) { if ( $nat->{ip} eq $action{host} ) { return; } }
+        foreach my $nat ( @$natarray ) { if ( isSubnetUsableIP($action{host}, $nat->{network})==1 ) { return $nat->{nic}; } }
+        return;
+    }
+    elsif ( $action{action}=~m/^ADDDESTINATION$|^DELDESTINATION$/ ) 
+    {
+        my $destlist=$overview->{destination}->[0]->{opt};    
+
+        #if ( $action{action} eq "ADDDESTINATION" )   
+        #{   
+           # my $destip=host2IP($action{destination});
+           # if ( !$destip ) { $gMSGPROMPT.=qq("Cannot Resolve Destination: $action{destination}"); return; }
+           # else {  $action{destination}=$destip; }
+        #}
+
+        @updated_array;
+        foreach my $dest ( @$destlist ) { if ($dest ne $action{destination} ) { push(@updated_array, $dest);} }
+
+        if ( $action{action} eq 'ADDDESTINATION' ) { push(@updated_array, $action{destination} ); }
+
+        $overview->{destination}->[0]->{opt}=\@updated_array;
+    }
+    elsif ( $action{action}=~m/^SETDATE$/ )
+    {
+        runCommand(command=>$gSETUIDPATH.'date.sh', params=>$action{dateinfo});
+        $gMSGPROMPT.=qq ( Set Date Successfully \\n);
+        return;
+    }
+    elsif ( $action{action}=~m/^FORMATHDD$/ )
+    {
+        runCommand(command=>'touch', params=>'/mnt/conf/'.$action{devicename}.'.dev');
+        runCommand(command=>'touch', params=>'/mnt/conf/'.$action{formattype}.'.tpe');
+        $gMSGPROMPT.=qq ( Please reboot qb to format hard disk \\n);
+        return;
+        
+        LogUserAction( action=>'FORMATHDD', devicename=>$action{devicename}, formattype=>$action{formattype} );
+    }
+    elsif ( $action{action}=~m/^REGNAME$/ )
+    {
+        if ( $action{registername}!~m/[A-Za-z]/ )
+        {
+            $gMSGPROMPT.=qq ( Please Check Company Name again!!! \\n);
+            return;
+        }
+        runCommand(command=>'echo ', params=>$action{registername}.' > '.'/tmp/insdate');
+        runCommand(command=>'echo ', params=>$action{registersn}.' > '.'/tmp/qbsn');
+        runCommand(command=>'echo ', params=>$action{registermail}.' > '.'/tmp/contact');
+        runCommand(command=>'/usr/sbin/ntpdate', params=>' time.stdtime.gov.tw');
+#        runCommand(command=>'/usr/sbin/ntpdate', params=>'$action{ntptimeserver}');
+        runCommand(command=>'date ', params=>'+%s > /tmp/dtstamp');
+        runCommand(command=>'mcrypt ', params=>'/tmp/dtstamp -k 2k6m6');
+        runCommand(command=>'mv', params=>'-f /tmp/insdate /mnt/conf/');
+        runCommand(command=>'mv', params=>'-f /tmp/qbsn /mnt/conf/');
+        runCommand(command=>'mv', params=>'-f /tmp/contact /mnt/conf/');
+        runCommand(command=>'mv', params=>'-f /tmp/dtstamp.nc /mnt/conf/dtstamp');
+        runCommand(command=>'sync', params=>'');
+        $gMSGPROMPT.=qq ( Thank you for the registration !!! \\n);
+        runCommand(command=>'/opt/qb/bin/script/mail.sh', params=>'qbreg');
+        return;
+        
+        LogUserAction( action=>'REGNAME', registername=>$action{registername}, registersn=>$action{registersn}, registermail=>$action{registermail}, ntptimeserver=>$action{ntptimeserver} );
+    }
+    elsif ( $action{action}=~m/^SAVEWARNING$/ )
+    {
+        $overview->{warning} = $action{warning};
+    }
+    elsif ( $action{action}=~m/^SAVE$/ ) 
+    {
+	if ( $action{httpsport} && $action{numofuser} )
+        {
+            $name = XMLread('/usr/local/apache/active/basic.xml');
+            $isplist = $name->{isp};
+            if ($action{autofile} eq 'on')
+            {
+                foreach $isp (@$isplist)
+                {
+            	    $x++;
+            	    if ($isp->{isptype} eq 'dtunnel' && $isp->{isptype} eq 'tunnel'){next;}
+            	    if ($isp->{tunnel_role} && $isp->{tunnel_role} eq '1'){next;}
+            	    $y++;
+                }
+            	if ($x eq $y){$gMSGPROMPT.= qq ( WARNING!! This Auto-Save Function is for Bonding Client to server server with CMS!! );}
+            }
+            $overview->{mail}= $action{mail};
+            $overview->{httpsport}=$action{httpsport};   #20080925 Brian for user define https port
+            $overview->{hostname}=$action{hostname};   #20080925 Brian for user define hostname
+            $overview->{hostname_lcm}=$action{hostname_lcm};   #20110425 Brian hostname on LCM
+            #20081226 Brian Export config file to ftp server
+            $overview->{enablecfgftpserver}=$action{enablecfgftpserver};
+            $overview->{ftpmode}=$action{ftpmode};
+            $overview->{autofile}=$action{autofile};
+            $overview->{cfgftpserverip}=$action{cfgftpserverip};
+            $overview->{cfgftpusername}=$action{cfgftpusername};
+            $overview->{cfgftppassword}=$action{cfgftppassword};
+            $overview->{cfgftpdirectory}=$action{cfgftpdirectory};
+            authenticate( action=>'SETMAXUSER', numofuser=>$action{numofuser} );
+            
+            LogUserAction( action=>'SAVEADMINSETTING', httpsport=>$action{httpsport}, hostname=>$action{hostname}, enablecfgftpserver=>$action{enablecfgftpserver}, ftpmode=>$action{ftpmode}, cfgftpserverip=>$action{cfgftpserverip}, cfgftpusername=>$action{cfgftpusername}, cfgftppassword=>$action{cfgftppassword}, cfgftpdirectory=>$action{cfgftpdirectory} );
+        }
+        elsif ( $action{enablecfgftpserver} )
+        {
+	    if ($action{enablecfgftpserver} eq 'true'){$overview->{enablecfgftpserver}='1';}
+            else {$overview->{enablecfgftpserver}='0';}
+            $overview->{ftpmode}=$action{ftpmode};
+	    if ($action{autofile} eq 'true'){$overview->{autofile}='on';}
+            else {$overview->{autofile}='';}
+            $overview->{cfgftpserverip}=$action{cfgftpserverip};
+            $overview->{cfgftpusername}=$action{cfgftpusername};
+            $overview->{cfgftppassword}=$action{cfgftppassword};
+            $overview->{cfgftpdirectory}=$action{cfgftpdirectory};
+            
+            authenticate( action=>'SETMAXUSER', numofuser=>$action{numofuser} );
+            LogUserAction( action=>'SAVEADMINSETTING', httpsport=>$action{httpsport}, hostname=>$action{hostname}, enablecfgftpserver=>$action{enablecfgftpserver}, ftpmode=>$action{ftpmode}, cfgftpserverip=>$action{cfgftpserverip}, cfgftpusername=>$action{cfgftpusername}, cfgftppassword=>$action{cfgftppassword}, cfgftpdirectory=>$action{cfgftpdirectory} );
+        }
+        elsif ( $action{tcp_opt} )
+        {
+            #$overview->{mssmodify}=$action{mssmodify};
+            #$overview->{mssmodify_value}=$action{mssmodify_value};
+            $overview->{tcp_opt}=$action{tcp_opt}; #20100401 Brian tcp optimization
+            $overview->{enabletcpopt}=$action{enabletcpopt}; #20100401 Brian tcp optimization
+            $overview->{tcp_source}=$action{tcp_source}; 
+            $overview->{tcp_destination}=$action{tcp_destination}; 
+            $overview->{tcp_dest_port}=$action{tcp_dest_port};
+            
+            LogUserAction( action=>'SAVETCPOPT', tcp_opt=>$action{tcp_opt}, tcp_source=>$action{tcp_source}, tcp_destination=>$action{tcp_destination}, tcp_dest_port=>$action{tcp_dest_port} ); 
+        }
+        #elsif ( defined($action{mssmodify}) ) 
+        elsif ( $action{mssmodify} ne '' || $action{udpmodify} ne '' ) 
+        {
+            $overview->{mssmodify}=$action{mssmodify};
+            $overview->{mssmodify_value}=$action{mssmodify_value};
+            $overview->{udpmodify}=$action{udpmodify};
+            $overview->{udpmodify_value}=$action{udpmodify_value};
+            
+            LogUserAction( action=>'SAVEMSSMODIFY', mssmodify=>$action{mssmodify}, mssmodify_value=>$action{mssmodify_value} );
+        }
+        elsif ( $action{h323helper} ne '' || $action{siphelper} ne '' )
+        {
+            $overview->{h323helper}=$action{h323helper};
+            $overview->{siphelper}=$action{siphelper};
+            
+            LogUserAction( action=>'SAVEVOIP', h323helper=>$action{h323helper}, siphelper=>$action{siphelper} );
+        }
+        elsif ( $action{ntptimeserver} )
+        {
+            $overview->{ntptimeserver}=$action{ntptimeserver};   #20081204 Brian for NTP Time Server
+        }
+        elsif ( $action{analydev} )
+        {
+            $overview->{analydev}=$action{analydev};
+            $overview->{analytpe}=$action{analytpe};
+            
+            LogUserAction( action=>'SAVEANALYDEV', analydev=>$action{analydev}, analytpe=>$action{analytpe} );
+        }
+        elsif ( $action{resolve} )
+        {
+            $overview->{resolve}=$action{resolve};
+            $overview->{dnsserver}=$action{dnsserver};
+            $overview->{dnsserverip}=$action{dnsserverip};
+            $overview->{relay}=$action{relay};
+            $overview->{dnsproxyport}=$action{dnsproxyport};
+            runCommand(command=>$gSETUIDPATH.'timeconfig.sh', params=>$action{timezone});
+            
+            LogUserAction( action=>'SAVEDNSSERVER', resolve=>$action{resolve}, dnsserver=>$action{dnsserver}, relay=>$action{relay} );
+        }
+
+        #$overview->{express}=$action{express};
+        $overview->{express}=0;
+        $overview->{analydev}=$action{analydev};
+
+        #$overview->{aggregate}=(!$action{express}) ? ('0'): ("$action{aggregate}");
+        $overview->{aggregate}=0;
+=cut
+        $overview->{mail}=$action{mail};
+
+        #$overview->{express}=$action{express};
+        $overview->{express}=0;
+
+        #$overview->{aggregate}=(!$action{express}) ? ('0'): ("$action{aggregate}");
+        $overview->{aggregate}=0;
+
+        $overview->{measure}=$action{measure};
+        $overview->{sendarp}=$action{sendarp};
+        $overview->{igwpermnt}=$action{igwpermnt};
+        $overview->{mssmodify}=$action{mssmodify};
+        $overview->{resolve}=$action{resolve};
+        $overview->{dnsserver}=$action{dnsserver};
+        $overview->{dnsserverip}=$action{dnsserverip};
+        $overview->{relay}=$action{relay};
+        $overview->{dnsproxyport}=$action{dnsproxyport};
+        $overview->{rmlogserver}=$action{rmlogserver};
+        $overview->{rmusername}=$action{rmusername};
+        $overview->{rmpassword}=$action{rmpassword};
+        $overview->{httpsport}=$action{httpsport};   #20080925 Brian for user define https port 
+        $overview->{ntptimeserver}=$action{ntptimeserver};   #20081204 Brian for NTP Time Server
+        $overview->{hostname}=$action{hostname};   #20080925 Brian for user define hostname
+        authenticate( action=>'SETMAXUSER', numofuser=>$action{numofuser} );
+
+        #20081226 Brian Export config file to ftp server
+        $overview->{enablecfgftpserver}=$action{enablecfgftpserver};
+        $overview->{cfgftpserverip}=$action{cfgftpserverip};
+        $overview->{cfgftpusername}=$action{cfgftpusername};
+        $overview->{cfgftppassword}=$action{cfgftppassword};
+        $overview->{cfgftpdirectory}=$action{cfgftpdirectory};
+        $overview->{analydev}=$action{analydev};
+        $overview->{analytpe}=$action{analytpe};
+        
+        $overview->{tcp_opt}=$action{tcp_opt}; #20100401 Brian tcp optimization
+
+        runCommand(command=>$gSETUIDPATH.'timeconfig.sh', params=>$action{timezone});
+=cut
+    }
+    elsif ( $action{action}=~m/^SYNC$/ ) 
+    {
+        $overview->{ntptimeserver}=$action{ntptimeserver};   #20081204 Brian for NTP Time Server
+        runCommand(command=>$gSETUIDPATH.'timeconfig.sh', params=>$action{timezone});
+        my $sync_result=runCommand(command=>'/usr/sbin/ntpdate', params=>$action{ntptimeserver});
+        $sync_result=~s/.*adjust/Connected to/g;
+        $sync_result=~s/\n//g;
+        $gMSGPROMPT.=qq ( $sync_result \\n);
+        if ( !$sync_result )
+        {
+           $gMSGPROMPT.=qq ( Fail to sync the NTP Server!!! \\n);
+        }
+        return;
+        
+#        LogUserAction( action=>'SYNCTIME', ntptimeserver=>$action{ntptimeserver}, timezone=>$action{timezone} );
+        LogUserAction( action=>'SYNCTIME', ntptimeserver=>$overview->{ntptimeserver} );
+    }
+    #-------updating overview.xml------------------------ 
+    XMLwrite($overview, $gPATH."overview.xml");
+
+    runCommand (command=>'/opt/qb/bin/script/enable_dnsserver.sh', param=>'');    
+
+    #dep:
+    if ( $action{action}=~m/^ADDDESTINATION$|^DELDESTINATION$/ ) { maintainFwmark( type=>'to' ); }
+    
+    #dep: 
+    if ( $action{action}=~m/^DELDESTINATION$/ ) { maintainIniroute( action=>'DELRULEOFDESTINATION' ); }
+
+    #dep:
+    if ( $action{action}=~m/^ADDDESTINATION$|^DELDESTINATION$/ ) { maintainNAT( action=>'CHECKNATOBSOLETE', viewpoint=>'nat' ); }
+    
+    #dep:
+    if ( $action{action}=~m/^ADDDESTINATION$|^DELDESTINATION$/ ) { maintainVS( action=>'CHECKREALSERVERS' ); }
+}
+#maintainOverview
+#
+1

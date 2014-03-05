@@ -1,0 +1,93 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showServiceGroup
+{
+    my (%action)=@_;
+    my $sergref=XMLread($gPATH.'sergroup.xml');
+    my $serglist=$sergref->{sergroup};
+    
+    my @titleHeadList=($qblang[29], $qblang[169], $qblang[25]);
+    my %titleWidth=('Name'=>300, 'Service'=>300, 'Edit'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Service Grouping);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    #==============================================================
+    # Print Title first
+    # show 
+    #===============================================================
+    # print qq (<div class="divframe" style="width:800">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0"><tr>); 
+    # foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    # print qq (<td align="center" width="100">);
+    # print qq (<a href="javascript:DelServiceGroup()"><image src="image/del.gif" title="Delete Checked sergdule(s)" border="0"></a>);
+    # print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('sergroupname', this.checked)">);
+    # print qq (</tr></table>);
+    # print qq (</div>);
+    print qq (<div class="divframe" style="height:200; width:800">);
+    print qq (<table id="sergvicegroupList" width="100%"  class="body" border="0"><thead><tr bgcolor="#332211"><td width="300" align="center">$qblang[29]</th><th width="" align="center">$qblang[169]</th><th width="100" align="center">$qblang[25]</th><th width="100" align="center"><a href="javascript:DelServiceGroup()"><img border="0" title="Delete Checked sergdule(s)" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('sergroupname', this.checked)" title="select or deselect all items"></th></tr></thead>);
+    my $lineCount=0;
+    foreach my $item ( @$serglist )
+    {
+        if ( $item->{sergroup} eq "system" ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)" title="$item->{serlist}">); 
+        print qq (<td align="center" width="$titleWidth{Name}" height="25" >$item->{sergroup}</td>);
+        print qq (<td align="center" width="$titleWidth{Description}" height="25">$item->{description}</td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<a href="newsergroup.cgi?sergroup=$item->{sergroup}&description=$item->{description}&serlist=$item->{serlist}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit sergvicegroup properties" border="0"></a></td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<input type="checkbox" name="sergroupname" value="$item->{sergroup}">);
+        print qq (</tr>);
+        $lineCount++;
+    }
+                                            
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="$qblang[162]" onclick="NewServiceGroup();">);
+}
+#showsergvicegroup
+    
+
+
+#=============================================================================================
+
+sub scriptServiceGroup
+{
+    print << "scriptservicegroup";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function NewServiceGroup() { window.top.mainFrame.location.href="newsergroup.cgi"; }    
+    
+    function DelServiceGroup()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+    </script>
+    
+scriptservicegroup
+}
+#sergvicegroupScript
+#
+1

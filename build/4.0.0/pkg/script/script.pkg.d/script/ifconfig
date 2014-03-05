@@ -1,0 +1,36 @@
+#!/bin/sh
+
+#
+# 2005-0701 Hammer
+# 	Hacking of /sbin/ifconfig. At Jesse's demand for XRIO QB evalution.
+#	Hacking for mpv0 only.
+#
+# 2005-0707 Hammer
+#	Modified. Hacking for mpv200 - mpv399 only.
+#
+# Original :
+#	/sbin/ifconfig mpv200 mtu 1500
+# New :
+#	/sbin/ifconfig mpv200 mtu 1420
+#
+
+IS_BASE_TUNNEL="n"
+
+# Checking for mpv200 <-> mpv399
+PREFIX=`echo $1 | cut -c1-3`
+if [ "x$PREFIX" = "xmpv" ]; then
+	LINE_NO=`echo $1 | sed -e "s/^mpv//g"`
+	if [ $LINE_NO -ge 80 -a $LINE_NO -le 99 ]; then
+	    IS_BASE_TUNNEL="y"
+	fi
+fi
+
+if [     $# -eq 3 \
+     -a "x$IS_BASE_TUNNEL" = "xy" \
+     -a "x$2" = "xmtu" ]; then
+
+	/sbin/ifconfig.org $1 mtu 1420
+else
+	/sbin/ifconfig.org $*
+fi
+

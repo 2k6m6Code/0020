@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="gui.css" type="text/css">
+    </head>
+    
+    <body bgcolor="#336699">
+    
+    <div class="body" align="center"><br>Add One to One Mapping in Batch Way<br><br>
+    <textarea class=qbtext id=info rows=10 cols=60></textarea><br><br>
+    <input type=button class=qb value="Ok" style="width:60" onClick="returnResult()">
+    <input type=button class=qb value="Cancel" style="width:60" onClick="returnCancel()">
+    </div>
+    <div class="body" align="left">
+    <hr size="1">
+    Usage:  MAPPING_1 ; MAPPING_2 ... ; MAPPING_N<br><br>
+    where   MAPPING_n:= { FORMAT1 | FORMAT2 | FORMAT3 }<br><br>
+            FORMAT1 := virtual_ip > real_server<br><br>
+            FORMAT2 := start virtual_ip : number of ip   > start real_server<br><br>
+            FORMAT3 := start virtual_ip - end virtual_ip > start real_server <br>
+    <hr size="1">
+    </div>
+    
+    <script language="javascript">
+        function returnResult() 
+        {
+            window.returnValue=info.value;
+            window.close();
+        }
+
+        function returnCancel() 
+        {
+            window.close();
+        }
+    </script>
+    </body>
+</html>

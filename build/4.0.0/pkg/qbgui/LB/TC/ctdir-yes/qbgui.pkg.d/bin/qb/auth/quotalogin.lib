@@ -1,0 +1,130 @@
+#!/usr/bin/perl
+#quotawork(%action)
+sub quotawork
+{
+my $cgi = new CGI;
+my ( %action )=@_;
+my $action = $cgi->param("action");
+my $link = $action{LINK};
+my $check1 = $action{CHECK};
+#print "Content-type:text/html\n\n";
+my $quota = XMLread($gPATH.'quota.xml');
+my $data1 = $action{DATA};
+my @filestr;
+
+if ($action eq "CREAT" || $action{quotaaction} eq "CREAT" )
+{
+    my $point = '0';
+    my $check = '0';
+    my $zonelist = $quota->{quota};
+    open(FILE,">/usr/local/apache/qb/setuid/quota.sh");
+    print FILE "\#!/bin/bash\n";
+    
+    foreach my $ref (@$zonelist) 
+    {
+        if ($ref->{gateway} eq "system" ){next;}
+        if ($ref->{enabled} eq "0" ){next;}
+        if ($check1 eq "repeat")
+        {
+            open(FILE1,"/usr/local/apache/qb/Log_file/quota_Dynamic");
+            foreach my $line (<FILE1>)
+            {
+                ($num,$dev,$size)=split(/,/,$line);
+            
+                if ($check1 eq "repeat" && $ref->{name} eq $dev)
+                {     
+                    $link = $ref->{name};
+                    $down=$size;
+                    $down=~s/\n//;
+                    $check='1';
+                }
+            }
+			open(FILE11,"/usr/local/apache/qb/Log_file/quota_Dynamic2");
+            foreach my $line (<FILE11>)
+            {
+                ($num,$dev,$size)=split(/,/,$line);
+            
+                if ($check1 eq "repeat" && $ref->{name} eq $dev)
+                {     
+                    $link = $ref->{name};
+                    $up=$size;
+                    $up=~s/\n//;
+                    $check='1';
+                }
+            }
+		}
+        if ($ref->{name} eq $link && $ref->{enabled} eq '1')
+		{##################################
+			$ref->{mail}='0';
+			if ($check eq '0')
+			{
+				$point = '1';
+				my ($dnum,$doo)=split(":",$ref->{down});
+				my ($unum,$uoo)=split(":",$ref->{up});
+				$down = $dnum*$doo;
+				$up = $unum*$uoo;
+			}
+			if($ref->{type} eq 'ip')
+			{
+				$tmp = "/sbin/iptables -t mangle -A $ref->{name}.up -j DROP\n";
+				$tmp1 = "/sbin/iptables -t mangle -A $ref->{name}.down -j DROP\n";
+				
+				print FILE "/sbin/iptables -t mangle -D POSTROUTING -s $ref->{ip} -j $ref->{name}.up\n";
+				print FILE "/sbin/iptables -t mangle -D PREROUTING -d $ref->{ip} -j $ref->{name}.down\n";
+				print FILE "/sbin/iptables -t mangle -N $ref->{group_name}.down\n";
+				print FILE "/sbin/iptables -t mangle -N $ref->{group_name}.up\n";
+				
+				print FILE "/sbin/iptables -t mangle -A POSTROUTING -s $ref->{ip} -j $ref->{name}.up\n";
+				print FILE "/sbin/iptables -t mangle -A PREROUTING -d $ref->{ip} -j $ref->{name}.down\n";
+
+				close(FILE1);
+			}
+		}
+		else{next;}
+    }
+    print FILE @filestr;
+    close(FILE);
+    system("/usr/local/apache/qb/setuid/run /bin/sh /usr/local/apache/qb/setuid/quota.sh");
+    system("/usr/local/apache/qb/setuid/run /usr/bin/perl /usr/local/apache/qb/setuid/requota.pl");
+    #print qq ($point);
+    open(QUOTA,"/usr/local/apache/qb/Log_file/quota_Dynamic");
+    foreach my $data (<QUOTA>)
+    {
+       my @tmpnum=split(/,/,$data);
+	   foreach my $ref (@$zonelist)
+       {
+           if($ref->{gateway} eq "system"){next;}
+           if ($ref->{port} ne '' && $ref->{port} ne $tmpnum[1]){next;}
+           #$ref->{num}=$tmpnum[0];
+       }
+       foreach my $ref (@$zonelist)
+       {
+           if($ref->{gateway} eq "system"){next;}
+           if ($ref->{ip} ne $tmpnum[1]){next;}
+           #$ref->{num}=$tmpnum[0];
+       }
+    }
+    close(QUOTA);
+	open(QUOTA2,"/usr/local/apache/qb/Log_file/quota_Dynamic2");
+    foreach my $data (<QUOTA2>)
+    {
+       my @tmpnum=split(/,/,$data);
+	   foreach my $ref (@$zonelist)
+       {
+           if($ref->{gateway} eq "system"){next;}
+           if ($ref->{port} ne $tmpnum[1]){next;}
+           #$ref->{num2}=$tmpnum[0];
+       }
+       foreach my $ref (@$zonelist)
+       {
+           if($ref->{gateway} eq "system"){next;}
+           if ($ref->{ip} ne $tmpnum[1]){next;}
+           #$ref->{num2}=$tmpnum[0];
+       }
+    }
+    close(QUOTA2);
+    XMLwrite($quota, $gPATH."quota.xml"); 
+}
+}
+#quotawork
+1

@@ -1,0 +1,478 @@
+#===========================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showHA0
+{
+    my (%action)=@_;
+    print qq (<table cellspacing="0" border="0" class="body">);
+    print qq (<tr><td class="bigtitle">$qblang[271]);
+    print qq (<a href="javascript:qbShowHelp('ha0')"><image src="image/help.gif" border="0" title="Help"></a><hr size=1></td></tr>);
+    
+    print qq (<tr>);
+    print qq (<td valign="top" class="body">$qblang[272]</td></tr>);
+    print qq (<tr><td align="right" valign="bottom"><input class="qb" type="button" value="$qblang[273]" title="Click to Enable HA" onClick="goHA('ENABLEHA')" style="width:120"></td></tr>);
+
+    print qq (<tr><td>&nbsp;</td></tr>);
+    print qq (<tr><td>);
+    print qq (<iframe name="result" style="background-color:#C2D1E1; width:350; height:300; filter:alpha(opacity=70);"></iframe></td>);
+    print qq (</td></tr>);
+    
+    print qq (</table>);
+}
+#showHA0
+
+#===========================================================================================
+sub showHA
+{
+    my (%action)=@_;
+    my $ha=XMLread($gINITPATH.'ha.xml');
+    #generating presentation format in TABLE 
+    print qq (<div align="center">);
+    print qq (<table cellspacing="0" border="0" class="body">\n);
+    print qq (<tr><td colspan="2" class="bigtitle" align="center">$qblang[274]  );
+    print qq (<a href="javascript:qbShowHelp('ha')"><image src="image/help.gif" border="0" title="Help"></a><hr size=1></td></tr>);
+    print qq (<tr><td align="center" valign="top" bgcolor="#224488">);
+    print qq (<sapn>$qblang[275]</span><br>);
+    print qq (<iframe name="result" style="background-color:red; width:270; height:390; filter:alpha(opacity=70);"></iframe>);
+    print qq (</td><td align="center" width="500">);
+
+    print qq (<table cellspacing="0" border="0" class="body">\n);
+    #====================================================================================
+    # Launch On Boot or Not
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[276]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $ha->{afs}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="afs"   $status value="1">Yes); 
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    $status=( $ha->{afs}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="afs"  $status value="0">No);
+    print qq (</td>);
+    print qq (</tr>);  
+
+    #====================================================================================
+    # Role to Play 
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Play the Role of:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $ha->{role}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="role"  $status value="1">$qblang[277]); 
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    $status=( $ha->{role}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="role"  $status value="0">$qblang[278]); 
+    print qq (</td>);
+    print qq (</tr>);  
+
+    #====================================================================================
+    # Auto Fail Over  
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[279]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $ha->{autofailover}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="autofailover"  $status value="1">Yes); 
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    $status=( $ha->{autofailover}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="autofailover"  $status value="0">No); 
+    print qq (</td>);
+    print qq (</tr>);  
+    
+    #====================================================================================
+    # Auto Switch Back 
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[280]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $ha->{autoswitchback}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="autoswitchback"  $status value="1">Yes); 
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    $status=( $ha->{autoswitchback}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="autoswitchback"  $status value="0">No); 
+    print qq (</td>);
+    print qq (</tr>);  
+    
+    #====================================================================================
+    # Fail when Lan Interface Fail 
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[281]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $ha->{nicfail}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="nicfail"   $status value="1">Yes); 
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    $status=( $ha->{nicfail}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="nicfail"  $status value="0">No);
+    print qq (</td>);
+    print qq (</tr>);  
+
+    #====================================================================================
+    # Host Over Time Out  
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[282]:);
+    print qq (</td>);
+    print qq (<td class="body"  colspan="2" valign="top" align="left">);
+    print qq (<select name="hosttimeout" class="qbopt" style="width:120">);
+    for ( my $interval=3; $interval<=30; $interval+=3)
+    {   
+        my $status=( $ha->{hosttimeout} eq $interval ) ? ('selected') : ('');
+        print qq (<option $status value="$interval">$interval s</option>); 
+    }
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);  
+
+    #====================================================================================
+    # Network Fail Over Time Out  
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[283]:);
+    print qq (</td>);
+    print qq (<td class="body"  colspan="2" valign="top" align="left">);
+    print qq (<select name="networktimeout" class="qbopt" style="width:120">);
+    for ( my $interval=3; $interval<=20; $interval+=3)
+    {   
+        my $status=( $ha->{networktimeout} eq $interval ) ? ('selected') : ('');
+        print qq (<option $status value="$interval">$interval times</option>); 
+    }
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);  
+
+    #====================================================================================
+    #  Enable Virtual MAC 
+    my @vmacarray=split(/:/, $ha->{vmacnic});
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[284]:);
+    print qq (</td>);
+    print qq (<td class="body"  colspan="2" valign="top" align="left">);
+    
+    print qq (<select class="qbopt" multiple name="vmacnic" style="WIDTH: 120px" size="3">\n);
+
+    foreach my $nicitem ( 2..$gNUMOFPORT-1-$gRESERVEDLANPORT ) 
+    { 
+        my $portnum='PORT '.($nicitem+1); 
+        my $portvalue='eth'.$nicitem;
+
+        my $status=( grep(/^$portvalue$/, @vmacarray) ) ? ( 'selected' ) : ( '' ); 
+
+        print qq (<option $status value="$portvalue">$portnum</option>\n); 
+    }
+
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);  
+    
+
+    my @configList=maintainConfig(action=>"LISTCONFIGNAME");
+
+    print qq (<tr><td colspan="3"><hr size="1"></td></tr>);
+    #====================================================================================
+    my $primary=$ha->{primaryconfigid};
+    my $slave=$ha->{slaveconfigid};
+    
+
+    print qq (<td valign="top" align="left">);
+    print qq (<tr bgcolor="332211"><td align="center">Mode</td><td align="center">[  Active ]</td><td align="center">[ Stand By ]</td></tr>);
+
+    #====================================================================================
+    print qq (<tr>);
+    print qq (<td valign="bottom">Config Set:</td>);
+    print qq (<td>);
+    print qq (<select class="qbopt" name="primaryconfigid" style="width:120">);
+    foreach my $configid ( @configList ) 
+    { 
+        if ( $configid=~m/import|default/i ) { next; }
+        my $status=( $configid eq $primary ) ? ('selected') : (''); 
+        print qq(<option value="$configid" $status>$configid</option>); 
+    } 
+    print qq (</select>);
+    print qq (</td>);
+    
+    print qq (<td>);
+    print qq (<select class="qbopt" name="slaveconfigid" style="width:120">);
+    foreach my $configid ( @configList ) 
+    {
+        if ( $configid=~m/IMPORT|default/ ) { next; }
+        my $status=( $configid eq $slave) ? ('selected') : (''); 
+        print qq(<option value="$configid" $status>$configid</option>); 
+    } 
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<tr><td colspan="3"><hr size="1"></td></tr>);
+
+
+    #====================================================================================
+    print qq (<tr>);
+    print qq (<td valign="bottom">$qblang[285]:</td>);
+    print qq (<td>);
+    print qq (<input type="text" maxlength="15" class="qbtext" name="floatingip" value="$ha->{floatingip}" style="width:120" onChange="haCheckIP(this)">/);
+    print qq (<select class="qbopt" class="qbopt" name="floatingipmask" style="width:40">); 
+    for ( my $mask=32; $mask>=1; $mask--) 
+    { 
+        my $status=( $mask eq $ha->{floatingipmask} ) ? ( 'selected' ) : ( '' );
+        print qq(<option $status value="$mask" >$mask</option>); 
+    } 
+    print qq (</select>);
+    print qq (</td>);
+    print qq (<td><select class="qbopt" class="qbopt" name="floatingport" style="width:80">); 
+    foreach my $eth ( 0.. $gNUMOFPORT-1 ) 
+    { 
+        my $nowinterface=$ha->{floatingport}; $nowinterface=~s/eth//g; 
+        my $status=( $eth eq $nowinterface ) ? ( 'selected' ) : ( '' );
+        my $interface='eth'.$eth;
+        my $port='PORT'.($eth+1);
+        print qq(<option $status value="$interface" >$port</option>); 
+    } 
+    print qq (</tr>);
+
+    print qq (<tr>);
+    print qq (<td valign="bottom" >$qblang[286]:</td>);
+    print qq (<td><input type="text" maxlength="15" class="qbtext" name="primarysip" value="$ha->{primarysip}" style="width:120" onChange="haCheckIP(this)">/);
+    print qq (<select class="qbopt" class="qbopt" name="prisipmask" style="width:40">); 
+    for (my $mask=32; $mask>=1; $mask--) 
+    {
+        my $status=( $mask eq $ha->{prisipmask} ) ? ( 'selected' ) : ( '' );
+        print qq(<option $status value="$mask" >$mask</option>); 
+    } 
+    print qq (</select></td>);
+    print qq (<td><select class="qbopt" class="qbopt" name="primaryport" style="width:80">); 
+    foreach my $eth ( 0.. $gNUMOFPORT-1 ) 
+    { 
+        my $nowinterface=$ha->{primaryport}; $nowinterface=~s/eth//g; 
+        my $status=( $eth eq $nowinterface ) ? ( 'selected' ) : ( '' );
+        my $interface='eth'.$eth;
+        my $port='PORT'.($eth+1);
+        print qq(<option $status value="$interface" >$port</option>); 
+    } 
+    print qq (</select></td>);
+    print qq (</tr>);
+
+
+    #====================================================================================
+    print qq (<tr>);
+    print qq (<td valign="bottom">$qblang[287]:</td>);
+    print qq (<td><input type="text" maxlength="15" class="qbtext" name="slavesip" value="$ha->{slavesip}" style="width:120" onChange="haCheckIP(this)">/);
+    print qq (<select class="qbopt" class="qbopt" name="slvsipmask" style="width:40">); 
+    for (my $mask=32; $mask>=1; $mask--) 
+    { 
+        my $status=( $mask eq $ha->{slvsipmask} ) ? ( 'selected' ) : ( '' );
+        print qq(<option $status value="$mask" >$mask</option>); 
+    } 
+    print qq (</select>);
+    print qq (</td>);
+    print qq (<td><select class="qbopt" class="qbopt" name="slaveport" style="width:80">); 
+    foreach my $eth ( 0.. $gNUMOFPORT-1 ) 
+    { 
+        my $nowinterface=$ha->{slaveport}; $nowinterface=~s/eth//g; 
+        my $status=( $eth eq $nowinterface ) ? ( 'selected' ) : ( '' );
+        my $interface='eth'.$eth;
+        my $port='PORT'.($eth+1);
+        print qq(<option $status value="$interface" >$port</option>); 
+    } 
+    print qq (</select></td>);
+    print qq (</tr>);
+
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (<tr><td colspan="3"><hr size="1"></td></tr>);
+    
+    # Line Check targets ====================================================================================
+    my $hatargets=$ha->{hatarget};
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<span title="Targets for Checking Ethernet Link on Active Mode">HA LAN Check Targets:</span>);
+    print qq (</td>);
+    my $count=1;
+    foreach my $target ( @$hatargets )
+    {
+        my $targetValue=$target->{value}; 
+        if ( $targetValue eq 'system' ) { $targetValue=''; }
+        print qq (<td class="body"  valign="top" align="left">);
+        print qq ($count:<input class="qbtext" name="target$count" type="text" value="$targetValue" maxlength="15" onChange="haCheckIP(this)" style="width:120">);
+        print qq (</td>);
+        if ( $count % 2 == 0 ) { print qq (</tr><tr><td></td>); }
+        $count++;
+    } 
+    print qq (</tr>);
+
+    print qq (</table>);
+    print qq (</td></tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (</table>);
+    print qq (</div>);
+
+    print qq (<span align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[289]" title="Click to Show Active or Stand By" onClick="goHA('QUERYMODE')" style="width:120">);
+    print qq (<input class="qb" type="button" value="$qblang[290]" title="Click to Show HA Status" onClick="goHA('QUERYSTATUS')" style="width:120">);
+    print qq (<input class="qb" type="button" value="$qblang[291]" title="Force to Change to another role " onClick="goHA('RUNFCR')" style="width:120">);
+    print qq (<input class="qb" type="button" value="$qblang[292]" title="Save HA Parameters" onClick="goHA('SAVE')" style="width:120">);
+    print qq (<input class="qb" type="button" value="$qblang[293]" title="Save HA Parameters and Apply it" onClick="goHA('APPLY')" style="width:120">);
+    print qq (</span>);
+}
+#showHA
+
+#===================================================================================================
+sub haScript
+{
+    print << "HASCRIPT";
+
+    <script type="text/javascript" src="grid.js"></script>
+    <script language="javascript">
+    
+    var myform;
+
+    function cgi_dep_onload() 
+    { 
+        myform=window.document.forms[0];
+    }
+
+    function haCheckIP(target)
+    {
+        if ( !target.value ) { return; }
+        if ( !isValidIP(target.value) ) 
+        {
+            alert('IP Format Error'); 
+            target.value=''; 
+        }
+    }
+
+    function goHA(command)
+    {
+        myform.action.value=command;
+        myform.submit();
+    }
+    
+    </script>
+
+HASCRIPT
+    
+}
+#haScript
+
+#===================================================================================================
+sub afswebadm
+{
+    my (%ha)=@_;
+
+    # run command afswebadm to config the following 4 attributes
+    my $autofailover=($ha{autofailover}) ? 'y' : 'n';
+    my $autoswitchback=($ha{autoswitchback}) ? 'y' : 'n';
+    runCommand(command=>'afswebadm', params=>qq(2 $autofailover  $autoswitchback  $ha{hosttimeout}  $ha{networktimeout}) );
+    my $result=runCommand(command=>'afswebadm', params=>'4');
+    $result=~tr/<>/[]/; $result=~s/\n/<br>/g; $result=~s/AFS/HA/g;
+
+    return $result;
+}#afswebadm
+
+#===================================================================================================
+sub maintainHA
+{
+    my (%action)=@_;
+    my $ha=XMLread($gINITPATH."ha.xml");
+    if ( !$action{action} ) { return; }
+
+    if ( $action{action}=~m/^QUERYMODE$/ )
+    {
+        print qq ( Result of check mode is : <br>);
+        if ( -e '/usr/afs/PA' )     { print qq( --- Active ---);   }
+        elsif ( -e '/usr/afs/MA' )  { print qq( --- Stand By ---); }
+        else                        { print qq( --- Unknown ---); }
+        return;
+    }
+    elsif ( $action{action}=~m/^QUERYSTATUS$/ )
+    {
+        my $result=runCommand(command=>'afswebadm', params=>'0');
+        $result=~tr/<>/[]/; 
+        $result=~s/tmp-hasmsg 0\n//g; 
+        $result=~s/tmp-rcvmsg 0\n//g;
+        $result=~s/tmp-rcvFCR 0\n//g;
+        $result=~s/tmp-fcrstart 0\n//g;
+        $result=~s/tmp-rcvFCRSTART 0\n//g;
+        $result=~s/START//g;
+        $result=~s/\n/<br>/g; 
+        $result=~s/AFS/HA/g;
+        print qq ($result);
+        return;
+    }
+    elsif ( $action{action}=~m/^RUNFCR$/ )
+    {
+        if ($gPLATFORM=~m/VIA/) { # new version...050202
+            runCommand(command=>'/sbin/reboot', params=>'-f');
+        } else {
+            my $result=runCommand(command=>'afswebadm', params=>'1');
+            $result=~tr/<>/[]/; $result=~s/\n/<br>/g; $result=~s/AFS/HA/g;
+            print qq ($result);
+        }
+        return;
+    }
+    elsif ( $action{action}=~m/^SAVE$|^APPLY$/ )
+    {
+        if ( $action{action} )
+        {
+            runCommand(command=>'sethaconf.sh', params=>$action{role}.'  role'); 
+            runCommand(command=>'sethaconf.sh', params=>$action{primaryconfigid}.'  primary');
+            runCommand(command=>'sethaconf.sh', params=>$action{slaveconfigid}.'    slave');
+            
+            LogUserAction( action=>'APPLYHA', afs=>$action{afs}, role=>$action{role}, autofailover=>$action{autofailover}, autoswitchback=>$action{autoswitchback}, nicfail=>$action{nicfail}, hosttimeout=>$action{hosttimeout}, networktimeout=>$action{networktimeout}, vmacnic=>$action{vmacnic}, primaryconfigid=>$action{primaryconfigid}, slaveconfigid=>$action{slaveconfigid}, floatingip=>$action{floatingip}, floatingipmask=>$action{floatingipmask}, floatingport=>$action{floatingport}, primarysip=>$action{primarysip}, pripipmask=>$action{pripipmask}, primaryport=>$action{primaryport}, slavesip=>$action{slavesip}, slvsipmask=>$action{slvsipmask}, slaveport=>$action{slaveport} );
+        }
+    }
+    elsif ( $action{action}=~m/^ENABLEHA$/ ) # nancy...041116
+    {
+        my $result=runCommand(command=>'enableha.pl', params=>'');
+        $result=~tr/<>/[]/; $result=~s/\n/<br>/g;
+        print qq ($result);
+        return;
+    }
+    my $storeaction=$action{action};
+    delete( $action{action} );
+    %$ha=%action;
+
+    #--------updating ha.xml------------------------ 
+    XMLwrite($ha, $gINITPATH."ha.xml");
+
+    #@dep
+    runCommand(command=>'do_qbha.pl', params=>'');
+    
+    #@dep
+    my $result=afswebadm(%$ha);
+    print qq ( $result );
+
+    #@dep
+    if ( $storeaction=~m/^APPLY$/ ) 
+    { 
+        # Stop AFS daemon
+        runCommand(command=>'afstop', params=>'QB'); 
+        
+        if ( $action{role} eq "1" ) 
+        {
+            runCommand(command=>'rm', params=>' -rf '.$gAFSPATH.'MA'.' '.$gAFSPATH.'B'); 
+            runCommand(command=>'touch ', params=>$gAFSPATH.'PA'.' '.$gAFSPATH.'A');
+        }
+        elsif ( $action{role} eq "0" )
+        {
+            runCommand(command=>'rm', params=>' -rf '.$gAFSPATH.'PA'.' '.$gAFSPATH.'A'); 
+            runCommand(command=>'touch ', params=>$gAFSPATH.'MA'.' '.$gAFSPATH.'B'); 
+        }
+    
+        # Play the role  as if in the Boot Stage
+        runCommand(command=>'/opt/qb/bin/script/qbha.sh', params=>'boot');
+
+        runCommand(command=>'afstart', params=>''); 
+    }
+
+    #--------overwrite  ha.xml from $gINIPATH  to  /mnt/qb/conf/ha.xml
+    runCommand(command=>'cp', params=>'-f '.$gINITPATH.'ha.xml /mnt/qb/conf/ha.xml');
+
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    qbSync();
+}
+#maintainHA
+
+1

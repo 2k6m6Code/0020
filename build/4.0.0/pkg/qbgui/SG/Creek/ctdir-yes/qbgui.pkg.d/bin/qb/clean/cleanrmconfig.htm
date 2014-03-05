@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="../gui.css" type="text/css">
+    </head>
+    <body onload="byebye()" bgcolor="#336699">
+        <script language="javascript">
+            function byebye() { setTimeout("window.close()",10); }   
+        </script>
+        <div class="body" align="center">
+        <hr size="1">
+            Shutting Down None Stopping export.sh Process<br>
+            Shutting Down None Stopping import.sh Process<br>
+            Shutting Down None Stopping qbupg.sh Process<br>
+            Please wait 2 seconds ...
+        <hr size="1">
+        </div>
+        <iframe src="../setuid/runrmconfig.cgi?action=stop&tool="export" style="display:none"></iframe>
+        <iframe src="../setuid/runrmconfig.cgi?action=stop&tool="import" style="display:none"></iframe>
+        <iframe src="../setuid/runrmconfig.cgi?action=stop&tool="upgrade" style="display:none"></iframe>
+    </body>
+</html>

@@ -1,0 +1,259 @@
+sub show_iniweb 
+{
+    my (%action)=@_;
+    my $fwmark=XMLread($gPATH."fwmark.xml");
+    my $temp=$fwmark->{nat}->[0]->{mark};
+    my $hostref=XMLread($gPATH."host.xml");
+    my $hostlist=$hostref->{host};
+    #my $service=XMLread($gPATH.'service.xml');
+    #my $servicelist=$service->{service};
+    my $category=XMLread($gPATH."category.xml");
+    my $categorylist=$category->{category};
+    my $schref=XMLread($gPATH.'schedule.xml');
+    my $schlist=$schref->{schedule};
+    my @hostobj;
+    my @destarray;
+    
+    #**************************************************************************************
+    # source
+    #************************************************************************************* 
+    my %source;
+    
+    print qq (<table border="0" width="100%" cellspacing="0" cellpadding="0">);
+    foreach my $mark ( @$temp ) { if ( $mark->{source_type} eq '' ) { $source{ $mark->{source} }=1; } }
+    #$source{'0.0.0.0/0'}=1;
+    foreach my $host ( @$hostlist )
+    {
+        if ($host->{hostname} eq 'system' ) { next; }
+        if ($host->{hosttype} ne 'fqdnlist' )
+        {
+            push(@hostobj, $host->{hostname});
+        }
+    }
+                                                     
+
+    my @allsources=sort subnet_sort keys %source;
+    #show host object
+    push(@allsources, @hostobj);
+
+    if ( !$action{source} ) { $action{source}=$allsources[0]; }
+
+    print qq (<td class="body"  valign="top" align="center" bordercolor="#ffffff">);
+    #print qq (<select class="qbopt" size="1" name="source" onChange="goSubmit('SWITCHSOURCE')" style="WIDTH:120">);
+    print qq (<select class="qbopt" size="1" name="source" style="WIDTH:120">);
+    foreach my $sourceitem ( @allsources )
+    {
+        if ( $sourceitem eq "system" ) { next; }
+        my $status=( $action{source} eq $sourceitem ) ? ( 'selected' ):( '' );
+        my $displaysource=( $sourceitem eq "localhost" ) ? ('Q-Balancer') : ($sourceitem) ;
+        my $addresslist;
+        if ( grep(/host-/, $displaysource))
+        {
+            $displaysource=~s/host-//g;
+            $addresslist=maintainHost( action=>'GETADDRESSLIST', hostname=>$displaysource);
+        }
+        else
+        {
+            $addresslist = $displaysource;
+        }
+        #print qq (<option value="$sourceitem" $status>$displaysource</option>);
+        print qq (<option value="$sourceitem" title="$addresslist" $status>$displaysource</option>);
+    }
+    print qq (</select><br>Source</td>);
+    print qq (<input type="hidden" name="realip" value="">);
+
+    print qq (<td class="body"  valign="top" align="center" bordercolor="#ffffff">);
+    
+    print qq (<select class="qbopt" size="1" name="webfilter" style="WIDTH:120">);
+    foreach my $category ( @$categorylist )
+    {
+        if ( $category->{categoryname} eq 'system' ) { next; }
+        my $status=( $action{webfilter} eq $category->{categoryname} ) ? ( 'selected' ) : ( '' );
+        print qq (<option value="$category->{categoryname}" title="" $status>$category->{categoryname}</option>);
+    }
+    print qq (</select><br>Category</td>);
+    
+    print qq (<td class="body"  valign="top" align="center" bordercolor="#ffffff">);
+    print qq (<select class="qbopt" size="1" name="schedule" style="width:120">);
+    print qq (<option value="All Week" $status>All Week</option>); 
+    foreach my $seq ( @$schlist ) 
+    { 
+        if ( $seq->{schname} eq "system" ) { next; }
+        my $status=( $action{schedule} eq $seq->{schname} ) ? ( 'selected' ) : ( '' );
+        print qq (<option $status value="$seq->{schname}" $status>$seq->{schname}</option>); 
+    }
+    print qq (</select><br>);
+    print qq (Schedule);
+    print qq (</td>);
+    
+    print qq (<td class="body"  valign="top" align="center" bordercolor="#ffffff">);
+    print qq (<select class="qbopt" size="1" name="web_action" style="WIDTH:120">);
+    #my $status=( $action{web_action} eq 'Allow' ) ? ( 'selected' ) : ( '' );
+    #print qq (<option value="Allow" $status>Allow</option>); 
+    my $status=( $action{web_action} eq 'Deny' ) ? ( 'selected' ) : ( '' );
+    print qq (<option value="Deny" $status>Deny</option>); 
+    print qq (</select><br>);
+    print qq (Action);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="center" bordercolor="#ffffff">);
+    print qq (<input type="button" class="qb" value="Add"    title="Add Policy"    onClick="updatePolicy('ADD')" style="height:20 width:25">);
+    print qq (<input type="button" class="qb" value="Update" title="Save Changes"  onClick="updatePolicy('UPDATE')" style="height:20 width:35">);
+}
+#show_iniroute
+
+sub iniwebScript
+{
+     print << "iniwebSCRIPT";
+     <script type="text/javascript" src="grid.js"></script>
+     <script language="javascript">
+     var myform;
+      
+     function cgi_dep_onload() 
+     { 
+         myform=window.document.forms[0]; 
+         setTimeout("updateShow()",500);
+     }
+     
+     function updateShow()
+     {
+         var action = document.getElementById('action').value;
+         
+         if (action == 'UPDATE' || action == 'ADD')
+         {
+             window.top.mainFrame.editweb.location.href = "editweb.cgi";
+         }
+     }
+     
+     function updatePolicy(action)
+     {
+         var category = document.getElementById('webfilter').value;
+         var sourceip = document.getElementById('source');
+         var realip = '';
+         if ( category == '' )
+         {
+             alert('Category is empty!!!!');
+             return;
+         }
+         if (action == 'UPDATE' && document.getElementById('rulekey').value == '' )
+         {
+             alert('MUST Select Policy to Update');
+             return;
+         }
+         for (var i = 0; i < sourceip.options.length; i++)
+         {
+             if ( sourceip.options[i].selected == true )
+             {
+                 realip = sourceip.options[i].title;
+             }
+         }
+         myform.realip.value = realip;
+         myform.action.value = action;
+         myform.submit();
+     }
+     
+     </script>
+     
+iniwebSCRIPT
+}
+sub maintianIniweb
+{
+    my (%action) = @_;
+    
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    my $iniweb = XMLread($gPATH."iniweb.xml");
+    my $classes = $iniweb->{class};
+
+    if ( $action{action} eq 'ADD' )    
+    {
+         delete($action{action});
+         my $newrule = $action{source}.$action{webfilter}.$action{schedule};
+         foreach my $class ( @$classes )
+         {
+             if ( $class->{source}.$class->{webfilter}.$class->{schedule} eq $newrule )
+             {
+                 $gMSGPROMPT.=qq(Policy Already Exists); 
+                 return;
+             }
+         }
+         push(@$classes, \%action); 
+	 @$classes = sort ini_class_sort_by_realip ( @$classes );
+	 
+	 LogUserAction( action=>'ADDCATEGORYFILTERING', source=>$action{source}, webfilter=>$action{webfilter}, schedule=>$action{schedule}, web_action=>$action{web_action} );
+    }
+    elsif ( $action{action} eq 'UPDATE' )
+    {
+         delete($action{action});
+         my $newrule = $action{source}.$action{webfilter}.$action{schedule};
+         my $editrule;
+         foreach my $class ( @$classes )
+         {
+             if ( $class->{source}.$class->{webfilter}.$class->{schedule} eq $action{rulekey} )
+             {
+                 $editrule = $class;
+                 delete($actin{rulekey});
+                 $class = \%action;
+                 next;
+             }
+             if ( $class->{source}.$class->{webfilter}.$class->{schedule} eq $newrule )
+             {
+                 $gMSGPROMPT.=qq(Policy Already Exists); 
+                 return;
+             }
+         }
+         
+	 LogUserAction( action=>'UPDATECATEGORYFILTERING', source=>$action{source}, webfilter=>$action{webfilter}, schedule=>$action{schedule}, web_action=>$action{web_action} );
+    }
+    elsif ( $action{action} eq 'DELRULES' )
+    {
+         my $delrulelist=$action{rule}; 
+         my @class_array_after_del;
+         
+         foreach my $class ( @$classes )
+         {
+             my $to_be_deleted = 0;
+             foreach my $delrule ( @$delrulelist )
+             {
+                 if ( $class->{source}. $class->{webfilter}.$class->{schedule}.$class->{web_action} ne $delrule ) { next; }
+                 $to_be_deleted=1;
+                 last;
+             }
+             if ( !$to_be_deleted ) { push( @class_array_after_del, $class ); }
+         }
+         
+         $iniweb->{class} = \@class_array_after_del;
+         
+	 LogUserAction( action=>'DELCATEGORYFILTERING', rule=>$action{rule}, delrule=>$action{$delrule}, rule=>action{rule}, source=>action{source} );
+    }
+    XMLwrite($iniweb, $gPATH."iniweb.xml");
+    
+    if ( $squid->{isenable} eq '1' )
+    {
+        runCommand(command=>'/usr/local/apache/qb/setuid/do_qbwebfilter.pl', params=>'');
+        runCommand(command=>'killall', params=>"-9 squid"); 
+    }
+}
+
+sub ini_class_sort_by_realip
+{
+    my @afields=split(/\.|\/|\-|\,/,$a->{realip});
+    my @bfields=split(/\.|\/|\-|\,/,$b->{realip});
+   
+    foreach my $index ( 0..4 )
+    {
+         $avalue=int($afields[$index]);
+         $bvalue=int($bfields[$index]);
+         if ( $avalue != $bvalue ) { last; }
+    }
+
+    #if ( $avalue == $bvalue )
+    #{
+    #    return $a->{schedule} cmp $b->{};
+    #}
+    #else
+    #{
+        #$avalue <=> $bvalue;
+    #}
+    $avalue <=> $bvalue;
+}
+#
+1

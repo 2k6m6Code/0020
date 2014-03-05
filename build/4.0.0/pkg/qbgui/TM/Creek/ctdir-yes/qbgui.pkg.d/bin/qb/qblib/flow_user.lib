@@ -1,0 +1,94 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showSchedule
+{
+    my (%action)=@_;
+    my $schref=XMLread($gPATH.'flow.xml');
+    my $schlist=$schref->{user};
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Unit);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    print qq (<div class="divframe" style="height:200; width:800">);
+    print qq (<table id="scheduleList" width="100%"  class="body" border="0">);
+    print qq (<thead><tr bgcolor="#332211">);
+    print qq (<th width="300" align="center">Group</th>);
+    print qq (<th width="300" align="center">Description</th>);
+    print qq (<th width="100" align="center">Edit</th><th width="100" align="center"><a href="javascript:delSchedule()"><img border="0" title="Delete Checked Schdule(s)" src="../image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('schedule', this.checked)" title="select or deselect all items"></th></tr></thead>);
+    my $lineCount=0;
+    foreach my $item ( @$schlist )
+    {
+        if ( $item->{schname} eq "system" ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+        if ($item->{description} eq 'LD'){$item->{description} = 'Local Database';}
+        print qq (<td align="center" width="$titleWidth{Name}" height="25" >$item->{schname}</td>);
+        print qq (<td align="center" width="$titleWidth{Description}" height="25">$item->{description}</td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<a href="newsflow_user.cgi?schname=$item->{schname}";selectedColor(natList.rows[$lineCount])" ><image src="../image/edit.gif" title="Edit Schedule properties" border="0"></a></td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<input type="checkbox" name="schedule" value="$item->{schname}">);
+        print qq (</tr>);
+        $lineCount++;
+    }
+                                            
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="$qblang[162]" onclick="NewSchedule();">);
+    print qq (<input class="qb" type="button" width="100" value="Import File" onclick="MM_openBrWindow('../file_import.cgi','Import',350,140)">);
+	print qq (<input class="qb" type="button" width="100" value="Export File" onclick="MM_openBrWindow('../file_export.cgi','Export',350,140)">);
+}
+#showSchedule
+    
+
+
+#=============================================================================================
+
+sub scriptSchedule
+{
+    print << "scriptSchedule";
+
+   <script type="text/javascript" src="../grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function NewSchedule() { window.top.mainFrame.location.href="newsflow_user.cgi"; }    
+    
+    function delSchedule()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+	
+	function MM_openBrWindow(theURL,winName,win_width,win_height) 
+	{
+		var PosX = (window.screen.availWidth-10-win_width)/2; 
+		var PosY = (window.screen.availHeight-30-win_height)/2; 
+		features = "width="+win_width+",height="+win_height+",top="+PosY+",left="+PosX+",status=no,location=no,status=no,menubar=no,toolbar=no,resizable=no,scrollbars=no"; 
+		var newwin = window.open(theURL,winName,features); 
+	}
+	
+    </script>
+    
+scriptSchedule
+}
+#scheduleScript
+#
+1

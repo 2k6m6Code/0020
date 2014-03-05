@@ -1,0 +1,76 @@
+#!/bin/sh
+WVDIAL_PPPDCONF="/etc/ppp/peers/wvdial"
+#set -x
+ispname=$1
+device=$2
+apn_name=$3
+ISPIID=$4
+dial_num=$5
+username=$6
+password=$7
+mode=$8
+band=$9
+
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+usbmodemtype=`grep ispname=\"$ispname\" $ACTIVEBASICXML|sed -e "s/  <isp.*usbmodemtype=\"//"|sed -e "s/\".*//"`
+
+let PPPDEVNUM=$ISPIID-1
+#sed -i -e '{
+#          s/^#ipparam.*/ipparam '$ispname'/g
+#          s/^ipparam.*/ipparam '$ispname'/g
+#          }' $WVDIAL_PPPDCONF
+cp -af /etc/wvdial.conf /etc/wvdial.$device
+if [ "$apn_name" != "null" ];then
+sed -i -e '{
+          s/^Modem = .*/Modem = \/dev\/'$device'/g
+          s/^PPPD Ipparam = .*/PPPD Ipparam = '$ispname'/g
+          s/^PPPD Unit = .*/PPPD Unit = '$PPPDEVNUM'/g
+          s/^APN = .*/APN = '$apn_name'/g
+          s/^Phone = .*/Phone = '$dial_num'/g
+          s/^Username = .*/Username = '$username'/g
+          s/^Password = .*/Password = '$password'/g
+          s/^Init6 = .*/Init6 = AT+CGDCONT=1,"IP",\"'$apn_name'\"/g
+          }' /etc/wvdial.$device
+else
+sed -i -e '{
+          s/^Modem = .*/Modem = \/dev\/'$device'/g
+          s/^PPPD Ipparam = .*/PPPD Ipparam = '$ispname'/g
+          s/^PPPD Unit = .*/PPPD Unit = '$PPPDEVNUM'/g
+          s/^APN = .*/APN = '$apn_name'/g
+          s/^Phone = .*/Phone = '$dial_num'/g
+          s/^Username = .*/Username = '$username'/g
+          s/^Password = .*/Password = '$password'/g
+          s/^Init6 = .*/Init6 = /g
+          }' /etc/wvdial.$device
+fi
+
+case $mode in
+      Auto )
+            sed -i -e '{s/^Init2 = .*/Init2 = AT+COPS=0/g}' /etc/wvdial.$device
+            ;; # ex. GSM or WCDMA
+       GSM )
+            sed -i -e '{s/^Init2 = .*/Init2 = AT+COPS=0,,,0/g}' /etc/wvdial.$device
+            ;; # ex. GSM only
+     WCDMA )
+            sed -i -e '{s/^Init2 = .*/Init2 = AT+COPS=0,,,2/g}' /etc/wvdial.$device
+            ;; # ex. WCDMA only
+         * )
+            ;; # ex. Huawei
+esac
+if [ "$usbmodemtype" = "H20" ];then                                                                                             
+case $band in
+      Auto )
+            sed -i -e '{s/^Init3 = .*/Init3 = AT\$QBP="GSM850","GSM900","GSM1800","GSM1900","UMTS850","UMTS1900","UMTS2100"/g}' /etc/wvdial.$device
+            ;; # ex. GSM or WCDMA
+         * )
+            sed -i -e '{s/^Init3 = .*/Init3 = AT\$QBP =\"'$band'\"/g}' /etc/wvdial.$device
+            ;; # ex. specify the band.
+esac
+else
+            sed -i -e '{s/^Init3 = AT\$QBP/#Init3 = AT\$QBP/g}' /etc/wvdial.$device
+fi
+
+if [ "$usbmodemtype" = "E173s" ] || [ "$usbmodemtype" = "E303" ];then
+   sed -i -e '{s/^Init5 = .*/Init3 = ATQ0 V1 E1 S0=0 \&C1 \&D2/g}' /etc/wvdial.$device
+fi
+

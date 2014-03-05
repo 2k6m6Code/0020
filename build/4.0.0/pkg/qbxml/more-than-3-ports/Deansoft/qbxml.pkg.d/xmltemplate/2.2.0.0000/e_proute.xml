@@ -1,0 +1,74 @@
+<opt lastupdate="" status="lock" file="proute">
+  <subadv>
+  </subadv>
+  <sys>
+  </sys>
+  <fw>
+  </fw>
+  <qb>
+    <class fwmark="0x3E9" natmethod="ls" service="ISP1" route_table="101" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3EA" natmethod="ls" service="ISP2" route_table="102" priority="5000">
+    <time>0:1439</time>
+    </class> 
+    <class fwmark="0x3EB" natmethod="ls" service="ISP3" route_table="103" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3EC" natmethod="ls" service="ISP4" route_table="104" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3ED" natmethod="ls" service="ISP5" route_table="105" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3EE" natmethod="ls" service="ISP6" route_table="106" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3EF" natmethod="ls" service="ISP7" route_table="107" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3F0" natmethod="ls" service="ISP8" route_table="108" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3Fl" natmethod="ls" service="ISP9" route_table="109" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3F2" natmethod="ls" service="ISP10" route_table="110" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3F3" natmethod="ls" service="ISP11" route_table="111" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3F4" natmethod="ls" service="ISP12" route_table="112" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3F5" natmethod="ls" service="ISP13" route_table="113" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3F6" natmethod="ls" service="ISP14" route_table="114" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3F7" natmethod="ls" service="ISP15" route_table="115" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3F8" natmethod="ls" service="ISP16" route_table="116" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3F9" natmethod="ls" service="ISP17" route_table="117" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3FA" natmethod="ls" service="ISP18" route_table="118" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3FB" natmethod="ls" service="ISP19" route_table="119" priority="5000">
+    <time>0:1439</time>
+    </class>
+    <class fwmark="0x3FC" natmethod="ls" service="ISP20" route_table="120" priority="5000">
+    <time>0:1439</time>
+    </class>
+    </qb>
+  <fwadv>
+  </fwadv>
+  <sub>
+  </sub>
+</opt>

@@ -1,0 +1,2243 @@
+#===================================================================================================
+sub listUsers
+{
+    my (%action)=@_;
+    my $login=XMLread($gINITPATH."login.xml");
+    my $userList=$login->{user};
+    my %titleWidth=(Username=>'80',  Privilege=>'80', Status=>'80', 'Session ID'=>'80', 'Last Login'=>'120', 'Last Logout'=>'120', 'Kick Out'=>'50');
+    my @titleList=('Username', 'Privilege', 'Status', 'Session ID', 'Last Login', 'Last Logout', 'Kick Out');
+    #20080220 Brian Remove "Basic >" 
+    #print qq (<font class="bigtitle">Basic &gt; User Account Management</font><hr size="1">);
+    print qq (<font class="bigtitle">User Account Management</font><hr size="1">);
+    print qq (<table cellspacing="0" cellpadding="0" class="body" >);
+    print qq (<tr bgcolor="#664422">);
+    foreach my $title ( @titleList ) { print qq (<td class="body" width="$titleWidth{$title}" align="center">$title</td>); }
+    print qq (<td align="center" width="50"><image src="image/del.gif" border="0"></td>);
+    print qq (</tr>);
+    
+    my $lineCount=1;
+    foreach my $user ( @$userList ) 
+    {
+        my $bgColor=($lineCount%2) ? ("#556677") : ("#334455");
+        my $userkey=$user->{username};
+        
+        if ( $user->{username} eq 'system' ) { next; }
+        if ( $user->{username} eq 'cksupport' ) { next; }
+        
+        print qq (<tr bgcolor="$bgColor" originalColor="$bgColor" cellspacing="0" cellpadding="0" onclick="selectedColor(this);focusUserInfo('$userkey', '$user->{password}', '$user->{privilege}', '$user->{multilog}')" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+        #===================================================================      
+        my $display=( $user->{username} eq 'system' ) ? ('*') : ($user->{username});
+        print qq (<td class="body"  align="center"  width="$titleWidth{Username}">$display</td>);
+
+        #===================================================================      
+        my $display=( $user->{privilege}==1 ) ? ( 'Admin') : ( 'User' );
+        print qq (<td class="body" align="center" width="$titleWidth{Privilege}">$display</td>);
+
+        #===================================================================      
+        my $display=( $user->{online} ) ? ('Online') : ( 'Offline' );
+        print qq (<td class="body" align="center" width="$titleWidth{Status}">$display</td>);
+        
+        #===================================================================      
+        my $display;
+        ( $user->{sessionid} ) ? ( $display=$user->{sessionid} ) : ( $display="None" );
+        if ( $display==-1 ) { $display="Forced Out";}
+        print qq (<td class="body" align="center" width="$titleWidth{'Session ID'}">$display</td>);
+        
+        #===================================================================      
+        my $display;
+        ( $user->{lastlogin} ) ? ( $display=scalar(localtime($user->{lastlogin})) ) : ( $display="None") ;
+        print qq (<td class="body" align="center" width="$titleWidth{'Last Login'}">$display</td>);
+        
+        #===================================================================      
+        my $display;
+        ( $user->{lastlogout} ) ? ( $display=scalar(localtime($user->{lastlogout})) ) : ( $display='None' );
+        print qq (<td class="body" align="center" width="$titleWidth{'Last Logout'}">$display</td>);
+ 
+        #===================================================================      
+        print qq (<td class="body" align="center" width="$titleWidth{'Kick Out'}">);
+        print qq (<input type="button" class="qb" onclick="kickoutUser('$userkey')" value="*" style="width:20;height:20" title="Kick Out this User">);
+        print qq (</td>);
+
+        #===================================================================      
+        print qq (<td class="body" align="center" width="50">);
+        print qq (<input type="button" class="qb" onclick="delUser('$userkey')" value="-" style="width:20;height:20" title="Delete this User">);
+        print qq (</td>);
+        print qq (</tr>);
+        
+        $lineCount++;
+    }
+
+    print qq (<tr><td colspan="8"><hr size="1"></td></tr>);
+    print qq (<tr><td colspan="8" align="right" class="body">);
+    print qq (Username: <input class="qbtext" name="newusername" type="text" style="width:80" onChange="enableNewUser()"><font color="#336699">||</font>);
+    #20080220 Brian To modify "+/U/B" button become "Add/Update/Back".
+    #print qq (User Password: <input class="qbtext" name="newpassword" type="password" style="width:80"><font color="#336699">||</font>);
+    print qq (Password: <input class="qbtext" name="newpassword" type="password" style="width:80"><font color="#336699">||</font>);
+    print qq (Confirm Password: <input class="qbtext" name="confirmpassword" type="password" style="width:80"><font color="#336699">||</font>);
+    print qq (Privilege: <select name="privilege" class="qbopt" style="width:60"><option value="1">Admin</optin><option value="0">User</option></select><font color="#336699">||</font>);
+    print qq (Multiple Login: <input type="checkbox" id="multi" name="multi" onClick="(this.form.multi.checked)?(this.form.multilog.value='1'):(this.form.multilog.value='0')">);
+    print qq (<input  type="hidden" name="multilog" value="0">);
+    #print qq (<input type="button" name="NEWUSER" class="qb" onclick="goSubmit('NEWUSER')" value="+" title="Add New User" style="width:20;height:20">);
+    #print qq (<input type="button" class="qb" onclick="updateUserInfo()" value="U" title="Update User Info" style="width:20;height:20">);
+    #print qq (<input type="button" class="qb" onclick="goBackToConsole()" value="B" title="Back To Administration Console" style="width:20;height:20">);
+    print qq (<input type="button" name="NEWUSER" class="qb" onclick="goSubmit('NEWUSER')" value="Add" title="Add New User" style="width:40;height:20">);
+    print qq (<input type="button" class="qb" onclick="updateUserInfo()" value="Update" title="Update User Info" style="width:45;height:20">);
+    print qq (<input type="button" class="qb" onclick="goBackToConsole()" value="Back" title="Back To Administration Console" style="width:40;height:20">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#listUsers
+
+#===================================================================================================
+sub editUsers
+{
+    my (%action)=@_;
+    my $login=XMLread($gINITPATH."login.xml");
+    my $userList=$login->{user};
+    $check=runCommand(command=>'cat', params=>"/mnt/conf/qbsn");
+    $check =~ s/\s/_/g;
+    $check =~ s/\^\$\*\.\&\%\#\@\|//g;
+    $check = 'QB_'.$check;
+            
+    if ( !$action{action} ) { return; }
+
+    if ( $action{action}=~m/^KICKOUTUSER$/ )
+    {
+        my $whoami;
+
+        foreach my $user ( @$userList ) 
+        {
+            if ( $user->{username} ne $action{user} ) { next;}
+            $whoami=$user;
+            last;
+        }
+     
+        $whoami->{online}="0";   
+        if ( $whoami->{sessionid} ) { $whoami->{sessionid}=-1; }
+    }
+    elsif ( $action{action}=~m/^UPDATEUSERINFO$/ )
+    {
+        my $targetUser;
+        
+        foreach my $user ( @$userList )
+        {
+            if ( $user->{username} ne $action{newusername} ) { next; }
+            $targetUser=$user;
+            last;
+        }
+
+        if ( !$targetUser ) { $gMSGPROMPT.=qq($action{newusername} NOT exists\\n); }
+        else
+        {
+            #20090723 Brian To change admin's password of SSH the same as UI.
+            if ( $action{newusername} eq "root")
+            {
+               runCommand(command=>'chpwd ', params=>qq($action{newpassword}));
+            }
+            $targetUser->{password}=$action{newpassword};
+            $targetUser->{privilege}=$action{privilege};
+            $targetUser->{multilog}=$action{multilog};
+            $gMSGPROMPT.=qq(Updated OK\\n);
+            LogUserAction( action=>'CHAUSER', username=>$action{newusername});
+        }
+    }
+    elsif ( $action{action}=~m/^NEWUSER$/ )
+    {
+        my %template;
+
+        foreach my $user ( @$userList ) 
+        {
+            if ( $user->{username} ne $action{newusername} ) { next;}
+            $gMSGPROMPT.=qq ( User: $action{newusername} exists already\\n);
+            return;
+        }
+        
+        foreach my $user ( @$userList ) 
+        {
+            if ( $user->{username} ne 'system' ) { next;}
+            %template=%$user;
+            last;
+        }
+
+        $template{username}=$action{newusername};
+        $template{password}=$action{newpassword};
+        $template{privilege}=$action{privilege};
+        $template{multilog}=$action{multilog};
+        #$template{sessionid}='';
+        $template{$check}='';
+        
+        push(@$userList, \%template);
+        LogUserAction( action=>'NEWUSER', username=>$action{newusername}, password=>$action{newpassword}, privilege=>$action{privilege}, multilog=>$action{multilog} );
+    }
+    elsif ( $action{action}=~m/^DELUSER$/ )
+    {
+        my  @newUserArray;
+        
+        foreach my $user ( @$userList ) 
+        {
+            if ( $user->{username} eq $action{user} ) 
+            {
+                LogUserAction( action=>'DELUSER', username=>$action{user});
+                next;
+            }
+            push(@newUserArray, $user);
+        }
+
+        $login->{user}=\@newUserArray;
+    }
+    elsif ( $action{action} eq "REPORT" )
+    {
+        print qq (<fieldset><legend><font class="subtitle">User Account</font></legend>);
+        print qq (<div class="reportdiv">);
+        
+        foreach my $user ( @$userList ) 
+        {
+            if ( $user->{username} eq 'system' ) { next; }
+
+            foreach my $key ( keys %$user) 
+            {
+                my $showInfo=( $key eq "password") ? ('***') : $user->{$key};
+                $showInfo=( $key=~m/lastupdate|lastlogin|lastlogout/ && $showInfo ) ? scalar(localtime($showInfo)): $showInfo;
+                print qq ( [ $key:$showInfo ] );  
+            } 
+            print qq (<br>);
+        }
+        print qq (</div>);
+        print qq (</fieldset>);
+    }
+
+    
+    #--------updating login.xml------------------------ 
+    XMLwrite($login, $gINITPATH."login.xml");
+
+    #--------overwrite  login.xml from $gINIPATH  to  /mnt/qb/conf/login.xml
+    runCommand(command=>'cp', params=>'-f '.$gINITPATH.'login.xml /mnt/qb/conf/login.xml');
+
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    qbSync();
+}
+#editUsers
+
+sub userScript
+{
+    
+print << "USERSCRIPT";
+
+    <script type="text/javascript" src="grid.js"></script>
+    
+    <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=document.forms[0]; }
+    
+    function goBackToConsole() { window.top.mainFrame.location.href="console.cgi"; }
+        
+    function enableNewUser() { myform.NEWUSER.disabled=false; }
+    
+    function focusUserInfo(username, password, privilege, multilog)    
+    {   
+        myform.newpassword.value=myform.confirmpassword.value=password; 
+        myform.newusername.value=username;
+        myform.multi.checked=(multilog=='1')?(true):(false);
+        
+        for(var i=0;i<myform.privilege.options.length;i++) 
+        { if (myform.privilege.options[i].value==privilege) { myform.privilege.options[i].selected=true; } }
+        
+        myform.NEWUSER.disabled=true;
+    }
+    
+    function kickoutUser(username)
+    {
+        if (username=='root')
+        {
+            alert('Can not kick out root');
+            return;
+        }
+
+        myform.user.value=username;
+        goSubmit('KICKOUTUSER');
+    }
+
+    function updateUserInfo()
+    {
+        if ( myform.newusername.value=='root' && myform.privilege.value==0 )
+        {
+            alert('root must have Administrator privilege');
+            return;
+        }
+        if ( myform.newpassword.value != myform.confirmpassword.value )
+        {
+            alert('Passwords do not match');
+            return;
+        }
+
+        goSubmit('UPDATEUSERINFO');
+    }
+    
+    function delUser(username)
+    {
+        if (username=='root') { alert('Can not delete root'); return; }
+        myform.user.value=username;
+        goSubmit('DELUSER');
+    }
+
+    function importXML()
+    {
+        if ( window.ActiveXObject )
+        {
+            xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
+            xmlDoc.onreadystatechange=checkXMLReadyState;
+        }
+        xmlDoc.load("data.xml");
+    }
+    
+    function  checkXMLReadyState()
+    {
+        if ( xmlDoc.readyState==4 )  initXML();
+    }
+
+    function   initXML()
+    {
+        var user=xmlDoc.getElementsByTagName('employee');
+        for ( var i=0; i< user.length; i++)
+        {
+            alert(user[i].childNodes[0].firstChild.nodeValue);
+        }
+    }  
+    
+    </script>
+
+USERSCRIPT
+}
+#userScript
+
+
+#================================================================================================
+sub authenticate 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    
+    my $logininfo=XMLread($gINITPATH.'login.xml');
+    my $userlist=$logininfo->{user};
+    $check=runCommand(command=>'cat', params=>"/mnt/conf/qbsn");
+    $check =~ s/\s/_/g;
+    $check =~ s/\^\$\*\.\&\%\#\@\|//g;
+    $check = 'QB_'.$check;
+             
+    #( action=>'GETMAXUSER' )
+    if ( $action{action}=~m/^GETMAXUSER$/ ) 
+    {
+        return $logininfo->{maximumuser};
+    }
+    #( action=>'SETMAXUSER', numofuser=>'' )
+    elsif ( $action{action}=~m/^SETMAXUSER$/ ) 
+    {
+        $logininfo->{maximumuser}=$action{numofuser};
+    }
+    #( action=>'LOGIN', username=>'', password=>'' )
+    elsif ( $action{action}=~m/^LOGIN$/ ) 
+    {
+        runCommand(command=>'/bin/cp' , params=>'-f /usr/local/apache/config/login.xml /tmp/');
+        my $whoami;
+        my $pass=0;
+        my $alivecount=0;
+
+        # help to force user who leave without logout
+        foreach my $user ( @$userlist )
+        {
+            if ( $user->{username} eq 'system' ) { next; } 
+
+            my $duration=time()-($user->{lastupdate});
+            
+            if ( $duration > $gTIMEOUT ) 
+            {
+                $user->{online}=0;;
+                $user->{lastupdate}='';
+                #$user->{sessionid}='';
+                $user->{$check}='';
+            }
+        }
+    
+        #計算人數
+        foreach my $user ( @$userlist ) 
+        {
+            if ( $user->{username} eq 'system' ) { next; } 
+            if ( $user->{online} ) { $alivecount++; }
+            if ( $user->{online} && $action{username}.$action{password} eq $user->{username}.$user->{password} ) { $alivecount--;}
+        }
+    
+        
+        #人數超過上限
+        if ( ( $alivecount >= $logininfo->{maximumuser} )  && $action{username} ne 'root' ) 
+        {
+            $gLOGINRESULT=0;
+            $pass=0; 
+            $gMSGPROMPT.=qq (Too Many Users\\n);
+            return;
+        }
+    
+        #驗證密碼
+        foreach my $user ( @$userlist ) 
+        {
+            if ( $user->{username} eq "system" ) { next; }
+            if ( $action{username}.$action{password} ne $user->{username}.$user->{password} ) { next;}
+            $whoami=$user;
+            $pass=1; 
+            last;
+        }
+    
+        #登入不成功
+        if ( !$pass ) 
+        {
+            $gLOGINRESULT=0; 
+            $gMSGPROMPT.=qq (User Login Failed\\n);
+            return;
+        }
+        
+        #登入成功
+        if ( $pass ) 
+        {
+            #set Cookie, this is very important
+            srand();
+            my $sessionid=int(rand(100000));  
+              
+            #重新發 cookie
+            &SetCookies('username', $action{username});             
+            &SetCookies($check, $sessionid);
+            &SetCookies('privilege', $whoami->{privilege});
+            &SetCookies('clearcookie', 'true');
+
+            if ( $gENABLECHINESE )
+            {
+                &SetCookies('english_only', 'false');
+            }
+            else
+            {
+                &SetCookies('english_only', 'true');
+            }
+        
+            $whoami->{online}=1;
+            $whoami->{lastlogin}=time();
+            $whoami->{lastupdate}=time();
+            #$whoami->{sessionid}=$sessionid;
+            $whoami->{$check}=$sessionid;
+            LogUserAction( action=>'LOGIN' ,username=>$action{username});        
+            $gLOGINRESULT=1;
+        }    
+    }
+    #( action=>'LOGOUT' )
+    elsif ( $action{action}=~m/^LOGOUT$/ ) 
+    {    
+        &GetCookies('username');  my $username=$Cookies{username};
+        my $whoami;
+        
+        foreach my $user ( @$userlist ) 
+        {
+            if ( $user->{username} ne $username ) { next;}
+            $whoami=$user;
+            last;
+        }
+        
+        $whoami->{online}=0;;
+        $whoami->{lastupdate}='';
+        $whoami->{lastlogout}=time();
+        $whoami->{sessionid}='';
+        LogUserAction( action=>'LOGOUT' );        
+        #清除 cookie
+        &SetCookies('username', '');
+    }
+    elsif ( $action{action}=~m/^RANDOMCHECK$/ ) 
+    {
+        &GetCookies('username');    my $username=$Cookies{username};
+        &GetCookies($check);     my $sessionid=$Cookies{$check};
+        &GetCookies(clearcookie);     my $clearcookie=$Cookies{clearcookie};
+        
+        my $whoami;
+        #$gMSGPROMPT.=qq (Cookie: $username --> $sessionid --> $clearcookie \\n);
+        
+        #如果沒有經過正常登入的動作
+        if ( !$username ) 
+        { 
+            $gLOGINRESULT=0;
+            $gMSGPROMPT.=qq (1. Please login through Standard Procedure\\n);
+            $gMSGPROMPT.=qq (2. Your session has been time Out);
+            return;
+        }
+    
+        foreach my $user ( @$userlist ) 
+        {
+            if ( $user->{username} ne $username ) { next;}
+            $whoami=$user;
+            last;
+        }
+
+        if ( !defined($whoami) ) 
+        {
+            $gLOGINRESULT=0;
+            $gMSGPROMPT.=qq ($username is kicked out by Administrator\\n);
+            return;
+        }
+
+        if ( $whoami->{$check} == -1 ) 
+        { 
+            $gLOGINRESULT=0;
+            $gMSGPROMPT.=qq ($username is forced to log out now\\n);
+            return;
+        }
+	if (!$whoami->{multilog} || $whoami->{multilog} eq '0')
+	{
+            if ( $whoami->{$check} ne $sessionid && $username ne 'cksupport') 
+            {   
+                $gLOGINRESULT=2;
+                &SetCookies('clearcookie', 'false');
+                $gMSGPROMPT.=qq (User: $username $whoami->{sessionid}  $sessionid Multi-login at a time);
+                return;
+            }
+        }
+    
+        #若太久時間沒有操作
+        my $duration=time()-($whoami->{lastupdate});
+        
+        if ( $duration > $gTIMEOUT ) 
+        {
+            $gLOGINRESULT=0;
+            $gMSGPROMPT.=qq (User: $username Time Out [ $duration Sec(s) ]);
+            return;
+        }
+    
+        #若都沒有問題的話，reset timeout
+        if ( $duration <= $gTIMEOUT ) 
+        {
+            $gLOGINRESULT=1;
+            $whoami->{lastupdate}=time();
+        }
+    }
+
+    #--------updating login.xml------------------------ 
+    XMLwrite($logininfo, $gINITPATH."login.xml"); 
+
+    #--------overwrite  login.xml from $gINIPATH  to  /mnt/qb/conf/login.xml
+    my $xml= -e "/usr/local/apache/config/login.xml";
+    my $xmlrule= "/usr/local/apache/config/login.xml";
+    if (!$xml || (-z $xmlrule))
+    {
+        runCommand(command=>'cp', params=>'-f /tmp/login.xml /usr/local/apache/config/login.xml');
+        runCommand(command=>'chmod' , params=>'777 /usr/local/apache/config/login.xml');
+    }
+    if ( $action{action}=~m/^LOGIN$/ ){runCommand(command=>'cp', params=>'-f '.$gINITPATH.'login.xml /mnt/qb/conf/login.xml'); qbSync();}
+    if ( $action{action}=~m/^LOGOUT$/ ) { runCommand(command=>'cp', params=>'-f '.$gINITPATH.'login.xml /mnt/qb/conf/login.xml'); qbSync(); }
+    #20120222 Do qbSync() here will cause QB become very slow when using analyser,so mark it here.
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    #qbSync();
+}
+#authenticate
+
+sub LogUserAction 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    &GetCookies('username');    my $username=$Cookies{username};
+    my $local_time=localtime(time());
+    if ( $action{action}=~m/^UPDATE$/ ) 
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Updated QB>>'.$gUSERACTIONLOG); 
+    }    
+    elsif ( $action{action}=~m/^UPDATE_DONE$/ ) 
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Updated QB Completed>>'.$gUSERACTIONLOG); 
+    }    
+    elsif ( $action{action}=~m/^LOGIN$/ ) 
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$action{username}.' Login>>'.$gUSERACTIONLOG);
+    }    
+    elsif ( $action{action}=~m/^LOGOUT$/ ) 
+    {    
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Logout>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^LOADCONFIG$/ ) 
+    {    
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' loaded the config file '.$action{configname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^SAVECONFIG$/ ) 
+    {    
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved the config file '.$action{configname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELETECONFIG$/ ) 
+    {    
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the config file '.$action{configname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^SAVEISP$/ ) 
+    {    
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved the isp'.$action{iid}.' named '.$action{ispname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELISP$/ ) 
+    {    
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the isp'.$action{iid}.' named '.$action{ispname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^NEWUSER$/ )
+    {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Add the Username:'.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELUSER$/ )
+    {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the Username:'.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^CHAUSER$/ )
+    {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' change the Username:'.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^Disabled_GSLB$/ )
+    {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Disabled GSLB:'.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^Enabled_GSLB$/ )
+    {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enabled GSLB:'.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+                          
+    #============================================================ Link Setup ==============================================================
+    ####################################################### Link Health Check ########################################################
+    elsif ( $action{action}=~m/^SAVEHEALTHCHECK$/ )
+    {
+      
+      if ( $action{checked} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Link Check Method: By Ping>>'.$gUSERACTIONLOG);
+      }
+      
+      if ( $action{nopassive} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Link Check Parameters, Disable Passive Line Check, Port: '.$action{port}.', Ping Time Out: '.$action{timeout}.', Traceroute Time Out: '.$action{traceroutetimeout}.', Connection Time Out: '.$action{connecttimeout}.', Check Time Interval:'.$action{interhctime}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Link Check Parameters, Enable Passive Line Check, Port: '.$action{port}.', Ping Time Out: '.$action{timeout}.', Traceroute Time Out: '.$action{traceroutetimeout}.', Connection Time Out: '.$action{connecttimeout}.', Check Time Interval:'.$action{interhctime}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    
+    ####################################################### Link IP Binding ########################################################
+    elsif ( $action{action}=~m/^ADDVSIP$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added an IP:'.$action{vip}.' to bind on ISP'.$action{isp}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^CHANGEVSIP$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' changed an IP:'.$action{vip}.' to bind on ISP'.$action{isp}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELVSIP$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted an IP:'.$action{vip}.' to bind on ISP'.$action{isp}.'>>'.$gUSERACTIONLOG);
+    }
+
+    ####################################################### MPV ########################################################
+    elsif ( $action{action}=~m/^SAVEMPV$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved the MPV link named '.$action{ispname}.'. NIC '.$action{nic}.', TVLI '.$action{systemip}.', TVRI '.$action{target}.', THRI '.$action{remote}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELMPV$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted MPV '.$action{iid}.', Name '.$action{ispname}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### TMV ########################################################
+    elsif ( $action{action}=~m/^SAVETMV$/ )
+    {
+      if ( $action{tunnel_role} eq '0')
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved the TMV link named '.$action{ispname}.'. NIC '.$action{nic}.', TVLI '.$action{systemip}.', TVRI '.$action{target}.', THRI '.$action{remote}.', ID '.$action{traversal_port}.', Role Client>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved the TMV link named '.$action{ispname}.'. NIC '.$action{nic}.', Name '.$action{ispname}.', TVLI '.$action{systemip}.', TVRI '.$action{target}.', ID '.$action{traversal_port}.', Role Server>>'.$gUSERACTIONLOG);
+      }
+    }
+    elsif ( $action{action}=~m/^DELTMV$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted TMV '.$action{iid}.', Name '.$action{ispname}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### IPSec ########################################################
+    elsif ( $action{action}=~m/^SAVEIPSEC$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved IPSec '.$action{iid}.', NIC '.$action{nic}.', Name '.$action{ispname}.', TVLI '.$action{systemip}.', TVRI '.$action{target}.', THLI '.$action{local}.', THRI '.$action{remote}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELIPSEC$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted IPSec '.$action{iid}.', Name '.$action{ispname}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    #============================================================ LAN Setup ==============================================================
+    ####################################################### Static Routes Setting ########################################################
+    elsif ( $action{action}=~m/^SAVENAT$/ ) 
+    {    
+      if ( $action{gateway} eq '')
+      {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved a subnet '.$action{network}.', and the Interface IP is '.$action{ip}.' on '.$action{nic}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved a subnet is '.$action{network}.', and the Gateway is '.$action{gateway}.' on '.$action{nic}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    elsif ( $action{action}=~m/^DELNAT$/ ) 
+    {    
+      if ( $action{gateway} eq '')
+      {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted a subnet is '.$action{network}.', and the Interface IP is '.$action{ip}.' on '.$action{nic}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted a subnet is '.$action{network}.' and the Gateway is '.$action{gateway}.' on '.$action{nic}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    
+    ####################################################### Wireless LAN Setting ########################################################
+    elsif ( $action{action}=~m/^APPLYWIRELESSLAN$/ )
+    {
+      if ( $action{enablewirelesslan} eq '1' )
+      {
+        if ( $action{wirelessmode} eq '0' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 B/G, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 B, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '4' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 G, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '6' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 N, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '7' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 G/N, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '9' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 B/G/N, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+      }
+      else
+      {
+        if ( $action{wirelessmode} eq '0' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 B/G, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 B, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '4' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 G, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '6' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 N, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '7' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 G/N, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+        if ( $action{wirelessmode} eq '9' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Wireless Name '.$action{ssid}.', '.$action{hidessid}.' Hide SSID, Wireless Mode:802.11 B/G/N, Operation Channel:'.$action{channelmode}.', Encrypt Type:'.$action{encryptmode}.', Auth Mode:'.$action{authmode}.'>>'.$gUSERACTIONLOG);
+        }
+      }
+    }
+    
+    ####################################################### Static ARP Setting ########################################################
+    elsif ( $action{action}=~m/^UPDATEARP$/ )
+    {
+      if ( $arprec{arpdhcpadd} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the Static ARP, enable ARPDHCP, IP:'.$action{ip}.', MAC:'.$action{mac}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the Static ARP, disable ARPDHCP, IP:'.$action{ip}.', MAC:'.$action{mac}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    
+    ####################################################### Transparent Setting ########################################################
+    # Subnet on DMZ
+    elsif ( $action{action}=~m/^UPDATEDMZ$/ )
+    {
+      if ( $action{enabled} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled transparent with '.$action{mode}.' mode on Interface:'.$action{nic}.'>>'.$gUSERACTIONLOG); 
+      }
+    }
+    
+    # Subnet on WAN
+    elsif ( $action{action}=~m/^UPDATESUBONWAN$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the Subnet on WAN, IP/Subnet:'.$action{ip}.', ISP:ISP'.$action{ispid}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### VLAN Setting  ########################################################
+    elsif ( $action{action}=~m/^ADDVLAN$/ )
+    {
+      if ( $action{enablevlan} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' added the VLAN '.$action{vlannic}.', and enabled Mac '.$action{mac_addr}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' added the VLAN '.$action{vlannic}.', and disabled Mac '.$action{mac_addr}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    elsif ( $action{action}=~m/^DELVLAN$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the VLAN '.$action{vlannic}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATEVLAN$/ )
+    {
+      if ( $action{enablevlan} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the VLAN '.$action{vlannic}.', and enabled Mac '.$action{mac_addr}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the VLAN '.$action{vlannic}.', and disabled Mac '.$action{mac_addr}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+
+
+    #============================================================ Bandwidth Shaper ==============================================================
+    ####################################################### MPV ########################################################
+    elsif ( $action{action}=~m/^SAVEQOSISP$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved MPV Bandwidth Shaper, Upload:'.$action{qos}.' kbps>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### IP ########################################################
+    elsif ( $action{action}=~m/^ADDIPQOS$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the IP Bandwidth Shaper, Source:'.$action{source}.', Usage Type:'.$action{qostype}.', Priority:'.$action{priority}.', Download:'.$action{downloadmin}.'-'.$action{downloadmax}.' kbps, Upload:'.$action{uploadmin}.'-'.$action{uploadmax}.' kbps>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELIPQOS$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the IP Bandwidth Shaper, Source:'.$action{source}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^AUTODELIPQOS$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the IP Bandwidth Shaper, Source:'.$action{source}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATEIPQOS$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the IP Bandwidth Shaper, Source:'.$action{source}.', Usage Type:'.$action{qostype}.', Priority:'.$action{priority}.', Download:'.$action{downloadmin}.'-'.$action{downloadmax}.' kbps, Upload:'.$action{uploadmin}.'-'.$action{uploadmax}.' kbps>>'.$gUSERACTIONLOG);
+    }
+    
+    
+    #============================================================  Policy Object ==============================================================
+    ####################################################### Host ########################################################
+    elsif ( $action{action}=~m/^SAVEHOST$/ ) 
+    {    
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved the host name is '.$action{hostname}.', the host type is '.$action{hosttype}.' and the IP Address is '.$action{hostaddress}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELHOST$/ ) 
+    {    
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the host:'.$action{hostname}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### Service Configuration ########################################################
+    elsif ( $action{action}=~m/^ADDSERVICE$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the Service:'.$action{title}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^ADDPORT$/ )
+    {
+      if ( $action{value} ne '' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' added the Service:'.$action{title}.', Protocol:'.$action{protocol}.', Port:'.$action{value}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' added the Service:'.$action{title}.', Protocol:'.$action{protocol}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    elsif ( $action{action}=~m/^DELPORT$/ )
+    {
+      if ( $action{value} ne '' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' deled the Service:'.$action{title}.', Protocol:'.$action{protocol}.', Port:'.$action{value}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' deled the Service:'.$action{title}.', Protocol:'.$action{protocol}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    elsif ( $action{action}=~m/^DELSERVICE$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deled the Service:'.$action{title}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### Service Grouping ########################################################
+    elsif ( $action{action}=~m/^SAVESERGROUP$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the Service Grouping:'.$action{sergroup}.', the Service included:'.$action{serlist}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELSERGROUP$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the Service Grouping:'.$action{sergroup}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### Schedule ########################################################
+    elsif ( $action{action}=~m/^SAVESCH$/ )
+    {
+      if ( $action{schname} ne '' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved the Schedule:'.$action{schname}.'>>'.$gUSERACTIONLOG);
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Days:'.$action{days}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    elsif ( $action{action}=~m/^DELSCH$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the Schedule:'.$action{schname}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### Outbound Pool ########################################################
+    elsif ( $action{action}=~m/^SAVEPOOL$/ )
+    {
+      if ( $action{backup_table} ne '')
+      {
+        if ( $action{mode} eq 'BTK' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Outbound Pool. ISP Info is '.$action{isp}.', Backup Pool is '.$action{backup_table}.', Balance Mode is '.$action{mode}.', Pool Name is '.$action{note}.', Bandwidth Measure Time:'.$action{measure_time}.' secs>>'.$gUSERACTIONLOG);
+        }
+        elsif ( $action{mode} eq 'BBL' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Outbound Pool. ISP Info is '.$action{isp}.', Backup Pool is '.$action{backup_table}.', Balance Mode is '.$action{mode}.', Pool Name is '.$action{note}.', When Latency '.$action{tolerance_latency}.' ms, When latency difference '.$action{latency_diff}.' ms >>'.$gUSERACTIONLOG);
+        }
+        elsif ( $action{mode} eq 'REDIRECT' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Outbound Pool. ISP Info is '.$action{isp}.', Backup Pool is '.$action{backup_table}.', Balance Mode is '.$action{mode}.', Pool Name is '.$action{note}.', Proxy: '.$action{redirect}.'>>'.$gUSERACTIONLOG);
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Outbound Pool. ISP Info:'.$action{isp}.', Backup Pool is '.$action{backup_table}.', Balance Mode is '.$action{mode}.', Pool Name is '.$action{note}.'>>'.$gUSERACTIONLOG);
+        }
+      }
+      else
+      {
+        if ( $action{mode} eq 'BTK' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Outbound Pool. ISP Info is '.$action{isp}.', Backup Pool is NONE, Balance Mode is '.$action{mode}.', Pool Name is '.$action{note}.', Bandwidth Measure Time:'.$action{measure_time}.' secs>>'.$gUSERACTIONLOG);
+        }
+        elsif ( $action{mode} eq 'BBL' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Outbound Pool. ISP Info is '.$action{isp}.', Backup Pool is NONE, Balance Mode is '.$action{mode}.', Pool Name is '.$action{note}.', When Latency '.$action{tolerance_latency}.' ms, When latency difference '.$action{latency_diff}.' ms >>'.$gUSERACTIONLOG);
+        }
+        elsif ( $action{mode} eq 'REDIRECT' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Outbound Pool. ISP Info is '.$action{isp}.', Backup Pool is NONE, Balance Mode is '.$action{mode}.', Pool Name is '.$action{note}.', Proxy: '.$action{redirect}.'>>'.$gUSERACTIONLOG);
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Outbound Pool. ISP Info is '.$action{isp}.', Backup Pool is NONE, Balance Mode is '.$action{mode}.', Pool Name is '.$action{note}.'>>'.$gUSERACTIONLOG);
+        }
+      }
+    }
+    elsif ( $action{action}=~m/^DELPOOL$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted Outbound Pool '.$action{table_num}.'>>'.$gUSERACTIONLOG);
+    }
+
+    ####################################################### QoS ########################################################
+    elsif ( $action{action}=~m/^SAVEQOS$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved the QoS Name:'.$action{qosname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELQOS$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the QoS:'.$action{qosname}.'>>'.$gUSERACTIONLOG);
+    }
+
+
+    #============================================================ Server Mapping ==============================================================
+    elsif ( $action{action}=~m/^ADDSERVERMAPPING$/ )
+    {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' added Server Mapping, Virtual IP:'.$action{vip}.', Service:'.$action{service}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    elsif ( $action{action}=~m/^DELSERVERMAPPING$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted Server Mapping ISP'.$action{isp}.', Virtual IP:'.$action{vip}.', Service:'.$action{service}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    #============================================================ Application Filtering ==============================================================
+    ####################################################### Application Grouping ########################################################
+    elsif ( $action{action}=~m/^SAVEAPPGROUP$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the Application Grouping '.$action{appgroup}.', the Service included : '.$action{applist}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELAPPGROUP$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the Application Grouping '.$action{appgroup}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    
+    #============================================================ Web Filtering ==============================================================
+    ####################################################### General Setting ########################################################
+    elsif ( $action{action}=~m/^APPLYWEBFILTERING$/ )
+    {
+      if ( $action{isenable} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Web Filtering>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Web Filtering>>'.$gUSERACTIONLOG);
+      }
+      
+      if ( $action{schedule} eq '0' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' checked Always Block>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        if ( $action{everyday} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Block Form '.$action{timehour1}.':'.$action{timemin1}.' To '.$action{timehour2}.':'.$action{timemin2}.' Everyday>>'.$gUSERACTIONLOG);
+        }
+        else
+        {
+          if ( $action{sun} eq '1' ) 
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Block Form '.$action{timehour1}.':'.$action{timemin1}.' To '.$action{timehour2}.':'.$action{timemin2}.' on Sunday>>'.$gUSERACTIONLOG);
+          };
+          if ( $action{mon} eq '1' ) 
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Block Form '.$action{timehour1}.':'.$action{timemin1}.' To '.$action{timehour2}.':'.$action{timemin2}.' on Monday>>'.$gUSERACTIONLOG);
+          }
+          if ( $action{tue} eq '1' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Block Form '.$action{timehour1}.':'.$action{timemin1}.' To '.$action{timehour2}.':'.$action{timemin2}.' on Tuesday>>'.$gUSERACTIONLOG);
+          }
+          if ( $action{wed} eq '1' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Block Form '.$action{timehour1}.':'.$action{timemin1}.' To '.$action{timehour2}.':'.$action{timemin2}.' on Wednesday>>'.$gUSERACTIONLOG);
+          }
+          if ( $action{thu} eq '1' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Block Form '.$action{timehour1}.':'.$action{timemin1}.' To '.$action{timehour2}.':'.$action{timemin2}.' on Thursday>>'.$gUSERACTIONLOG);
+          }
+          if ( $action{fri} eq '1' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Block Form '.$action{timehour1}.':'.$action{timemin1}.' To '.$action{timehour2}.':'.$action{timemin2}.' on Friday>>'.$gUSERACTIONLOG);
+          }
+          if ( $action{sat} eq '1' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Block Form '.$action{timehour1}.':'.$action{timemin1}.' To '.$action{timehour2}.':'.$action{timemin2}.' on Saturday>>'.$gUSERACTIONLOG);
+          }
+        }
+      }
+    }
+    
+    elsif ( $action{action}=~m/^ADDPC$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added Web Filtering Privileged Lists '.$action{iprange1}.' - '.$action{iprange2}.'>>'.$gUSERACTIONLOG);
+    }
+   
+    elsif ( $action{action}=~m/^DELPC$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted Web Filtering Privileged Lists '.$action{pclist}.'>>'.$gUSERACTIONLOG);
+    }
+   
+    
+    ####################################################### File Type ########################################################
+    elsif ( $action{action}=~m/^ADDFILETYPE$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the file type of web filtering '.$action{filename}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^APPLYFILE$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' applied a file type '.$action{filename}.' of web filter>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELFILETYPE$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted a file type '.$action{filename}.' of web filter>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### MIME Type ########################################################
+    elsif ( $action{action}=~m/^ADDMIME$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the mime type of web filtering '.$action{mimetype}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^APPLYMIME$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' applied a mime type '.$action{mimetype}.' of web filter>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELMIME$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the mime type '.$action{mimetype}.' of web filter>>'.$gUSERACTIONLOG);
+    }
+    ####################################################### HTTP URL Filtering ########################################################
+    elsif ( $action{action}=~m/^ADDTRUST$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the Trusted Web Sites '.$action{trustname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^ADDFORBID$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the Forbidden Web Site '.$action{forbidname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^ADDKEYWORD$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the Keyword Blocking '.$action{keywordname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELTRUST$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the Trusted Web Sites '.$action{trustname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELFORBID$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the Forbidden Web Site '.$action{forbidname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELKEYWORD$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the Keyword Blocking '.$action{keywordname}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### HTTP Content Filtering ########################################################
+    elsif ( $action{action}=~m/^APPLYCONTENTFILTERING$/ )
+    {
+      
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' applied HTTP Content Filtering>>'.$gUSERACTIONLOG);
+      
+      # Block Web Content 
+      if ( $action{activex} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' BLOCK ActiveX>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{javascript} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' BLOCK JavaScript>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{javaapplet} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' BLOCK JavaApplet>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{cookies} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' BLOCK Cookies>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{proxy} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' BLOCK Proxy>>'.$gUSERACTIONLOG);
+      }
+      # Prohibit Multi-thread Download 
+      if ( $action{prohibitmulti} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enable Prohibit Multi-thread Download>>'.$gUSERACTIONLOG);
+      }
+    }
+    
+    # Block Content Keyword 
+    elsif ( $action{action}=~m/^ADDCONTENTKEYWORD$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the Block Content Keyword '.$action{keywordname}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELCONTENTKEYWORD$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleteed the Block Content Keyword '.$action{keywordname}.'>>'.$gUSERACTIONLOG);
+    }
+
+    ####################################################### Category ########################################################
+    elsif ( $action{action}=~m/^SAVECATEGORY$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved the Category '.$action{categoryname}.', Block:'.$action{block}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELCATEGORY$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the Category:'.$action{categoryname}.'>>'.$gUSERACTIONLOG);
+    }
+
+    ####################################################### Filtering By Category ########################################################
+    elsif ( $action{action}=~m/^ADDCATEGORYFILTERING$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added Category Filtering, Source:'.$action{source}.', Web Filter:'.$action{webfilter}.', Schedule:'.$action{schedule}.', Action:'.$action{web_action}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATECATEGORYFILTERING$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updated Category Filtering, Source:'.$action{source}.', Web Filter:'.$action{webfilter}.', Schedule:'.$action{schedule}.', Action:'.$action{web_action}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELCATEGORYFILTERING$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted Category Filtering>>'.$gUSERACTIONLOG);
+    }
+
+    #============================================================ VPN ==============================================================
+    ####################################################### L2TP IPsec VPN Configuration ########################################################
+    elsif ( $action{action}=~m/^APPLYL2TP$/ )
+    {
+      if ( $action{isenable} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' applied the L2TP IPsec VPN, and enabled '.$action{servername}.', IP release range '.$action{iprange1}.' - '.$action{iprange2}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' applied the L2TP IPsec VPN, and disabled '.$action{servername}.', IP release range '.$action{iprange1}.' - '.$action{iprange2}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+
+    ####################################################### L2TP IPsec Authentication ########################################################
+    elsif ( $action{action}=~m/^ADDL2TPUSER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the L2TP IPsec user '.$action{username}.', assign IP '.$action{assignip}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATEL2TPUSER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the L2TP IPsec user '.$action{username}.', assign IP '.$action{assignip}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELL2TPUSER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the L2TP IPsec user '.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+
+    ####################################################### PPTP Server Configuration ########################################################
+    elsif ( $action{action}=~m/^APPLYPPTP$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' applied the PPTP Server, IP release range '.$action{iprange1}.' - '.$action{iprange2}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### PPTP User Authentication ########################################################
+    elsif ( $action{action}=~m/^ADDPPTPUSER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the PPTP Server user '.$action{username}.', assign IP '.$action{assignip}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATEPPTPUSER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the PPTP Server user '.$action{username}.', assign IP '.$action{assignip}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELPPTPUSER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the PPTP Server user '.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### SSL Configuration ########################################################
+    elsif ( $action{action}=~m/^APPLYSSL$/ )
+    {
+      if ( $action{enablessl} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' applied the SSL, and enabled VPN Server IP: '.$action{servername}.', Protocol: '.$action{protocol}.', Port: '.$action{port}.', VPN Net Range: '.$action{vpnnet}.', VPN Netmask: '.$action{netmask}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' applied the SSL, and disabled VPN Server IP: '.$action{servername}.', Protocol: '.$action{protocol}.', Port: '.$action{port}.', VPN Net Range: '.$action{vpnnet}.', VPN Netmask: '.$action{netmask}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+
+    ####################################################### SSL User Authentication ########################################################
+    elsif ( $action{action}=~m/^ADDSSLUSER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the SSL user '.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATESSLUSER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the SSL user '.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELSSLUSER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleteed the SSL user '.$action{username}.'>>'.$gUSERACTIONLOG);
+    }
+
+
+    #============================================================ Inbound Multi-DNS ==============================================================
+    elsif ( $action{action}=~m/^ADDDOMAIN$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added Inbound DNS '.$action{d_name}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATEDOMAIN$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updated Inbound DNS '.$action{d_name}.', IP '.$action{ip}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELDOMAIN$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted Inbound DNS '.$action{d_name}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATEHOST$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updated Host Properties '.$action{h_name}.'>>'.$gUSERACTIONLOG);
+    }
+
+
+    #============================================================ DoS Prevention ==============================================================
+    # Privileged List to bypass checks below
+    elsif ( $action{action}=~m/^SAVEDOSLIST$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Privileged List to bypass checks below '.$action{exception}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    # Connection Overflow Detection
+    elsif ( $action{action}=~m/^SAVECONNLIMIT$/ )
+    {
+      if ( $action{enable} eq '1' )
+      {
+        if ( $action{drop} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Connection Overflow Detection, Log Rate: '.$action{lograte}.', Log Prefix : '.$action{logprefix}.', Enable Drop Packet if matched, Can not go over : '.$action{above}.' Connections per IP>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass COD : '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Connection Overflow Detection, Log Rate: '.$action{lograte}.', Log Prefix : '.$action{logprefix}.', Disable Drop Packet if matched, Can not go over : '.$action{above}.' Connections per IP>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass COD : '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+      }
+      else
+      {
+        if ( $action{drop} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Connection Overflow Detection, Log Rate: '.$action{lograte}.', Log Prefix : '.$action{logprefix}.', Enable Drop Packet if matched, Can not go over : '.$action{above}.' Connections per IP>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass COD : '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Connection Overflow Detection, Log Rate: '.$action{lograte}.', Log Prefix : '.$action{logprefix}.', Disable Drop Packet if matched, Can not go over : '.$action{above}.' Connections per IP>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass COD : '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+      }
+    }
+    
+    # Fuzzy Ping Flooding Detection
+    elsif ( $action{action}=~m/^SAVEPFD$/ )
+    {
+      if ( $action{enable} eq '1' )
+      {
+        if ( $action{drop} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Fuzzy Ping Flooding Detection, Log Rate: '.$action{lograte}.', Log Prefix:'.$action{logprefix}.', Enable Drop Packet if matched, Lower : '.$action{lower}.' pkts/s, Upper : '.$action{upper}.' pkts/s>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass FPFD: '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Fuzzy Ping Flooding Detection, Log Rate: '.$action{lograte}.', Log Prefix:'.$action{logprefix}.', Disable Drop Packet if matched, Lower : '.$action{lower}.' pkts/s, Upper : '.$action{upper}.' pkts/s>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass FPFD: '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+      }
+      else
+      {
+        if ( $action{drop} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Fuzzy Ping Flooding Detection, Log Rate: '.$action{lograte}.', Enable Drop Packet if matched, Lower : '.$action{lower}.' pkts/s, Upper : '.$action{upper}.' pkts/s>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass FPFD: '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Fuzzy Ping Flooding Detection, Log Rate: '.$action{lograte}.', Disable Drop Packet if matched, Lower : '.$action{lower}.' pkts/s, Upper : '.$action{upper}.' pkts/s>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass FPFD: '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+      }
+    }
+    
+    # Port Scan Detection
+    elsif ( $action{action}=~m/^SAVEPSD$/ )
+    {
+      if ( $action{enable} eq '1' )
+      {
+        if ( $action{drop} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Port Scan Detection, Log Rate:'.$action{lograte}.', Log Prefix:'.$action{logprefix}.', Enable Drop Packet if matched, Weight Threshold:'.$action{threshold}.', High Port Weight:'.$action{highport}.', Low Port Weight:'.$action{lowport}.', Delay Thershold:'.$action{delay}.'>>'.$gUSERACTIONLOG); 
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass FPFD: '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Port Scan Detection, Log Rate:'.$action{lograte}.', Log Prefix:'.$action{logprefix}.', Disable Drop Packet if matched, Weight Threshold:'.$action{threshold}.', High Port Weight:'.$action{highport}.', Low Port Weight:'.$action{lowport}.', Delay Thershold:'.$action{delay}.'>>'.$gUSERACTIONLOG); 
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass FPFD: '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+      }
+      else
+      {
+        if ( $action{drop} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Port Scan Detection, Log Rate:'.$action{lograte}.', Log Prefix:'.$action{logprefix}.', Enable Drop Packet if matched, Weight Threshold:'.$action{threshold}.', High Port Weight:'.$action{highport}.', Low Port Weight:'.$action{lowport}.', Delay Thershold:'.$action{delay}.'>>'.$gUSERACTIONLOG); 
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass FPFD: '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Port Scan Detection, Log Rate:'.$action{lograte}.', Log Prefix:'.$action{logprefix}.', Disable Drop Packet if matched, Weight Threshold:'.$action{threshold}.', High Port Weight:'.$action{highport}.', Low Port Weight:'.$action{lowport}.', Delay Thershold:'.$action{delay}.'>>'.$gUSERACTIONLOG); 
+          if ( $action{exception} ne '' )
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass FPFD: '.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+        }
+      }
+    }
+    # Quota Overflow Detection
+    elsif ( $action{action}=~m/^SAVEQOD$/ )
+    {
+      if ( $action{enable} eq '1' )
+      {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Quota Overflow Detection, Log Rate:'.$action{lograte}.', Log Prefix:'.$action{logprefix}.'>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '')
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass QOD:'.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+      }
+      else
+      {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Quota Overflow Detection, Log Rate:'.$action{lograte}.', Log Rate:'.$action{logprefix}.'>>'.$gUSERACTIONLOG);
+          if ( $action{exception} ne '')
+          {
+            runCommand(command=>'echo', params=>$local_time.' '.$username.' Privileged List to bypass QOD:'.$action{exception}.'>>'.$gUSERACTIONLOG);
+          }
+      }
+    } 
+    
+    #============================================================ HA ==============================================================
+    elsif ( $action{action}=~m/^APPLYHA$/ )
+    {
+      if ( $action{afs} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Launch HA on Boot>>'.$gUSERACTIONLOG); 
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' disabled Launch HA on Boot>>'.$gUSERACTIONLOG); 
+      }
+      
+      if ( $action{role} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Play the Role of: Primary>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Play the Role of: Secondary>>'.$gUSERACTIONLOG);
+      }
+      
+      if ( $action{autofailover} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Auto Fail Over>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' disabled Auto Fail Over>>'.$gUSERACTIONLOG);
+      }
+      
+      if ( $action{autoswitchback} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Auto Switch Back>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' disabled Auto Switch Back>>'.$gUSERACTIONLOG);
+      }
+      
+      if ( $action{nicfail} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Fail on LAN Interface>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' disabled Fail on LAN Interface>>'.$gUSERACTIONLOG);
+      }
+      
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Host FAILOVER Timeout:'.$action{hosttimeout}.' s, Network FAILOVER Timeout: '.$action{networktimeout}.' times, Enable Virtual MAC: '.$action{vmacnic}.'>>'.$gUSERACTIONLOG);
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Active Config Set: '.$action{primaryconfigid}.', Stand By Config Set: '.$action{slaveconfigid}.'>>'.$gUSERACTIONLOG);
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Floating IP: '.$action{floatingip}.' / '.$action{floatingipmask}.' '.$action{floatingport}.'>>'.$gUSERACTIONLOG);
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Standby IP of Primary: '.$action{primarysip}.' / '.$action{pripipmask}.', '.$action{primaryport}.'>>'.$gUSERACTIONLOG);
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Standby IP of Secondary: '.$action{slavesip}.' / '.$action{slvsipmask}.', '.$action{slaveport}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    
+    #============================================================ System ==============================================================
+    ####################################################### Administration ########################################################
+    elsif ( $action{action}=~m/^SAVEADMINSETTING$/ )
+    {
+      if ( $action{hostname} ne '' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Https Port Number:'.$action{httpsport}.', Hostname:'.$action{hostname}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Https Port Number:'.$action{httpsport}.'>>'.$gUSERACTIONLOG);
+      }
+      
+      # Export Config. to FTP Server
+      if ( $action{enablecfgftpserver} eq '1' )
+      {
+        if ( $action{ftpmode} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Export Config. to FTP Server:'.$action{cfgftpserverip}.', FTP Mode:Active, Login username:'.$action{cfgftpusername}.', Login password:'.$action{cfgftppassword}.', Upload directory:'.$action{cfgftpdirectory}.'>>'.$gUSERACTIONLOG);
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Export Config. to FTP Server:'.$action{cfgftpserverip}.', FTP Mode:Passive, Login username:'.$action{cfgftpusername}.', Login password:'.$action{cfgftppassword}.', Upload directory:'.$action{cfgftpdirectory}.'>>'.$gUSERACTIONLOG);
+        }
+      }
+      else
+      {
+        if ( $action{ftpmode} eq '1' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Export Config.>>'.$gUSERACTIONLOG);
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable Export Config.>>'.$gUSERACTIONLOG);
+        }
+      }
+    }
+      
+    ####################################################### Appliance Registration ########################################################
+    elsif ( $action{action}=~m/^REGNAME$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' register Appliance Registration, Company Name:'.$action{registername}.', Contact E-mail:'.$action{registermail}.', Serial Number:'.$action{registersn}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### DNS ########################################################
+    elsif ( $action{action}=~m/^SAVEDNSSERVER$/ )
+    {
+      if ( $action{dnsserver} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved QB works as DNS Server with Authoritative DNS '.$action{relay}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved QB works as DNS resolver '.$action{resolve}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    elsif ( $action{action}=~m/^ADDDNSSERVER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added '.$action{source}.' DNS Relay, and schedule is '.$action{schedule}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATEDNSSERVER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updeted '.$action{source}.' DNS Relay, and schedule is '.$action{schedule}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^DELDNSSERVER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted '.$action{source}.' DNS Relay>>'.$gUSERACTIONLOG);
+    }
+
+    ####################################################### Dynamic Routing ########################################################
+    elsif ( $action{action}=~m/^APPLYDROUTEING$/ )
+    {
+      
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' applied Dynamic Routing>>'.$gUSERACTIONLOG);
+      
+      if ( $action{enabledynroute} eq '1' )
+      {
+        if ( $action{protocol} eq 'OSPF' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Dynamic Routing, Method: '.$action{protocol}.'>>'.$gUSERACTIONLOG);
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Dynamic Routing, Method: '.$action{protocol}.', Route Metric: '.$action{metric}.', Route Update Time: '.$action{chgtime}.', Monitor Port: '.$action{monport}.'>>'.$gUSERACTIONLOG);
+        }
+      }
+      else
+      {
+        if ( $action{protocol} eq 'OSPF' )
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' disabled Dynamic Routing, Method: '.$action{protocol}.'>>'.$gUSERACTIONLOG);
+        }
+        else
+        {
+          runCommand(command=>'echo', params=>$local_time.' '.$username.' disabled Dynamic Routing, Method: '.$action{protocol}.', Route Metric: '.$action{metric}.', Route Update Time: '.$action{chgtime}.', Monitor Port: '.$action{monport}.'>>'.$gUSERACTIONLOG);
+        }
+      }
+    }
+    
+    ####################################################### External Storage ########################################################
+    elsif ( $action{action}=~m/^FORMATHDD$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Format Hard Disk>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^SAVEANALYDEV$/ )
+    {
+      if ( $action{analydev} ne '' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Analyser Hard Disk:'.$action{analydev}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Analyser Hard Disk:None>>'.$gUSERACTIONLOG);
+      }
+    }
+    
+    ####################################################### Miscellaneous ########################################################
+    elsif ( $action{action}=~m/^SAVEMSSMODIFY$/ )
+    {
+      if ( $action{mssmodify} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Modify MSS by User define:'.$action{mssmodify_value}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Modify MSS by Default>>'.$gUSERACTIONLOG);
+      }
+    }
+    
+    ####################################################### TCP Optimization ########################################################
+    elsif ( $action{action}=~m/^SAVETCPOPT$/ )
+    {
+      if ( $action{tcp_opt} eq 'none' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved TCP Optimization:None>>'.$gUSERACTIONLOG);
+      }
+      elsif ( $action{tcp_opt} eq 'cubic')
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved TCP Optimization:Algorithm for ADSL Links, Source:'.$action{tcp_source}.', Destination:'.$action{tcp_destination}.', Destination Port:'.$action{tcp_dest_port}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' saved TCP Optimization:Algorithm for Wireless Links, Source:'.$action{tcp_source}.', Destination:'.$action{tcp_destination}.', Destination Port:'.$action{tcp_dest_port}.'>>'.$gUSERACTIONLOG);
+      }
+    }
+    
+    ####################################################### SNMP ########################################################
+    elsif ( $action{action}=~m/^APPLYSNMP$/ )
+    {
+      
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' applied Snmp Administration Console>>'.$gUSERACTIONLOG);
+      
+      if ( $action{enablesnmp} eq '1' && $action{enabletrap} eq '0')
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable SNMP, Snmp Manager IP 1:'.$action{snmpmgrip}.', Snmp Manager IP 2:'.$action{snmpmgrip2}.', Snmp Community String:'.$action{community}.'>>'.$gUSERACTIONLOG);
+      }
+      elsif ( $action{enablesnmp} eq '0' && $action{enabletrap} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable SNMP trap, Snmp Manager IP 1:'.$action{snmpmgrip}.', Snmp Manager IP 2:'.$action{snmpmgrip2}.', Snmp Community String:'.$action{community}.'>>'.$gUSERACTIONLOG);
+      }
+      elsif ( $action{enablesnmp} eq '1' && $action{enabletrap} eq '1')
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable SNMP and SNMP trap, Snmp Manager IP 1:'.$action{snmpmgrip}.', Snmp Manager IP 2:'.$action{snmpmgrip2}.', Snmp Community String:'.$action{community}.'>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Disable SNMP and SNMP trap, Snmp Manager IP 1:'.$action{snmpmgrip}.', Snmp Manager IP 2:'.$action{snmpmgrip2}.', Snmp Community String:'.$action{community}.'>>'.$gUSERACTIONLOG);
+      }
+      
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' applied System Information, System Name:'.$action{sysname}.', System Contact:'.$action{syscontact}.', System Location:'.$action{syslocation}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### Time ########################################################
+    elsif ( $action{action}=~m/^SYNCTIME$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' SYNC NTP Time Server>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^SAVENTPTIMESERVER$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' synced NTP Time Server>>'.$gUSERACTIONLOG);
+    }
+    
+    ####################################################### VOIP ########################################################
+    elsif ( $action{action}=~m/^SAVEVOIP$/ )
+    {
+      if ( $action{h323helper} eq '1' && $action{siphelper} eq '0' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled H.323 NAT Support>>'.$gUSERACTIONLOG);
+      }
+      elsif ( $action{h323helper} eq '0' && $action{siphelper} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled SIP NAT Support>>'.$gUSERACTIONLOG);
+      }
+      elsif ( $action{h323helper} eq '1' && $action{siphelper} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled H.323 NAT and SIP NAT Support>>'.$gUSERACTIONLOG);
+      }
+      elsif ( $action{h323helper} eq '0' && $action{siphelper} eq '0' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' disabled VOIP>>'.$gUSERACTIONLOG);
+      }
+    }
+    
+    ####################################################### Web Proxy ########################################################
+    elsif ( $action{action}=~m/^APPLYPROXY$/ )
+    {
+      if ( $action{enablepxy} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Proxy Server, Maximum Object Size '.$action{maxobj}.' KB, Minimum Object Size '.$action{minobj}.' KB, Object Replacement '.$action{replace_usage}.' %, Proxy Cache Size'.$action{pxycachesize}.' MB>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' disabled Proxy Server, Maximum Object Size '.$action{maxobj}.' KB, Minimum Object Size '.$action{minobj}.' KB, Object Replacement '.$action{replace_usage}.' %, Proxy Cache Size'.$action{pxycachesize}.' MB>>'.$gUSERACTIONLOG);
+      }
+    }
+
+
+    #============================================================ Logs and Reports ==============================================================
+
+    
+    ####################################################### Layer 7 log Configuration ########################################################
+    elsif ( $action{action}=~m/^SAVEL7LOG$/ )
+    {
+      
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' saved Layer7 Log >>'.$gUSERACTIONLOG);
+      
+      # Layer7 IM Log
+      if ( $action{aim} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled AIM - AOL instant messenger>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{aimwebcontent} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled AIM web content>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{msnmessenger} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled MSN Messenger - Microsoft Network chat client>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{qq} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Tencent QQ - Chinese instant messenger protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{yahoo} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Yahoo messenger - an instant messenger protocol>>'.$gUSERACTIONLOG);
+      }
+      
+      # Layer7 P2P Log
+      if ( $action{applejuice} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Apple Juice - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ares} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Ares - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{audiogalaxy} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Audiogalaxy - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{bittorrent} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Bittorrent - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{directconnect} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Direct Connect - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{edonkey} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled eDonkey2000 - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{fasttrack} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled FastTrack - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{gnucleuslan} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled GnucleusLAN - LAN P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{gnutella} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Gnutella - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{goboogy} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled GoBoogy - a Korean P2P protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{hotline} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Hotline - An old P2P filesharing protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{imesh} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled iMesh - a P2P application>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{kugoo} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled KuGoo - a Chinese P2P program>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{mute} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled MUTE - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{napster} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Napster - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{openft} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled OpenFT - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{poco} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled POCO and PP365 - Chinese P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{soribada} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Soribada - A Korean P2P filesharing program>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{soulseek} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Soulseek - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{tesla} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Tesla Advanced Communication - P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{thecircle} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled The Circle - P2P application>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{xunlei} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Xunlei - Chinese P2P filesharing>>'.$gUSERACTIONLOG);
+      }
+      
+      # Layer7 Game Log
+      if ( $action{battlefield1942} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Battlefield 1942 - An EA game>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{battlefield2} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Battlefield 2 - An EA game>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{counterstrike} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Counterstrike - Game>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{dayofdefeat} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Day of Defeat: Half-Life 2 mod>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{doom3} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Doom 3 - A computer game>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{halflife2} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Half-Life 2 Deathmatch>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{mohaa} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Medal of Honor Allied Assault - an Electronic Arts game>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{quake} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled HL1 games>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{quake1} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Quake 1 - A popular computer game>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{subspace} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Subspace - 2D asteroids-style space game>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{worldofwarcraft} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled World of Warcraft - popular network game>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{xboxlive} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled XBox Live - Console gaming>>'.$gUSERACTIONLOG);
+      }
+      
+      # Layer7 Voice Log
+      if ( $action{h323} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled H.323 - Voice over IP>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{sip} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled SIP - Session Initiation Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{teamspeak} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled TeamSpeak - VoIP group communications software>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ventrilo} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Ventrilo - VoIP group communications software>>'.$gUSERACTIONLOG);
+      }
+      
+      # Layer7 Others Log
+      if ( $action{bgp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled BGP - Border Gateway Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{biff} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Biff - new mail notification>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{chikka} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Chikka - SMS service can be used without phones>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{cimd} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled CIMD - An SMSC protocol by Nokia>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ciscovpn} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Cisco VPN client software>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{citrix} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Citrix ICA remote desktop application>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{cvs} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled CVS - Concurrent Versions System>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{dhcp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled DHCP - Dynamic Host Configuration Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{dns} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled DNS - Domain Name System>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{finger} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Finger - User information server>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{freenet} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Freenet - Anonymous information retrieval>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ftp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled FTP - File Transfer Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{gkrellm} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Gkrellm - a system monitor>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{gopher} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Gopher - A precursor to HTTP>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{hddtemp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Hddtemp - Hard drive temperature reporting>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{http} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled HTTP - HyperText Transfer Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{httpaudio} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled HTTP - Audio over HTTP>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{httpcachehit} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled HTTP - Proxy Cache hit for HTTP>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{httpcachemiss} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled HTTP - Proxy Cache miss for HTTP>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{httpvideo} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled HTTP - Video over HTTP>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ident} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Ident - Identification Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{imap} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled IMAP - Internet Message Access Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ipp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled IP printing - a new standard for UNIX printing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{irc} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled IRC - Internet Relay Chat>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{jabber} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Jabber - open instant messenger protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{live365} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled live365 - An Internet radio site>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{lpd} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled LPD - Line Printer Daemon Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{nbns} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled NBNS - NetBIOS name service>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ncp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled NCP - Novell Core Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{netbios} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled NetBIOS - Network Basic Input Output System>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{nntp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled NNTP - Network News Transfer Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ntp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled NTP - Network Time Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{pcanywhere} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled pcAnywhere - Symantec remote access program>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{pop3} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled POP3 - Post Office Protocol version-3>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{pressplay} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled pressplay - A legal music distribution site>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{quicktime} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Quicktime HTTP>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{radmin} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled RDP software - Famatech Remote Administrator>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{rdp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled RDP - Remote Desktop Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{rlogin} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Rlogin - remote login>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{rtsp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled RTSP - Real Time Streaming Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{shoutcast} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Shoutcast and Icecast - streaming audio>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{smb} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Samba/SMB - Server Message Block>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{smtp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled SMTP - Simple Mail Transfer Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{snmp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled SNMP - Simple Network Management Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{socks} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled SOCKS Version 5 - Firewall traversal protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ssdp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled SSDP - Simple Service Discovery Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ssh} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled SSH - Secure SHell>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ssl} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled SSL - Secure Socket Layer>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{stun} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled STUN - Simple Traversal of UDP Through NAT>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{subversion} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Subversion - a version control system>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{telnet} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Telnet - Insecure remote login>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{tftp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled TFTP - Trivial File Transfer Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $actiion{tor} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Tor - The Onion Router - used for anonymization>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{tsp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled TSP - UNIX Time Synchronization Protocol>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{uucp} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled UUCP - nix to Unix Copy>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{validcertssl} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Valid certificate SSL>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{vnc} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled VNC - Virtual Network Computing>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{whois} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Whois - query/response system>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{x11} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled X Windows Version 11>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{zmaap} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' enabled Zeroconf Multicast Address Allocation Protocol>>'.$gUSERACTIONLOG);
+      }
+    }
+    
+    
+    ####################################################### Syslog Server ########################################################
+    elsif ( $action{action}=~m/^APPLYSYSLOGSERVER$/ )
+    {
+      
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Syslog Administration Console>>'.$gUSERACTIONLOG);
+      
+      if ( $action{serverlog} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable QB Server log>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{kernellog} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable QB Traffic log>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{squidlog} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable QB Proxy log>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{locallog} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Log on Local>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{syslogserver} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Remote Syslog Server '.$action{syslogserverip}.'>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{ftpserver} eq '1' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Enable Remote FTP Server '.$action{ftpserverip}.'>>'.$gUSERACTIONLOG);
+      }
+      if ( $action{syslogdev} ne '' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Local syslog storage '.$action{syslogdev}.'>>'.$gUSERACTIONLOG);
+      }
+      
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' applied Syslog Server. FTP Login Username '.$action{ftpusername}.', FTP Login Password '.$action{ftppassword}.', FTP Upload Directory '.$action{ftpdir}.'>>'.$gUSERACTIONLOG);
+    }
+    
+    
+    elsif ( $action{action}=~m/^Reboot$/ ) 
+    {    
+      if ( $action{reboot_time} eq '24' ) 
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' rebooted the QB at the moment>>'.$gUSERACTIONLOG);
+      }
+      elsif ( $action{reboot_time} eq 'Clear' )
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' Clear reboot Time>>'.$gUSERACTIONLOG);
+      }
+      else
+      {
+        runCommand(command=>'echo', params=>$local_time.' '.$username.' set to reboot the QB at '.$action{reboot_time}.':00>>'.$gUSERACTIONLOG);
+      }
+    }
+    elsif ( $action{action}=~m/^DELPROUTE$/ ) 
+    { 
+      my $proute_direction;
+      if ( $action{direction} eq 'd' ) { $proute_direction="RQST"; }
+      if ( $action{direction} eq 's' ) { $proute_direction="RPLY"; }
+      my $service_name=( $action{service} eq 'others' ) ? ( 'ANY' ) : ( $action{service} );
+      my $showdst=( $action{destination} eq 'system' ) ? ( 'Anywhere' ) : ( $action{destination} );
+      my $table=( $action{table} eq '30' ) ? ( 'BALANCE' ) : ( 'Pool'.$action{table} );
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' deleted the policy '.$action{source}.' '.$showdst.' '.$service_name.'\('.$proute_direction.'\)'.$action{schedule}.' '.$table.' '.$action{type}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^UPDATEPROUTE$/ ) 
+    { 
+      my $proute_direction;
+      if ( $action{direction} eq 'd' ) { $proute_direction="RQST"; }
+      if ( $action{direction} eq 's' ) { $proute_direction="RPLY"; }
+      my $service_name=( $action{service} eq 'others' ) ? ( 'ANY' ) : ( $action{service} );
+      my $showdst=( $action{destination} eq 'system' ) ? ( 'Anywhere' ) : ( $action{destination} );
+      my $table=( $action{table} eq '30' ) ? ( 'BALANCE' ) : ( 'Pool'.$action{table} );
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' updated the policy '.$action{source}.' '.$showdst.' '.$service_name.'\('.$proute_direction.'\)'.$action{schedule}.' '.$table.' '.$action{type}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^ADDPROUTE$/ ) 
+    { 
+      my $proute_direction;
+      if ( $action{direction} eq 'd' ) { $proute_direction="RQST"; }
+      if ( $action{direction} eq 's' ) { $proute_direction="RPLY"; }
+      my $service_name=( $action{service} eq 'others' ) ? ( 'ANY' ) : ( $action{service} );
+      my $showdst=( $action{destination} eq 'system' ) ? ( 'Anywhere' ) : ( $action{destination} );
+      my $table=( $action{table} eq '30' ) ? ( 'BALANCE' ) : ( 'Pool'.$action{table} );
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' added the policy '.$action{source}.' '.$showdst.' '.$service_name.'\('.$proute_direction.'\)'.$action{schedule}.' '.$table.' '.$action{type}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^LOGINXML$/ )
+    {
+       $failfile=$action{file};
+       $PATH = '/mnt/log/LogBug.log';
+       runCommand(command=>'echo', params=>$local_time.' '.$username.' Xml damaged and loaded default config file:'.$failfile.'>>'.$PATH);
+    } 
+    elsif ( $action{action}=~m/^SAVEAS$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Backup Config, Save As:'.$action{saveas}.'>>'.$gUSERACTIONLOG);
+    }
+    elsif ( $action{action}=~m/^IMPORTNAME$/ )
+    {
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' Upload Config, Upload:'.$action{importname}.'>>'.$gUSERACTIONLOG);
+    }
+
+    else 
+    {    
+      runCommand(command=>'echo', params=>$local_time.' '.$username.' '.$action{action}.' the QB>>'.$gUSERACTIONLOG);
+    }
+}
+#LogUserAction
+    
+# must do this
+1

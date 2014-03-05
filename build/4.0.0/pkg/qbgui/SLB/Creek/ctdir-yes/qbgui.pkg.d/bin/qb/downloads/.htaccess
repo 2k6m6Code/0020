@@ -1,0 +1,7 @@
+AuthGroupFile /dev/null
+AuthName Downloads
+AuthType Basic
+
+<Limit GET POST PUT>
+ deny from all
+</Limit>

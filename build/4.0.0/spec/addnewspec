@@ -1,0 +1,12 @@
+#!/bin/sh
+set -x
+ALLREG=`find . -name registry`
+for filename in $ALLREG
+do
+#sed -i '{
+#40 a\
+#ENABLESSLVPNCLT 1
+#}' $filename
+sed -i '$ a\ENABLESSLVPNCLT 1' $filename
+done
+

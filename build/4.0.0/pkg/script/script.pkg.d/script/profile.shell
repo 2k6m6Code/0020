@@ -1,0 +1,14 @@
+
+TTY=`tty | cut -d/ -f3-`
+NNAME=`uname -n`
+MAC_ADDR=`/sbin/ifconfig eth0 |grep "HWaddr"|awk '{print $5}'`
+
+PS1='
+$MAC_ADDR[$LOGNAME@$TTY]:$PWD
+> ';                                                    export PS1
+
+export TERM=ansi
+
+set -o vi
+alias l="ls -al"
+

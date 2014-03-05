@@ -1,0 +1,54 @@
+<html>
+<head><link rel="stylesheet" href="ch_help.css" type="text/css"></head>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Multi-V</title>
+<body>
+
+<h2>Multi-V</h2>
+<ol>
+<li>Multi-V Topology</li> <!--1-->
+<p>
+ Multi-V 主要的功能就是在兩台Q-Balancer之間建立多個互連的GRE通道，透過通道，可以使兩台Q-Balancer後方的網段透通，這種方式可以使得VPN， Video Conference的協定在沒有Nat障礙的情況下使用多條線路的頻寬及彼此備援的功能，當然也可以建立一個 1對N或N對N的VPN負載平衡架構。<br>
+    由於對Multi-V通道進行健康偵測的模式與一般線路相同，因此在Q-Balancer中的設定模式也類似，一但設定好Multi-V的線路之後在 " Outbound Pool"，"Policy Routing"中的使用都等於一般的線路。
+</p>	
+<li>Setup MPV</li> <!--2-->
+<p>
+在【Link Config.】內點選【Create】，出現的網頁對話選擇【MPV】，然後會看到出現MPV ISP新線路設定區。
+</p> 
+<p>
+要建立通道，必須注意三件事情：
+<ol>
+<li>通道是一個成對的設定，在另一端點Q-Balancer的設定會用這個端點的 "local" 當 "remote" 而 "remote" 當 "local"。
+<li>用來產生新IP表頭的IP位址必須屬於已經設定過線路的IP address。
+<li>由於系統會產生一個新的虛擬 Device，必須為這個虛擬的Device加上一個IP位址作為路由資訊的使用。
+</ol>
+</p>
+<p>
+<table>
+<tr><th></th><th>	Q-Balancer A</th><th>	Q-Balancer B</th><th></th></tr>	
+<tr><td class="light">Name :</td><th class="light">ISP 3</th><th class="light">	ISP 3	</th><td class="light">MPV 線路的名字</td></tr>
+<tr><td>Tunnel Header Source IP</td><th>	210.201.178.9</th><th>	61.220.116.221</th><td>作為 Tunnel IP header的 source IP</td></tr>
+<tr><td class="light">Tunnel Header Destination IP</td><th class="light">	61.220.116.221</th><th class="light">	210.201.178.9</th><td class="light">作為 Tunnel IP header的 destination IP</td></tr>
+<tr><td>Tunnel Device Local IP</td><th>	172.16.0.2</th><th>	172.16.0.1</th><td>作為 Tunnel Device的Device IP，任意一個不重覆使用的IP address</td></tr>
+<tr><td class="light">Tunnel Device Remote IP</td><th class="light">	172.16.0.1</th><th class="light">	172.16.0.2</th><td class="light">通道遠端對應設定的Tunnel Device IP
+</td></tr>
+<tr><td>Target IP :</td><th>	172.16.0.1</th><th>	172.16.0.2</th><td>可以使用遠端Tunnel Device的IP位址
+</td></tr>
+<tr><td class="light">Download/Upload :</td><th class="light">	512/512</th><th class="light">	512/512</th><td class="light">頻寬</td></tr>
+<tr><td>MPV MTU:</td><th></th><th></th><td>使用這個選項可以避免有些Device不支援 MTU Discovery Protocol的問題
+</td></tr>
+<tr><td class="light">MPV MSS:</td><th class="light"></th><th class="light"></th><td class="light">使用這個選項可以避免有些Device不支援 MTU Discovery Protocol的問題
+</td></tr>
+</table>
+<em>兩台需設定相對應的設定，這條MPV ISP才能Work</em>
+</p>
+<li>Use MPV links</li> <!--3-->
+<p>
+在【Outbound Pool Configuration】，你可以開啟一個 Pool並在內部使用 MPV建立的線路，使用" Weighted Least Traffic By Packet"演算法，可以把封包分散在不同的MPV link中達成頻寬聚合的功能，不過使用packet level的分配在Voip或Video conference的效果並不好。<br>
+
+在【Policy Configuration】，對於兩台Q-Balancer後方網段聯繫的政策作設定，必須設定 Request 及 Reply的政策。<br>
+
+請注意NAT的模式是使用 None NAT，因為在MPV中是建立Tunnel來傳輸資料而不適用NAT。
+</p>
+</ol>
+</body></html>

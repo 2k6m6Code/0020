@@ -1,0 +1,10 @@
+<opt hosttimeout="3" primarysip="" slaveconfigid="boot" slavesip="" afs="0" autofailover="1" slvsipmask="32" primaryconfigid="boot" slaveport="eth0" networktimeout="3" nicfail="1" primaryport="eth0" autoswitchback="1" role="0" prisipmask="32">
+  <slavepip></slavepip>
+  <pripipmask></pripipmask>
+  <hatarget value="system" />
+  <hatarget value="system" />
+  <hatarget value="system" />
+  <hatarget value="system" />
+  <slvpipmask></slvpipmask>
+  <primarypip></primarypip>
+</opt>

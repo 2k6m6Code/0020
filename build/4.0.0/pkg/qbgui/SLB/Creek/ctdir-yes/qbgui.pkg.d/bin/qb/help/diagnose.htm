@@ -1,0 +1,36 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Diagnostic Tools</title>
+</head>
+<body>
+
+<h2>Diagnostic Tools</h2>
+<p>
+Q-Balancer provides a set of tools to debug link errors.</p> 
+<table>
+<tr><td width=130 valign=top>Ping	</td><td>This sends ICMP packets</td></tr> 
+<tr><td valign=top class="light">Ping by Arp Packet	</td><td class="light">This sends ICMP packets using Arp Broadcast. This is usually used to check if a device is successfully hooked directly to Q-Balancer.</td></tr> 
+<tr><td valign=top>Packet Captor	</td><td>This is a tool to sniff packets. It has the same argument as Tcp-dump open source tool.</td></tr>
+<tr><td valign=top class="light">Show Arp Cache	</td><td class="light">Shows the Arp Table on Q-Balancer</td></tr>
+<tr><td valign=top>Query QOS Status	</td><td>Displays all kinds of information on QoS.</td></tr> 
+<tr><td valign=top class="light">Restart QB Engine	</td><td class="light">Restart the Q-Balancer program, this does not reboot the machine.</td></tr>
+</table>
+<p>
+Parameters for packet captor
+</p>
+<table>
+<tr><th>-i</th><td>	Interface, Port 1 use eth0, Port 2 use eth1...</td></tr>
+<tr><th>-n</th><td>	Not display Protocol Name, show port no.</td></tr>
+<tr><th>Host IP</th><td>	Designate the HOST, ex: host 168.95.1.1</td></tr>
+<tr><th>Port No.</th><td>	Designate the Port, ex: port 80</td></tr>
+<tr><th>And</th><td>	Intersection</td></tr>
+<tr><th>Not</th><td>	Exclusion</td></tr>
+</table>
+<p>
+Examples :<br> 
+<li>host 168.95.1.2 and host 210.1.1.2
+<li>host 140.113.1.1 and port 53
+<li>host 210.1.1.5 and not port 4000
+</p>
+</body></html>

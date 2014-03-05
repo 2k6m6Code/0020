@@ -1,0 +1,131 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showqosisp2
+{
+    my (%action)=@_;
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    #my $qosref=XMLread($gPATH.'qospolic.xml');
+    #my $qoslist=$qosref->{isp};
+    
+    my @titleHeadList=('ID', $qblang[29], $qblang[66], $qblang[148]);
+    my %titleWidth=('ID'=>100, 'Name'=>150, 'Upload'=>150, 'NIC'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0" style="width:600">);
+    #print qq (<tr><td class="bigtitle">Qos of MPV);
+    print qq (<tr><td class="bigtitle">TMV Bandwidth Shaper);
+    print qq (<tr><td>);
+    #print qq (<table cellspacing="0">);
+    #print qq (<tr>);
+    #print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</table>);
+
+    #==============================================================
+    # Print Title first
+    # show 
+    #===============================================================
+    # print qq (<div class="divframe" style="width:500">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0"><tr>); 
+    # foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    # print qq (</tr></table>);
+    # print qq (</div>);
+    
+    print qq (<div class="divframe" style="height:200; width:500">);
+    print qq (<table id="hostList" width="100%"  class="body" border="0"><thead style="background-color: #332211;"><tr><th width="100" align="center">ID</th><th width="150" align="center">$qblang[29]</th><th width="100" align="center">$qblang[66]</th><th width="150" align="center">$qblang[148]</th></tr></thead>);
+    my $lineCount=0;
+    foreach my $isp ( @$isplist )
+    {
+        #if ( $isp->{iid} eq 'system' ) { next; }
+        if ( $isp->{isptype} ne 'dtunnel' ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+        #my $showname=$item->{hostname};
+        #$showname=~s/host-//g;
+        #print qq (<tr>);
+        print qq (<td align="center" width="$titleWidth{ID}" height="25" >TMV $isp->{iid}</td>);
+        print qq (<td align="center" width="$titleWidth{Name}" height="25">$isp->{ispname}</td>);
+        print qq (<td align="center" width="$titleWidth{nic}" height="25">$isp->{nic}</td>);
+        print qq (<td align="center" width="$titleWidth{Upload}" height="25">);
+        print qq (<input class="qbtext" name="qos" style="WIDTH: 80" value="$isp->{qos}" >kbps\n);
+        print qq (</td>);
+        print qq (</tr>);
+        $lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+    print qq (<table width="100%"><tr><td align="center">);
+    #print qq (<input type="button" class="qb" value="Save" onClick="goSubmit('SAVE')" style="width:60">);
+    print qq (<input type="button" class="qb" value="$qblang[54]" onClick="SAVE()" style="width:60">);
+    print qq (</td></tr></table>);
+}
+#showqosisp
+
+
+#=============================================================================================
+
+sub scriptqosisp2 
+{
+    print << "scriptHost";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+    
+    function SAVE()
+    {
+        var qos = document.getElementsByName('qos');
+        
+        for (var i = 0; i < qos.length; i++)
+        {
+            if (qos[i].value != '' && isNaN(qos[i].value))
+            {
+                alert('Please Enter the number');
+                return;
+            }
+        }
+        myform.action.value = 'SAVE';
+        myform.submit();
+    }
+
+    </script>
+    
+scriptHost
+}
+
+sub maintainQoSISP2
+{
+    my (%action)=@_;
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    
+    if ( $action{action} eq 'SAVE' )
+    {
+        my $qos = $action{qos};
+        my @tmp;
+        foreach my $item ( @$qos )
+        {
+            push(@tmp, $item);
+
+            LogUserAction( action=>'SAVETMVQOSISP', qos=>$item );
+        }
+        foreach my $isp ( @$isplist )
+        {
+            if ( $isp->{isptype} eq 'dtunnel' )
+            {
+                $isp->{qos} = $tmp[0];
+                shift @tmp;
+            }
+        }
+    }
+    XMLwrite($ispref, $gPATH."basic.xml");    
+}
+#
+#
+1

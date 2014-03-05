@@ -1,0 +1,81 @@
+body	{ background-color: #336699; color=#FFFFFF; font-family: "Verdana", "Arial", "Helvetica", "sans-serif"; font-size: 12px; font-weight: normal; margin-left: 5px}
+h1		{ font-size: 36px}
+h2		{ margin-top:20px; font-size: 16px} /* as bigtitle */
+/* 
+p		{ margin-left: 50px ;margin-bottom: 15px; margin-top: 15px; }
+td		{ text-align:center;}
+p.margin	{ margin-bottom: 5px} bg:#6699FF vs. color#FFFFFF
+*/
+table	{ font-family:"Verdana"; font-size:12px; margin-left: 10px; margin-right: 10px; background:lightblue;  color:#003366; layout-grid:18px; border-collapse:collapse;}
+td.light{ background:lightcyan;} 
+th.light{ background:lightcyan;}
+p		{ layout-grid:20px}
+li		{ layout-grid:18px}
+em		{ BACKGROUND-COLOR: #667788; BORDER-BOTTOM: #185563 1px groove; BORDER-LEFT: #185563 1px groove; BORDER-RIGHT: #185563 1px groove; BORDER-TOP: #185563 1px groove; } /* as title */
+
+
+/*
+a           { color:white }
+a:hover     { color:blue  }
+.title      { BACKGROUND-COLOR: #667788; BORDER-BOTTOM: #185563 1px groove; BORDER-LEFT: #185563 1px groove; BORDER-RIGHT: #185563 1px groove; BORDER-TOP: #185563 1px groove; COLOR: #185563; FONT-FAMILY: Arial, Helvetica; FONT-SIZE: 12px; color:ffffff;}
+.subtitle   { font-family: "Arial", "Helvetica", "sans-serif"; font-size: 14px; font-weight: bolder; color: #FFFFFF ; font-style: normal}
+.bigtitle   { font-family: "Arial", "Helvetica", "sans-serif"; font-size: 16px; font-weight: bolder; color: #FFFFFF ; font-style: normal}
+.legend     { font-family: "Arial", "Helvetica", "sans-serif"; font-size: 12px; font-weight: bolder; color: #FFFFFF ; font-style: normal}
+.body       { font-family: "Verdana", "Arial", "Helvetica", "sans-serif"; font-size: 12px; font-weight: normal; color: #FFFFFF }
+.report     { font-family: "Verdana", "Arial", "Helvetica", "sans-serif"; font-size: px; font-weight: normal; color: #FFFFFF }
+.message    { font-family: "Verdana"; font-size: 12px; color: #004488;}
+.bodybold   { font-family: "Verdana", "Arial", "Helvetica", "sans-serif"; font-size: 12px; font-weight: bold; color: #FFFFFF }
+.qb         {  font-family: "Verdana", "Arial", "Helvetica", "sans-serif"; font-size: 11px; color: #003366;}
+.quest      {  font-family: "Verdana", "Arial", "Helvetica", "sans-serif"; font-size: 11px; color: #003366; cursor:help;}
+.qbCopy     { font-family: "Verdana", "Arial", "Helvetica", "sans-serif"; font-size: 9px; color: #FFFFFF; padding-top: 5px; padding-right: 5px}
+.qbtext     { BACKGROUND-COLOR: #FFFBFF; BORDER-BOTTOM: #185563 1px groove; BORDER-LEFT: #185563 1px groove; BORDER-RIGHT: #185563 1px groove; BORDER-TOP: #185563 1px groove; COLOR: #185563; FONT-FAMILY: Arial, Helvetica; FONT-SIZE: 12px;}
+.qbopt      { font-family: "Verdana", "Arial", "Helvetica", "sans-serif"; font-size: 9px; color: #003366; padding-top: 5px; padding-right: 5px; width:60px;}
+.alertopt   { BACKGROUND-COLOR: #FFFBFF; BORDER-BOTTOM: #185563 1px groove; BORDER-LEFT: #185563 1px groove; BORDER-RIGHT: #185563 1px groove; BORDER-TOP: #185563 1px groove; COLOR: #ff5563; FONT-FAMILY: Arial, Helvetica; FONT-SIZE: 16px;}
+.myframe    { }
+.prompt     { position:absolute;font-family:"Verdana","Arial"; font-size:9px; color:#ffffff; background-color:#223344;left:120;top:10;visibility:hidden;height:50;width:120; overflow:scroll;z-index:1;}
+
+
+.div	    { width:300px;height:100px;background:lightblue;}
+
+
+.reportdiv  { 
+                width:100%;border:1 white;
+	        font-family: "Verdana"; font-size:10px; color: #ffffff; 
+            }
+
+.reportdiv table     { font-family:"Verdana"; font-size:10px;}
+.reportdiv td        { text-align:center;}
+
+
+.divframe   { 
+                width:100%;overflow-y:auto;background:#223344;
+	        scrollbar-track-color:#336699;	scrollbar-Face-Color:#336699;
+	        scrollbar-Arrow-Color:#ffffff;	scrollbar-Highlight-Color:#ffffff;
+	        scrollbar-Shadow-Color:#ffffff;	scrollbar-3dLight-Color:#336699;
+	        scrollbar-DarkShadow-Color:#336699; font-family: "Verdana"; font-size:12px; color: #ffffff; 
+            }
+.divframe table     { font-family:"Verdana"; font-size:12px;}
+.divframe td        { text-align:center;}
+
+
+
+.infodiv            { position:absolute; display:none;border:1 solid black;background:#555555;z-index:6;filter:alpha(opacity=80)}
+.infodiv table      { color:white;font-family:"Verdana", "Arial"; font-size:10}
+.fieldset           { width:250px;height:100px;font-family: "Verdana", "Arial", "Helvetica", "sans-serif"; font-size: 12px; font-weight: normal; color: #FFFFFF }
+.tagOn  {
+            border:1 solid black;
+            border-bottom:;
+            text-align:center;
+            font:11 Verdana;
+            background:#332211;
+            width:60;
+}
+.tagOff{
+            border:1 solid black;
+            background:#556677;
+            text-align:center;
+            font:11 Verdana;
+            cursor:hand;
+            width:60;
+}
+*/

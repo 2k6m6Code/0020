@@ -1,0 +1,4 @@
+[CONF.PKG] 
+version = 3.0.0 
+serial = Mesh 400
+[/CONF.PKG]

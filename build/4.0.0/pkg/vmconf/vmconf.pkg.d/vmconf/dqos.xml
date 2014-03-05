@@ -1,0 +1,7 @@
+<opt file="dqos">
+  <fuzzypfd lograte="1/m" chain="FUZZYPFD" exception="" upper="" next="ACCEPT" lower="" logprefix="fuzzypfd:" enable="0" match="fuzzy" />
+  <connlimit lograte="1/m" chain="CONNLIMIT" mask="" exception="" next="QOD" above="50" logprefix="cod:" enable="0" match="connlimit" />
+  <forward chain="FORWARD" userchain="PSD:CONNLIMIT:QOD:FUZZYPFD" exception="" />
+  <psd next="CONNLIMIT" lograte="1/m" highport="1" chain="PSD" logprefix="psd:" exception="" lowport="3" enable="0" threshold="21" match="psd" delay="5" />
+  <qod lograte="1/m" chain="QOD" exception="" level="0:0x02;0:0x04;0:0x08;0:0x10;0:0xff" next="ACCEPT" logprefix="qod:" enable="0" match="qod" />
+</opt>

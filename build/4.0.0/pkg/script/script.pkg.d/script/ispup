@@ -1,0 +1,185 @@
+ #!/bin/sh
+ #set -x
+ ispid=$1
+ CNCINBOUND="/usr/local/apache/qbconf/cncin.sh"
+ CNCINBOUNDDEL="/usr/local/apache/qbconf/cncindel.sh"
+ CTCINBOUND="/usr/local/apache/qbconf/ctcin.sh"
+ CTCINBOUNDDEL="/usr/local/apache/qbconf/ctcindel.sh"
+ ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+ DNSXML="/usr/local/apache/active/dns.xml"
+ CHANGEPOLICY="/tmp/changepolicy"
+ TEMP_CNCISP="/tmp/tmp_cncisp"
+ TEMP_CTCISP="/tmp/tmp_ctcisp"
+
+#Delete ddns check process
+ delpid=`ls /tmp/|grep "\<ddnsmpv$ispid\>" |awk '{print $1}' |sed -e "s/\n//" |sed -e "s/.ddnsmpv$ispid//"`
+ if [[ -n $delpid ]]
+ then
+ kill -9 $delpid
+ rm -f /tmp/$delpid.ddnsmpv$ispid
+ fi
+
+isptype=`grep "iid=\"$ispid\"" $ACTIVEBASICXML|sed -e "s/  <isp.*isptype=\"//"|sed -e "s/\".*//"`
+if [ "$isptype" = "dtunnel" ];then
+  /opt/qb/bin/script/dmpv.sh $ispid &
+fi
+
+enc=`grep "iid=\"$ispid\"" $ACTIVEBASICXML|sed -e "s/  <isp.*enc=\"//"|sed -e "s/\".*//"`
+if [ "$isptype" = "tunnel" ] && [ "$enc" = "1" ];then
+  sleeptime=2
+  while [ -f /tmp/ipsec.lock ]
+  do
+    sleep $sleeptime  #wait other ispup
+    let sleeptime=$(( $RANDOM % 5 ))
+  done
+  touch /tmp/ipsec.lock
+  #Check if racoon is running.If not,need to start the service.
+  ps -ef|grep racoon|grep -v grep >/dev/null
+  checkracoon=$?
+  if [ "$checkracoon" != '0' ];then
+    #........................................................
+    # 20131008 Brian Start Racoon
+    #..........................................................
+    #/sbin/setkey -f /etc/racoon/flush
+    /usr/local/apache/qb/setuid/do_qbipsec.pl
+    /usr/local/apache/qb/setuid/do_qbipsec_route.pl
+    /usr/local/apache/qb/setuid/do_qbracoon.pl
+    sleep 2
+    /sbin/setkey -f /etc/racoon/ipsec.conf
+    /etc/racoon/ipsecroute
+    /usr/sbin/racoon
+    if [ -f /etc/racoon/delipsecrule ]; then
+    /etc/racoon/delipsecrule
+    fi
+    /etc/racoon/ipsecrule
+  else
+    ispname=`grep "iid=\"$ispid\"" $ACTIVEBASICXML|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+    #create ipsec racoon configure
+    /usr/local/apache/qb/setuid/do_qbddipsec.pl $ispid
+    /usr/local/apache/qb/setuid/do_qbipsec.pl
+    /usr/local/apache/qb/setuid/do_qbracoon.pl
+    sleep 5
+    #/sbin/setkey -f /etc/racoon/ipsec.conf
+    /sbin/setkey -f /etc/racoon/addipsec.$ispname
+    #/usr/sbin/racoonctl flush-sa ipsec
+    /usr/sbin/racoonctl reload-config
+
+    #Check if SA is exist"
+#    `/sbin/setkey -DP|grep $localip|grep $remoteip >/dev/null`
+#    checkSA=$?
+#    if [ "$checkSA" != "0" ];then
+#    /usr/local/apache/qb/setuid/do_qbipsec.pl
+#    /usr/local/apache/qb/setuid/do_qbracoon.pl
+#    /usr/sbin/racoonctl reload-config
+#    sleep 2
+#    /sbin/setkey -f /etc/racoon/ipsec.conf
+#    fi
+                                            
+  fi
+  rm -f /tmp/ipsec.lock
+fi
+
+if [ -f $CNCINBOUND ]; then
+  `grep group=\"CNC\" $DNSXML|sed -e "s/  <isp.*ispnum=\"//"|sed -e "s/\".*//">$TEMP_CNCISP`
+  `grep group=\"CTC\" $DNSXML|sed -e "s/  <isp.*ispnum=\"//"|sed -e "s/\".*//">$TEMP_CTCISP`
+  grep $ispid $TEMP_CNCISP
+  test_CNC=$?
+  grep $ispid $TEMP_CTCISP
+  test_CTC=$?
+  if [ "$test_CNC" != "0" ];then
+    if [ "$test_CTC" != "0" ];then
+      exit 0 
+    fi
+  fi
+  intime=`date`
+  echo "$intime In ispup function ISPID:$ispid" >>/tmp/aa
+  systemip=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*systemip=\"//"|sed -e "s/\".*//"`
+  grep $systemip $CNCINBOUND
+  test_CNC_boot=$?
+  grep $systemip $CTCINBOUND
+  test_CTC_boot=$?
+    if [ "$test_CNC_boot" = "0" ];then
+    if [ "$test_CTC_boot" = "0" ];then
+      echo "Exit ispup function ISPID:$ispid(boot)" >>/tmp/aa
+      exit 0
+    fi
+  fi
+
+  if [ "$test_CNC" = "0" ];then
+  #CNC BALANCE argument
+  count_iid=1
+  while test $count_iid -gt 0
+  do
+    cnciid=`awk NR==$count_iid $TEMP_CNCISP`
+    alive=`grep iid=\"$cnciid\" $ACTIVEBASICXML|sed -e "s/  <isp.*alive=\"//"|sed -e "s/\".*//"`
+    weight=`grep ispnum=\"$cnciid\" $DNSXML|sed -e "s/  <isp.*weight=\"//"|sed -e "s/\".*//"`
+    let count_iid=$count_iid+1
+    if [ "$cnciid" = "" ];then
+       count_iid=0
+    elif [ "$cnciid" != "" ]
+    then
+         if [ "$alive" = "0" ];then
+         cnc="$cnc"
+         else
+         cnc="$cnc --to-destination 172.31.0.$cnciid-0.0.0.$weight"
+         fi
+     fi
+  done
+  sed -e "s/-j BALANCE.*/-j BALANCE $cnc/" $CNCINBOUND>$CHANGEPOLICY
+  if [ "$?" != "1" ];then
+    cp -af $CHANGEPOLICY $CNCINBOUND
+  fi
+  else
+  #CTC BALANCE argument
+  count_iid=1
+  while test $count_iid -gt 0
+  do
+    ctciid=`awk NR==$count_iid $TEMP_CTCISP`
+    alive=`grep iid=\"$ctciid\" $ACTIVEBASICXML|sed -e "s/  <isp.*alive=\"//"|sed -e "s/\".*//"`
+    weight=`grep ispnum=\"$ctciid\" $DNSXML|sed -e "s/  <isp.*weight=\"//"|sed -e "s/\".*//"`
+    let count_iid=$count_iid+1
+    if [ "$ctciid" = "" ];then
+       count_iid=0
+    elif [ "$ctciid" != "" ]
+    then
+         if [ "$alive" = "0" ];then
+         ctc="$ctc"
+         else
+         ctc="$ctc --to-destination 172.31.0.$ctciid-0.0.0.$weight"
+         fi
+     fi
+  done
+  sed -e "s/-j BALANCE.*/-j BALANCE $ctc/" $CTCINBOUND>$CHANGEPOLICY
+  if [ "$?" != "1" ];then
+    cp -af $CHANGEPOLICY $CTCINBOUND
+  fi
+ fi
+ #Delete Old Rules
+ if [ -f $CNCINBOUNDDEL ]; then
+    chmod a+x $CNCINBOUNDDEL
+    . $CNCINBOUNDDEL
+ fi
+ if [ -f $CTCINBOUNDDEL ]; then
+    chmod a+x $CTCINBOUNDDEL
+    . $CTCINBOUNDDEL
+ fi
+
+ #Execute New Rules
+ if [ -f $CNCINBOUND ]; then
+    chmod a+x $CNCINBOUND
+    . $CNCINBOUND
+ fi
+ if [ -f $CTCINBOUND ]; then
+    chmod a+x $CTCINBOUND
+    . $CTCINBOUND
+ fi
+
+ #Generate Delete Policy for Link up and down
+ sed -e "s/-I/-D/" $CNCINBOUND>$CNCINBOUNDDEL
+ sed -e "s/-I/-D/" $CTCINBOUND>$CTCINBOUNDDEL
+
+ outtime=`date`
+ echo "$outtime Exit ispup function ISPID:$ispid" >>/tmp/aa
+else
+ exit 0
+fi

@@ -1,0 +1,204 @@
+#=============================================================================================
+sub showEditmime
+{
+    my (%action)=@_;
+    #$action{mimetype}=~s/^host-//g;
+    my $mimeref=XMLread($gPATH.'mime.xml');
+    my $mimelist=$mimeref->{mime};
+    my $edit;
+    foreach my $item ( @$mimelist )
+    {
+        if ( $item->{mimetype} eq $action{mimetype} )
+        {
+            $edit = $item;
+        }
+    }
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">MIME Type);
+
+    print qq (<hr size=1>);
+    print qq (<table>);
+    #-------------------------------------------------------------------------------------------
+    #  mime: MIME
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (MIME Type :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="mimetype" style="WIDTH: 120px" value="$action{mimetype}" >);
+    print qq (<input type="hidden" name="oldmimetype" value="$action{mimetype}" >);
+    print qq (</td></tr>);
+    #-------------------------------------------------------------------------------------------
+    #  mime: 
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Block :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $status = ( $edit->{block} eq '1' ) ? ( 'checked' ) : ( '' );
+    print qq (<input type="checkbox" name="block" $status >);
+    print qq (</td></tr>); 
+    #-------------------------------------------------------------------------------------------
+    #  mime: 
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Description :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    #print qq (<input class="qbtext" name="description" style="WIDTH: 120px; HEIGHT: 60px" value="$edit->{description}" >);
+    print qq (<textarea class="qbtext" name="description" style="width:200;height:80" >$edit->{description}</textarea>);
+    print qq (</td></tr>); 
+    
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 600px">);
+    print qq (<input class="qb" type="button" width="100" value="Save" onclick="Savemime();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+}
+#showEditmime
+
+
+#=============================================================================================
+
+sub scriptEditmime
+{
+    print << "scriptEditemime";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() 
+    { 
+    	myform=window.document.forms[0]; 
+    	checkState();
+    }
+    
+    function Savemime()
+    {
+    	var block = document.getElementById('block');
+    	var description=document.getElementById('description').value;
+    	
+    	for (i = 0; i < description.length; i++)
+    	{
+    	    var ch = description.charCodeAt(i);
+    	    if ( ch < 32 || ch > 126 )
+    	    {
+    	        alert("MIME Type Description must be English ");
+    	        return;
+    	    }
+    	}
+   	
+   	if (block.checked == true)  	
+   	{
+   	    myform.block.value = '1';
+   	}
+   	else
+   	{
+   	    myform.block.value = '0';
+   	}
+    	
+    	myform.action.value = 'SAVE';
+    	myform.submit();
+    }
+    
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+                                                    
+        if ( action != '' )
+            window.top.mainFrame.location.href="mime.cgi";
+    }
+    
+    </script>
+    
+scriptEditemime
+}
+#scriptEditemime
+
+sub maintainMIME
+{
+    %action=@_;
+    my $mimeref=XMLread($gPATH.'mime.xml');
+    my $mimelist=$mimeref->{mime};
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    
+    if ( !$action{action} ) { return; } 
+    
+    $action{mimetype}=~s/^\s*|\s*$//g;
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+    	delete($action{action});
+    	if ( $action{oldmimetype} eq '' )
+    	{
+    	    delete($action{oldmimetype});
+    	    push(@$mimelist, \%action);
+    	}
+    	else 
+    	{
+    	    foreach my $item ( @$mimelist )
+    	    {
+    	        if ( $item->{mimetype} eq $action{oldmimetype} )
+    	        {
+    	            delete($action{oldmimetype});
+    	            $item = \%action;
+    	        }
+    	    }
+    	}
+    	@$mimelist=sort { $a->{description} cmp $b->{description} } @$mimelist;
+    	LogUserAction( action=>'ADDMIME', mimetype=>$action{mimetype} );
+    }
+    elsif ( $action{action}=~m/^APPLY$/ )
+    {
+        my $block_mimes=$action{block_mimes};
+        
+        foreach my $item ( @$mimelist )
+        {
+            if ( grep(/^$item->{mimetype}$/, @$block_mimes) )
+            {
+                $item->{block} = '1';
+                LogUserAction( action=>'APPLYMIME', mimetype=>$item->{mimetype} );
+            }
+            else
+            {
+                $item->{block} = '0';
+            }
+        }
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{mimetypes};
+        
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some mime first\\n\\n);
+            return;
+        } 
+        my @temparray;
+        foreach my $item ( @$mimelist )
+        {
+            if ( grep(/^$item->{mimetype}$/, @$delet) ) { LogUserAction( action=>'DELMIME', mimetype=>$item->{mimetype} ); next; }
+            push(@temparray, $item);
+        }
+        $mimeref->{mime}=\@temparray;
+    }
+    
+    XMLwrite($mimeref, $gPATH."mime.xml");
+    if ( $squid->{isenable} eq '1' )
+    {
+        runCommand(command=>'/usr/local/apache/qb/setuid/do_qbmime.pl', params=>'');
+        runCommand(command=>'killall', params=>"-9 squid");
+    }
+}
+#
+1

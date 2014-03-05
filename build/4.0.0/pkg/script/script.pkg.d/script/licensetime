@@ -1,0 +1,58 @@
+#!/bin/bash
+#set -x
+if [ ! -f /tmp/licenseserial ];then #Need to get license information
+ LicenseIP="123.51.217.232"
+ /usr/bin/scp -P 4200 $LicenseIP:/home/brian/vmware/vmQB.cfg /tmp
+ ScpResult=$?
+ if [ $ScpResult != "0" ];then
+  LicenseDomainName=`/opt/qb/bin/script/ns vmlicense.creek.com.tw`
+  LicenseIP=$LicenseDomainName
+  /usr/bin/scp -P 4200 $LicenseIP:/home/brian/vmware/vmQB.cfg /tmp
+ fi
+
+ QBSN=`cat /mnt/conf/qbsn`
+ Serial=`cat /tmp/vmQB.cfg|grep "$QBSN"`
+ rm -f /tmp/vmQB.cfg
+ if [ "$Serial" != "" ];then
+    echo "$Serial" >/tmp/licenseserial
+ fi
+fi
+Expired=`cat /tmp/licenseserial|awk '{print $2}'|sed s/,//g`
+License_Expired=`date -d "$Expired"`
+
+#To show License Expiry time for GUI
+echo $License_Expired
+
+license_sec=`date -d "$License_Expired" +%s`
+month_sec=`expr $license_sec - 86400 \* 30`
+month_date=`date -d "1970-01-01 UTC $month_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+real_date=`date |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+
+two_weeks_sec=`expr $license_sec - 86400 \* 14`
+two_weeks_date=`date -d "1970-01-01 UTC $two_weeks_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+
+week_sec=`expr $license_sec - 86400 \* 7`
+week_date=`date -d "1970-01-01 UTC $week_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+
+two_days_sec=`expr $license_sec - 86400 \* 2`
+two_days_date=`date -d "1970-01-01 UTC $two_days_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+
+day_sec=`expr $license_sec - 86400 \* 1`
+day_date=`date -d "1970-01-01 UTC $day_sec seconds" |awk '{print $2}{print $3}{print $6}'|sed s/,//g`
+
+if [ "$month_date" == "$real_date" ] ;then
+  #/opt/qb/bin/script/licensemail.sh 30
+  echo $(date) "License will expire after 30 Days !!! Need to register qb.">>/mnt/log/bootlog
+elif [ "$two_weeks_date" == "$real_date" ] ;then
+  #/opt/qb/bin/script/licensemail.sh 14
+  echo $(date) "License will expire after 14 Days !!! Need to register qb.">>/mnt/log/bootlog
+elif [ "$week_date" == "$real_date" ] ;then
+  #/opt/qb/bin/script/licensemail.sh 7
+  echo $(date) "License will expire after 7 Days !!! Need to register qb.">>/mnt/log/bootlog
+elif [ "$two_days_date" == "$real_date" ] ;then
+  #/opt/qb/bin/script/licensemail.sh 2
+  echo $(date) "License will expire after 2 Days !!! Need to register qb.">>/mnt/log/bootlog
+elif [ "$day_date" == "$real_date" ] ;then
+  #/opt/qb/bin/script/licensemail.sh 1
+  echo $(date) "License will expire after 1 Day !!! Need to register qb.">>/mnt/log/bootlog
+fi

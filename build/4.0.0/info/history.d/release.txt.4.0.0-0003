@@ -1,0 +1,2 @@
+   1.To support Max link numbers=1047.Max pool number=250.
+    The modification include :isphis,rate.cgi,qbserv,constants.h,newqbhc.h,qbker22.h,qbserv.h,qroute.c,qroute.h,vs.h(recompile all directories);qbkflow.ko/qbkf_timeout.ko:qbkf_mod.c,qbkflow.h

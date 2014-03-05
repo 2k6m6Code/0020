@@ -1,0 +1,631 @@
+#!/bin/bash
+#set -x
+NF_MODULE_DIR=/lib/modules/2.6.22/kernel/net/netfilter
+NF_MODULE_V4_DIR=/lib/modules/2.6.22/kernel/net/ipv4/netfilter
+
+DYNROUTEXML="/usr/local/apache/active/dynroute.xml"
+#killall dmpv.sh
+killall -9 dmpv.sh
+if [ -f /opt/qb/xl2tp/l2tpconnect ]; then
+  /opt/qb/xl2tp/l2tpconnect & #Need to add route for L2TP server.
+fi
+if [ -f /usr/sbin/pptpaddroute ]; then
+  /usr/sbin/pptpaddroute & #Need to add route for PPTP Clients.
+fi
+#-------------------------------------------------------
+#default protection filter on QB
+#-------------------------------------------------------
+#/usr/local/sbin/iptables -t filter -A INPUT -m pfd -j DROP
+/opt/qb/bin/script/default_anti_dos.sh
+
+#-------------------------------------------------------
+#20110512 To setup NIC speed
+#-------------------------------------------------------
+/opt/qb/bin/script/nicspeed.sh &
+
+#------------------------------------------------------
+#for Dashboard information
+#------------------------------------------------------
+/usr/local/apache/qb/setuid/warranty.sh &
+
+#------------------------------------------------------
+#for traffic and dynamic QoS
+#------------------------------------------------------
+/usr/bin/perl /usr/local/apache/qb/setuid/defqos.sh      
+/opt/qb/bin/script/enable_qos.sh &
+
+#------------------------------------------------------
+#for extra arp entries
+#------------------------------------------------------
+if [ -f /usr/local/apache/active/arpscript ]; then
+/bin/sh /usr/local/apache/active/arpscript &
+fi
+
+#------------------------------------------------------
+#for DHCP daemon
+#------------------------------------------------------
+#Brian 2005/12/26 To wait qbmod.cgi when QB on booting.
+#sleep 3   #Brian 20100628 Move to rundhcpd.pl
+/usr/local/apache/qb/setuid/do_qbstaticarp.pl &
+/opt/qb/bin/script/rundhcpd.pl &
+
+#..........................................................
+# 2012-1228
+# Wimax interface up
+#..........................................................
+AllNICs=`/sbin/ip addr|grep -e usb[0-9]*:|awk -F ":" '{print $2}'`
+usbcount=0
+for nic in $AllNICs
+do
+   ifconfig $nic up
+   usbcount=`expr $usbcount + 1`
+done
+echo $usbcount>/tmp/wimaxcount
+
+#------------------------------------------------------
+#for notifying AFS that qbserv has done network updates
+#------------------------------------------------------
+QBSERVER_DONE_TO_INFORM_AFS=/var/run/qbserver_is_done
+ps -ef | grep -v grep | grep afsd
+AFSRUN=$? && [ $AFSRUN = '0' ] && [ -f /usr/afs/PA ] && touch $QBSERVER_DONE_TO_INFORM_AFS
+
+#------------------------------------------------------
+#Added By Stewart@2005/12/1
+#Workaround for TCPMSS value problem arised by G-Dynamic
+#------------------------------------------------------
+#/usr/local/sbin/iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1380
+#/usr/local/sbin/iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1428
+
+OVERVIEWXML="/usr/local/apache/active/overview.xml"
+mssmodify=`grep mssmodify=\".*\" $OVERVIEWXML|sed -e "s/<opt.*mssmodify=\"//"|sed -e "s/\".*//"`
+mssmodify_value=`grep mssmodify_value=\".*\" $OVERVIEWXML|sed -e "s/<opt.*mssmodify_value=\"//"|sed -e "s/\".*//"`
+udpmodify=`grep udpmodify=\".*\" $OVERVIEWXML|sed -e "s/<opt.*udpmodify=\"//"|sed -e "s/\".*//"`
+udpmodify_value=`grep udpmodify_value=\".*\" $OVERVIEWXML|sed -e "s/<opt.*udpmodify_value=\"//"|sed -e "s/\".*//"`
+KERNEL_PARAMS_PREFIX=net.ipv4.netfilter
+if [ "$mssmodify" = "1" ]
+then
+    if [ $mssmodify_value ];then
+    /usr/local/sbin/iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $mssmodify_value
+    else
+    /usr/local/sbin/iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1428
+    fi
+fi
+if [ "$udpmodify" = "1" ]
+then
+/sbin/sysctl -w ${KERNEL_PARAMS_PREFIX}.ip_conntrack_udp_timeout=$udpmodify_value
+else
+/sbin/sysctl -w ${KERNEL_PARAMS_PREFIX}.ip_conntrack_udp_timeout=5
+fi
+
+
+#...............................................................
+# Gary for IP Alias
+#...............................................................
+QBCONFACTIVE="/usr/local/apache/active/basic.xml"
+#alias_subnet1=`grep isptype=\"normal\" $QBCONFACTIVE|grep alias_enabled=\"1\"|sed -e "s/  <isp.*alias_subnet1=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+#alias_subnet2=`grep isptype=\"normal\" $QBCONFACTIVE|grep alias_enabled=\"1\"|sed -e "s/  <isp.*alias_subnet2=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+alias_subnet1=`grep alias_enabled=\"1\" $QBCONFACTIVE|sed -e "s/  <isp.*alias_subnet1=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+alias_subnet2=`grep alias_enabled=\"1\" $QBCONFACTIVE|sed -e "s/  <isp.*alias_subnet2=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+
+if [ "$alias_subnet1" != "" ]; then
+
+    for subnet1 in $alias_subnet1 ;do
+
+    isp_iid=`grep alias_subnet1=\"$subnet1\" $QBCONFACTIVE|grep alias_enabled=\"1\"|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+    table_num=$((100+$isp_iid))
+    isp_nic=`grep alias_subnet1=\"$subnet1\" $QBCONFACTIVE|grep alias_enabled=\"1\"|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+    alias_ip1=`grep alias_subnet1=\"$subnet1\" $QBCONFACTIVE|grep alias_enabled=\"1\"|sed -e "s/  <isp.*alias_ip1=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+    /sbin/ip a add $alias_ip1 dev $isp_nic
+    /sbin/ip rule del from $subnet1 table $table_num prio 30000
+    /sbin/ip rule add from $subnet1 table $table_num prio 30000
+
+    done
+        if [ "$alias_subnet2" != "" ]; then
+
+        for subnet2 in $alias_subnet2 ;do
+
+            alias_ip2=`grep alias_subnet2=\"$subnet2\" $QBCONFACTIVE|grep alias_enabled=\"1\"|sed -e "s/  <isp.*alias_ip2=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+            /sbin/ip a add $alias_ip2 dev $isp_nic
+            /sbin/ip rule del from $subnet2 table $table_num prio 30000
+            /sbin/ip rule add from $subnet2 table $table_num prio 30000
+        done
+        fi
+    sync;sync
+    /sbin/ip route flush cache
+    /sbin/ip route flush cache
+fi
+
+#..........................................................
+# 2005-1124 Brian
+# * To exe. bindmac config file.
+#..........................................................
+
+MACSET="/usr/local/apache/qbconf/macset"
+if [ -f $MACSET ]; then
+    chmod a+x $MACSET
+    . $MACSET
+    sync;sync
+fi
+
+#..........................................................
+# 2011-0914 Brian
+# * To exe. extr_route.
+#..........................................................
+
+EXTRIPSET="/opt/qb/bin/script/extroute"
+if [ -f $EXTRIPSET ]; then
+    /opt/qb/bin/script/extroute &
+fi
+
+#..........................................................
+# 2006-0524 Brian
+# * Add PPPoE's gateway to main routing table and execlute ddclient.
+#..........................................................
+#PPPCONF="/etc/ppp/pppoe.conf1"
+#if [ -f $PPPCONF ]; then
+#pppgateway=`/usr/sbin/pppoe-status /etc/ppp/pppoe.conf1|grep 'inet' |awk '{print $3}' | sed -e "s/P-t-P\://" | sed -e "s/\n//"`
+#if [ $pppgateway != '' ]; then
+   #/usr/local/sbin/ip route add default via $pppgateway  dev ppp0 #20080911 Brian no need to use this method,because no route rule for ppp device was fixed.
+#   killall -9 ddclient
+#   chmod 755 /etc/ddclient/ddclient_sh
+#   /etc/ddclient/ddclient_sh
+#else
+#   killall -9 ddclient
+#   chmod 755 /etc/ddclient/ddclient_sh
+#   /etc/ddclient/ddclient_sh
+#fi
+#else
+   killall -9 ddclient
+   chmod 755 /etc/ddclient/ddclient_sh
+   /etc/ddclient/ddclient_sh
+#fi
+
+#..........................................................
+# 2006-0721 Brian
+# * Use WRR to redirect http service to isp's proxy server.
+#..........................................................
+
+PROXY="/usr/local/apache/qbconf/httproxy.sh"
+if [ -f $PROXY ]; then
+    chmod a+x $PROXY
+    . $PROXY
+fi
+
+#..........................................................
+# 2007-0518 Brian
+# * Create Vlan Device.
+#..........................................................
+
+VLAN="/mnt/conf/vlan.con"
+if [ -f $VLAN ]; then
+    chmod a+x $VLAN
+    . $VLAN
+fi
+
+#..........................................................
+# 2011-1205 Brian
+# * Add extr_cmd . To add command here will not be effected by firmware upgrade
+#..........................................................
+
+EXTR_CMD="/mnt/qb/conf/extr_cmd"
+if [ -f $EXTR_CMD ]; then
+    chmod a+x $EXTR_CMD
+    . $EXTR_CMD
+fi
+
+#..........................................................
+# 2007-0716 Brian
+# * Add Layer 7 policy .
+#..........................................................
+
+Layer7="/usr/local/apache/qbconf/l7log.sh"  #20080219 Brian change layer7.sh become l7log.sh
+if [ -f $Layer7 ]; then
+    chmod a+x $Layer7
+    . $Layer7
+fi
+
+#..........................................................
+# 2008-0717 Brian
+# Auto refresh router's arp table when using arp proxy mode.
+#..........................................................
+sendarp=`grep sendarp=\".*\" $OVERVIEWXML|sed -e "s/<opt.*sendarp=\"//"|sed -e "s/\".*//"`
+#if [ "$sendarp" = "1" ]
+#then
+    /usr/bin/perl /usr/local/apache/qb/setuid/do_qbarp.pl &
+#fi
+
+#..........................................................
+# 2008-0925 Brian
+# User define https port.
+#..........................................................
+SSLCFG="/etc/httpd/conf.d/ssl.conf"
+httpsport_new=`grep httpsport=\".*\" $OVERVIEWXML|sed -e "s/<opt.*httpsport=\"//"|sed -e "s/\".*//"`
+httpsport_org=`grep Listen $SSLCFG|awk '{print $2}'`
+if [ "$httpsport_new" != "$httpsport_org" ] && [ "$httpsport_new" != "" ]
+then
+    sed -i -e '{ s/'$httpsport_org'/'$httpsport_new'/g}' $SSLCFG
+    service httpd restart &                                   
+fi
+#..........................................................
+# 2008-1204 Brian
+# NTP Time Server.
+#..........................................................
+ntptimeserver=`grep ntptimeserver=\".*\" $OVERVIEWXML|sed -e "s/<opt.*ntptimeserver=\"//"|sed -e "s/\".*//"`
+if [ "$ntptimeserver" != "" ]
+then
+    /usr/sbin/ntpdate $ntptimeserver &                                    
+fi
+
+
+#..........................................................
+# 2008-0925 Brian
+# User define hostname.
+#..........................................................
+hostname_new=`grep hostname=\".*\" $OVERVIEWXML|sed -e "s/<opt.*hostname=\"//"|sed -e "s/\".*//"`
+hostname_org=`hostname`
+if [ "$hostname_new" != "$hostname_org" ] && [ "$hostname_new" != "" ]
+then
+     hostname $hostname_new
+fi
+
+#..........................................................
+# 2008-1015 Brian
+# Monitor PPTP client links.
+#..........................................................
+killall -9 pptpreconnect
+killall -9 pptpcheck
+ACTIVEBASICXML=/usr/local/apache/active/basic.xml
+#count=3
+#while test $count -gt 0
+#do
+#  isptype=`awk NR==$count $ACTIVEBASICXML|sed -e "s/  <isp.*isptype=\"//"|sed -e "s/\".*//"`
+#  if [ "$isptype" = "pptp" ]
+#  then
+#  pptpserver=`awk NR==$count $ACTIVEBASICXML|grep isptype=\"pptp.*\"|sed -e "s/  <isp.*pptpserver=\"//"|sed -e "s/\".*//"`
+#  ispname=`awk NR==$count $ACTIVEBASICXML|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+#  ispid=`awk NR==$count $ACTIVEBASICXML|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"`
+#    if [ "$ispname" != "" ] && [ "$pptpserver" != "" ];then
+#     /usr/sbin/pptpreconnect $ispid &
+#     #/usr/sbin/pptpreconnect $ispid 2>>/tmp/pptpreconnect.$ispname &
+#     let count=$count+1
+#     sleep 10
+#    fi
+#  elif [ "$isptype" != "pptp" ] && [ "$isptype" != "pppoe" ] && [ "$isptype" != "tunnel" ] && [ "$isptype" != "normal" ]&& [ "$isptype" != "dhcp" ];then
+#  count=0
+#  else
+#  let count=$count+1
+#  fi
+#  done
+
+PPTPIID=`grep isptype=\"pptp\" $ACTIVEBASICXML|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+#for pptpiid in $PPTPIID
+#do
+#  /usr/sbin/pptpreconnect $pptpiid &
+#done
+if [ "$PPTPIID" != "" ]
+then
+  /usr/sbin/pptpreconnect &
+fi
+                                                                                                     
+#..........................................................
+# 2008-1020 Brian
+# Start PPTP Server.
+#..........................................................
+ACTIVEPPTPINITXML=/usr/local/apache/active/pptpinit.xml
+enablepptpd=`grep enableppd $ACTIVEPPTPINITXML|sed -e "s/<opt.*enableppd=\"//"|sed -e "s/\".*//"`
+  if [ "$enablepptpd" = "1" ] && [ -f /usr/local/sbin/pptpd ]
+  then
+      /usr/local/apache/qb/setuid/do_qbpptpinit.pl &
+      /usr/local/apache/qb/setuid/do_qbpptpusr.pl &
+      /usr/local/apache/qb/setuid/do_qbpppusr.pl &
+      service pptpd restart &
+  else
+      service pptpd stop &
+  fi
+
+#..........................................................
+# 2008-1029 Brian
+# Start DHCP relay. 
+# 2009-1029 Brian
+# To support dhcp relay over mpv tunnels
+#..........................................................
+ killall -9 dhcp-helper 
+ /usr/local/apache/qb/setuid/do_dhcprelay.pl &
+
+#echo 3600 > /proc/sys/net/ipv4/route/gc_interval
+#........................................................
+# 2009-1028 Luke
+# Start IPsec
+#..........................................................
+/sbin/setkey -f /etc/racoon/flush 
+killall -9 racoon
+rm -f /etc/racoon/*.conf
+/usr/local/apache/qb/setuid/do_qbipsec.pl 
+/usr/local/apache/qb/setuid/do_qbipsec_route.pl 
+/usr/local/apache/qb/setuid/do_qbracoon.pl 
+sleep 5
+grep "sainfo address" /etc/racoon/racoon.conf
+ipsecremote=$? 
+if [ $ipsecremote == '0' ]; then
+    /sbin/setkey -f /etc/racoon/ipsec.conf
+    /etc/racoon/ipsecroute
+    /usr/sbin/racoon
+    if [ -f /etc/racoon/delipsecrule ]; then
+        /etc/racoon/delipsecrule
+    fi
+    /etc/racoon/ipsecrule
+fi
+#..........................................................
+# L2TP IPsec road warrior 20100415
+L2TPIPSECXML=/usr/local/apache/active/l2tpinit.xml
+enablel2tp=`grep -c "isenable=\"1\"" $L2TPIPSECXML`
+
+if [ -f /etc/racoon/dell2tpipsec.conf ]; then
+    /sbin/setkey -f /etc/racoon/dell2tpipsec.conf
+fi
+
+if [ "$enablel2tp" = "1" ]; then
+    /usr/local/apache/qb/setuid/do_qbl2tpipsec.pl
+fi
+
+
+#........................................................
+# 2010-0112 Brian
+# To check pppoe links
+#..........................................................
+if [ ! -f /tmp/temp.xml ]; then
+sleep 10
+/usr/sbin/pppoechk.pl >/tmp/ppplog/pppoechk &
+fi
+#........................................................
+# 2010-0121 Luke
+# Start SSLVPN Server
+#..........................................................
+ACTIVESSLXML=/usr/local/apache/active/sslinit.xml
+enablessl=`grep -c "enablessl=\"1\"" $ACTIVESSLXML`
+if [ $enablessl == '1' ]; then
+  #killall -9 openvpn   #Brian it will cause udp tunnel can't work.
+  /usr/local/apache/qb/setuid/do_qbsslinit.pl 
+  /etc/ssl/sslstart 
+  if [ -f /usr/local/apache/qbconf/ssllogo.jpg ];then
+        cp -a /usr/local/apache/qbconf/ssllogo.jpg /usr/local/apache/qb/image/
+  fi
+  #/etc/ssl/zipsslclient & 
+fi
+
+#........................................................
+# 2010-0730 Brian
+# For dhcp client reconnect function
+#..........................................................
+killall -9 dhcpreconnect 2>/dev/null
+/sbin/dhcpboot &
+
+#..........................................................
+# For proxy dns server relay
+#..........................................................
+dnsserver=`grep -c "dnsserver=\"1\"" $OVERVIEWXML`
+relay=`grep relay=\".*\" $OVERVIEWXML|sed -e "s/<opt.*relay=\"//"|sed -e "s/\".*//"`
+if [ $dnsserver == '1' ]; then
+   if [ ! -d /usr/local/bind ]
+   then
+      ln -s /opt/qb/bin/script/bind /usr/local/
+   fi
+#   inboundcfg=`ps -ef|grep -e bind[1-9]|grep -v grep|awk '{print $10}'|head -n 1`
+#   if [ "$inboundcfg" != "" ]; then
+#     listen_range=`cat $inboundcfg|grep listen-on|sed -e "s/172.31.0.[0-9]\;//"|sed -e "s/listen-on {//g"|sed -e "s/[[:space:]]//g"`
+#     sed  -i -e '{ s/listen-on {.*/listen-on {'$listen_range'/g}' /usr/local/bind/named.conf
+#   fi
+   named -c /usr/local/bind/named.conf -u named &
+   /usr/local/apache/qb/setuid/do_qbdnsserver.pl &
+   /usr/local/apache/qb/setuid/do_qbdnsiptables.pl &
+   /usr/local/bind/etc/dnsproxy.sh &
+fi
+                
+#........................................................
+# 2010-1221 Brian
+# For Wireless LAN
+#..........................................................
+ENABLEWIRELESS=$(awk  "/ENABLEWIRELESS/ { print \$2 }" /opt/qb/registry)
+
+if [ "$ENABLEWIRELESS" = "1" ]; then
+/usr/local/apache/qb/setuid/do_qbwirelessinit.pl &
+fi
+#........................................................
+#20100401 Brian TCP Optimization
+#........................................................
+enabletcpopt=`grep enabletcpopt=\".*\" $OVERVIEWXML|sed -e "s/<opt.*enabletcpopt=\"//"|sed -e "s/\".*//"`
+if [ "$enabletcpopt" = "1" ]; then
+tcpopt=`grep tcp_opt=\".*\" $OVERVIEWXML|sed -e "s/<opt.*tcp_opt=\"//"|sed -e "s/\".*//"`
+/opt/qb/bin/script/tcp_optimization $tcpopt >/dev/null &
+else
+/opt/qb/bin/script/tcp_optimization none >/dev/null &
+fi
+
+#........................................................
+#20110304 Brian Enable NAT Helper
+#........................................................
+siphelper=`grep siphelper=\".*\" $OVERVIEWXML|sed -e "s/<opt.*siphelper=\"//"|sed -e "s/\".*//"`
+/sbin/lsmod |grep sip >/dev/null
+checksip=$?
+if [ "$checksip" != "0" ] && [ "$siphelper" = "1" ]; then
+insmod   $NF_MODULE_DIR/nf_conntrack_sip.ko
+insmod   $NF_MODULE_V4_DIR/nf_nat_sip.ko
+fi
+
+if [ "$checksip" = "0" ] && [ "$siphelper" = "0" ]; then
+/sbin/rmmod nf_nat_sip
+/sbin/rmmod nf_conntrack_sip
+fi
+
+h323helper=`grep h323helper=\".*\" $OVERVIEWXML|sed -e "s/<opt.*h323helper=\"//"|sed -e "s/\".*//"`
+/sbin/lsmod |grep h323 >/dev/null
+checkh323=$?
+if [ "$checkh323" != "0" ] && [ "$h323helper" = "1" ]; then
+insmod   $NF_MODULE_DIR/nf_conntrack_h323.ko
+insmod   $NF_MODULE_V4_DIR/nf_nat_h323.ko
+fi
+
+if [ "$checkh323" = "0" ] && [ "$h323helper" = "0" ]; then
+/sbin/rmmod nf_nat_h323
+/sbin/rmmod nf_conntrack_h323
+fi
+
+#3proxy
+killall -9 3proxy
+/opt/qb/bin/script/enable_3proxy &
+
+#........................................................
+#20120103 Brian Enable Dynamic Routing
+#........................................................
+DYNROUTEXML="/usr/local/apache/active/dynroute.xml"
+if [ -f $DYNROUTEXML ];then
+enabledynroute=`grep enabledynroute=\".*\" $DYNROUTEXML|sed -e "s/<opt.*enabledynroute=\"//"|sed -e "s/\".*//"`
+dynroute_proto=`grep protocol=\".*\" $DYNROUTEXML|sed -e "s/<opt.*protocol=\"//"|sed -e "s/\".*//"`
+ if [ "$enabledynroute" = "1" ]; then
+   if [ ! -d /opt/qb/quagga ];then
+   tar zxfC /mnt/quagga.pkg /opt/qb/
+   /opt/qb/quagga/init.sh
+   fi
+   /usr/local/apache/qb/setuid/do_qbdynroute.pl &
+   
+   if [ "$dynroute_proto" = "OSPF" ]; then
+   /sbin/service ripd stop
+   /sbin/service zebra restart
+   /sbin/service ospfd restart
+   else
+   /sbin/service ospfd stop
+   /sbin/service zebra restart
+   /sbin/service ripd restart
+   fi
+ else
+   /sbin/service zebra stop
+   /sbin/service ripd stop
+ fi
+fi
+#20120321 Brian for Analyser
+postgres_num=`ps -ef|grep -v grep|grep -c postgres`
+if [ $postgres_num -ge 1 ];then # If the postgres process >=1,means analyser is working
+  /usr/bin/php /usr/local/apache/qb/analyser_web/service_decode.php>/dev/null &
+fi
+
+ipsecpath='/tmp/connmark.txt'
+if [ ! -e "$ipsecpath" ]; then
+/bin/touch "$ipsecpath"
+fi
+
+killall -9 npd6
+/usr/local/apache/qb/setuid/npd6.pl &
+
+
+/usr/bin/perl /usr/local/apache/qb/runiptables.cgi action=UPDATE
+
+
+quota='/mnt/log/Log_file/quota_Dynamic'
+quota2='/mnt/log/Log_file/quota_Dynamic2'
+if [ -e "$quota" ] || [ -e "$quota2" ]; then
+/bin/cp -a /mnt/log/Log_file/quota_Dynamic /usr/local/apache/qb/Log_file/
+/bin/cp -a /mnt/log/Log_file/quota_Dynamic2 /usr/local/apache/qb/Log_file/
+/usr/bin/perl /usr/local/apache/qb/quotawork.pl action=CREAT CHECK=repeat
+fi
+
+#/usr/bin/perl /usr/local/apache/qb/transformwork.pl action=GO
+
+#Gary 20130624 weburl webstr string
+iptables_weburl='/usr/local/apache/active/iptables_weburl'
+if [ -f "$iptables_weburl" ]; then
+$iptables_weburl
+fi
+
+#Gary 20130705 access
+iptables_access='/usr/local/apache/active/iptables_access'
+if [ -f "$iptables_access" ]; then
+$iptables_access &
+fi
+
+/usr/bin/perl /usr/local/apache/qb/data_search.pl action=SEARCH
+
+# ========================================================================================
+# Gary 20130712 netflow
+#
+# ========================================================================================
+ENABLETM=$(awk  "/ENABLETM/ { print \$2 }" /opt/qb/registry)
+
+#if [ "$ENABLETM" = "1" ]; then
+/sbin/ip route add local 127.0.0.1 dev lo proto kernel scope host src 127.0.0.1 table 255
+/sbin/ip route add local 127.0.0.0/8 dev lo proto kernel scope host src 127.0.0.1 table 255
+#/sbin/insmod /opt/qb/modules/ipt_NETFLOW.ko destination=127.0.0.1:54311
+/usr/local/bin/nfcapd -w -D -t 60 -S 1 -l /mnt/tclog/nfcapd/ -p 54311
+/sbin/iptables -I FORWARD -j NETFLOW
+/sbin/iptables -I INPUT -j NETFLOW
+/sbin/iptables -I OUTPUT -j NETFLOW
+
+    #
+    # Do black list command
+    #
+    if [ -e '/usr/local/apache/active/userlock_cmd' ];then
+    $(/usr/local/apache/active/userlock_cmd)
+    fi
+    #
+    # keep netflow 5 days data
+    # delete other
+    #
+#     cat >> /etc/crontab <<!
+#40 11 * * *  root      /opt/qb/bin/script/rm_netflow_data.sh
+#!
+
+#fi
+# _______________________________________________________________________________________
+# ========================================================================================
+#
+
+#2013 0924 Shane Auth
+/sbin/iptables -t nat -N AUTH_CHAIN
+/sbin/iptables -t nat -F AUTH_CHAIN
+/sbin/iptables -t nat -D PREROUTING -j AUTH_CHAIN
+/sbin/iptables -t nat -A PREROUTING -j AUTH_CHAIN
+
+/usr/bin/perl /usr/local/apache/qb/auth_open.pl
+/bin/cp -a /mnt/qb/conf/auth/image/* /usr/local/apache/qb/auth/
+
+ip_mac='/mnt/log/ip-mac.sh'
+if [ -e "$ip_mac" ]; then
+/bin/sh /mnt/log/ip-mac.sh
+fi
+
+#..........................................................
+# 2008-0402 Brian
+# * Add policies for proxy server.
+#..........................................................
+# 2008-0717 Brian
+# 2010-0728 Luke
+killall -9 RunCache
+killall -9 squid
+SQUIDCFG="/usr/local/apache/qbconf/pxyinit.xml"
+SQUIDGEN="/usr/local/apache/qbconf/squidgen.xml"
+if [ -f $SQUIDCFG ]; then
+    enablesquidpxy=`grep -c enablepxy=\"1\" $SQUIDCFG`
+fi
+if [ -f $SQUIDGEN ]; then
+    enablesquid=`grep -c isenable=\"1\" $SQUIDGEN`
+fi
+
+if [ $enablesquidpxy = '1' ] || [ $enablesquid = '1' ];then
+  /opt/qb/bin/script/enable_squid.sh &
+  #echo 200 >/tmp/fifo.qbserv
+fi
+
+#fi
+
+#..........................................................
+# 2010-0226 Luke
+# Start content filter - squid
+#..........................................................
+
+#SQUIDGEN="/usr/local/apache/qbconf/squidgen.xml"
+
+#if [ -f $SQUIDGEN ]; then
+#enablesquid=`grep -c isenable=\"1\" $SQUIDGEN`
+#  if [ $enablesquid = '1' ]; then
+#    /opt/qb/bin/script/enable_content_filter.sh
+#  fi
+#fi

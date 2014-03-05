@@ -1,0 +1,15 @@
+<opt lastupdate="" status="" file="fwmark">
+  <from_to></from_to>
+  <from></from>
+  <sys>
+    <mark hookpoint="OUTPUT" dirty="0" service="domain" direction="d" destination="" value="0x8FF2710" source="" />
+    <mark hookpoint="OUTPUT" dirty="0" service="smtp" direction="d" destination="" value="0x8FF2711" source="" />
+    <mark hookpoint="OUTPUT" dirty="0" service="ftp" direction="d" destination="" value="0x8FF2712" source="" />
+  </sys>
+  <qb></qb>
+  <dmz></dmz>
+  <nat></nat>
+  <lvs></lvs>
+  <to></to>
+  <from_service_to></from_service_to>
+</opt>

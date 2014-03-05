@@ -1,0 +1,525 @@
+#=============================================================================================
+sub showNewQoS
+{
+    my (%action)=@_;
+    
+    my $qosref=XMLread($gPATH.'qos.xml');
+    my $qoslist=$qosref->{qos};
+    my $show;
+    foreach my $qos ( @$qoslist )
+    {
+    	if ( $qos->{qosname} eq $action{qosname} )
+    	{
+    	    $show = $qos;   
+    	}
+    }
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">QoS Object);
+
+    print qq (<hr size=1>);
+    print qq (<table>);
+    #-------------------------------------------------------------------------------------------
+    #  qos: Name and Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 160px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 160px">);
+    print qq (<input class="qbtext" name="qosname_show" id="qosname_show" style="WIDTH: 100px" value="$action{qosname}" >);
+    print qq (<input type="hidden" name="qosname" id="qosname" value="$action{qosname}" >);
+    print qq (</td></tr>);
+    
+    #-------------------------------------------------------------------------------------------
+    #  qos: priority & usage type
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 160px">);
+    print qq (Priority :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 160px">);
+    print qq (<select class="qbopt"  name="priority" style="width:100"> );
+    my $status=( $show->{priority} eq '0' ) ? 'selected' : '';
+    print qq (<option value="1" $status>1(highest)</option>);
+    foreach my $pri ( 2..6 )
+    {
+        my $status=( $show->{priority} eq $pri ) ? 'selected' : '';
+        print qq (<option value="$pri" $status>$pri</option>);
+    }
+    my $status=( $show->{priority} eq '7' ) ? 'selected' : '';
+    print qq (<option value="7" $status>7(lowest)</option>);
+    print qq (</td>);
+    print qq (</tr>);
+    
+=cut    
+    if ( $action{qostype} ne 'bypool' ) 
+    {
+        print qq (</table>);
+        print qq (<table>);
+        print qq (<tr>);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 160px">);
+        print qq (Upload Bandwidth :);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+        print qq (<input class="qbtext" name="uploadmin" id="uploadmin" style="WIDTH: 100px" value="$show->{uploadmin}" >);
+        print qq (-);
+        print qq (<input class="qbtext" name="uploadmax" id="uploadmax" style="WIDTH: 100px" value="$show->{uploadmax}" >kbits);
+        print qq (</td>);
+        print qq (</tr>);
+    
+        print qq (<tr>);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 160px">);
+        print qq (Download Bandwidth :);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+        print qq (<input class="qbtext" name="downloadmin" style="WIDTH: 100px" value="$show->{downloadmin}" >);
+        print qq (-);
+        print qq (<input class="qbtext" name="downloadmax" style="WIDTH: 100px" value="$show->{downloadmax}" >kbits \( e.g. 512 - 1024kbits \));
+        print qq (</td>);
+        print qq (</tr>);
+    }
+    else
+    {
+=cut
+        print qq (</table>);
+        print qq (<table>);
+        print qq (<tr>);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 160px">);
+        print qq (<input type="hidden" name="downloadmin" id="downloadmin" style="WIDTH: 100px" value="" >);
+        print qq (<input type="hidden" name="downloadmax" id="downloadmax" style="WIDTH: 100px" value="" >);
+        print qq (<input type="hidden" name="uploadmin" id="uploadmin" style="WIDTH: 100px" value="" >);
+        print qq (<input type="hidden" name="uploadmax" id="uploadmax" style="WIDTH: 100px" value="" >);
+        print qq (Pool :);
+        print qq (</td>);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 120px">);
+        #my @rtablelist=maintainRtable( action=>'GETALLPOOL' );
+        my %rtablehash=GETALLPOOL();
+        my @temptables=maintainRtable( action=>'GETPOOLTABLES', focused_rtable=>'30');
+        my $tables = '';
+        my $bandwidth = '';
+        foreach ( @temptables ) 
+        { 
+            $tables .= $_.','; 
+            my $isp = $_ - 100;
+            my $ispinfo = maintainBasic( action=>"GETISPINFO", iid=>$isp );
+            $bandwidth .= $ispinfo->{download}."/".$ispinfo->{upload}.',';
+        }
+        print qq (<input type="hidden" name="bandwidth30" id="bandwidth30" value="$bandwidth" >);
+        print qq (<input type="hidden" name="pool30" id="pool30" value="$tables" >);
+        print qq (<select class="qbopt"  name="pool" id="pool" style="width:100" onchange="ShowTables(this.value)"> );
+        my $status = ( $show->{pool} eq '30' ) ? ( 'selected' ) : ( '' );
+        print qq (<option value="30" $status>BALANCE</option>);
+        foreach $key (sort { int($a) <=> int($b) } keys %rtablehash )
+        {
+            my $status = ( $key eq $show->{pool} ) ? ( 'selected' ) : ( '' );
+            print qq(<option id="$key" value="$key" $status>Pool $key  $rtablehash{$key}</option>);
+        }
+        print qq (</select>);
+        foreach $key (sort { int($a) <=> int($b) } keys %rtablehash )
+        {
+            my @temptables=maintainRtable( action=>'GETPOOLTABLES', focused_rtable=>$key);
+            my $tables = '';
+            my $bandwidth = '';
+            foreach ( @temptables ) 
+            { 
+                $tables .= $_.','; 
+                my $isp = $_ - 100;
+                my $ispinfo = maintainBasic( action=>"GETISPINFO", iid=>$isp );
+            	$bandwidth .= $ispinfo->{download}."/".$ispinfo->{upload}.',';
+            }
+            print qq (<input type="hidden" name="pool$key" id="pool$key" value="$tables" >);
+            print qq (<input type="hidden" name="bandwidth$key" id="bandwidth$key" value="$bandwidth" >);
+        }
+        print qq (</td></tr>);
+        
+        
+    
+##### Gary individual
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 160px">);
+    print qq (Usage type :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 160px">);
+    print qq (<select class="qbopt" id="qostype" name="qostype" style="width:100"> );
+    my $status=( $show->{qostype} eq 'Share' ) ? 'selected' : '';
+    print qq (<option value="Share" $status>Share</option>);
+    my $status=( $show->{qostype} eq 'Individual' ) ? 'selected' : '';
+    print qq (<option value="Individual" $status>Individual</option>);
+    print qq (</td>);
+    print qq (</tr>);
+#####        
+        
+        print qq (</table>);
+        
+        print qq (<div style="height:200; width:600">);
+        print qq (<table id="qosList" width="100%"  class="body" border="0">);
+        print qq (<tr bgcolor="#332211" width="100%">);
+        print qq (<td align="center" width="20%">ISP</td>);
+        print qq (<td align="center" width="40%">Upload Bandwidth</td>);
+        print qq (<td align="center" width="40%">Download Bandwidth</td>);
+        print qq (</tr>); 
+        my $isplist = $show->{isp};
+        my $index = 0;
+        foreach my $isp ( @$isplist )
+        {
+            print qq (<tr><td align="center" >$isp->{iid}</td>);
+            print qq (<td align="center" ><input class="qbtext" name="uploadmin$index" id="uploadmin$index" style="WIDTH: 80px" value="$isp->{uploadmin}" >-);
+            print qq (<input class="qbtext" name="uploadmax$index" id="uploadmax$index" style="WIDTH: 80px" value="$isp->{uploadmax}">kbits</td>);
+            print qq (<td align="center" ><input class="qbtext" name="downloadmin$index" id="downloadmin$index" style="WIDTH: 80px" value="$isp->{downloadmin}" >-);
+            print qq (<input class="qbtext" name="downloadmax$index" id="downloadmax$index" style="WIDTH: 80px" value="$isp->{downloadmax}" >kbits</td>);
+            $index++;
+        }
+        print qq (</table>);
+    #}
+    
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 600px">);
+    print qq (<input class="qb" type="button" width="100" value="Save" onclick="saveQoS();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+}
+#showQoS
+
+
+#=============================================================================================
+
+sub scriptNewQoS
+{
+    print << "scriptNewQoS";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() 
+    { 
+    	myform=window.document.forms[0]; 
+    	checkState();
+    }
+    
+    
+    function ShowTables(pool)
+    {
+        var poolname = 'pool' + pool;
+        var bandwidthname = 'bandwidth' + pool;
+        var tables = document.getElementById(poolname).value;
+        var bandwidth = document.getElementById(bandwidthname).value;
+        var qosList = document.getElementById('qosList'); 
+        var qosrow = document.getElementById('qosList').rows;                                                                                           
+        var total = qosrow.length;
+        var tablesarray = tables.split(",");
+        var bandwidtharray = bandwidth.split(",");
+		
+        var oTD;
+        var oTR;
+        var oInput;
+        for (var i = total - 1; i > 0; i--)
+        {
+            qosList.deleteRow(i);
+        }
+        
+        for (var i = 0; i < tablesarray.length - 1; i++)
+        {
+			var max1="value="+'"'+bandwidtharray[i].split("/")[0]+'"';
+			var max2="value="+'"'+bandwidtharray[i].split("/")[1]+'"';
+            oTR = qosList.insertRow(i + 1);
+            oTR.align = "center";
+            var isp = parseInt(tablesarray[i]) - 100;
+            oTD = oTR.insertCell(-1);
+            oTD.innerHTML = 'ISP' + isp + '(' + bandwidtharray[i] + ')';
+            oTD = oTR.insertCell(-1);
+            oTD.innerHTML = '<input class="qbtext" name="uploadmin' + i.toString(10) +'" id="uploadmin'+ i.toString(10)+'" style="WIDTH: 80px" value="32">' +
+            		    ' - <input class="qbtext" name="uploadmax' + i.toString(10) +'" id="uploadmax'+ i.toString(10)+'" style="WIDTH: 80px"'+max2+'>kbits';
+            oTD = oTR.insertCell(-1);
+            oTD.innerHTML = '<input class="qbtext" name="downloadmin' + i.toString(10)+'" id="downloadmin'+ i.toString(10) +'" style="WIDTH: 80px" value="32">' +
+            		    ' - <input class="qbtext" name="downloadmax' + i.toString(10)+'" id="downloadmax'+ i.toString(10) +'" style="WIDTH: 80px"'+max1+'>kbits';
+        }
+    }
+    
+    function saveQoS()
+    {
+        var qosname_show=document.getElementById('qosname_show').value;
+        var isplist = '';
+        var Dminlist = '';
+        var Dmaxlist = '';
+        var Uminlist = '';
+        var Umaxlist = '';
+        
+            var qosrow = document.getElementById('qosList').rows;                                                                                           
+            var total = qosrow.length;
+            
+            for (var i = 1; i < total; i++)
+            {
+                var index = i - 1;
+                var uploadmin=document.getElementById('uploadmin' + index).value;
+                var uploadmax=document.getElementById('uploadmax' + index).value;
+                var downloadmin=document.getElementById('downloadmin' + index).value;
+                var downloadmax=document.getElementById('downloadmax' + index).value;
+                if (!isDecimal(uploadmin) || !isDecimal(uploadmax) || !isDecimal(downloadmin) || !isDecimal(downloadmax))
+                {
+                    alert('Bandwidth must be nember!!\\n');
+                    return;
+                }
+                
+                if (parseInt(uploadmin) < 32 || parseInt(downloadmin) < 32)
+                {
+                    alert('Bandwidth must greater than 32kbits!!\\n');
+                    return;
+                }
+                
+                if (parseInt(uploadmin) > parseInt(uploadmax) || parseInt(downloadmin) > parseInt(downloadmax))
+                {
+                    alert('Invalid Bandwidth range!!\\n');
+                    return;
+                }
+                
+                isplist += qosrow[i].cells[0].innerHTML + ',';
+                Dminlist += document.getElementById('downloadmin' + index).value + ',';    
+                Uminlist += document.getElementById('uploadmin' + index ).value + ',';    
+                Dmaxlist += document.getElementById('downloadmax' + index).value + ',';    
+                Umaxlist += document.getElementById('uploadmax' + index).value + ',';    
+                
+            myform.qosisp.value = isplist;
+            myform.downloadmin.value = Dminlist;
+            myform.downloadmax.value = Dmaxlist;
+            myform.uploadmin.value = Uminlist;
+            myform.uploadmax.value = Umaxlist;
+        }
+	if ( qosname_show == '' )
+        {
+            alert('Qos Name must be English or nember');
+            return;
+        }
+        
+        for (var i = 0; i < qosname_show.length; i++)
+        {
+            var ch = qosname_show.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+                alert('Qos Name must be English or nember');
+                return;
+            }
+        } 
+        myform.action.value = 'SAVE';
+        myform.qosname.value = qosname_show;
+        myform.submit();
+    }
+    
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var qosname=document.getElementById('qosname');
+        var pool=document.getElementById('pool');
+        var qosname_show=document.getElementById('qosname_show');
+        var qoslist = document.getElementById('qosList');                                                                                           
+                               
+        if ( qosname.value != '' )
+            qosname_show.disabled = true;
+                                                    
+        if ( action != '' )
+            window.top.mainFrame.location.href="qos.cgi";
+            
+        if ( pool ) 
+        {
+            var total = qoslist.rows.length;
+            if ( pool.value == 30 && total == 1) 
+                ShowTables('30');
+        }
+    }
+    
+    </script>
+    
+scriptNewQoS
+}
+#scriptNewqos
+
+sub byName
+{
+    $a->{qosname} cmp $b->{qosname};
+}
+#byName
+
+sub GETALLPOOL
+{
+    #my $rtables = XMLread('/usr/local/apache/active/rtable.xml');
+    my $rtables=XMLread($gPATH.'rtable.xml');
+    my $temptables=$rtables->{table};
+    my %poolnote;
+            
+    foreach my $table ( @$temptables )
+    {
+        if ( $table->{table_num} eq 'system' || $table->{table_num} > 52 || $table->{table_num} == 30 ) { next; }
+        $poolnote{ $table->{table_num} }=$table->{note};
+    }
+    return %poolnote;
+}
+
+sub maintainQoS
+{
+    %action=@_;
+    my $qosref=XMLread($gPATH.'qos.xml');
+    my $qoslist=$qosref->{qos};
+    my $exist=0;
+    
+    if ( !$action{action} ) { return; } 
+    
+    $action{qosname}=~s/^\s*|\s*$//g;
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        if ( $action{qosisp} ne '' )
+        {
+            $action{qosisp} =~ s/\,$//g;
+            $action{downloadmin} =~ s/\,$//g;
+            $action{downloadmax} =~ s/\,$//g;
+            $action{uploadmin} =~ s/\,$//g;
+            $action{uploadmax} =~ s/\,$//g;
+            my @isp = split(/,/, $action{qosisp});
+            my @downloadmin = split(/,/, $action{downloadmin});
+            my @downloadmax = split(/,/, $action{downloadmax});
+            my @uploadmin = split(/,/, $action{uploadmin});
+            my @uploadmax = split(/,/, $action{uploadmax});
+            my @ispref;
+            my $index = 0;
+            foreach my $isp ( @isp )
+            {
+                my %ispinfo = (
+                    iid    	=>$isp,
+                    downloadmin =>$downloadmin[$index],
+                    downloadmax =>$downloadmax[$index],
+                    uploadmin =>$uploadmin[$index],
+                    uploadmax =>$uploadmax[$index],
+                );
+                push(@ispref, \%ispinfo);
+                $index++;
+            }
+            $action{downloadmin} = '';
+            $action{downloadmax} = '';
+            $action{uploadmin} = '';
+            $action{uploadmax} = '';
+            $action{isp} = \@ispref;
+            
+            LogUserAction( action=>'SAVEQOS', qosname=>$action{qosname}, qosisp=>$action{qosisp}, iid=>$action{isp}, downloadmax=>$action{downloadmax}, downloadmin=>$action{downloadmin}, uploadmax=>$action{uploadmax}, uploadmin=>$action{uploadmin}, priority=>$action{priority} );
+        }
+	foreach my $qos ( @$qoslist )
+        {
+            if ( $qos->{qosname} eq $action{qosname} )
+            {
+                $exist=1;
+                delete($action{action});
+                $qos=\%action;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            delete($action{action});
+            push( @$qoslist, \%action);
+        }
+        @$qoslist=sort byName @$qoslist;
+        XMLwrite($qosref, $gPATH."qos.xml");
+        
+#        LogUserAction( action=>'SAVEQOS', qosname=>$action{qosname}, qosisp=>$action{qosisp}, iid=>$action{isp}, downloadmax=>$action{downloadmax}, downloadmin=>$action{downloadmin}, uploadmax=>$action{uploadmax}, uploadmin=>$action{uploadmin}, priority=>$action{priority} );
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{qos};
+        
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some qos first\\n\\n);
+            return;
+        } 
+        my @temparray;
+        foreach my $item ( @$qoslist )
+        {
+            if ( grep(/^$item->{qosname}$/, @$delet) ) { next; }
+            push(@temparray, $item);
+            
+            LogUserAction( action=>'DELQOS', qosname=>$action{qosname} );
+        }
+        #my @temp= map{$_}@$delet;
+        $qosref->{qos}=\@temparray;
+        XMLwrite($qosref, $gPATH."qos.xml");
+        
+#        LogUserAction( action=>'DELQOS', qosname=>$item );
+    }
+    elsif ( $action{action}=~m/^DEFQOS$/ )
+    {
+        my $qossref=XMLread($gPATH.'qos.xml');
+        my $rtableref=XMLread($gPATH.'rtable.xml');
+        my $qosslist=$qossref->{qos};
+        my $rtablelist=$rtableref->{table};
+        my @temparray;
+        foreach my $qosref (@$qosslist)
+        {
+            if ( $qosref->{default} eq '1' ){next;}
+            push(@temparray,$qosref);
+        }
+        $qossref->{qos}=\@temparray;
+        my $qosslist= $qossref->{qos};
+        foreach my $rtable (@$rtablelist)   
+        {
+           my $index = 0;
+           my %ispinfo;
+           my %action;
+           my @ispref; 
+           if ( $rtable->{table_num} eq 'system' || $rtable->{table_num} eq '100' || $rtable->{table_num} > 100 || $rtable->{table_num} eq '30'){next;}
+           $point = '0';
+           foreach my $qos (@$qosslist)
+           {
+               if ($qos->{pool} ne $rtable->{table_num}) {next;}
+               $point = '1';
+               last;
+           }
+           if ($point eq '0')
+           {
+          	$pathlist = $rtable->{path};
+          	$action{qosname}='Pool'.$rtable->{table_num};
+          	$action{pool}=$rtable->{table_num};
+          	foreach my $path (@$pathlist)
+          	{
+          	    my $isppref=XMLread($gPATH.'basic.xml');
+          	    my $isplist=$isppref->{isp};
+          	    foreach my $isp (@$isplist)
+          	    {
+          	        if ($isp->{iid} ne $path->{isp}){next;}
+          	        $upload = $isp->{upload};
+          	        $download=$isp->{download};
+          	        $name = 'ISP'.$path->{isp}.'('.$isp->{download}.'/'.$isp->{upload}.')';
+          	        $action{qosisp} .= 'ISP'.$path->{isp}.'('.$isp->{download}.'/'.$isp->{upload}.'),';
+          	    }
+          	    if (!$upload || !$download || !$name || !$action{qosisp}){next;} 
+		     my %ispinfo = (
+		         iid         =>$name,
+		         downloadmin =>$download,
+		         downloadmax =>$download,
+		         uploadmin   =>$upload,
+		         uploadmax   =>$upload,
+		     );
+		     push(@ispref, \%ispinfo);
+		     $index++;
+		}
+		$action{qosisp} =~ s/\,$//g;
+		$action{downloadmin} = '';
+		$action{downloadmax} = '';
+		$action{uploadmin} = '';
+		$action{uploadmax} = '';
+		$action{default} = '1';
+		$action{priority}='7';
+		$action{isp} = \@ispref;
+		delete($action{action});
+		push( @$qosslist, \%action);
+		@$qosslist=sort byName @$qosslist;
+		XMLwrite($qossref, $gPATH."qos.xml");
+           }
+        } 
+    }
+}
+#
+1

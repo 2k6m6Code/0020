@@ -1,0 +1,84 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Outbound Pool Configuration</title>
+</head>
+<body>
+
+<h2>Outbound Pool Configuration</h2>
+<p>
+A pool is a collection of different outbound paths and its balance algorithm.  Balance algorithms can be divided to ones based on the last mile, the middle mile, and end-to-end. Balancing can be done on different granularities: by connection, by IP address, or by packets.<br>  
+When all paths in a pool fail, a backup pool can be selected.
+</p>
+<p>
+The different types of algorithms are explained below.
+</p>
+<ol>
+<li> 
+Bi-directional Sensitive Weighted Least Traffic(BSWLT) <!--1-->
+</li><p>
+This uses the ingress and egress traffics measured on the last mile to optimize the network. The ingress data flows are weighted more heavily, but egress data flows are also considered. This is suitable for some network where ingress data flow can be nil but egress data flow can clog up the network. In this situation, directing more traffics to the link would not make sense, and BSWLT algorithm would manage it properly. 
+</p>
+<li>
+Fastest ISP Response Time <!--2-->
+</li><p>
+For every connection, the path to take is based on the shortest response time to external reference points for each link. These external reference points are chosen by finding bottlenecks to Targets filled in Link Config. 
+</p>
+<li> 
+Fastest Way By Destination(FWBD) <!--3-->
+</li>
+<p>
+    For every connection made, path with the shortest response time path to the intended destination is chosen. Q-Balancer uses a very special algorithm to make this decision fast and efficiently.<br>
+<ul>
+<li>FWBD can be used on sites that can only be accessed via particular network. For example, educational institutes to sites on Internet2 can only be accessed via particular link. 
+<li>FWBD can find the sole valid link.
+<li>FWBD algorithm can function as a type of healthy check. Packets can avoid using the broken links even before the real link checks takes time to determine them as broken. 
+<li>As of now, FWBD will use the system IP configured in the Link Config to do NAT and measure for every path. Thus we cannot disable NAT under this algorithm.
+</ul>
+</p>
+<li>
+Weight Round-Robin by connection <!--4-->
+</li><p>
+All connections, are assigned to different paths according to the weights specified to each link. This method can be used to demonstrate throughput in utilizing multiple links when testing the network with tools such as the NetAnts download manager.</p>
+<li> 
+Weight Round-Robin IP persistent <!--5-->
+</li><p>
+All connections made out from the same source and destination IP pairs will all take the same path in a short period of time 
+</p>
+<li>
+Weight Least Traffic by packet <!--6-->
+</li><p>
+This algorithm disperses traffics to different paths in packet granularity. That is, it disperses traffics packet by packet to different paths, making its decision by weighing egress traffics. The weights are reset every thirty seconds. This algorithm is only open to Multi-Path VPN, when both ends of the tunnel are handled by Q-Balancer. This achieves bandwidth aggregation in egress traffics. 
+</p>
+<li>
+Redirect to Transparent proxy <!--7-->
+</li><p>
+Redirect traffics to a transparent proxy.
+</p>
+<li>
+Bandwidth Measure WRR By Packet <!--8-->
+</li><p>
+The context to apply these degrees would refer to two traffic conditions: interference-duration and bandwidth-fluctuation. Interference-duration means the existing duration for a bandwidth influence (i.e download). Bandwidth-fluctuation means the bandwidth quality of the end-to-end link.
+</p>
+Level 0 (WRR) , Interference duration=No , Bandwidth fluctuations=No.  
+</p>
+Level 1       , Interference duration=Long , Bandwidth fluctuations=Small.  
+</p>
+Level 2       , Interference duration=Middle , Bandwidth fluctuations=Medium.  
+</p>
+Level 3       , Interference duration=Short , Bandwidth fluctuations=Huge.  
+</p>
+Usage notes:
+</p>
+1.If most of the time , the link quality is maintained well , WRR is the preferable algorithm.
+</p>
+2.If one of the link is mixed with Internet usage, and some long duration downloaded is issued sometimes, level1 is the preferable algorithm.
+</p>
+3.If every link is mixed with Internet usage, level2 is the preferable algorithm, and QoS in q-balancer should be set to protect the GRE bandwidth.
+</p>
+4.If MPV is set with long distance site-to-site, should have careful check on the traffic condition.
+</p>
+5.A long latency or long delay path is always a bad link for by-packet bandwidth aggregation. 
+</p>
+</ol>
+</body></html>

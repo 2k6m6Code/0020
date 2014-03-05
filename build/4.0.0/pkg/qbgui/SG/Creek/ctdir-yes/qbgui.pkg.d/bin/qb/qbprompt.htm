@@ -1,0 +1,30 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="gui.css" type="text/css">
+    </head>
+    
+    <body bgcolor="#336699">
+    
+    <script language="javascript">
+        var msg=window.dialogArguments;
+        var pageContent='<div class="body" align="center"><br>'+msg+'<br><br>';
+        pageContent+='<input type=text class=qbtext id=info style="width:120"><br><br>';
+        pageContent+='<input type=button class=qb value="Ok" style="width:60" onClick="returnResult()">';
+        pageContent+='<input type=button class=qb value="Cancel" style="width:60" onClick="returnCancel()"></div>';
+        document.write(pageContent);
+    </script>
+    
+    <script language="javascript">
+        function returnResult() 
+        {
+            window.returnValue=info.value;
+            window.close();
+        }
+
+        function returnCancel() 
+        {
+            window.close();
+        }
+    </script>
+    </body>
+</html>

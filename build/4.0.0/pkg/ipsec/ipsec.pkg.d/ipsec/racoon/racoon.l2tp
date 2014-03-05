@@ -1,0 +1,28 @@
+# cat /etc/racoon/racoon.conf
+#path pre_shared_key "/etc/racoon/psk.txt";
+#padding {
+#        maximum_length 20;
+#        randomize off;
+#        strict_check off;
+#        exclusive_tail off;
+#}
+remote anonymous {
+        exchange_mode main;
+        doi ipsec_doi;
+        situation identity_only;
+        generate_policy on;
+        proposal_check obey;
+        proposal {
+                encryption_algorithm des;
+                hash_algorithm md5;
+                authentication_method pre_shared_key;
+                dh_group modp768;
+        }
+}
+sainfo anonymous {
+        lifetime time 28800 sec;
+        encryption_algorithm 3des;
+        authentication_algorithm hmac_md5;
+        compression_algorithm deflate;
+}
+

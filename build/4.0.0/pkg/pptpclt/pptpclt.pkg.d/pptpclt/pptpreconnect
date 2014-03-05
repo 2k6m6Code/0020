@@ -1,0 +1,6 @@
+#!/bin/bash
+#set -x
+while : ; do
+    sleep 60
+    /usr/sbin/pptpcheck
+done

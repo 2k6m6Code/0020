@@ -1,0 +1,50 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Policy Configuration</title>
+</head>
+<body>
+
+<h2>Policy Configuration</h2>
+<p>
+policy entry can be maintained by [+] for add and [U] for update buttons.<br>
+Using groups we define in subnet/service and adding destination and time as attributes, we select an action to make the policy. 
+</p> 
+<table>
+<tr><td valign=top>Source :</td><td>Source IP addresses of the Internal Subnet. That is the Internal Subnet defined in Subnet/Service. </td></tr>
+<tr><td valign=top class="light">Service :</td><td class="light">All services. </td></tr>
+<tr><td valign=top>Destination  :</td><td>Destination of the packets. Anywhere means not having any particular specification. You can set up different destinations to use different pools.</td></tr>
+<tr><td valign=top class="light">Schedule :</td><td class="light">The active time segment of the policy.</td></tr> 
+<tr><td valign=top>Pool :</td><td>A n suitable pool configured in Outbound Pool Configuration is selected for this policy. </td></tr>
+<tr><td valign=top class="light">NAT Mode :</td><td class="light">Select three modes: Smart, None, or Manual. </td></tr>
+</table>
+<ol>
+<li>Choosing a Pool</li> <!--1-->
+<p>     
+The following graph depicts different subnets using different pool for load balance. Pool has many applications. For example, different hosts taking different paths, or different application using different paths.<br>
+ Other than user-defined pools, Q-Balancer provides a few default ones with the following path combinations: <br>
+<ol type=a> 
+<li>Single ISP path. [ISP1], [ISP2] ...
+<li>All ISP paths. [BALANCE] 
+<li>Reply to the same gateway the request is from, or Reply to Requested Gateway. [RRG]
+<li>Reply to the path by the source IP which is used as service IP for the request.[RSI]
+<li>Select no path and drops the packets. [DROP]
+</ol></p> 
+
+<li>NAT Mode</li> <!--2-->
+<p>
+The path taken influences the NAT IP address decision. <br>
+<ol type=a>
+<li>SMART NAT: Uses the system IP addresses as NAT IP addresses for the connections chosen that path
+<center><table>
+<tr><th>Source IP</th><th class="light">	SYSTEM IP	</th><th>Description</th></tr>
+<tr><td rowspan=2 valign=top>10.10.50.0/24</td><td class="light">	61.220.116.222</td><td>	System IP of ISP1</td></tr>
+<tr><td class="light">	211.23.43.172</td><td>	System IP of ISP2</td></tr>
+</table></center>
+<li>None NAT: No NAT is done on any paths. 
+<li>Manual NAT: This is to designate NAT IP addresses manually, such as one-to-one, one-to-many, or some path does NAT and some doesn't. 
+</ol>
+In the expanded field, we can see all IP addresses that are set up in Link IP Binding. You can hold the Ctrl key accompanying left mouse clicks to select a couple of IP addresses. If no path is selected, the system will use system IP addresses. If some paths are selected while others not, those not selected will have no NAT. <br>
+    The following figure shows that a subnet using public IP address can retain its own address on its own path and has NAT function on the other path.<br></p>
+</ol>
+</body></html>

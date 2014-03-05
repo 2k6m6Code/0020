@@ -1,0 +1,19 @@
+#!/bin/bash
+ #set -x
+ BASICXML="/usr/local/apache/qbconf/basic.xml"
+ TEMPXML="/tmp/temp.xml"
+ #NEWBASICXML="  <isp enableproxy=\"\" ddnsname=\"login\" password=\"\" upload=\"\" gateway=\"\" remote=\"\" ddnsdomainname=\"your.domain.name\" nic=\"\" pppoeportdev=\"\" broadcast=\"\" pppoename=\"\" enabled=\"0\" proxyip=\"\" type=\"fixed\" proxyname=\"\" state=\"NONE\" alive=\"0\" ispname=\"\" enableddns=\"No\" systemip=\"\" download=\"\" dsip=\"1\" isptype=\"\" iid=\"system\" username=\"\" pppoepasswd=\"\" ddnschoice=\"www.dyndns.org\" ddnspasswd=\"password\" local=\"\" subnet=\"\" remotename=\"\"/>"
+ grep iid=\"system.*\" $BASICXML|grep proxyport 
+ test=$?
+if [ "$test" = "1" ];then
+  echo $(date) "Upgrade old xml files" >>/mnt/log/runway.log
+  #Use sed to replace old xml files
+  #/opt/qb/bin/script/sed "/iid=\"system\"/c\'$NEWBASICXML'" $BASICXML > $TEMPXML
+  /bin/sed "/iid=\"system\"/c\  <isp enableproxy=\"\" ddnsname=\"login\" password=\"\" upload=\"\" gateway=\"\" remote=\"\" ddnsdomainname=\"your.domain.name\" nic=\"\" pppoeportdev=\"\" broadcast=\"\" pppoename=\"\" enabled=\"0\" proxyip=\"\" type=\"fixed\" proxyname=\"\" proxyport=\"\" state=\"NONE\" alive=\"0\" ispname=\"\" enableddns=\"No\" systemip=\"\" download=\"\" dsip=\"1\" isptype=\"\" iid=\"system\" username=\"\" pppoepasswd=\"\" ddnschoice=\"www.dyndns.org\" ddnspasswd=\"password\" local=\"\" subnet=\"\" remotename=\"\"/>" $BASICXML > $TEMPXML
+  if [ "$?" != "1" ];then
+    /bin/chmod 777 $TEMPXML
+    /bin/cp -af $TEMPXML $BASICXML
+    /bin/rm -f $TEMPXML
+  fi
+ exit $test 
+fi

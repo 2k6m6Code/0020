@@ -1,0 +1,49 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Transparent Setting</title>
+</head>
+<body>
+
+<h2>Transparent Setting</h2>
+<p>
+Transparent設定的好處可以在導入Q-balancer時能不動到既有的網路架構。<br>
+假設一個簡易的透通模式架構，可在Firewall直接不更改他所使用的所有Public IP與Gateway情況下，新增一條ISP線路透過Q-Balancer進行Outbound Load Balance
+</p><p>
+Q-balancer目前提供兩種不同可以達成Transparent的設定模式，一種是Bridge模式，一種是 arp proxy模式，這兩種不同的方式差別在於和Q-Balancer相接設備arp cache的內容。
+</p><p>
+在Bridge mode 下，在與Q-Balancer相接的設備在做Arp問答的時候，這些封包會直接的穿透過Q-Balancer的兩個Port，所以這些相接設備的Arp內容會維持一致。<br>
+     但是假設在Arp proxy Mode下，當在透通區有Arp問題的時候，Q-Balancer會以本身的Mac address來代為回應。下表列出了這兩種模式的差異性：<br>
+<table border=0>
+<tr valign=top><th>	 </th><th class="light">Bridge</th><th>Arp proxy</th></tr>
+<tr valign=top><td width=40>優點</td><td class="light"><li>不會影響到既有的arp table 內容</td><td><li>相接設備可能需要Reboot來避免記住舊的arp內容
+<li>在transparent相接的設備對於Q-balancer arp的詢問會有 IP spoofing判定的問題</td></tr>
+<tr valign=top><td>缺點</td><td class="light"><li>在透通區相接的設備必須得真正存在，才能使得mac address被問到而使網路流通</td><td><li>Q-Balancer代為回應arp的答案因此原來的設備不在也可以繼續傳送</td></tr>
+</table></p>
+<p>
+選擇 Bridge模式：<br>
+<table>
+<tr valign=top><td>Zone ID :	</td><td width=50><b>ISP 1	</b></td><td>Q-Balancer每個ISP都能做透通模式，能同時做，也能只做單一線路透通</td></tr>
+<tr valign=top><td class="light">Status :	</td><td class="light"><b>On	</b></td><td class="light">預設是 Off，如該線路欲做透通模式，則改成On即可</td></tr>
+<tr valign=top><td>Interface :	</td><td><b>Port3	</b></td><td>這個Interface是指承接透通模式後方Device(Firewall or VPN Device)的Interface，基本上與該ISP線路承接WAN Port的Interface需為不同的Port，如ISP 1的WAN Port可能為Port 1，但是在後方的Firewall則是設定接在Port 3</td></tr>
+</table>
+</p><p>
+選擇 Arp proxy模式：<br>
+設定的方式同 Bridge模式
+</p>
+<p>
+<b>*注意事項*</b><br>
+<ol>
+<li><!--1-->在 Bridge 模式中，<em>Public IP Reused as Pass through IP for bridge</em> 這個功能按鈕並非一定要使用，除非有設備需要和Q-Balancer共用IP Address才要使用<br>
+     在 Arp proxy 模式中，<em>Pass through IP registration for arp proxy</em> 則一定要 
+     設定，設定過的IP才能使用Transparent的功能。
+<li><!--2-->為了避免在 arp proxy mode下，與ISP透通的另ㄧ端port相接的設備不回應Q-balancer的 arp 詢問，我們可以在【LAN Setup】->【Static Routes Setting】
+中建立了屬於該ISP網段的的IP網段<br> 
+     例如port3後方帶有61.221.23.254這個使用透通功能的IP，那麼可以在port 3  
+     上加入一個 61.221.23.251/32這個網段，使Q-balancer用這個IP來詢問為
+     source address來詢問61.221.23.254的mac address
+<li><!--3-->目前Q-balancer在 bridge mode下只支援一個ISP的透通，arp mode下則沒有這個限制
+</ol>
+</p>
+</body></html>

@@ -1,0 +1,868 @@
+#================================================================================================
+# predifine some working path here
+# du to the file system privilege limitation for cgis run by apache web server 
+# we have to make a copy of specified config set to /var/upg/$setname, and then launch upgrade procedure in the directory
+# after upgrade procedure is finished, we copy the upgrded config. set back to /mnt/qb/conf/set/
+$CONFSETUPGPATH='/var/upg/';
+$CONFTEMPLATEPATH='/tmp/xmltemplate/';
+$UIPATH='/usr/local/apache/qb/';
+
+sub showXMLupg
+{
+    my (%action)=@_;
+   
+    print qq (<table>);
+    
+    print qq (<tr><td class="bigtitle" colspan="2">Config. Upgrade Tool</td></tr>); 
+    print qq (<tr><td class="bigtitle" colspan="2"><hr size="1"></td></tr>); 
+    print qq (<tr><td rowspan="2">);
+    print qq (<iframe name="result" style="width:450; height:300; filter:alpha(opacity=70);"></iframe>);
+    print qq (<iframe id="kill" style="display:none"></iframe>);
+    print qq (</td>);
+    
+    print qq (<td valign="top" align="center">);
+    
+    #====================================================================================================================================
+    # print config options of selected diagnosetic whattodo
+    print qq (<tr><td align="center" valign="top">);
+ 
+    print qq (<fieldset id="export" class="fieldset" style="display:block;height:50">);
+    print qq (<legend class="subtitle">Select Config. Set</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>Config. Set:</td><td>);
+    my @configname=maintainConfig(action=>'LISTCONFIGNAME', type=>'UPGRADE');
+    print qq (<select class="qbopt" name="configuration" size="1" style="width:120">);
+    foreach my $confid ( @configname ) {   print qq (<option value="$confid">$confid</option>); }
+    print qq (</select></td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+    
+
+    #====================================================================================================================================
+    # printing Selection Menu of Tool
+    print qq (<fieldset class="fieldset">);
+    print qq (<legend class="subtitle">Menu for Config. Upgrade</legend>);
+    print qq (<table class="body">);
+    print qq (<tr><td><input name="whattodo" type="radio" value="showversion"  checked >Show Version Info. </td></tr>); 
+    print qq (<tr><td><input name="whattodo" type="radio" value="doupgrade" >Launch Config. Upgrade</td></tr>);
+    print qq (</table>); 
+    print qq (</fieldset>);
+    
+
+    #====================================================================================================================================
+    print qq (<table class="body">);
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<input type="button" class="qb" value="Go" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="Back"  title="Go Back to Admin Console" style="width:50px;width:50px" onClick="goBackToConsole()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+    print qq (</td></tr>);
+
+    print qq (<tr><td class="bigtitle" colspan="2"><hr size="1"></td></tr>); 
+    print qq (</table>);
+}
+#showXMLupg
+
+
+#======================================================================================================================================
+sub xmlupgScript
+{
+    print << "XMLUPGSCRIPT";
+
+    <script language="javascript">
+        
+        var myform;
+    
+        function cgi_dep_onload() 
+        { 
+            myform=window.document.forms[0]; 
+        } 
+
+        function goBackToConsole() { window.top.mainFrame.location.href="console.cgi"; }
+        
+        function go()
+        { 
+            myform.action.value='start';
+            myform.submit();
+        }
+    </script>
+    
+XMLUPGSCRIPT
+}
+#xmlupgScript
+
+
+#=====================================================
+# Get all names of XML Config Set
+#=====================================================
+sub getAllSetNames
+{
+    my @setname;
+    if ( opendir(CONFIGSET, "$CONFSETUPGPATH") ) 
+    { 
+        foreach my $set (readdir(CONFIGSET))
+        {
+            if ( $set eq '.' || $set eq '..' ) { next; }
+            push ( @setname, $set );
+        }
+        
+        closedir(CONFIGSET);
+    }
+    else 
+    { 
+        @setname=(); 
+    }
+ 
+    return @setname;
+}
+#getAllSetNames
+
+
+#=====================================================
+# Get Target XML Config Version Number which is needed for new UI
+#=====================================================
+sub getTargetVersion
+{
+    my $filename=$UIPATH.'XMLVERSION';
+    my $defaultversion='2.1.5.0000';
+    my $version='';
+
+    if ( -e $filename )
+    {
+        open(VERSION, "$filename");
+        while(<VERSION>) {  chomp; $version=$_; }
+    }
+
+    close(VERSION);
+    
+    if ( !$version ) { $version=$defaultversion; }
+
+    return $version;
+}
+#getTargetVersion
+
+
+#=====================================================
+# Get XML Config Version Number of a XML SET
+#=====================================================
+sub getSetVersion
+{
+    my ($setname)=@_;
+
+    my $defaultversion='2.1.5.0000';
+    my $version='';
+    my $basicxml=$CONFSETUPGPATH.$setname.'/basic.xml';
+    my $lvsnetxml=$CONFSETUPGPATH.$setname.'/lvsnet.xml';
+
+    if ( ! -e $basicxml )   { $version='0.0.0.0000'; }
+
+    if ( -e $lvsnetxml )  { $defaultversion='2.2.0.0000'; }
+
+    if ( !$version )
+    {
+        my $filename=$CONFSETUPGPATH.$setname.'/xmlver';
+        if ( -e $filename )
+        {
+            open(VERSION, "$filename");
+            while(<VERSION>) {  chomp; $version=$_; }
+        }
+        close(VERSION);
+    }
+
+    if ( !$version )
+    {
+        $filename=$CONFSETUPGPATH.$setname.'/version';
+        if ( -e $filename )
+        {
+            open(VERSION, "$filename");
+            while(<VERSION>) {  chomp; $version=$_; }
+        }
+        close(VERSION);
+    }
+
+    if ( !$version )
+    {
+        $filename=$CONFSETUPGPATH.$setname.'/xmlversi';
+        if ( -e $filename )
+        {
+            open(VERSION, "$filename");
+            while(<VERSION>) {  chomp; $version=$_; }
+        }
+        close(VERSION);
+    }
+    
+    if ( !$version ) { $version=$defaultversion; }
+
+    # get rid of all space character
+    $version=~s/\s//g;
+
+    return $version;
+}
+#getSetVersion
+
+
+#=====================================================
+# Set XML Config Version Number to a XML SET
+#=====================================================
+sub setSetVersion
+{
+    my ($setname, $version)=@_;
+    my $filename=$CONFSETUPGPATH.$setname.'/xmlver';
+
+    open(VERSION, ">$filename");
+
+    print VERSION $version;
+
+    close(VERSION);
+
+    chmod(0777, $filename);
+
+    $filename=$CONFSETUPGPATH.$setname.'/xmlversi'; unlink($filename);
+    $filename=$CONFSETUPGPATH.$setname.'/version';  unlink($filename);
+}
+#setSetVersion
+
+
+#====================================================
+# compare two version numbers
+#
+# Parameters:
+#   $ver1 : version number of xml 1
+#   $ver2 : version number of xml 2
+#
+# Result:
+#   input error     ==> return -1   
+#   ver1 > ver2     ==> return 1
+#   ver1 < ver2     ==> return 2
+#   ver1 = ver2     ==> return 3
+#====================================================
+sub cmpVersion
+{
+    my ( $ver1, $ver2 )=@_;
+    
+    my @subver1=split(/_|\./, $ver1);
+    my @subver2=split(/_|\./, $ver2);
+
+    
+    if ( @subver1 != 4 || @subver2 != 4 ) { return 0; }
+
+    foreach my $sub  ( 0..3 ) { if ( $subver1[$sub]!~m/^\d{1,4}$/ || $subver2[$sub]!~m/^\d{1,4}$/ ) { return 0; } }
+
+    foreach my $sub  ( 0..3 )
+    {
+        if ( $subver1[$sub] > $subver2[$sub] )    { return 1; }
+        elsif ( $subver1[$sub] < $subver2[$sub] ) { return 2; }
+    }
+    
+    return 3;
+}
+#cmpVersion
+
+
+#===================================================================================
+# copy just XML from $from to $to
+#===================================================================================
+sub cpConf
+{
+    my ( $from, $to )=@_;
+
+    if ( !open(FROM, "<$from") ) 
+    {          
+        print qq ( Can not open $from to read <br>);
+    }
+ 
+    if ( !open(TO, ">$to") )  
+    { 
+        print qq ( Can not open $to to write <br>);
+        return -1; 
+    }
+
+    while (<FROM>) { print TO $_; }
+    close(FROM);
+    close(TO);
+    chmod(0777, $to);
+}
+#cpConf
+
+
+#====================================================================================
+# copy xml(s) from /tmp/xmltemplace/$targetversion  to  /mnt/qb/conf/$setname if necessary
+#====================================================================================
+sub maintainIntegrity
+{
+    my ( $targetversion, $setname)=@_;
+    
+    my $targettemplate=$CONFTEMPLATEPATH.$targetversion.'/';
+    my $setpath=$CONFSETUPGPATH.$setname.'/';
+
+    if( !opendir(TARGET, "$targettemplate") ) 
+    {   
+        print qq ( Can not open XML Template version $targetversion <br>\n );
+        return -1 
+    };
+    
+    foreach my $xml (readdir(TARGET))
+    {
+        if ( $xml eq '.' || $xml eq '..' || $xml eq 'CVS' || $xml=~m/swp/ || $xml eq 'xmlver' ) { next; }
+        
+        if ( (-z $setpath.$xml) ||  !( -e $setpath.$xml) ) 
+        {
+            my $from=$targettemplate.$xml;
+            my $to=$setpath.$xml;
+     
+            if ( ! -r $from )
+            {       
+                print qq ( Trying to read $from fail  ...<br>\n );
+            }
+
+            my $cpResult=cpConf($from, $to);
+            
+            if ( $cpResult < 0 ) 
+            { 
+                print qq ( Copy $xml fail <br>\n); 
+            }
+            else 
+            { 
+                print qq ( Copy $xml Succefully <br>\n); 
+            }
+        }
+    }
+    
+    closedir(TARGET);
+}
+#maintainIntegrity
+
+
+#=======================================================================================
+sub from_0_0_0_0000_to_2_1_5_0000
+{
+    my ($setname)=@_;
+    my $targetversion='2.1.5.0000';
+    my $setversion=getSetVersion($setname);
+ 
+    print qq ( Starting to migrate from $setversion to $targetversion ... <br>\n);   
+
+    maintainIntegrity($targetversion, $setname);
+
+    #==================================================
+    # 5. Setting version of upgraded xml set
+    #============================================
+    print qq ( Writing version number $targetversion to xml set $setname ... <br>\n);
+    setSetVersion($setname, $targetversion);
+}
+#from_0_0_0_0000_to_2_1_5_0000
+
+
+#==================================================
+# Parameters:
+# $setname: Name of XML Config Set 
+# 
+# Result:
+#   some error          ==> return -1
+#   no necessary        ==> return 1    
+#   just do integrity   ==> return 2
+#   successfully        ==> return 2_2_0_0000
+#
+#==================================================
+sub from_2_1_5_0000_to_2_2_0_0000
+{
+    my ($setname)=@_;
+    my $targetversion='2.2.0.0000';
+    my $setversion=getSetVersion($setname);
+ 
+    print qq ( Starting to migrate from $setversion to $targetversion ... <br>\n);   
+
+    print qq ( Config. Set $setname is already in version $targetversion <br>\n);
+    
+    #==================================================
+    # 1. Judge if we should process this function
+    #==================================================
+    $cmpResult1=cmpVersion($setversion, '2.1.5.0000');
+    $cmpResult2=cmpVersion($setversion, '2.2.0.0000');
+    
+    # if version format error just return
+    if ( $cmpResult < 0 )  
+    {   
+        print qq ( Compare Version Fail !! <br>\n); 
+        return -1;  
+    }
+    
+    # if the xml version of $setname is not 2.1.5.0000, just return
+    if ( $cmpResult1 != 3 && $cmpResult2 !=3 ) 
+    { 
+        print qq ( $setname is neither version 2.1.5.0000 nor 2.2.0.0000, skipping upgrade process !! <br>\n); 
+        return 1;  
+    }
+    
+    #==================================================
+    # 2. if any xml of $setname is damaged or missed, then copy it from template of target version to $setname
+    #==================================================
+    print qq ( Performing integrity checking of $setname ... <br>\n);
+
+    maintainIntegrity($targetversion, $setname);
+
+    #==================================================
+    # 3. upgrade basic.xml of this xml set
+    #==================================================
+    print qq ( Upgrading basic.xml ...<br>\n);
+    
+    my $ispref=XMLread($CONFSETUPGPATH.$setname.'/basic.xml');
+
+    my $allisp=$ispref->{isp};
+
+    foreach my $isp ( @$allisp )
+    {
+        if ( $isp->{iid} eq 'system' ) { next; }
+        
+        $isp->{isptype}='normal';
+    }
+
+    XMLwrite( $ispref, $CONFSETUPGPATH.$setname.'/basic.xml');
+    #===============================================================
+    
+    
+    #==================================================
+    # 4. upgrade natnet.xml of this xml set
+    #==================================================
+    print qq ( Upgrading natnet.xml ... <br>\n);
+
+    my $ref=XMLread($CONFSETUPGPATH.$setname.'/natnet.xml');
+
+    my $natsubnet=$ref->{nat}->[0]->{subnet};
+
+    foreach my $subnet ( @$natsubnet )
+    {   
+        if ( !exists($subnet->{sservice} ) ) { $subnet->{sservice}=['system']; }
+
+        if ( exists( $subnet->{service} ) )
+        {   
+            my $srcitem=$subnet->{service}; 
+            my @clonsrc=@$srcitem;
+            $subnet->{dservice}=\@clonsrc;
+            delete($subnet->{service});   
+        }
+    }
+    
+    XMLwrite( $ref, $CONFSETUPGPATH.$setname.'/natnet.xml');
+    #===============================================================
+
+    #==================================================
+    # 5. upgrade natnet.xml of this xml set
+    #==================================================
+    print qq ( Moving entries in dmznet.xml into natnet.xml ... <br>\n);
+
+    my $natref=XMLread($CONFSETUPGPATH.$setname.'/natnet.xml');
+    my $dmzref=XMLread($CONFSETUPGPATH.$setname.'/dmznet.xml');
+    my $natsubnet=$natref->{nat}->[0]->{subnet};
+    my $dmzsubnet=$dmzref->{dmz}->[0]->{subnet};
+
+    foreach my $subnet ( @$dmzsubnet ) { push( @$natsubnet, $subnet); }
+    $dmzref->{dmz}->[0]->{subnet}=[];
+    
+    XMLwrite( $natref, $CONFSETUPGPATH.$setname.'/natnet.xml');
+    XMLwrite( $dmzref, $CONFSETUPGPATH.$setname.'/dmznet.xml');
+    #===============================================================
+    
+    
+    #==================================================
+    # 6. upgrade zonecfg.xml of this xml set
+    #==================================================
+    print qq ( Upgrading zonecfg.xml ... <br>\n);
+
+    my $zoneref=XMLread($CONFSETUPGPATH.$setname.'/zonecfg.xml');
+    my $natarray=$zoneref->{nat};
+
+    foreach my $nat ( @$natarray )
+    {
+        if ( $nat->{natid} eq 'system' ) { next; }
+        $nat->{type}='nat';
+    }
+
+    XMLwrite( $zoneref, $CONFSETUPGPATH.$setname.'/zonecfg.xml');
+    #===============================================================
+
+    #=====================================================================
+    # 7. upgrade tcclass.xml of this xml set
+    #=====================================================================
+    
+    #==================================================
+    # 7-1. upgrade tcclass.xml of this xml set
+    #============================================
+    print qq ( Upgrading tcclass.xml - phase 1 ... <br>\n);
+
+    my $tcclassref=XMLread($CONFSETUPGPATH.$setname.'/tcclass.xml');
+    my $portarray=$tcclassref->{port};
+    my @areaarray;
+    
+    foreach my $port ( @$portarray )
+    {
+        $port->{area}=$port->{nic};
+        delete($port->{nic});
+        push(@areaarray, $port);
+    }
+
+    $tcclassref->{area}=\@areaarray;
+
+    delete($tcclassref->{port});
+
+    XMLwrite( $tcclassref, $CONFSETUPGPATH.$setname.'/tcclass.xml');
+    #===============================================================
+
+    #==================================================
+    # 7-2. upgrade tcclass.xml of this xml set
+    #=================================================
+    
+    #======================================================================
+    # 7-2-1. get good iid list in basic.xml
+    my $ispref=XMLread($CONFSETUPGPATH.$setname.'/basic.xml');
+    my $isplist=$ispref->{isp};
+    my %isplisthash;
+    foreach my $item ( @$isplist ) 
+    { 
+        if( $item->{iid} eq 'system' ) { next; }
+        if( !($item->{state}=~m/^HEALTHYOK$|^FORMATOK$/) ) { next; }
+        $isplisthash{"$item->{iid}"}=1; 
+    }
+    my @goodiidlist=sort keys %isplisthash;
+
+    print qq ( Upgrading tcclass.xml - phase 2 ... <br>\n);
+    my $tcclassref=XMLread($CONFSETUPGPATH.$setname.'/tcclass.xml');
+    my $areaarray=$tcclassref->{area};
+    my %allimqhash;
+    my %areatemplate;
+
+    #======================================================================
+    # 7-2-2. reset content of areas, of which ISP does no longer exist 
+    foreach my $area ( @$areaarray )
+    {
+        $allimqhash{$area->{area}}=1;
+
+        #==========================================================
+        # get area template for use in step 2.
+        if ( $area->{area}=~m/system/ ) { %areatemplate=%$area; }
+
+        if ( $area->{area}!~m/imq/ ) { next; }
+
+        my $isp_in_out=nicTranslate($area->{area}); 
+
+        my ($ispid)=($isp_in_out=~m/ISP(\d+)-.+/i);
+
+        # if isp of this $hardarea still exist, skip it ... 
+        if ( grep(/^$ispid$/, @goodiidlist) ) { next; }
+
+        #reset bw value
+        $area->{bw}='system';
+        $area->{default}='system';
+
+        my $classarray=$area->{class};
+        my @newclassarray;
+    
+        foreach my $class ( @$classarray ) 
+        { 
+            if ( $class->{idnum} eq 'system' )  
+            {
+                push( @newclassarray, $class );
+                last;
+            }
+        }
+
+        $area->{class}=\@newclassarray;
+    }
+
+    #======================================================================
+    # 7-2-3. making up missed  imq? area for ISP(s) without imq entry in tcclass.xml
+    foreach my $dir ( '-IN', '-OUT' )
+    {
+        foreach my $iid ( @goodiidlist )
+        {
+            $newimq=nicTranslate('ISP'.$iid.$dir);
+            if ( exists($allimqhash{$newimq}) ) { next; }
+
+            my %newarea=%areatemplate;
+            my $classarray=$areatemplate{class};
+            my @newimqclassarray;
+            foreach my $class ( @$classarray ) { my %newimqclass=%$class; push(@newimqclassarray, \%newimqclass); }
+            $newarea{class}=\@newimqclassarray;
+            $newarea{area}=$newimq;
+            push(@$areaarray, \%newarea);
+        }
+    }
+
+    #--------updating tcclass.xml------------------------ 
+    XMLwrite( $tcclassref, $CONFSETUPGPATH.$setname.'/tcclass.xml');
+    #==================================================
+
+
+    #=====================================================================
+    # 8. upgrade rtable.xml of this xml set
+    #=====================================================================
+    print qq ( Upgrading rtable.xml ... <br>\n);
+
+    #=====================================================================
+    # 8-1. tuning table attribures of rtable.xml
+    print qq ( Upgrading rtable.xml - phase 1 ... <br>\n);
+    
+    my $tableref=XMLread($CONFSETUPGPATH.$setname.'/rtable.xml');
+    my $tablearray=$tableref->{table};
+
+    foreach my $table ( @$tablearray ) 
+    { 
+        if ( $table->{table_num} eq 'system' ) { next; }
+        $table->{mode}=( $table->{dynamic} ) ? ( 'BTK' ) : ( 'WRR' ); 
+    }   
+    
+
+    #======================================================================
+    # 8-2. Adding BALANCE table into rtable.xml
+    print qq ( Upgrading rtable.xml - phase 2 ... <br>\n);
+    my $ispref=XMLread($CONFSETUPGPATH.$setname.'/basic.xml');
+    my $ispinfo=$ispref->{isp};
+    my @ispinfolist;
+    my $tableBalance;
+    my $tableTemplate;
+  
+    #======================================================================
+    # 將 isp 的資訊從 $ispinfo 中整理到 @ispinfolist 中，並以 iid 當成 index
+    foreach my $isp ( @$ispinfo ) 
+    { 
+        if ( $isp->{iid} eq 'system' ) { next; }
+        $ispinfolist[$isp->{iid}]=$isp;
+    }
+        
+    my $tableBalanceExist=0;
+    foreach my $table ( @$tablearray ) 
+    { 
+        if ( $table->{table_num} eq $gBALANCE ) { $tableBalance=$table;  $tableBalanceExist=1; } 
+        if ( $table->{table_num} eq 'system' )  { $tableTemplate=$table;  } 
+    }
+
+    #====================================================
+    # update attribute value of Table $gBALANCE 
+    # Add path of ISP into Table $gBALANCE 
+    # collect path info. for table BALANCE 
+    #====================================================
+    my %tableBalanceData=%$tableTemplate;
+    $tableBalanceData{table_num}=$gBALANCE;
+    $tableBalanceData{mode}='BSWLT';
+        
+    #====================================================
+    my @balancePath;
+    my $numOfDsip=0;
+    foreach my $isp ( @$ispinfo )
+    {
+        if ( $isp->{iid} eq 'system' )     { next; }
+
+        if ( $isp->{isptype} eq 'tunnel' ) { next; }
+
+        my %ispPath=(   weight=>'1', 
+                        subnet=>$isp->{subnet}, 
+                        dsip=>$isp->{dsip}, 
+                        gateway=>$isp->{gateway}, 
+                        systemip=>$isp->{systemip}, 
+                        isp=>$isp->{iid} 
+        );
+
+        if ( $isp->{dsip} ) { $numOfDsip++; }
+
+        push( @balancePath, \%ispPath );
+    }
+
+    if ( @balancePath > 1 ) { $tableBalanceData{multiple}=1; }
+
+    $tableBalanceData{dsipnum}=$numOfDsip;
+
+    $tableBalanceData{numpath}=@balancePath;
+
+    $tableBalanceData{path}=\@balancePath;
+    
+    if ( $tableBalanceExist ) 
+    { 
+        %$tableBalance=%tableBalanceData; 
+    }
+    else 
+    { 
+        push ( @$tablearray, \%tableBalanceData ); 
+    }
+
+    #--------updating rtable.xml------------------------ 
+    XMLwrite( $tableref, $CONFSETUPGPATH.$setname.'/rtable.xml');
+    #==================================================
+
+    #=====================================================================
+    # 9. upgrade ipbank.xml of this xml set
+    #=====================================================================
+    print qq ( Upgrading ipbank.xml ... <br>\n);
+    
+    #=====================================================================
+    # step 1. get iid list in basic.xml
+    my $ispref=XMLread($CONFSETUPGPATH.$setname.'/basic.xml');
+    my $isplist=$ispref->{isp};
+    my %isplisthash;
+    foreach my $item ( @$isplist ) 
+    { 
+        if( $item->{iid} eq 'system' ) { next; }
+        $isplisthash{"$item->{iid}"}=1; 
+    }
+    
+    #=====================================================================
+    # step 2. delete all $ipbankref->{ip}->{isp[i]} entries
+    my $ipbankref=XMLread($CONFSETUPGPATH.$setname.'/ipbank.xml');
+    
+    foreach my $ispid ( keys %isplisthash ) 
+    { 
+        #-------------------------------------------
+        # transfer old lvs group into public group, then delete lvs group
+        if ( exists($ipbankref->{ip}->{'isp'.$ispid.'lvs'}) )
+        {
+            $ipbankref->{ip}->{'isp'.$ispid.'public'}=$ipbankref->{ip}->{'isp'.$ispid.'lvs'};
+            delete($ipbankref->{ip}->{'isp'.$ispid.'lvs'});
+        }
+        
+        #--------------------------------------------
+        # delete isp group
+        delete($ipbankref->{ip}->{'isp'.$ispid}); 
+    }
+
+    XMLwrite( $ipbankref, $CONFSETUPGPATH.$setname.'/ipbank.xml');
+    #===============================================================
+
+    #=====================================================================
+    # 10. upgrade iniroute.xml of this xml set
+    #=====================================================================
+    print qq ( Upgrading iniroute.xml ... <br>\n);
+    my $inirouteref=XMLread($CONFSETUPGPATH.$setname.'/iniroute.xml');
+
+    my $natclasses=$inirouteref->{nat}->[0]->{class};
+    foreach my $class ( @$natclasses ) 
+    { 
+        if ( $class->{direction} eq '*' ) { $class->{direction}='d'; } 
+    }
+
+    my $lvsclasses=$inirouteref->{lvs}->[0]->{class};
+    foreach my $class ( @$lvsclasses ) 
+    { 
+        if ( $class->{direction} eq '*' ) { $class->{direction}='s'; } 
+        if ( $class->{table} eq '100' )   { $class->{table}='200'; }
+    }
+
+    #=====================================================================
+    print qq ( Moving dmz entries in iniroute.xml to nat ... <br>\n);
+    my $dmzclasses=$inirouteref->{dmz}->[0]->{class};
+    my @newdmzclasses;
+    foreach my $class ( @$dmzclasses ) 
+    {
+        if ( $class->{service} eq "system" ) { push( @newdmzclasses, $class); next; }
+        my %movedclass=%$class;
+        
+        #--------------------------------------------------------------------------------
+        # 1. clone nat sip 
+        #--------------------------------------------------------------------------------
+        my $sipptr=$class->{sip};
+        my @siparray; foreach my $sip ( @$sipptr ) { my %newsip=%$sip; push(@siparray, \%newsip); }
+        $movedclass{sip}=\@siparray;
+        
+        #--------------------------------------------------------------------------------
+        # 2. clone time info.
+        #--------------------------------------------------------------------------------
+        $timearrayptr=$class->{time};
+        my @time=@$timearrayptr; 
+        $movedclass{time}=\@time;
+
+        #--------------------------------------------------------------------------------
+        # 3. clone QoS info.
+        #--------------------------------------------------------------------------------
+        my $qosptr=$class->{qos};
+        my @qosarray; foreach my $qos ( @$qosptr ) { my %newqos=%$qos; push(@qosarray, \%newqos); }
+        $movedclass{qos}=\@qosarray;
+
+        push(@$natclasses, \%movedclass);
+    }
+
+    $inirouteref->{dmz}->[0]->{class}=\@newdmzclasses;
+
+    XMLwrite( $inirouteref, $CONFSETUPGPATH.$setname.'/iniroute.xml');
+    #===============================================================
+     
+    #=====================================================================
+    # 11. upgrade fwmark.xml of this xml set
+    #=====================================================================
+    print qq ( Upgrading fwmark.xml ... <br>\n);
+    
+    print qq ( Moving entries in dmz group of fwmark.xml to nat group ... <br>\n);
+    my $fwmark=XMLread($CONFSETUPGPATH.$setname.'/fwmark.xml');
+    my @newnatfwmarkarray;
+    my $natfwmark=$fwmark->{nat}->[0]->{mark};
+    my $dmzfwmark=$fwmark->{dmz}->[0]->{mark};
+
+    foreach my $mark ( @$dmzfwmark , @$natfwmark )
+    {
+        my %newmark=%$mark;
+        push( @newnatfwmarkarray, \%newmark );
+    }
+
+    $fwmark->{dmz}->[0]->{mark}=[];
+    $fwmark->{nat}->[0]->{mark}=\@newnatfwmarkarray;
+
+    XMLwrite( $fwmark, $CONFSETUPGPATH.$setname.'/fwmark.xml');
+    #===============================================================
+
+    #=====================================================================
+    # 12. upgrade lvsnet.xml of this xml set
+    #=====================================================================
+    print qq ( Upgrading lvsnet.xml ... <br>\n);
+    
+    #===================================================================================    
+    # we collect all (source => service1, service2, service3 ... ) from fwmark.xml to add to lvsnet.xml
+    my $fwmark=XMLread($CONFSETUPGPATH.$setname.'/fwmark.xml');
+    my $vsfwmark=$fwmark->{lvs}->[0]->{mark};
+    my $lvsnetref=XMLread($CONFSETUPGPATH.$setname.'/lvsnet.xml');
+    my $lvsarray=$lvsnetref->{lvs}->[0]->{subnet};
+    my %hash_of_lvs_region;
+    my %vssourcehash;
+
+    #===================================================================================    
+    # remember existing regions in order not to add their entries into lvsnet.xml redundantly
+    foreach my $vs ( @$lvsarray ) { $hash_of_lvs_region{$vs->{region}}=1; }
+
+    foreach my $mark ( @$vsfwmark )
+    {
+        if ( $mark->{source}=~m/system|localhost/ ) { next; }
+        
+        if ( $mark->{service}=~m/system/ ) { next; }
+
+        if ( exists($hash_of_lvs_region{$mark->{source}}) ) { next; }
+
+        if ( exists($vssourcehash{$mark->{source}}) )
+        {
+            $vssourcehash{$mark->{source}}.=':'.$mark->{service};
+        }
+        else
+        {
+            $vssourcehash{$mark->{source}}=$mark->{service};
+        }
+    }
+
+    foreach my $source ( keys %vssourcehash )
+    {
+        my @sservices=split(/:/, $vssourcehash{$source}); 
+        push(@sservices, 'system');
+        my %newsubnet=( region=>$source, dirty=>'0', dservice=>['system'], sservice=>\@sservices);
+        push(@$lvsarray, \%newsubnet);
+    }
+
+    XMLwrite( $lvsnetref, $CONFSETUPGPATH.$setname.'/lvsnet.xml');
+    #===============================================================
+    
+
+    #==================================================
+    # 13. Setting version of upgraded xml set
+    #============================================
+    print qq ( Writing version number $targetversion to xml set $setname ... <br>\n);
+    setSetVersion($setname, $targetversion);
+}
+#from_2_1_5_0000_to_2_2_0_0000
+
+#=====================================================================================================
+# 1 in the next line is a MUST
+1

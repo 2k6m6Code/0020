@@ -1,0 +1,125 @@
+#=============================================================================================
+sub showIPSec
+{
+    my (%action)=@_;
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    
+    #my @titleHeadList=('ID', 'NIC', 'Name', 'TVLI', 'TVRI', 'THSI', 'THRI', 'Status',  'NAT', 'Isakmp_SA', 'Ph1_Encryption',
+    # 		       'Hash', 'DH_Group', 'IPSec_SA', 'Ph2_Encryption', 'Authentition', 'PF_Group', 'Down/Up', 'Edit');
+    my @titleHeadList=( $qblang[25], $qblang[65], $qblang[66], $qblang[29], $qblang[67], $qblang[70], $qblang[84], $qblang[70], $qblang[24],  $qblang[75], $qblang[85], $qblang[86],
+    		       $qblang[87], $qblang[88], $qblang[89], $qblang[90], $qblang[91], $qblang[92], $qblang[34] );
+    #==============================================================
+    # Print Title first
+    #===============================================================
+    
+    #my %titleWidth=( 'ID'=>80, 'NIC'=>80, 'Name'=>120, 'TVLI'=>120, 'TVRI'=>120, 'THSI'=>120, 'THRI'=>120, 'Status'=>50, 'NAT'=>50, 'Isakmp_SA'=>70, 'Ph1_Encryption'=>70,  
+    # 		     'Hash'=>70, 'DH_Group'=>70, 'IPSec_SA'=>70, 'Ph2_Encryption'=>70, 'Authentition'=>70, 'PF_Group'=>70, 'Down/Up'=>120,'Edit'=>50 );
+    my %titleWidth=( 'Edit'=>50, 'ID'=>80, 'NIC'=>80, 'Name'=>120, 'TVLI'=>120, 'TVRI'=>120, 'THSI'=>120, 'THRI'=>120, 'Status'=>50, 'NAT'=>50, 'Isakmp_SA'=>70, 'Ph1_Encryption'=>70,  
+     		     'Hash'=>70, 'DH_Group'=>70, 'IPSec_SA'=>70, 'Ph2_Encryption'=>70, 'Authentition'=>70, 'PF_Group'=>70, 'Down/Up'=>120 );
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">$qblang[93]);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+    
+    print qq (<div class="divframe" style="width=1350; " >);
+    print qq (<table class="sortable" width="100%" border="0"><tr bgcolor="#332211">); 
+    print qq (<td align="center" width="50">);
+    print qq (<a href="javascript:delIPSec()"><image src="image/del.gif" title="Delete Checked IPSec(s)" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('ipsec', this.checked)"></td>);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+
+    #==============================================================
+    # Print IPSec Info 
+    #===============================================================
+    
+    my $lineCount=0;
+    foreach my $isp ( @$isplist )
+    {
+        if ( $isp->{iid} eq 'system' ) { next; }
+        if ( $isp->{isptype} eq 'ipsec' )
+        {
+            my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+            my $status;
+            print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+            print qq (<td align="center" width="50" height="25">);
+            print qq (<input type="checkbox" name="ipsec" value="$isp->{iid}"></td>);
+            print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+            print qq (<a href="newipsec.cgi?isp=$isp->{iid}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+            print qq (<td align="center" width="$titleWidth{ID}" height="25" >IPSec $isp->{iid}</td>);
+            print qq (<td align="center" width="$titleWidth{NIC}" height="25" >$isp->{nic}</td>);
+            print qq (<td align="center" width="$titleWidth{Name}" height="25" >$isp->{ispname}</td>);
+            print qq (<td align="center" width="$titleWidth{TVLI}" height="25" >$isp->{systemip}</td>);
+            print qq (<td align="center" width="$titleWidth{TVRI}" height="25" >$isp->{gateway}</td>);
+            print qq (<td align="center" width="$titleWidth{THLI}" height="25" >$isp->{local}</td>);
+            print qq (<td align="center" width="$titleWidth{THRI}" height="25" >$isp->{remote}</td>);
+            print qq (<td align="center" width="$titleWidth{Status}" height="25" >);
+            my $alive = maintainBasic(action=>'GETALIVEBYIID', iid=>$isp->{iid}, ispname=>$isp->{ispname});
+            my $show_status = ( $alive eq '1' ) ? "alive.png" : "dead.png";
+            print qq (<img src="image/$show_status" width="14" height="14" border="0" />);
+            print qq (</td>);
+              
+            $status = ( $isp->{mpv_nat} ) ? ( 'On' ) : ( 'Off' );
+            print qq (<td align="center" width="$titleWidth{NAT}" height="25" >$status</td>);
+            print qq (<td align="center" width="$titleWidth{Isakmp_SA}" height="25" >$isp->{exchange}</td>);
+            print qq (<td align="center" width="$titleWidth{Ph1_Encryption}" height="25" >$isp->{ph1alg}</td>);
+            print qq (<td align="center" width="$titleWidth{Hash}" height="25" >$isp->{ph1hash}</td>);
+            print qq (<td align="center" width="$titleWidth{DH_Group}" height="25" >$isp->{dhgroup}</td>);
+            print qq (<td align="center" width="$titleWidth{IPSec_SA}" height="25" >$isp->{protocol}</td>);
+            print qq (<td align="center" width="$titleWidth{Ph2_Encryption}" height="25" >$isp->{ph2alg}</td>);
+            print qq (<td align="center" width="$titleWidth{Authentition}" height="25" >$isp->{ph2auth}</td>);
+            print qq (<td align="center" width="$titleWidth{PF_Group}" height="25" >$isp->{pfgroup}</td>);
+            print qq (<td align="center" width="120" height="25" >$isp->{download}/$isp->{upload}</td>);
+            
+            print qq (</tr>);
+        }
+        $lineCount++;
+    }
+    print qq (</table></div>);
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="$qblang[94]" onclick="NewIPSec();">);
+}
+#showIPSec
+    
+
+
+#=============================================================================================
+
+sub scriptIPSec 
+{
+    print << "scriptHost";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="qbjs/sorttable.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function NewIPSec() { window.top.mainFrame.location.href="newipsec.cgi"; }    
+    
+    function delIPSec()
+    {
+        if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )
+        {
+            myform.action.value='DELET';
+            myform.submit();
+        }
+    }
+    </script>
+    
+scriptHost
+}
+#hostScript
+#
+1

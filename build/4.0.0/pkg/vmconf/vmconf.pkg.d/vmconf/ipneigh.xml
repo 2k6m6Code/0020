@@ -1,0 +1,3 @@
+<opt file="ipneigh">
+  <ipneigh ip="system" isp="system" nic="system" />
+</opt>

@@ -1,0 +1,39 @@
+set -x
+
+qbserv_count=`ps -ef|grep -v grep|grep -c qbserv`
+defunct_count=`ps -ef|grep -v grep|grep qbserv|grep -c defunct`
+
+# 20130121 Gary add condition
+action_link=`grep -c alive /usr/local/apache/active/basic.xml`
+true_link=`expr $action_link - 1`
+
+# 20130508 Gary add for GSLB
+enable_GSLB=`grep -c enablegslb=\"1\" /usr/local/apache/active/dns.xml`
+
+if  [ "$qbserv_count" = "0" ];then
+ echo $(date) "Qbserv disappearied!!!" >>/mnt/log/runway.log
+ killall -9 qbrunway
+ /opt/qb/bin/qbrunway &
+elif [ "$defunct_count" != "0" ];then
+ echo $(date) "Qbserv was defunct." >>/mnt/log/runway.log
+ killall -9 qbrunway
+ killall -9 qbserv
+ /opt/qb/bin/qbrunway &
+# 20130121 Gary add condition
+elif [ "$qbserv_count" -lt "$true_link" ];then
+ echo $(date) "Qbserv quantity error!" >>/mnt/log/runway.log
+ killall -9 qbrunway
+ killall -9 qbserv
+ /opt/qb/bin/qbrunway &
+
+elif [ "$enable_GSLB" -gt "0" ];then
+ server_total=`cat /tmp/GSLB_server_total`
+ gslb_chk=`expr $true_link + $server_total`
+ if [ "$qbserv_count" -lt "$gslb_chk" ];then
+  echo $(date) "Qbserv quantity error!  (Enable GSLB)" >>/mnt/log/runway.log 
+ killall -9 qbrunway
+ killall -9 qbserv
+ /opt/qb/bin/qbrunway &
+ fi
+fi
+                            

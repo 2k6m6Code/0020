@@ -1,0 +1,1405 @@
+############################################################################################################
+#                    Policy Routing and Policy-based Filter for QoS Config
+############################################################################################################
+
+#########################   About  Policy Routing   ###################################
+sub showWeburlTitle
+{
+    my (%action)=@_;
+    my $iniroute=XMLread($gPATH."weburl.xml");
+	
+    my %titleWidth=(Source=>'140', FilterType=>'100', Destination=>'150', ListName=>'80', Schedule=>'100', Edit=>'30');
+    my @titleList=( 'FilterType', 'ListName', 'Schedule', 'Edit' );
+	print qq (<table><tr><td class="body">Enabled Keyword Filtering : </td><td>);
+	foreach $weburl_enable($iniroute)
+	{
+		if($iniroute->{enable} eq '1'){print qq (<input type="checkbox" name="enable" value="0" onclick="selenable()" checked>);}
+		else{print qq (<input type="checkbox" name="enable" value="1" onclick="selenable()">);}
+	}
+	print qq (</td></tr></table>);
+    print qq (<div class="divframe">);
+    print qq (<table width="100%" bgcolor="#332211" border="0" align="center"> );
+    print qq (<tr>);
+    print qq (<td align="center" width="$titleWidth{'Source'}" ><a href="javascript:sortPolicy('BYSOURCE')" title="Sort by Source" border="0">Source</a></td>);
+    print qq (<td align="center" width="$titleWidth{'Destination'}" >Destination</td>);
+    foreach my $title ( @titleList ) { print qq (<td  align="center" width="$titleWidth{$title}"><font color="#ffffff">$title</font></td>); }
+    print qq (<td align="center" width="50" ><a href="javascript:delWeburl()"><image src="image/del.gif" title="Delete checked policies" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('rule', this.checked)">);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</div>);
+    
+    
+    my $classes=$iniroute->{class};
+    my @sortedClasses;
+    my $sortingKEY=$action{sortingkey};
+	
+    #host obj to sort
+    my @hostobj;
+    my @srcobj;
+    foreach my $item ( @$classes )
+    {
+        if( grep(/^host-/, $item->{source}) )
+        {
+            push(@hostobj, $item);
+        }
+        else
+        {
+            push(@srcobj, $item);
+push(@hostobj, $item);			
+        }
+    }
+    @hostobj=sort ini_class_sort_by_hostobj @hostobj;
+    
+    #if ( !$sortingKEY )                     { $sortingKEY='BYSOURCE';}
+    #if ( $sortingKEY eq 'BYSOURCE' )        { @sortedClasses=sort ini_class_sort_by_source @srcobj; }
+    #elsif ( $sortingKEY eq 'BYSERVICE' )    { @sortedClasses=sort ini_class_sort_by_service @srcobj;}
+    
+    push(@sortedClasses, @hostobj);
+    
+    #================================================================================================
+    # we get all necessary info. here to avoid unacceptable loop-count times access to all this info.
+    # data structure all the policy check will use
+    
+    #======================================================================================================
+    # phase 1. prepare some necessary data structure before looping to use for speeding up valid checking ...
+    
+    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # prepare step 1. get isp id list
+    my @ispidlist;
+    @ispidlist=maintainBasic( action=>'GETIIDLIST' ); 
+    
+    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # prepare step 2.  
+    # %isppubip is a data structure designed to be loaded on demand
+    my %isppubip;
+    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # prepare step 3.
+    my @sourcelist;
+    my %source2isp;
+        foreach my $class ( @sortedClasses ) { if ($class->{source} ne 'system') { push(@sourcelist, $class->{source});}}    
+    
+    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # prepare step 4.
+    #my %POLICY_USABLE_TABLES;
+
+    print qq (<div class="divframe" style="height:270">);
+    print qq (<table class="body" id="ruleList" width="100%" border="0">);
+    #print qq (<table id="ruleList" width="1000" class="body" border="0" align="center" >);
+    
+    my $lineCount=0;
+    #my @tablelist;
+    foreach my $class ( @sortedClasses ) { if ( $class->{table} eq 'system' ) {  next; } push(@tablelist, $class->{table});}
+    my @showtable = presentTables(@tablelist);
+    foreach my $class ( @sortedClasses )
+    {
+        #$gMSGPROMPT.=qq ( class :$class->{enables} \\n );
+        #碰到系統保留的那一筆就免了
+        if ( $class->{service} eq 'system' ) { next; }
+        if ( $class->{enables} eq '1' ) {$lineCount++; next; }
+        #Policy of Real Service remove Q-Balancer
+        #if ( $class->{source} eq 'localhost') { next; }
+        
+        #===================================================================      
+        # prepare key of Policy
+        #my $rulekey=$class->{source}.$class->{service}.':'.$class->{direction}.$class->{destination}.':'.$class->{table};
+        #luke 1008
+        #20101224 add schedule
+        #my $rulekey=$class->{source}.$class->{service}.':'.$class->{direction}.$class->{destination};
+        my $rulekey=$class->{source}.$class->{destination}.$class->{filtertype}.$class->{listname};
+        my $key_for_shortcut=$class->{source}.'&'.$class->{destination}.'&'.$class->{filtertype}.'&'.$class->{listname};
+        #my $checkrulekey=$class->{source}.$class->{destination}.':'.$class->{method}.':'.$class->{table};
+        
+        #=================================================================== 
+        # prepare display color
+        my ( $originalColor, $bgcolor ); $originalColor=$bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        if ( $class->{dirty} ) { $originalColor=$bgcolor='#bb6600' }; 
+
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+
+        #===================================================================
+            my $display=( $class->{source} eq 'system' ) ? ('*') : ( $class->{source} );
+            $display=~s/localhost/Q-Balancer/g;
+            $display=~s/host-//g;
+            my $addresslist=maintainHost( action=>'GETADDRESSLIST', hostname=>$display);
+            print qq (<td align="center" style="width:$titleWidth{Source} !important" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$display</td>);
+
+        #===================================================================      
+        my $display=( $class->{destination} eq 'system' ) ? ('Anywhere') : ( $class->{destination} );
+        #20101228
+        $display =~ s/host-//g;
+        #my $addresslist=maintainHost( action=>'GETADDRESSLIST', hostname=>$display);
+        print qq (<td align="center" style="width:$titleWidth{Destination} !important" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$display</td>);
+# Gary destination
+        
+        #Filter Type
+        
+        my $showtype;
+        if ( $class->{filtertype} eq 'weburl' ){ $showtype='HTTP URL Keyword'; }
+        elsif ( $class->{filtertype} eq 'webstr' ){ $showtype='HTTP Keyword'; }
+        elsif ( $class->{filtertype} eq 'string' ){ $showtype='Content Keyword'; }
+        #print qq (<td align="center" style="width:$titleWidth{FilterType} !important" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$class->{filtertype}</td>);
+        print qq (<td align="center" style="width:$titleWidth{FilterType} !important" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$showtype</td>);
+        #List Name
+        print qq (<td align="center" style="width:$titleWidth{ListName} !important" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$class->{listname}</td>);
+        #===================================================================
+        #Schedule view
+		print qq (<td align="center" style="width:$titleWidth{Schedule} !important" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$class->{schedule}</td>);
+        #===================================================================      
+        #my $key_for_shortcut=$viewpoint.'&'.$class->{isp}.'&'.$class->{source}.'&'. $class->{service}.':'.$class->{direction}.'&'.$class->{advance}.'&'.$class->{destination}.'&'.$class->{table};
+        print qq (<td align="center" style="width:$titleWidth{Edit} !important">);
+        print qq (<a href="javascript:edit_this_rule('$key_for_shortcut','$rulekey');selectedColor(ruleList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit rule properties" border="0"></a></td>);
+        #print qq (<a href="javascript:edit_this_rule('$rulekey');selectedColor(ruleList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit rule properties" border="0"></a></td>);
+        
+        
+        #===================================================================      
+        #print checkbox and set its value
+        print qq (<td style="width:50" align="center">);
+        print qq (<input type="checkbox" name="rule" value="$rulekey">);
+        print qq (</td>);
+
+        print qq (</tr>\n);
+     
+        if ( $rulekey eq $action{keyofrule} ) { print qq (<script>initSelect(ruleList.rows[$lineCount]);</script>); }
+        
+        $lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+}
+#list_ini_rule
+
+
+#==============================================================================================================
+sub list_weburl_script 
+{
+    print << "LIST_WEBURL_SCRIPT";
+    
+    <div id="ServiceDiv" class="infodiv"></div>
+    <div id="TableDiv" class="infodiv"></div>
+   
+    <div id="HostDiv" class="infodiv"></div>
+
+    <script type="text/javascript" src="grid.js"></script>
+    
+    <script language="javascript">
+    
+    var myform;
+    function change()
+    {
+        var tmp = document.getElementById('source');
+        var name =tmp.value;
+        alert(name);
+    
+    }
+    
+    function cgi_dep_onload() 
+    { 
+        myform=window.document.forms[0];
+        //setTimeout("informProute()",500);
+    }
+    
+	function selenable()
+	{
+		goSubmit('ENABL');
+		
+	}
+	
+    function sortPolicy(key)
+    {
+        myform.sortingkey.value=key;
+        myform.submit();
+    }    
+    
+    function delWeburl()
+    {
+        if (!myform.rule) return;
+        var setDeleteOn=false;
+        if ( !myform.rule.length ) setDeleteOn=myform.rule.checked;
+        for(var i=0;i<myform.rule.length;i++) { if (myform.rule[i].checked) { setDeleteOn=true; break; } }
+        if (!setDeleteOn) { alert("There is No Policy Rule Checked"); }
+        if (setDeleteOn) { if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )  { goSubmit('DELRULES');} }
+    }
+    
+    function informProute()
+    {
+        var action=myform.action.value;
+        if ( action=="DELRULES" )
+        {
+            //window.top.mainFrame.editweburl.document.forms[0].action.value="UPDATEINTERFACE";        
+            window.top.mainFrame.editweburl.document.forms[0].submit();
+        }          
+    }
+    
+    function edit_this_rule(rule_key_to_edit, focusedrule)
+    {
+        document.showweburl.focusedrule.value=focusedrule;
+        //var from=document.editpruleform.viewpoint.value;
+        var qstring='';
+        var params=rule_key_to_edit.split('&');
+        qstring+='editweburl.cgi?';
+        qstring+='source'+'='+params[0]+'&';
+        qstring+='dest'+'='+params[1]+'&';
+        qstring+='filter_type'+'='+params[2]+'&';
+        qstring+='listname'+'='+params[3]+'&';
+		qstring+='schedule'+'='+params[4]+'&';
+        //alert(qstring);
+        
+        window.top.mainFrame.editweburl.location.href=qstring;
+    }
+    
+    function showHostInfo(name, addresslist)
+    {
+        //if(!name ) { return; }
+        if ( addresslist == '' )
+        {
+            addresslist = (name == 'Anywhere') ? ('0.0.0.0/0') : (name);    
+        }
+        
+        HostDiv.innerText="<table class=infodivtable><tr><td>"+"Host Name:" + name + "</td></tr>";
+        HostDiv.innerText += "<tr><td>Address Detail:" + addresslist + "</td></tr>";
+        
+        with(HostDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+
+    function showServiceInfo(service)
+    {
+        var pattern=/\\.|\\*|system|others|\\:d|\\:s|\\:/g; service=service.replace(pattern,'');
+        if(!service) { return; }
+        var service=eval(service);
+        
+        ServiceDiv.innerText="<table class=infodivtable><tr><td>"+"Service Name:"+service.info[1]+"</td><td>"+"Type:"+service.info[0]+"</td></tr>";
+        
+        //if ( service.info[0] != 'group' )    
+        //{
+        with(service)
+        for(count=0;count<port.length;count++)
+        {
+            //Brian for layer7
+            if(service.info[0]=="layer7")
+            {
+              ServiceDiv.innerText+="<tr><td>Protocol:"+port[count].protocol+"</td><td>Info:"+port[count].port+"</td></tr>";
+            }
+            else
+            { 
+	    ServiceDiv.innerText+="<tr><td>Protocol:"+port[count].protocol+"</td><td>Port:"+port[count].port+"</td></tr>";
+            }
+        }
+        //}
+        
+        with(ServiceDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+   
+    function showTableInfo(Table)
+    {
+        if(Table=='$gDROP' || Table=='$gALLPATH' || Table=='$gRRG' || !Table ) { return; } 
+        
+        var table=eval('T'+Table); 
+        
+        with(TableDiv)
+        {
+            innerText="<table class=infodivtable><tr><td>"+"Pool ID:"+Table+"</td><td>";
+            //20100223 Brian To show the note of the pool
+            innerText+="<td>Pool Name:"+table.I[4]+"</td><td>";
+            innerText+="<td>By Packet:"+table.I[0]+"</td><td>";
+            innerText+="<td>Mode:"+table.I[1]+"</td><td>";
+            innerText+="<td>Truely Aggregate:"+table.I[2]+"</td><td>";
+            innerText+="<td>Redirect Host:"+table.I[3]+"</td></tr>";
+        }
+            
+        with(eval('T'+Table))
+        for(count=0;count<P.length;count++)
+        {
+	    TableDiv.innerText+="<tr><td>ISP ID:"+P[count].a+"</td><td>Name:"+P[count].b+"</td><td>Weight:"+P[count].c+"</td><td>DSIP:"+P[count].d+"</td></tr>";
+        }
+        
+        with(TableDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+
+    function hideTableInfo(){TableDiv.style.display="none";}
+    function hideServiceInfo(){ServiceDiv.style.display="none";}
+    function hideHostInfo(){HostDiv.style.display="none";}
+    
+  </script>
+    
+LIST_WEBURL_SCRIPT
+}
+#list_weburl_script
+
+#==============================================================================================================
+sub edit_weburl
+{
+    my (%action)=@_;
+	$action{test}='nat';
+    #$gMSGPROMPT.=qq ( $action{source} ,$action{dest} ,$action{filtertype}, $action{listname}\\n );
+    my $fwmark=XMLread($gPATH."fwmark.xml");
+	my $schref=XMLread($gPATH.'schedule.xml');
+    my $schlist=$schref->{schedule};
+    #my $fwviewpoint=( $action{viewpoint} eq 'app') ? ( 'nat' ) : ( $action{viewpoint} );
+    #my $temp=$fwmark->{$fwviewpoint}->[0]->{mark};
+    my $temp=$fwmark->{$action{test}}->[0]->{mark};
+    my $hostref=XMLread($gPATH."host.xml");
+    my $hostlist=$hostref->{host};
+    my @hosobj;
+    my @destarray;
+    my @weburlobj;
+
+    my $iniroute=XMLread( $gPATH.'iniroute.xml');
+    
+    foreach my $host ( @$hostlist )
+    {
+        if ($host->{hostname} eq 'system' ) { next; }
+        if ( $host->{hosttype} eq 'weburl')
+        {
+            push(@weburlobj, $host->{hostname});
+        }
+    	if ($host->{hosttype} ne 'fqdnlist' && $host->{hosttype} ne 'weburl')
+    	{
+            push(@hostobj, $host->{hostname});
+        }
+    	if ($host->{hosttype} ne 'weburl')
+    	{
+            push(@destarray,  $host->{hostname});
+        }
+    }
+    
+    print qq (<table border="0" width="100%" cellspacing="0" cellpadding="0">);
+    
+    #**************************************************************************************
+    # 1. ViewPoint
+    #**************************************************************************************
+    #print qq (<input name="viewpoint" type="hidden" value="$action{viewpoint}">);
+    
+    
+    #**************************************************************************************
+    #  source
+    #**************************** list nat->source(s) or lvs->source(s) ****************************
+        #**************************** list nat->source(s) ****************************
+        my %source;
+
+        foreach my $mark ( @$temp ) { if ( $mark->{source_type} eq '' ) { $source{ $mark->{source} }=1; } }
+        #if ( $action{viewpoint} eq "nat" || $action{viewpoint} eq 'app' ) { $source{'0.0.0.0/0'}=1; }
+        $source{'0.0.0.0/0'}=1;
+
+        my @allsources=sort subnet_sort keys %source;
+        #show host object
+        push(@allsources, @hostobj);
+        
+        if ( !$action{source} ) { $action{source}=$allsources[0]; }
+        
+        print qq (<td class="body" colspan="8" valign="top" align="center" >);
+        print qq (<select class="qbopt" size="1" name="source"  style="WIDTH:130">);
+        foreach my $sourceitem ( @allsources ) 
+        { 
+            if ( $sourceitem eq "system" ) { next; }
+            my $status=( $action{source} eq $sourceitem ) ? ( 'selected' ):( '' ); 
+            my $displaysource=( $sourceitem eq "localhost" ) ? ('Q-Balancer') : ($sourceitem) ;
+            $displaysource=~s/host-//g;
+            my $addresslist=maintainHost( action=>'GETADDRESSLIST', hostname=>$displaysource);
+            print qq (<option value="$sourceitem" title="$addresslist" $status>$displaysource</option>); 
+        }
+        print qq (</select><br>Source</td>); 
+
+    
+    #**************************************************************************************
+    #  Destination
+    #**************************** list nat->source(s) or lvs->source(s) ****************************
+    print qq (<td class="body" valign="top" align="center">);
+    print qq (<select class="qbopt" size="1" name="dest"  style="width:120">);
+    my $status=( $action{destination} eq $dest ) ? ( 'selected' ):( '' ); 
+    print qq (<option $status value="system">0.0.0.0/0</option>);
+    foreach my $dest ( sort @destarray ) 
+    {
+    	my $showdest = $dest; 
+        my $status=( $action{destination} eq $dest ) ? ( 'selected' ):( '' ); 
+        $showdest =~ s/host-//g;
+        my $addresslist=maintainHost( action=>'GETADDRESSLIST', hostname=>$showdest);
+        print qq (<option value="$dest" title="$addresslist" $status>$showdest</option>); 
+        #print qq (<option $status value="$dest">$showdest</option>);
+    }
+    my @destarray=maintainOverview(action=>'GETDESTINATION');
+    foreach my $dest ( sort @destarray )
+    {
+        my $status=( $action{destination} eq $dest ) ? ( 'selected' ):( '' );
+        print qq (<option $status value="$dest">$dest</option>);
+    }
+    print qq (</select><br>);
+    print qq (Destination);
+    print qq (</td>);
+    #20101228 
+    $action{advance} = ( $action{destination} eq 'system' ) ? ( '0' ) : ( '1' );
+    
+    
+    #**************************************************************************************
+    #  Filter Type
+    #**************************** list nat->source(s) or lvs->source(s) ****************************
+    print qq (<td class="body" valign="top" align="center">);
+    print qq (<select class="qbopt" size="1" id="filter_type" name="filter_type"  style="width:120">);
+    foreach my $filter_type ( 'weburl','webstr','string' ) 
+    {
+    	my $status=( $action{filtertype} eq $filter_type ) ? ( 'selected' ) : ( '' );
+    	my $showtype;
+    	if ( $filter_type eq 'weburl' ) { $showtype='HTTP URL Keyword'; }
+    	elsif ( $filter_type eq 'webstr' ) { $showtype='HTTP Keyword'; }
+    	elsif ( $filter_type eq 'string' ) { $showtype='Content Keyword'; }
+        print qq (<option value="$filter_type" title="$filter_type" $status >$showtype</option>); 
+    }
+    print qq (</select><br>);
+    print qq (Filter Type);
+    print qq (</td>);
+    
+    #**************************************************************************************
+    # select weburl object 
+    #**************************** list nat->source(s) or lvs->source(s) ****************************
+    print qq (<td class="body" valign="top" align="center">);
+    print qq (<select class="qbopt" size="1" id="listname" name="listname"  style="width:120">);
+    #$gMSGPROMPT.=qq ( $action{listname}\\n );
+    foreach my $weburl_obj ( @weburlobj ) 
+    {
+    	my $status=( 'host-'.$action{listname} eq $weburl_obj ) ? ( 'selected' ) : ( '' );
+        $weburl_obj =~ s/host-//g; print qq (<option value="$weburl_obj" title="$weburl_obj" $status >$weburl_obj</option>); 
+    }
+    print qq (</select><br>);
+    print qq (Keyword List);
+    print qq (</td>);
+    #**************************************************************************************
+    
+	#**************************************************************************************
+    # select schedule object 
+    #**************************************************************************************
+	print qq (<td class="body"  valign="top" align="center" >);
+    print qq (<select class="qbopt" size="1" name="schedule" style="width:80">);
+    print qq (<option value="All Week" $status>All Week</option>); 
+    foreach my $seq ( @$schlist ) 
+    { 
+        if ( $seq->{schname} eq "system" ) { next; }
+        my $status=( $action->{schedule} eq $seq->{schname} ) ? ( 'selected' ) : ( '' );
+        print qq (<option $status value="$seq->{schname}" $status>$seq->{schname}</option>); 
+    }
+	print qq (</select><br>);
+	print qq (Schedule);
+	print qq (</td>);
+    
+    
+    
+    print qq (<td class="body" align="right" valign="top">);
+    
+    print qq (<input type="button" class="qb" value="Add"    title="Add Policy"    onClick="updateWeburl('ADD')" style="height:20 width:25">);
+    print qq (<input type="button" class="qb" value="Update" title="Save Changes"  onClick="updateWeburl('UPDATE')" style="height:20 width:35">);
+            
+    print qq (<br>);
+    
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#edit_weburl
+
+#===============================================================================================
+sub weburl_script 
+{
+    print << "WEBURL_SCRIPT";
+
+    <div id="ServiceDiv" class="infodiv"></div>
+    <div id="TableDiv" class="infodiv"></div>
+
+  <script language="javascript">
+      
+    var dropTable=$gDROP;
+    var myform=window.document.forms[0];  
+  
+    function cgi_dep_onload()
+    {
+    	//20101228 remove
+        //20111117 Brian fix: after updating the lvs policy,the page can not return.
+        //var viewpoint=myform.viewpoint.value;
+        setTimeout("updateShow()",500);
+    }
+    
+
+    function updateShow()
+    {
+        var action=myform.action.value;
+
+        if ( action=='UPDATE' || action=='ADD' )
+        {
+            //var keyofrule=myform.keyofrule.value;
+            var qstring='';
+            //qstring+='showweburl.cgi'+'?';
+            qstring+='showweburl.cgi';
+            //qstring+='keyofrule='+keyofrule;
+            window.top.mainFrame.showweburl.location.href=qstring;
+        }
+    }
+
+
+    
+    function updateWeburl(action)
+    {
+        var report="";
+        var okToGo=true;
+
+        if (action=='UPDATE') { myform.focusedrule.value=window.top.mainFrame.showweburl.document.forms[0].focusedrule.value; }
+        
+	if ( !myform.listname.value ) { report+="Please select a blocked name is Must"+"\\n"; okToGo=false; }
+        if ( !okToGo )  alert(report); 
+        if ( okToGo )   goSubmit(action);
+    }
+    
+    function popUpTableInfo()
+    {
+        var table=myform.table.value;
+        showTableInfo(table);
+    }
+
+    function popUpServiceInfo()
+    {
+        var service=myform.service.value;
+        showServiceInfo(service);
+    }
+    
+    function showServiceInfo(service)
+    {
+        var pattern=/\\.|\\*|system|others|\\:d|\\:s|\\:/g; service=service.replace(pattern,'');
+        if(!service) { return; }
+        var service=eval(service);
+        ServiceDiv.innerText="<table class=infodivtable><tr><td>"+"Service Name:"+service.info[1]+"</td><td>"+"Type:"+service.info[0]+"</td></tr>";
+        
+        
+            
+        with(service)
+        for(count=0;count<port.length;count++)
+        {
+	    ServiceDiv.innerText+="<tr><td>Protocol:"+port[count].protocol+"</td><td>Port:"+port[count].port+"</td></tr>";
+        }
+        
+        with(ServiceDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+    
+    function showTableInfo(Table)
+    {
+        if( !Table || Table=='$gDROP' || Table=='$gALLPATH' || Table=='$gRRG' ) 
+        { 
+            alert("no info !!");
+            return; 
+        } 
+
+        var table=eval('T'+Table);
+
+        with(TableDiv)
+        {
+            innerText="<table class=infodivtable><tr><td>"+"Pool ID:"+Table+"</td><td>";
+            //20100223 Brian To show the note of the pool
+            innerText+="<td>Pool Name:"+table.I[4]+"</td><td>";
+            innerText+="<td>By Packet:"+table.I[0]+"</td><td>";
+            innerText+="<td>Mode:"+table.I[1]+"</td><td>";
+            innerText+="<td>Truely Aggregate:"+table.I[2]+"</td><td>";
+            innerText+="<td>Redirect Host:"+table.I[3]+"</td></tr>";
+        }
+            
+        with(eval('T'+Table))
+        for(count=0;count<P.length;count++)
+        {
+	    TableDiv.innerText+="<tr><td>ISP ID:"+P[count].a+"</td><td>Name:"+P[count].b+"</td><td>Weight:"+P[count].c+"</td><td>DSIP:"+P[count].d+"</td></tr>";
+        }
+        
+        with(TableDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+
+    function goBackToServerMapping() { window.top.mainFrame.location.href="vs.cgi"; }
+
+    function hideTableInfo(){TableDiv.style.display="none";}
+    function hideServiceInfo(){ServiceDiv.style.display="none";}
+    
+  </script>
+  
+  
+WEBURL_SCRIPT
+}
+#weburl_script
+
+#===================================================================================================
+#maintainIniroute(%action)
+sub maintainWeburl
+{
+    my (%action)=@_;
+    #$gMSGPROMPT.=qq ( Now action :$action{action}\\n );
+    if ( !$action{action} ) { return; }
+    my $weburl=XMLread($gPATH."weburl.xml");
+    my $fwmark=XMLread($gPATH."fwmark.xml");
+    my $target;
+    my $hostref=XMLread($gPATH.'host.xml');
+    my $hostlist=$hostref->{host};
+    
+    #ex:( action=>'CHANGESOURCE', viewpoint=>'', source=>'', newsource=>'', newisp=>'')
+    if ( $action{action}=~m/^DELSUBNETRULES$/ ) 
+    {
+        my $subnet=$action{source};
+        my @class_array_after_del;
+        my $classes=$weburl->{nat}->[0]->{class};
+      
+        foreach my $class ( @$classes ) 
+        {
+            if ( !grep(/^$class->{source}/, @$subnet) )
+            { 
+                push( @class_array_after_del, $class ); 
+            }
+        }
+        $weburl->{class}=\@class_array_after_del;
+    }
+    elsif ( $action{action}=~m/^DELRULES$/ ) 
+    {
+        my $delrulelist=$action{rule};
+        my @class_array_after_del;
+        my $classes=$weburl->{class};
+        foreach my $class ( @$classes ) 
+        {
+            my $to_be_deleted=0;
+            foreach my $delrule ( @$delrulelist )
+            {
+            
+        #my $teststr=$class->{source}.$class->{destination}.$class->{filtername}.$class->{listname};
+        #$gMSGPROMPT.=qq ( delrule: $delrule\\n );
+        #$gMSGPROMPT.=qq ( DELRULE: $class->{source}$class->{destination}$class->{listname}$class->{filtertype}\\n );
+        #$gMSGPROMPT.=qq ( DELRULE: $teststr\\n );
+                if( $class->{source}.$class->{destination}.$class->{filtertype}.$class->{listname}  ne $delrule) { next; }
+                #LogUserAction( action=>'DELPROUTE', source=>$class->{source}, service=>$class->{service}, destination=>$class->{destination}, schedule=>$class->{schedule}, table=>$class->{table}, type=>$viewpoint, direction=>$class->{direction});
+		$to_be_deleted=1;
+		last;
+	    }
+        #$gMSGPROMPT.=qq ( to_be_deleted : $to_be_deleted\\n );
+	    if ( !$to_be_deleted ) { push( @class_array_after_del, $class ); }
+        }
+ #  return; 
+        $weburl->{class}=\@class_array_after_del;
+    }
+    elsif ( $action{action}=~m/^DELTMVRULES$/ )
+    {
+        my $delrulelist=$action{rule};
+        my $viewpoint=$action{viewpoint};
+        my @class_array_after_del;
+        my $classes=$weburl->{$viewpoint}->[0]->{class};
+        foreach my $class ( @$classes )
+        {
+            my $to_be_deleted=0;
+            foreach my $delrule ( @$delrulelist )
+            {
+                if( $class->{source}.$class->{service}.':'.$class->{direction}.$class->{destination}.$class->{schedule}  ne $delrule) { next; }
+                LogUserAction( action=>'DELPROUTE', source=>$class->{source}, service=>$class->{service}, destination=>$class->{destination}, schedule=>$class->{schedule}, table=>$class->{table}, type=>$viewpoint, direction=>$class->{direction});
+                $to_be_deleted=1;
+                last;
+            }
+            if ( !$to_be_deleted ) { push( @class_array_after_del, $class ); }
+         }       
+         $weburl->{$viewpoint}->[0]->{class}=\@class_array_after_del;
+    } #ex:( action=>'DELRULEOFDESTINATION' ) 
+    elsif ( $action{action}=~m/^DELRULEOFDESTINATION$/ ) 
+    {
+        my @destarray=maintainOverview( action=>'GETDESTINATION' );
+        
+        foreach my $viewpoint ( 'dmz', 'nat', 'lvs' ) 
+        {
+            my @class_array_after_del;
+            my $classes=$weburl->{$viewpoint}->[0]->{class};
+              
+            foreach my $class ( @$classes ) 
+            {
+                  
+                if ( $class->{service} eq 'system' ) { push( @class_array_after_del, $class ); next;}
+                if ( $class->{destination} eq 'system' ) { push( @class_array_after_del, $class ); next;}
+                  
+                my $to_be_deleted=1;
+                  
+                foreach my $dest ( @destarray ) 
+                { 
+                    if ( $class->{destination} ne $dest ) { next; }
+                    $to_be_deleted=0; 
+                    last; 
+                }
+                                    
+                if ( !$to_be_deleted ) { push( @class_array_after_del, $class ); }
+            }
+                
+            $weburl->{$viewpoint}->[0]->{class}=\@class_array_after_del;
+        }
+    }
+    #ex:( action=>'DELRULEOFSERVICE', viewpoint=>'', key=>'source.service.direction') 
+    elsif ( $action{action}=~m/^DELRULEOFSERVICE$/ ) 
+    {
+        my $classes=$weburl->{$action{viewpoint}}->[0]->{class};
+        
+        my @class_array_after_del;
+        
+        foreach my $class ( @$classes ) 
+        {
+            if ( $class->{source}.$class->{service}.$class->{direction} ne $action{key} ) 
+            { 
+                  push ( @class_array_after_del, $class );  
+            }
+        }
+            
+        # write \@class_array_after_del back into 'weburl' 
+        $weburl->{$action{viewpoint}}->[0]->{class}=\@class_array_after_del;
+            
+        #會產生 dep issue
+    }
+#########################################################################
+	elsif ( $action{action}=~m/^ENABL$/ )
+	{
+		#my $enalist=$enaref->{nat}->[0]->{class};
+		my $enable=$action{enable};
+		if($enable eq '1')
+		{
+			$weburl->{enable} = 1;
+		}
+		else
+		{
+			$weburl->{enable} = 0;
+			system("cat /dev/null > /usr/local/apache/qbconf/iptables_weburl");
+		}
+		XMLwrite($weburl, $gPATH."weburl.xml");
+	}
+################################################################################
+    elsif ( $action{action}=~m/^ADD$|^UPDATE$/ ) 
+    {
+        #$gMSGPROMPT.=qq ( source:$action{source}\\n );
+        #$gMSGPROMPT.=qq ( destination:$action{destination}\\n );
+        #$gMSGPROMPT.=qq ( listname:$action{listname}\\n );
+        #$gMSGPROMPT.=qq ( FilterType:$action{filtertype}\\n );
+		#$gMSGPROMPT.=qq ( Schedule:$action{schedule}\\n );
+        $action{advance} = ( $action{destination} eq 'system' ) ? ( '0' ) : ( '1' );
+        my $direction ; 
+        my $classes=$weburl->{class};
+        
+        # 以下將介面上蒐集到的時間區段轉換成 XML 中要儲存的時間區段格式
+        #luke mark 20100819
+        #my @timesegments=timeseqarray2segarray( $action{time} );
+        #my @timesegments=timeseqarray2segarray( @allday );
+        
+
+        # Check if every MUST field is available, if anyone fails, just return doing nothing
+        
+
+        #============================================================================================================
+        # Check if new Policy exists already
+        my $target_exist=0; 
+        my $target;
+
+        #===== search ( source x service x direction x destination x table ) in weburl =========================
+        my $sourcekey = $action{source};
+        $sourcekey =~ s/host-//g;
+        if (grep(/\./,$sourcekey))
+        {
+            $sourcekey = ( get_subnet($sourcekey) eq '' ) ? ( maintainHost( action=>'GETADDRESSLIST', hostname=>$sourcekey) ) : $sourcekey; 
+            $sourcekey =~ /\d+.\d+.\d+.\d+\/(\d+)/;
+        }
+        if (grep(/\:/,$sourcekey))
+        {
+            $sourcekey = ( get_subnet_v6($sourcekey) eq '' ) ? ( maintainHost( action=>'GETADDRESSLIST', hostname=>$sourcekey) ) : $sourcekey;
+            #$sourcekey =~ /\d+.\d+.\d+.\d+\/(\d+)/;    
+        }
+        
+        my $destkey = $action{destination};
+        $destkey =~ s/host-//g;
+        $destkey = ( $action{destination} ne 'system' && get_subnet($destkey) eq '' ) ? ( maintainHost( action=>'GETADDRESSLIST', hostname=>$destkey) ) : $destkey; 
+        my $listnamekey = $action{listname};
+        my $filtertypekey = $action{filtertype};
+		my $schedulekey = $action{schedule};
+        
+        my $ruleContentToAddOrUpdate=$sourcekey.$destkey.$filtertypekey.$listnamekey.$schedulekey;
+
+        foreach my $item ( @$classes ) 
+        { 
+            my $rulekey;
+            if ( $item->{service} eq 'system' ) { next; }
+            my $direction=$item->{direction};
+            
+            $rulekey=$item->{source}.$item->{destination}.$item->{filtertype}.$item->{listname};
+
+            my $sourcekey = $item->{source};
+            $sourcekey =~ s/host-//g;
+            $sourcekey = ( get_subnet($sourcekey) eq '' ) ? ( maintainHost( action=>'GETADDRESSLIST', hostname=>$sourcekey) ) : $sourcekey; 
+            my $destkey = $item->{destination};
+            $destkey =~ s/host-//g;
+            $destkey = ( $destkey ne 'system' && get_subnet($destkey) eq '' ) ? ( maintainHost( action=>'GETADDRESSLIST', hostname=>$destkey) ) : $destkey; 
+            my $filtertypekey = $item->{filtertype};
+            my $listnamekey = $item->{listname};
+			my $schedulekey = $item->{schedule};
+            $iprulekey=$sourcekey.$destkey.$filtertypekey.$listnamekey.$schedulekey;
+            
+            if ( $rulekey eq $action{focusedrule} ) { $target=$item; }
+
+            if ( $iprulekey eq $ruleContentToAddOrUpdate ) { $target_exist=1; last; } 
+        }
+
+        #============================================================================================================
+        # if new Policy exists when ADDing rules, prompt message to user
+        $ruleContentToAddOrUpdate=$action{source}.$action{destination}.$action{filtertype}.$action{listname};    
+        if ( $action{action} eq 'ADD' && $target_exist && $action{enables} ne '1') {   $gMSGPROMPT.=qq(Policy Already Exists); return; }
+        if ( $action{action} eq 'UPDATE' && $target_exist &&  $ruleContentToAddOrUpdate ne $action{focusedrule} && $action{enables} ne '1') { $gMSGPROMPT.=qq(Policy Already Exists); return; }
+    
+        my %newclass;
+        #********************** if ViewPoint is DMZ || LVS
+        #Check if every MUST field is available, if anyone fails, just return doing nothing
+            
+        %newclass=( 
+            source      =>  $action{source}, 
+            destination   =>  $action{destination}, 
+            listname	=>  $action{listname},
+            filtertype	=>  $action{filtertype},
+			schedule	=>  $action{schedule}
+        ); 
+        #According to the Spec. every sip set of any nat class must contain a 'system' element *********  
+        if ( $action{action} eq "UPDATE" ) 
+        {
+                #%$target=%newDMZNATclass;
+                %$target=%newclass;
+                #LogUserAction( action=>'UPDATEPROUTE', source=>$action{source}, service=>$service, destination=>$action{destination}, schedule=>$action{schedule}, table=>$action{table}, type=>$action{method}, direction=>$direction);
+        }
+        elsif ( $action{action} eq "ADD" ) 
+        {    
+                #push( @$classes, \%newDMZNATclass );
+                push( @$classes, \%newclass );
+#               if ( $action{enables} eq '2' && $direction ne 's' && $action{viewpoint}=~m/^nat$/){push( @$classes, \%newclasss );}
+                #LogUserAction( action=>'ADDPROUTE', source=>$action{source}, service=>$service, destination=>$action{destination}, schedule=>$action{schedule}, table=>$action{table}, type=>$action{method}, direction=>$direction);
+        }
+            
+            
+        #$newclass{type} = $action{viewpoint};
+    	#my $fwviewpoint=( $action{viewpoint} eq 'app') ? ( 'nat' ) : ( $action{viewpoint} );
+        # to generate fwmark for policy with service
+        #XMLwrite($weburl, $gPATH."weburl.xml");
+        
+    }      
+
+    #======== Update weburl.xml =============================
+    XMLwrite($weburl, $gPATH."weburl.xml");
+	#write_iptables_weburl_script();
+}
+#maintainWeburl
+
+sub write_iptables_weburl_script()
+{
+    my $weburlref=XMLread($gPATH.'weburl.xml');
+    my $weburl_class=$weburlref->{class};
+    my $hostref=XMLread($gPATH."host.xml");
+    my $hostlist=$hostref->{host};
+	
+	my $QB_SCHEDULE_XML = "/usr/local/apache/qbconf/schedule.xml";
+	my $schedule = XMLread ( $QB_SCHEDULE_XML );
+	my $schedulelist = $schedule->{schedule};
+
+	if ( !$schedule ) #if the string is NULL
+	{
+		print " $QB_SCHEDULE_XML is NULL \n";
+	}
+ 
+ 
+    my $iptables_weburl = "/usr/local/apache/qbconf/iptables_weburl";
+    if ( !open(IPTABLES_WEBURL, ">$iptables_weburl") )
+    {
+    	print "open qosinit fail!!\n";
+    	return;
+    }
+	foreach my $web_ena ($weburlref)
+	{
+		if($web_ena->{enable} ne '1'){system("cat /dev/null > /usr/local/apache/qbconf/iptables_weburl");return;}
+	}	
+    foreach my $item (@$weburl_class)
+    {
+	if ( $item->{filtertype} eq 'system' ){next;}
+    	my $source;
+    	my $destination;
+    	my $weburllist;
+ 	my $sources=0;
+ 	my $destinations=0;
+    	foreach my $host ( @$hostlist )
+    	{
+ 
+    	    if ( $host->{hostaddress} eq 'system' ) {next;}
+
+    	    if ( $item->{source} eq $host->{hostname} )
+    	    {
+    	        $source=$host->{hostaddress};
+    	        
+    	        if ( $host->{hosttype} ne 'network' && $host->{hosttype} ne 'weburl' ) { $sources=1; }
+    	    }else{$source=$item->{source};}
+
+    	    if ( $item->{destination} eq $host->{hostname} )
+    	    {
+    	    	$destination=$host->{hostaddress};
+    	    	
+    	        if ( $host->{hosttype} ne 'network' && $host->{hosttype} ne 'weburl' ) { $destinations=1; }
+    	    }else{$destination=$item->{destination};}
+ 
+    	    if ( "host-".$item->{listname} eq $host->{hostname} )
+    	    {
+    	    	$weburllist=$host->{hostaddress};
+    	    }
+        }
+		
+    	if ( $item->{source} eq 'system' )	{ $source='0.0.0.0/0'; }
+    	if ( $item->{destination} eq 'system' ) { $destination='0.0.0.0/0'; }
+ 
+ 	if ( $item->{filtertype} eq 'weburl' )
+ 	{
+    	my @keywordarray = split( /,/, $weburllist);
+		foreach my $keyword ( @keywordarray )
+    	{
+    	    if ( $sources eq '1' || $destinations eq '1')
+    	    {
+    	        if ( $sources eq '1' && $destinations eq '1' )
+    	 	    {
+    	    	    my @source_array = split( /,/, $source);
+  	    	        foreach my $sourceip (@source_array)
+   	    	        {
+   	    	            my @destination_array = split( /,/, $destination);
+						foreach my $destinationip (@destination_array)
+						{
+							if($item->{schedule} eq 'All Week'||!$item->{schedule})
+							{
+								print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+								print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+							}
+							else
+							{
+								foreach my $sch ( @$schedulelist )
+								{
+									my $schedulelist;
+									if ( $sch->{schname} eq $item->{schedule} )
+									{
+										print qq ($sch->{schname}\n);
+									 
+										my $subsch = $sch->{subsch};
+										foreach my $item2 ( @$subsch )
+										{
+											print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+											print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+											
+											#print DNSPROXY qq "/usr/local/sbin/iptables -t nat -I PREROUTING -p udp --dport 53 $address -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j REDIRECT --to-port $dnsproxyport\n";
+											#print DELDNSPROXY qq "/usr/local/sbin/iptables -t nat -D PREROUTING -p udp --dport 53 $address -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j REDIRECT --to-port $dnsproxyport\n";
+										}
+									}
+								}
+								#print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+								#print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+								#print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -m $item->{filtertype} --contains \"yahoo\" -j DROP\n";
+							}
+						}
+   	    	        }
+   	            }
+   	    	    elsif ( $sources eq '1' )
+   	    	    {
+   	            	my @source_array = split( /,/, $source);
+   	            	foreach my $sourceip (@source_array)
+   	            	{
+						if($item->{schedule} eq 'All Week'||!$item->{schedule})
+						{
+							print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+							print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destination -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+						}
+						else
+						{
+							foreach my $sch ( @$schedulelist )
+							{
+								my $schedulelist;
+								if ( $sch->{schname} eq $item->{schedule} )
+								{
+									print qq ($sch->{schname}\n);
+								 
+									my $subsch = $sch->{subsch};
+									foreach my $item2 ( @$subsch )
+									{
+										print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -m $item->{filtertype} --contains \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+										print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destination -m $item->{filtertype} --contains \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";							
+									}
+								}
+							}
+						}
+   	            	    #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+   	            	    #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destination -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+   	            	    #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -m $item->{filtertype} --contains \"yahoo\" -j DROP\n";
+   	            	}
+   	    	    }
+   	    	    elsif ( $destinations eq '1' )
+   	    	    {
+   	    	        my @destination_array = split( /,/, $destination);
+   	    	        foreach my $destinationip (@destination_array)
+   	    	        {
+						if($item->{schedule} eq 'All Week'||!$item->{schedule})
+						{
+							print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+							print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+						}
+						else
+						{
+							foreach my $sch ( @$schedulelist )
+							{
+								my $schedulelist;
+								if ( $sch->{schname} eq $item->{schedule} )
+								{
+									print qq ($sch->{schname}\n);
+								 
+									my $subsch = $sch->{subsch};
+									foreach my $item2 ( @$subsch )
+									{
+										print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+										print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";							
+									}
+								}
+							}
+						}
+   	                    #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+   	                    #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destinationip -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+   	    	        }
+   	    	    }
+			}
+    	    else
+    	    {
+				if($item->{schedule} eq 'All Week'||!$item->{schedule})
+				{
+					print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destination -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+					print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destination -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+				}
+				else
+				{
+					foreach my $sch ( @$schedulelist )
+					{
+						if ( $sch->{schname} eq $item->{schedule} )
+						{
+							my $subsch = $sch->{subsch};
+							foreach my $item2 ( @$subsch )
+							{
+								print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destination -m $item->{filtertype} --contains \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+								print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destination -m $item->{filtertype} --contains \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";							
+							}
+						}
+					}
+				}
+                #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destination -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+                #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destination -m $item->{filtertype} --contains \"$keyword\" -j DROP &\n";
+            }
+    	    
+ 	  }
+ 	}
+ 	if ( $item->{filtertype} eq 'webstr' )
+ 	{
+    	  my @keywordarray = split( /,/, $weburllist);
+ 	  foreach my $keyword ( @keywordarray )
+    	  {
+    	    if ( $sources eq '1' || $destinations eq '1')
+    	    {
+    	            if ( $sources eq '1' && $destinations eq '1' )
+    	 	    {
+    	    	        my @source_array = split( /,/, $source);
+
+    	    	        foreach my $sourceip (@source_array)
+    	    	        {
+    	    	            my @destination_array = split( /,/, $destination);
+    	    	            foreach my $destinationip (@destination_array)
+    	    	            {
+								if($item->{schedule} eq 'All Week'||!$item->{schedule})
+								{
+									print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+									print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+								}
+								else
+								{
+									foreach my $sch ( @$schedulelist )
+									{
+										if ( $sch->{schname} eq $item->{schedule} )
+										{
+											my $subsch = $sch->{subsch};
+											foreach my $item2 ( @$subsch )
+											{
+												print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+												print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+											}
+										}
+									}
+								}
+    	    	                #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+    	    	                #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+    	    	                #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -m $item->{filtertype} --contains \"yahoo\" -j DROP\n";
+    	    	            }
+    	    	        }
+    	            }
+    	    	    elsif ( $sources eq '1' )
+    	    	    {
+    	            	my @source_array = split( /,/, $source);
+    	            	
+    	            	foreach my $sourceip (@source_array)
+    	            	{
+							if($item->{schedule} eq 'All Week'||!$item->{schedule})
+							{
+								print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+								print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+							}
+							else
+							{
+								foreach my $sch ( @$schedulelist )
+								{
+									if ( $sch->{schname} eq $item->{schedule} )
+									{
+										my $subsch = $sch->{subsch};
+										foreach my $item2 ( @$subsch )
+										{
+											print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+											print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+										}
+									}
+								}
+							}
+    	            	    #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+    	            	    #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+    	            	    #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -m $item->{filtertype} --contains \"yahoo\" -j DROP\n";
+    	            	}
+    	    	    }
+    	    	    elsif ( $destinations eq '1' )
+    	    	    {
+    	    	        my @destination_array = split( /,/, $destination);
+    	    
+    	    	        foreach my $destinationip (@destination_array)
+    	    	        {
+							if($item->{schedule} eq 'All Week'||!$item->{schedule})
+							{
+								print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+								print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+							}
+							else
+							{
+								foreach my $sch ( @$schedulelist )
+								{
+									if ( $sch->{schname} eq $item->{schedule} )
+									{
+										my $subsch = $sch->{subsch};
+										foreach my $item2 ( @$subsch )
+										{
+											print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+											print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+										}
+									}
+								}
+							}
+    	                    #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+    	                    #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destinationip -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+    	    	        }
+    	    	    }
+    	    }
+    	    else
+    	    {
+				if($item->{schedule} eq 'All Week'||!$item->{schedule})
+				{
+					print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+					print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+				}
+				else
+				{
+					foreach my $sch ( @$schedulelist )
+					{
+						if ( $sch->{schname} eq $item->{schedule} )
+						{
+							my $subsch = $sch->{subsch};
+							foreach my $item2 ( @$subsch )
+							{
+								print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+								print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+							}
+						}
+					}
+				}
+                #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+                #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destination -p tcp -m $item->{filtertype} --url \"$keyword\" -j DROP &\n";
+            }
+    	    
+ 	  }
+ 	}
+ 	if ( $item->{filtertype} eq 'string' )
+ 	{
+    	my @keywordarray = split( /,/, $weburllist);
+		foreach my $keyword ( @keywordarray )
+    	{
+    	    if ( $sources eq '1' || $destinations eq '1')
+    	    {
+    	        if ( $sources eq '1' && $destinations eq '1' )
+    	 	    {
+    	    	    my @source_array = split( /,/, $source);
+
+    	    	    foreach my $sourceip (@source_array)
+    	    	    {
+    	    	        my @destination_array = split( /,/, $destination);
+    	    	        foreach my $destinationip (@destination_array)
+    	    	        {
+							if($item->{schedule} eq 'All Week'||!$item->{schedule})
+							{
+								print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+								print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+							}
+							else
+							{
+								foreach my $sch ( @$schedulelist )
+								{
+									if ( $sch->{schname} eq $item->{schedule} )
+									{
+										my $subsch = $sch->{subsch};
+										foreach my $item2 ( @$subsch )
+										{
+											print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+											print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+										}
+									}
+								}
+							}
+    	    	            #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+    	    	            #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+    	    	            #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip -m $item->{filtertype} --contains \"yahoo\" -j DROP\n";
+    	    	        }
+    	    	    }
+    	        }
+    	    	elsif ( $sources eq '1' )
+    	    	{
+    	        	my @source_array = split( /,/, $source);
+    	         	
+    	          	foreach my $sourceip (@source_array)
+    	           	{
+						if($item->{schedule} eq 'All Week'||!$item->{schedule})
+						{
+							print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+							print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+						}
+						else
+						{
+							foreach my $sch ( @$schedulelist )
+							{
+								if ( $sch->{schname} eq $item->{schedule} )
+								{
+									my $subsch = $sch->{subsch};
+									foreach my $item2 ( @$subsch )
+									{
+										print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+										print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+									}
+								}
+							}
+						}						
+    	           	    #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+    	           	    #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $sourceip -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+    	           	    #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $sourceip -d $destination -m $item->{filtertype} --contains \"yahoo\" -j DROP\n";
+    	           	}
+    	    	}
+    	    	elsif ( $destinations eq '1' )
+    	    	{
+    	    	    my @destination_array = split( /,/, $destination);
+    	    
+   	    	        foreach my $destinationip (@destination_array)
+   	    	        { 
+						if($item->{schedule} eq 'All Week'||!$item->{schedule})
+						{
+							print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+							print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+						}
+						else
+						{
+							foreach my $sch ( @$schedulelist )
+							{
+								if ( $sch->{schname} eq $item->{schedule} )
+								{
+									my $subsch = $sch->{subsch};
+									foreach my $item2 ( @$subsch )
+									{
+										print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+										print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+									}
+								}
+							}
+						}
+   	                    #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+   	                    #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destinationip -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+   	    	        }
+   	    	    }
+    	    }
+    	    else
+    	    {
+				if($item->{schedule} eq 'All Week'||!$item->{schedule})
+				{
+					print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+					print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+				}
+				else
+				{
+					foreach my $sch ( @$schedulelist )
+					{
+						if ( $sch->{schname} eq $item->{schedule} )
+						{
+							my $subsch = $sch->{subsch};
+							foreach my $item2 ( @$subsch )
+							{
+								print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+								print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -m time --timestart $item2->{timestart} --timestop $item2->{timestop} --weekday $item2->{days} -j DROP &\n";
+							}
+						}
+					}
+				}
+                #print IPTABLES_WEBURL qq "/sbin/iptables -A FORWARD -s $source -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+                #print IPTABLES_WEBURL qq "/sbin/iptables -A INPUT -s $source -d $destination -m $item->{filtertype} --string \"$keyword\" --algo bm -j DROP &\n";
+            }
+		}
+ 	}
+ 
+ 
+    }
+    
+    
+    
+    close(IPTABLES_WEBURL);
+    chmod(0777, $iptables_weburl);
+}
+#write_iptables_weburl_script
+
+#==================================================================================================
+1

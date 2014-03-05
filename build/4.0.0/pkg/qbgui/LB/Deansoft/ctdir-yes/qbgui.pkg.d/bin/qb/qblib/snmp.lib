@@ -1,0 +1,178 @@
+###############################################################################################
+#                                           Snmp Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showSnmp 
+{
+    my (%action)=@_;
+    my $snmp=XMLread($gINITPATH.'snmp.xml');
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[382] ); #</td></tr>);
+    print qq (<a href="javascript:qbShowHelp('snmp')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[383]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $snmp->{enablesnmp} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="enablesnmp"  $status >); 
+    print qq (</td>);
+    print qq (</tr>);  
+  
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[384]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $snmp->{enabletrap} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="enabletrap" $status >);
+    print qq (</td>);
+    print qq (</tr>);  
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[385]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text" maxlength="15" class="qbtext" name="snmpmgrip" value="$snmp->{snmpmgrip}" onChange="checkAndSetSnmpServerIP()">);
+    print qq (</td>);
+    print qq (</tr>); 
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[386]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text" maxlength="15" class="qbtext" name="snmpmgrip2" value="$snmp->{snmpmgrip2}" onChange="checkAndSetSnmpServerIP2()">);
+    print qq (</td>);
+    print qq (</tr>); 
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[387]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text" maxlength="20" class="qbtext" name="community" value="$snmp->{community}" >);
+    print qq (</td>);
+    print qq (</tr>); 
+    
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td colspan="2" class="body"  valign="top" align="left">);
+    print qq (<fieldset>);
+    print qq (<legend>$qblang[388]</legend>);
+    print qq (&nbsp &nbsp $qblang[389] &nbsp&nbsp&nbsp:<input type="text" class="qbtext" name="sysname" value="$snmp->{sysname}" style="width:180"><br>);
+    print qq (&nbsp &nbsp $qblang[390] &nbsp:<input type="text" class="qbtext" name="syscontact" value="$snmp->{syscontact}" style="width:180"><br>);
+    print qq (&nbsp &nbsp $qblang[391]:<input type="text" class="qbtext" name="syslocation" value="$snmp->{syslocation}" style="width:180" >);
+    print qq (</fieldset>);
+    print qq (</td>);
+    print qq (</tr>); 
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    
+    #************************************ Command Button  ********************************************
+    print qq (<tr>);
+    print qq (<td colspan="2" align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[139]"  title="Save All Parameters" onClick="goSubmit('APPLY')" style="width:120">);
+    #print qq (<input class="qb" type="button"  value="Go Back !"  title="Back To Log Analysis" onClick="goBackToLogAnalysis()" style="width:120">);
+    print qq (</td></tr>);
+ 
+    print qq (</table>);
+}
+#showConsole
+
+
+#======================================================================================================================
+sub snmpScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+
+    function checkAndSetSnmpServerIP()
+    {
+        if ( !isValidIP(myform.snmpmgrip.value) ) 
+        { 
+            myform.snmpmgrip.value=""; 
+            alert('IP format Error');
+        }
+    }
+
+    function checkAndSetSnmpServerIP2()
+    {
+        if ( !isValidIP(myform.snmpmgrip2.value) ) 
+        { 
+            myform.snmpmgrip2.value=""; 
+            alert('IP format Error');
+        }
+    }
+
+    function goBackToLogAnalysis()
+    {
+        window.top.mainFrame.location.href="loganalysis.cgi";
+    }
+    
+    </script>
+SCRIPT
+}
+#snmpScript
+
+
+#======================================================================================================================
+#maintainSnmp( %action )
+sub maintainSnmp 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $snmp=XMLread($gINITPATH.'snmp.xml');
+
+    if ( $action{action}=~m/^APPLY$/ ) 
+    {
+        $snmp->{sysname}        =   $action{sysname};
+        $snmp->{enablesnmp}     =   $action{enablesnmp};
+        $snmp->{enabletrap}     =   $action{enabletrap};
+        $snmp->{snmpmgrip}      =   $action{snmpmgrip};
+        $snmp->{snmpmgrip2}     =   $action{snmpmgrip2};
+        $snmp->{syscontact}     =   $action{syscontact};
+        $snmp->{syslocation}    =   $action{syslocation};
+        $snmp->{community}      =   $action{community};
+
+        #runCommand(command=>$gSETUIDPATH.'timeconfig.sh', params=>$action{timezone});
+        
+        LogUserAction( action=>'APPLYSNMP', enablesnmp=>$action{enablesnmp}, enabletrap=>$action{enabletrap}, snmpmgrip=>$action{snmpmgrip}, snmpmgrip2=>$action{snmpmgrip2}, community=>$action{community}, sysname=>$action{sysname}, syscontact=>$action{syscontact}, syslocation=>$action{syslocation} );
+    }
+    
+    #-------updating snmp.xml------------------------ 
+    XMLwrite($snmp, $gINITPATH."snmp.xml");
+    
+    #@dep
+    runCommand(command=>'do_qbsnmp.pl', params=>'');
+    
+    #--------overwrite  snmp.xml from $gINIPATH  to  /mnt/qb/conf/snmp.xml
+    runCommand(command=>'cp', params=>'-f '.$gINITPATH.'snmp.xml /mnt/qb/conf/snmp.xml');
+
+    # sync the writing to CF
+    qbSync();
+
+    sendSnmpUpdateFifo();
+}
+#maintainSnmp
+#
+1

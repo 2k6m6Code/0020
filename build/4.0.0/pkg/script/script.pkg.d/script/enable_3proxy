@@ -1,0 +1,17 @@
+#!/bin/bash
+#set -x
+tcp_opt=`grep "tcp_opt" /usr/local/apache/active/overview.xml|sed -e "s/<opt.*tcp_opt=\"//"|sed -e "s/\".*//"`
+if [ "$tcp_opt" = "none" ] || [ "$tcp_opt" = "" ];then
+  echo "tcp optimization is disabled";
+  exit
+fi
+tcp_source=`grep "tcp_source" /usr/local/apache/active/overview.xml|sed -e "s/<opt.*tcp_source=\"//"|sed -e "s/\".*//"`
+tcp_destination=`grep "tcp_destination" /usr/local/apache/active/overview.xml|sed -e "s/<opt.*tcp_destination=\"//"|sed -e "s/\".*//"`
+tcp_dest_port=`grep "tcp_dest_port" /usr/local/apache/active/overview.xml|sed -e "s/<opt.*tcp_dest_port=\"//"|sed -e "s/\".*//"`
+echo $tcp_source
+echo $tcp_destination
+echo $tcp_dest_port
+#/usr/local/etc/3proxy/do_qb3proxy_center.pl 192.168.1.0/24 192.168.19.21 17860
+/usr/local/etc/3proxy/do_qb3proxy_center.pl $tcp_source $tcp_destination $tcp_dest_port
+/tmp/proxy.sh
+/usr/local/bin/3proxy &

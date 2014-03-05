@@ -1,0 +1,48 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Create QOS Class ID</title>
+</head>
+<body>
+
+<h2>Create QOS Class ID</h2>
+<table>
+<tr><td width=80>Bandwidth:	</td><td>Total bandwidth of the line or interface.</td></tr> 
+<tr><td class="light">Class ID:	</td><td class="light">Class ID, only digits can be used.</td></tr> 
+<tr><td>Area:	</td><td>Area, either ISP or Port.</td></tr> 
+<tr><td class="light">Max:	</td><td class="light">The maximum bandwidth allowed.</td></tr>
+<tr><td>Min:	</td><td>The guaranteed bandwidth</td></tr>
+<tr><td valign=top class="light">Priority:	</td><td class="light">When multiple class guaranteed bandwidth adds up to more than currently available bandwidth, the priority determines which class to first satisfy. (Smaller numbers precedes larger ones.) </td></tr>
+</table>
+<ol>
+<li>Browse classes</li> <!--1-->
+<p>
+In Class Definition, ISPs and physical ports interfaces are displayed in tabs. You can clicks on tabs to show configured classes for each ISP and ports. 
+</p>
+<li>Add new classes</li> <!--2-->
+<p>
+	First, make sure ISP1 bandwidth is set up. First add class, fill in Class ID, pick Area (that is an ISP or a physical port). Max is the maximum bandwidth allowed and Min is the guaranteed bandwidth. Priority is for determining which classes should be first satisfied when all classes has to compete to satisfy their guaranteed bandwidth. (Class with a smaller number precedes one with a larger number.) This can happen depends on how classes are configured. After all fields are entered, click on Add.
+</p> 
+<li>Edit an existing class</li> <!--3-->
+<p>
+	After clicking on the Edit button associated with a class, the data will be filled in the entry form below for edit. Modify anything you want to change, then click on Update. 
+</p><p>
+For the bandwidth regulation intended in this example, we make the corresponding configurations and explain its logistics:<br>
+<ul><li>
+First we set up ISP1's bandwidth in ISP outbound bandwidth. This is set to 512. This makes sure our total traffic flow would not exceed 512kbps. 
+</li><li>
+We set up three classes; they're class 1, class 2, and class 3. 192.168.1.15 needs to be guaranteed a certain bandwidth, but cannot overtake the entire line. Therefore, we set up class 2 to make sure it has at least 128kbps, but not exceeding it. 192.168.1.22 needs to have fast a response time; therefore, we give it class 1. However, when it occupies too much bandwidth, it'll be redirected to class 3. This is a form of dynamic QoS. (This will be elaborated further in service-filter.) Other unclassified traffic flow is directed to class 1. This is because we set it as the default. 
+</li><li>
+Class Min/Max setting are used as follows. If Class 1 has 512kbps of traffic flow to fill the entire 512kbps, but the mail server using Class 2 has 200 kbps of flow requests. To respond to the request, class 1 would decrease its usage to 384kbps, and let class 2 taking the 128 kbps. However, mail server bandwidth usage cannot exceed 128kbps, this is because the maximum bandwidth for class 2 is 128 kbps. 
+</li><li>
+After setting the classes, one must be set as the default. The default class is used in any traffic that are not filtered to any class. 
+</li>
+</ul>
+</p>
+<li>Inbound QoS</li> <!--4-->
+<p>
+The inbound bandwidth can also be managed by the Inbound QoS setting. The concept in class maintaining is no difference with the class used for ISP-out or PORT.<br>
+  The only difference is in the policy based filter menu we choose a outbound policy to setup its inbound QoS class , the system can find the correspondence inbound traffic for an outbound policy automatically.
+</p>
+</ol>
+</body></html>

@@ -1,0 +1,31 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Diagnosis Tools</title><!--網路診斷工具-->
+</head>
+<body>
+
+<h2>Diagnosis Tools</h2><!--網路診斷工具-->
+<p>
+Q-Balancer針對線路除錯提供了相當有用的各種功能</p> 
+<table>
+<tr><td width=130 valign=top>Ping	</td><td>發出ICMP封包</td></tr> 
+<tr><td valign=top class="light">Ping by Arp Packet	</td><td class="light">用Arp Broadcast的方式發出ICMP封包，通常用於偵測與Q-Balancer介接的Device</td></tr> 
+<tr><td valign=top>Packet Captor	</td><td>抓取封包的工具，使用的參數如同Tcpdump</td></tr>
+<tr><td valign=top class="light">Show Arp Cache	</td><td class="light">Show Q-Balancer上的Arp Table</td></tr>
+<tr><td valign=top>Query QOS Status	</td><td>顯示QOS各項運作資訊</td></tr> 
+<tr><td valign=top class="light">Restart QB Engine	</td><td class="light">重新啟動QB的程式，不是Reboot</td></tr>
+</table>
+<p>
+packet captor的常用參數
+</p>
+<table>
+<tr><th>-i</th><td>	Interface, Port 1 use eth0, Port 2 use eth1...</td></tr>
+<tr><th>-n</th><td>	Not display Protocol Name, show port no.</td></tr>
+<tr><th>Host IP</th><td>	Designate the HOST, ex: host 168.95.1.1</td></tr>
+<tr><th>Port No.</th><td>	Designate the Port, ex: port 80</td></tr>
+<tr><th>And</th><td>	Intersection</td></tr>
+<tr><th>Not</th><td>	Exclusion</td></tr>
+</table>
+</body></html>

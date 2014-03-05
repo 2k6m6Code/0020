@@ -1,0 +1,32 @@
+#!/bin/sh
+
+#set -x
+
+ BASICXML="/usr/local/apache/qbconf/basic.xml"
+ IPADDRXML="/usr/local/apache/qbconf/ipaddr.xml"
+ IPBANKXML="/usr/local/apache/qbconf/ipbank.xml"
+ PROUTEXML="/usr/local/apache/qbconf/proute.xml"
+ RTABLEXML="/usr/local/apache/qbconf/rtable.xml"
+ LVSXML="/usr/local/apache/qbconf/lvs.xml"
+ DNSXML="/usr/local/apache/qbconf/dns.xml"
+ TEMPXML="/tmp/temp.xml"
+
+dhcp_eth="$1"
+dhcp_newip="$2"
+#OLDINFO="/etc/dhcpc/dhcpcd-$dhcp_eth.info.old"
+dhcp_oriip=`grep isptype=\"dhcp\" $BASICXML|grep $dhcp_eth|sed -e "s/  <isp.*systemip=\"//"|sed -e "s/\".*//"`
+#dhcp_oriip=`grep IPADDR= $OLDINFO|sed -e "s/IPADDR=//"`
+dhcp_newgw="$3"
+dhcp_origw=`grep isptype=\"dhcp\" $BASICXML|grep $dhcp_eth|sed -e "s/  <isp.*gateway=\"//"|sed -e "s/\".*//"`
+#dhcp_origw=`grep GATEWAY= $OLDINFO|sed -e "s/GATEWAY=//"`
+
+       if [ "$dhcp_newip" != "" ];then
+
+          #Refresh all xml files
+           sed -i -e '{
+           s/'$dhcp_oriip'/'$dhcp_newip'/g
+           s/'$dhcp_origw'/'$dhcp_newgw'/g
+           }' /usr/local/apache/qbconf/*.xml
+           update="$?"
+           sync  #prevent write data error
+       fi

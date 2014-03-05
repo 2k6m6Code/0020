@@ -1,0 +1,85 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Inbound Multi-DNS</title><!--多名稱伺服器設定-->
+</head>
+<body>
+
+<h2>Inbound Multi-DNS</h2><!--多名稱伺服器設定-->
+<p>
+針對實際的簡單網路架構來解說Q-Balancer的Inbound Load Balance Setup (DNS Setup)  
+<table>
+<tr><td class="light">ISP1</td><td class="light">163.99.111.1/29</td><td>ISP2</td><td>217.66.222.254/29</td></tr>
+<tr><td class="light">QB(DNS)</td><td class="light">163.99.111.2/29</td><td>QB(DNS)</td><td>217.66.222.253/29</td></tr>
+<tr><td class="light">HTTP</td><td class="light">163.99.111.3:80</td><td>HTTP</td><td>217.66.222.252:80</td></tr>
+<tr><td colspan=2 align=right>QB</td><td colspan=2>168.95.1.254/24</td></tr>
+<tr><td colspan=2 align=right>Web/DNS Server</td><td colspan=2>168.95.1.100/24</td></tr>
+</table>
+<p>這是一個簡單的架構，基本上Q-Balancer直接擔任DNS的腳色，形同分別在ISP 1 與ISP 2 各擁有一台DNS，提供不同的Domain Name解析 
+</p>
+<b>範例和各項設定參數定義：</b>
+<ol>
+<li>ISP 1 DNS Config</li>
+<table border=0>
+<tr><td colspan=4><b>Inbound Load Balance Mode</b><td></tr>
+<tr><td width=20%>BTK</td><td width=60% colspan=2>依線路反應時間來回覆</td><td width=20% align=right>Ratio</td></tr> 	
+<tr><td width=20%>WLT</td><td width=60% colspan=2>依線路Outbound的可用頻寬比例來回覆</td><td width=20% align=right>Ratio</td></tr> 	
+<tr><td width=20%>WRR</td><td width=60% colspan=2>依輪詢方式回覆</td><td width=20% align=right>靜態</td></tr> 	
+<tr><td width=20%>FAILOVER</td><td width=60% colspan=2>依備援的Priority來選擇特定線路作DNS回覆</td><td width=20% align=right>無</td></tr>	
+<tr><td colspan=4><b>ISP Selection</b></td></tr>
+<tr><td width=20%>ISP :</td><td width=20% class="light" align=center><b>ISP 1</b></td><td width=60% colspan=2>選擇線路，每一條線路都具有一組自己的DNS設定</td></tr> 
+<tr><td width=20%>Weight :</td><td width=20% class="light" align=center><b>1</b></td><td width=60% colspan=2>WRR與WLT的權值設定</td></tr> 
+<tr><td width=20% valign=top>Priority :</td><td width=20% class="light" align=center valign=top><b>1</b></td><td width=60% colspan=2>FAILOVER的Priority，數字越小越大，如果Priority為1的線路Fail，系統會自動使用Priority為3或5的線路</td></tr>   
+<tr><td colspan=4><b>Domain Selection</b></td></tr>
+<tr><td width=20%>Domain :</td><td width=20% class="light" align=center><b>test.com</b></td><td width=60% colspan=2>Domain Name</td></tr>
+<tr><td width=20%>Domain IP :</td><td width=20% class="light" align=center><b>163.99.111.2</b></td><td width=60% colspan=2>依原先的DNS設定來填，如未特定指定，一般使用DNS IP</td></tr>
+<tr><td colspan=4><b>Domain Level MX and NS</b></td></tr>
+<tr><td width=20%  valign=top>MX :</td><td width=20%  valign=top>mail</td><td width=60% colspan=2>雖然Host Properties的Type也有MX模式，不過基本上Domain Level的MX在這裡設定就行了</td></tr>
+<tr><td width=20%>DNS :</td><td width=20%>dns</td><td width=60% colspan=2>負責這個Domain的DNS</td></tr>
+<tr><td colspan=4><b>Host Properties</b></td></tr>
+<tr><td width=20%>Host :</td><td width=20% class="light" align=center><b>www	</b></td><td width=60% colspan=2>Record Host Name</td></tr>
+<tr><td width=20%>Type :</td><td width=20% class="light" align=center><b>A</b></td><td width=60% colspan=2>Record Type，依實際設定A、CNAME、MX、NS </td></tr>
+<tr><td width=20%>Priority :</td><td width=20% class="light" align=center><b>None</b></td><td width=60% colspan=2>MX的Priority</td></tr>
+<tr><td width=20%>Value :</td><td width=20% class="light" align=center><b>163.99.111.3</b></td><td width=60% colspan=2>這筆Record位於ISP 1的IP Value </td></tr>
+</table>
+<p>
+在ISP 2裡面會看到與ISP 1相對應的DNS設定，接著在這些欄位裡填入屬於ISP 2網段的IP，並使用【Update】來更新這些相對應的Record.</p>
+<li>ISP 2 DNS Config</li>
+<table>
+<tr><td colspan=4><b>Inbound Load Balance Mode</b><td></tr>
+<tr><td width=20%>BTK</td><td width=60% colspan=2>依線路反應時間來回覆</td><td width=20% align=right>Ratio</td></tr> 	
+<tr><td width=20%>WLT</td><td width=60% colspan=2>依線路Outbound的可用頻寬比例來回覆</td><td width=20% align=right>Ratio</td></tr> 	
+<tr><td width=20%>WRR</td><td width=60% colspan=2>依輪詢方式回覆</td><td width=20% align=right>靜態</td></tr> 	
+<tr><td width=20%>FAILOVER</td><td width=60% colspan=2>依備援的Priority來選擇特定線路作DNS回覆</td><td width=20% align=right>無</td></tr>	
+<tr><td colspan=4><b>ISP Selection</b></td></tr>
+<tr><td width=20%>ISP :</td><td width=20% class="light" align=center><b>ISP 2</b></td><td width=60% colspan=2>選擇線路，每一條線路都具有一組自己的DNS設定</td></tr> 
+<tr><td width=20%>Weight :</td><td width=20% class="light" align=center><b>1</b></td><td width=60% colspan=2>WRR與WLT的權值設定</td></tr> 
+<tr><td width=20% valign=top>Priority :</td><td width=20% class="light" align=center valign=top><b>1</b></td><td width=60% colspan=2>FAILOVER的Priority，數字越小越大，如果Priority為1的線路Fail，系統會自動使用Priority為3或5的線路</td></tr>   
+<tr><td colspan=4><b>Domain Selection</b></td></tr>
+<tr><td width=20%>Domain :</td><td width=20% class="light" align=center><b>test.com</b></td><td width=60% colspan=2>Domain Name</td></tr>
+<tr><td width=20%>Domain IP :</td><td width=20% class="light" align=center><b>217.66.222.253</b></td><td width=60% colspan=2>依原先的DNS設定來填，如未特定指定，一般使用DNS IP</td></tr>
+<tr><td colspan=4><b>Domain Level MX and NS</b></td></tr>
+<tr><td width=20% valign=top>MX :</td><td width=20% valign=top>mail</td><td width=60% colspan=2>雖然Host Properties的Type也有MX模式，不過基本上Domain Level的MX在這裡設定就行了</td></tr>
+<tr><td width=20%>DNS :</td><td width=20%>dns</td><td width=60% colspan=2>負責這個Domain的DNS</td></tr>
+<tr><td colspan=4><b>Host Properties</b></td></tr>
+<tr><td width=20%>Host :</td><td width=20% class="light" align=center><b>www	</b></td><td width=60% colspan=2>Record Host Name</td></tr>
+<tr><td width=20%>Type :</td><td width=20% class="light" align=center><b>A</b></td><td width=60% colspan=2>Record Type，依實際設定A、CNAME、MX、NS </td></tr>
+<tr><td width=20%>Priority :</td><td width=20% class="light" align=center><b>None</b></td><td width=60% colspan=2>MX的Priority</td></tr>
+<tr><td width=20%>Value :</td><td width=20% class="light" align=center><b>217.66.222.252</b></td><td width=60% colspan=2>這筆Record位於ISP 2的IP Value </td></tr>
+</table>
+<p>
+設定完畢Inbound DNS後，還需利用Server Mapping幫Q-Balancer的DNS Service 能被對外服務的IP來做 mapping 
+</p>
+</ol>
+<p><b>幾個使用的注意事項:</b></p>
+<ol>
+<li>Use Q-Balancer as DNS for the domain</li>
+<p>
+這是比較正式的方式，直接由Q-Balancer在Internet上取代舊有的DNS，如不能直接使用舊有的DNS IP，則需到負責該Domain的上層DNS去申請更換Domain Name Server IP，我們可以使用 Pass through IP registration的方式來讓Q-balancer接取原來系統舊有IP的domain服務，而不binding該IP，這樣可以保留原始的DNS server用作備援</p>
+<li>Keep Old DNS as Domain use CNAME to Sub Domain</li>
+<p>
+如果原有的DNS上面Record太多，無法完整移植到Q-Balancer身上，則可以使用一個變通的方式：將預訂進行Inbound Load Balance的Record改成CNAME，CNAME到另一個由Q-Balancer負責的Domain，可能是另一個獨立Domain或是原本網域的Sub Domain </p>
+</ol>
+</p>
+</body></html>

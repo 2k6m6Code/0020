@@ -1,0 +1,25 @@
+#!/bin/sh
+PIDFILE=$1
+>$PIDFILE
+shift
+CMD=$1
+shift
+ARGS=
+while [ $# -ne 0 ] ;do
+    ARGS="$ARGS $1" 
+    shift
+done
+PSLINE=
+PSTMP=/tmp/afs.pstmp.$$
+ps ax >$PSTMP
+if [ $? -ne 0 ] ;then
+	ps ax >$PSTMP
+fi
+grep -v "cmd2pid" $PSTMP|grep "$CMD"|while read PSLINE ;do
+	if [ -n "$PSLINE" ] ;then
+   		set $PSLINE
+   	    echo $1 >> $PIDFILE
+	fi
+done
+rm -f $PSTMP
+exit 0

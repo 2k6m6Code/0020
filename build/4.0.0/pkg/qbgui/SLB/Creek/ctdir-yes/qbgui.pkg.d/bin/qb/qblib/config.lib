@@ -1,0 +1,463 @@
+#!/usr/bin/perl -w
+
+###############################################################################################
+#                               Configuration Management 
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+
+$lanConfig{configmanage}=$qblang[475];
+$lanConfig{load}        =$qblang[476];
+$lanConfig{save}        =$qblang[477];
+$lanConfig{delete}      =$qblang[478];
+$lanConfig{templet}     =$qblang[479];
+sub showConfig
+{
+    (%action)=@_;
+    #************************* Configuration Sets **************************************
+    my @configlist=(0,1,2,3,4,5);
+    if ( $action{config} eq '' ) { $action{config}=$configlist[0]; }
+    my $allconf=$config->{set};
+    
+    print qq (<form name="configform" action="config.cgi" method="post">);
+    print qq (<div id="Layer3" style="position:absolute; left:0px; top:15px; width:700px; height:43px; z-index:2">); 
+    print qq (<table border="1" cellspacing="0" cellpadding="4" bordercolor="#3399CC">);
+    print qq (<tr><td bgcolor="#003366" bordercolor="#003366">);
+    print qq (<font face="Arial, Helvetica, sans-serif" size="1">$lanConfig{configmanage} :</font>); 
+    print qq (<input type="button"  class="qb" name="LOAD" value=$lanConfig{load}  title="Load a Config. Set" onClick="loadConfig()" style="width:39px">);
+    print qq (<input type="button"  class="qb" name="SAVE" value=$lanConfig{save} title="Save a Config. Set" onClick="saveConfig()" style="width:39px">);
+    print qq (<input type="button"  class="qb" name="DELETE" value=$lanConfig{delete} title="Delete a Config. Set" onClick="deleteConfig()" style="width:48px">);
+    print qq (<input type="button"  class="qb" name="Templet" value="$lanConfig{templet}" title="Load a Template Config. Set" onClick="loadTempletConfig()" style="width:58px">);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (<input type="hidden" name="action" value="$action{action}">);
+    print qq (<input type="hidden" name="configname" value="">);
+    print qq (<input type="hidden" name="cmsname" id="cms" value="">);
+    print qq (</form>);
+    print qq (</div>);
+    
+    print qq (<div id="Layer2" style="position:absolute; left:300px; top:15px; width:50px; height:43px; z-index:2">); 
+    print qq (<table border="1" cellspacing="0" cellpadding="4" bordercolor="#3399CC">);
+    #print qq (<tr>); 
+    #print qq (<td><img src="image-top/spacer.gif" width="50" height="1" border="0"></td>);
+    #print qq (</tr>);
+    print qq (<tr><td bgcolor="#003366" bordercolor="#003366">);
+    print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[480]" title="" onClick="showDashboard();" style="width:70px">);
+    print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[481]" title="" onClick="askAndApply();" style="width:90px">);
+    print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[482]" title="" onClick="confirmLogout();" style="width:45px">);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</div>);
+    
+    print qq (<div id="Layer1" style="position:absolute; left:0px; top:-1px; width:230px; height:28px; z-index:1">); 
+    #print qq (<table border="0" cellpadding="0" cellspacing="0" width="635">);
+    print qq (<table border="0" cellpadding="0" cellspacing="0" width="800">);
+    print qq (<tr>); 
+    #Brian 2008030x top_qb_logo was disappeared,reshow it again
+    print qq (<td><img src="image-top/spacer.gif" width="400" height="1" border="0"></td>);
+    print qq (<td><img src="image-top/spacer.gif" width="56" height="1" border="0"></td>);
+    print qq (<td><img src="image-top/spacer.gif" width="179" height="1" border="0"></td>);
+    print qq (<td><img src="image-top/spacer.gif" width="1" height="1" border="0"></td>);
+    print qq (</tr>);
+    print qq (<tr>); 
+    print qq (<td bgcolor="#003366">&nbsp;</td>);
+    #print qq (<td colspan="2"><img name="top_qb_logo" src="image/top_qb_logo.gif" width="235" height="62" border="0"></td>);
+    print qq (<td colspan="2"><img name="top_qb_logo" src="image/top_qb_logo.gif" width="280" height="62" border="0"></td>);
+    print qq (<td><img src="image/spacer.gif" width="1" height="51" border="0"></td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</div>);
+}
+#showConfig
+
+#============================================================================================
+#global message log variable for recording events ...
+sub configScript
+{
+    my $year=1900+(localtime)[5];
+    my $month=1+(localtime)[4];
+    my $day=(localtime)[3];
+    my $hour=(localtime)[2];
+    my $min=(localtime)[1];
+    my $sec=(localtime)[0];
+
+print << "CONFIGSCRIPT";
+
+    <script type="text/javascript" src="grid.js"></script>
+    <script language="javascript">
+
+        var myform;
+        
+        function showDashboard()
+        {
+            window.top.mainFrame.location.href = 'dashboard.php';
+        }
+        
+        function cgi_dep_onload() 
+        {
+            
+            myform=window.document.forms[0];  
+            if ( myform.action.value=="LOADCONFIG" ) { window.top.mainFrame.location.reload(); }
+        }
+        
+        function loadConfig()
+        {
+            //20061003 Brian modify user's privilege.
+            var privilege=getcookie('privilege');
+            if(privilege!=1) {alert('You do not have Privilege to Load it'); return;}
+
+            var setname=qbListConfig('LOAD');
+            var tmp =new Array();
+            tmp = setname.split(",");
+            if ( !tmp[0] ) { return; }
+            if ( !tmp[1] ) { tmp[1]='none'; }
+            myform.configname.value=tmp[0];
+            myform.cmsname.value=tmp[1];
+            goSubmit('LOADCONFIG');
+        }    
+        
+        function saveConfig()
+        {
+            //20061003 Brian modify user's privilege.
+            var privilege=getcookie('privilege');
+            if(privilege!=1) {alert('You do not have Privilege to Save it'); return;}
+
+            var setname=qbListConfig('SAVE');
+            var tmp =new Array();
+            tmp = setname.split(",");
+            if ( tmp[0]=="default" || tmp[0]=="active" ) { alert("Can NOT Overwrite System Reserved Config. Set"); return; }
+            if ( !tmp[0] ) { return; }
+            myform.configname.value=tmp[0];
+            myform.cmsname.value=tmp[1];
+            goSubmit('SAVECONFIG');
+        }
+
+        function deleteConfig()
+        {
+            //20061003 Brian modify user's privilege.
+            var privilege=getcookie('privilege');
+            if(privilege!=1) {alert('You do not have Privilege to Delete it'); return;}
+
+            var setname=qbListConfig('DELETE');
+            if ( setname=="default" || setname=="boot" || setname=="active" ) { alert("Can NOT Delete SYSTEM Reserved Config. Set"); return; }
+            if ( !setname ) { return; }
+            myform.configname.value=setname;
+            goSubmit('DELETECONFIG');
+        }
+        
+        function loadTempletConfig()
+        {
+            //20061003 Brian modify user's privilege.
+            var privilege=getcookie('privilege');
+            if(privilege!=1) {alert('You do not have Privilege to Load it'); return;}
+
+            var setname=qbListConfig('Templet');
+            if ( !setname ) { return; }
+            myform.configname.value=setname;
+            goSubmit('LOADCONFIG');
+        }    
+
+        function confirmLogout() 
+        {
+            var answer=( getcookie('language') == "chinese" ) ? qbConfirm(2, '確定要登出 ？') : qbConfirm(2,'Sure to Logout ?'); 
+            if (answer==1) { window.top.location.href="index.htm"; }
+        }
+        
+        function askAndApply() 
+        {
+            if ( getcookie('language') == "chinese" )
+            {
+                if ( qbConfirm(2, '確定執行 ？')==1 ) { goSubmit('UPDATE'); } 
+            }
+            else
+            {
+                if ( qbConfirm(2, 'Are You Sure ?')==1 ) { goSubmit('UPDATE'); }
+            }
+        }
+
+    </script>
+        
+CONFIGSCRIPT
+}
+#configScript
+
+#====================================================================================
+sub listConfig
+{
+    my ($type)=@_;
+
+    print qq (<table border="1" cellspacing="0" cellpadding="4" bordercolor="#3399CC">);
+    print qq (<tr><td bgcolor="#003366" bordercolor="#003366" align="center">);
+
+    print qq (<font face="Arial, Helvetica, sans-serif" size="1">Select Config. Set To $type </font><br>); 
+   
+    # $type will be |SAVE|LOAD|DELETE| 
+    my @configlist=maintainConfig(action=>'LISTCONFIGNAME', type=>$type); 
+
+    if ( $type=~m/Templet/ )
+    { 
+      print qq (<select class="qbopt" size="10" name="configname" style="width:180" onChange="this.form.typename.value=this.value"> );
+      print qq (<option value="" >---------Single Site---------</option>/n);
+      foreach my $cfg_name ( sort keys %gSingle_Config_hash )
+      {
+        if ( grep(/$cfg_name/, @configlist) ) { print qq (<option value="_$cfg_name" span title="$cfg_name" >$cfg_name</option>/n); }
+      }
+      print qq (<option value="" ></option>/n);
+      print qq (<option value="" >-----VPN Bonding Client-----</option>/n);
+      foreach my $cfg_name ( sort keys %gBonding_Client_Config_hash )
+      {
+        if ( grep(/$cfg_name/, @configlist) ) { print qq (<option value="_$cfg_name" span title="$cfg_name" >$cfg_name</option>/n); }
+      }
+      print qq (<option value="" ></option>/n);
+      print qq (<option value="" >-----VPN Bonding Center-----</option>/n);
+      foreach my $cfg_name ( sort keys %gBonding_Center_Config_hash )
+      {
+        if ( grep(/$cfg_name/, @configlist) ) { print qq (<option value="_$cfg_name" span title="$cfg_name" >$cfg_name</option>/n); }
+      }
+      print qq (</select>);
+                                                                              
+    }else{
+
+    print qq (<select class="qbopt" size="10" id="select" name="configname" style="width:180" onChange="this.form.typename.value=this.value"> );
+    foreach my $set ( @configlist )  { print qq (<option value="$set" span title="$set" $status value="$set">$set</option>); }
+    print qq (</select>);
+    }
+
+    #Brian 20110331 Support 255 chars for config file names.(Need to upgrade fs image)
+    my $mountinfo=runCommand(command=>"mount", params=>'');
+    if ( grep(/vfat/, $mountinfo) )
+    {
+    print qq (<br><input class="qbtext" type="text" maxlength="255" name="typename" value="" style="width:180">);
+    }else{
+    print qq (<br><input class="qbtext" type="text" maxlength="8" name="typename" value="" style="width:180">);
+    }
+    if ( $type=~m/SAVE/ )
+    {
+        $over = XMLread('/usr/local/apache/active/overview.xml');
+        $enabled = $over->{autofile};
+        $name = XMLread('/usr/local/apache/active/basic.xml');
+        $isplist = $name->{isp};
+        foreach $isp (@$isplist)
+        {
+            if (!$isp->{remote}){next;}
+            if ($isp->{tunnel_role} && $isp->{tunnel_role} eq '1'){next;}
+            if ($isp->{isptype} ne 'dtunnel' && $isp->{isptype} ne 'tunnel'){next;}
+            if ($isp->{alive} eq "1" )
+            {
+                $ip = $isp->{remote};
+                break;
+            }
+	    if ($isp->{alive} eq "0" )
+            {
+                $ip = 'fail';
+            }
+        }
+        print qq (<br><input type=button id="sel" class=qb value="OK" style="width:60" onClick="returnResult('$enabled','$ip')">);
+    }else
+    {
+        print qq (<br><input type=button id="sel" class=qb value="OK" style="width:60" onClick="returnResult()">);
+    }
+    print qq (<input type=button id="sel2" class=qb value="Cancel" style="width:60" onClick="window.close()">);
+    print qq (</td></tr>);
+    if ( $type=~m/SAVE/ || $type=~m/LOAD/ )
+    {
+        my $file = join(",",glob('/mnt/qb/conf/cms/*'));
+        my @name = split(",",$file);
+        print qq (<td><font face="Arial, Helvetica, sans-serif" size="1">CMS File :</font>);
+        if ($type=~m/LOAD/){print qq(<select class="qbopt" id="sel1" style="width:150" onChange="this.form.cmsname.value=this.value;ajax(this.value);" > );}
+        else{print qq(<select class="qbopt" style="width:150" onChange="this.form.cmsname.value=this.value" > );}
+        print qq (<option value="none">none</option>);
+        foreach my $y (@name)
+        {
+            $y =~ s/\/mnt\/qb\/conf\/cms\///;
+            print qq (<option value="$y">$y</option>);
+        }
+        print qq (</select>);
+        print qq(<input type="hidden" name="cmsname" value="">);
+        print qq (</td>);
+    }
+    print qq (</table>);
+}
+#listConfig
+
+# ====================================================================================
+sub listConfigScript
+{
+print  << "LISTCONFIGSCRIPT";    
+    
+    <script language="javascript">
+        function returnResult(enabled,ip) 
+        {
+            var configname=window.document.forms[0].configname.value;
+            var typename=window.document.forms[0].typename.value;
+            if (enabled == 'on')
+            {
+                if (ip == "")
+                {
+                    alert("No Route To Center QB!!\\n(Can't Find CMS Function!!)");
+                }
+                if (ip == "fail")
+                {
+                    alert("No Route To Center QB!!");
+                }
+//                var data = ip + "," + configname ;
+//                ajax(data,1);
+            }
+            if (document.getElementById("cms"))var cms = window.document.forms[0].cmsname.value;
+            if (cms && cms != "none" ){window.returnValue=typename + "," + cms;} 
+            else{window.returnValue=typename;}
+            window.close();
+        }
+        var queryReqHandler;
+        function ajax(cms,check)
+        {
+            queryReqHandler = new ActiveXObject("Microsoft.XMLHTTP");
+            queryReqHandler.onreadystatechange = fno;
+            if (check == 1)
+            {
+                queryReqHandler.open("GET","../datawork.cgi?data=" + cms + "&time=" + new Date().getTime() ,true);
+            }else
+            {
+                queryReqHandler.open("GET","../reflesh.cgi?id=" + cms + "&time=" + new Date().getTime() ,true);
+                check = 0;
+            }
+            queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+            var str='';
+            queryReqHandler.send(str); 
+            if (check == 0)
+            {
+                var sel=document.getElementById("sel");
+                var sel1=document.getElementById("sel1");
+                var sel2=document.getElementById("sel2");
+                var sel3=document.getElementById("select");
+                sel.disabled = true;
+                sel1.disabled = true;
+                sel2.disabled = true;
+                sel3.disabled = true;
+            }                                                                                     
+        }
+        function fno()
+        {
+            var current=document.getElementById("select");
+            if(queryReqHandler.readystate == 4)
+            {
+        	var sel=document.getElementById("sel");
+        	var sel1=document.getElementById("sel1");
+        	var sel2=document.getElementById("sel2");
+        	var sel3=document.getElementById("select");
+        	sel.disabled = false;
+        	sel1.disabled = false;
+        	sel2.disabled = false;
+        	sel3.disabled = false;
+        	document.getElementById("select").length=0;
+        	var tmp = queryReqHandler.responseText;
+        	var element = tmp.split(",");
+        	for ( i = 0 ; i < element.length - 1 ; i++ )
+        	{
+        	    document.getElementById("select").options.add(new Option(element[i],element[i])); 
+        	}
+        	queryReqHandler = null;
+            }
+        }
+    </script>
+    
+LISTCONFIGSCRIPT
+}
+#listConfigScript
+
+
+# ====================================================================================
+# method to manage Config. Set
+sub maintainConfig()
+{
+    my (%action)=@_;
+    if ( $action{action}=~m/^LOADCONFIG$/ ) 
+    {
+        if ($action{cms} && $action{cms} ne 'none')
+        {
+            $result=runCommand(command=>'loaddom.sh', params=>"$action{configname} $action{cms}");
+            LogUserAction( action=>'LOADCONFIG', configname=>$action{configname} );
+            $result=~s/\n/\\n/g;
+            $gMSGPROMPT.=qq ($action{configname} $action{cms}\\n);
+            $gMSGPROMPT.=qq ($result); 
+        }
+        elsif (!$action{cms} || $action{cms} eq 'none')
+        {
+            $result=runCommand(command=>'loaddom.sh', params=>$action{configname});
+            LogUserAction( action=>'LOADCONFIG', configname=>$action{configname} );
+            $result=~s/\n/\\n/g;
+            $gMSGPROMPT.=qq ($result);
+        }
+        
+        return;
+    }
+    elsif ( $action{action}=~m/^SAVECONFIG$/ ) 
+    { 
+        #@dep
+        ini2via();
+        via2prt();
+        $over = XMLread('/usr/local/apache/active/overview.xml');
+        $enabled = $over->{autofile};   
+        $result=runCommand(command=>'savedom.sh', params=>$action{configname});
+        LogUserAction( action=>'SAVECONFIG', configname=>$action{configname} );
+        my $check=runCommand(command=>'cat', params=>"/mnt/conf/qbsn");
+        my $ispref=XMLread('/usr/local/apache/active/basic.xml');
+        my $isplist=$ispref->{isp};
+        $option = "-o StrictHostKeyChecking=no -o TCPKeepAlive=no -o ServerAliveInterval=5 -o ServerAliveCountMax=3 -o ConnectTimeout=10";
+        
+        foreach $isp (@$isplist)
+        {
+            if ($isp->{alive} eq "1" && $isp->{tunnel_role} eq "0" && $enabled eq '1')
+            {
+                runCommand(command=>'scp', params=>"-i /etc/.ssh/qlogin $option -r /mnt/qb/conf/set/$action{configname} $isp->{remote}:/mnt/qb/conf/cms/$check/");
+            }
+        }
+        if ( $action{configname}!~m/active/ )
+        {
+            $result=~s/\n//g; 
+            $result=~s/\"//g; 
+            $result=~s/Syntax error.*unrecognized//g; 
+            $result=~s/directory.*exists//g;
+            if ($enabled eq 'on')
+            {
+            	$result.="\\nSend to Center QB Successfuly!!";
+            }
+            $gMSGPROMPT.=qq ($result);
+        }
+        my $path='/mnt/qb/conf/';
+        if ($action{cms} && $action{cms} ne 'none')
+        {
+            runCommand(command=>'cp', params=>"-a $path\/set\/$action{configname} $path\/cms\/$action{cms}");
+            runCommand(command=>'sync', params=>'');#20130419 To prevent DOM/CF become readonly
+        }
+        return;
+    }
+    elsif ( $action{action}=~m/^DELETECONFIG$/ ) 
+    {
+        $result=runCommand(command=>'deletedom.sh', params=>$action{configname});
+        LogUserAction( action=>'DELETECONFIG', configname=>$action{configname} );
+        $result=~s/\n//g; 
+        $gMSGPROMPT.=qq ($result);
+        return;
+    }
+    elsif ( $action{action}=~m/^LISTCONFIGNAME$/ )
+    {
+        my $allconfig=runCommand(command=>'ls', params=>$gDOMCONFPATH);
+        my $alltempletconfig=runCommand(command=>'ls', params=>qq($gDOMCONFPATH \|grep \^_));
+        
+        if ( $action{type}=~m/SAVE/ )       { $allconfig=~s/^default$|^active$//g; $allconfig=~s/^_.*\n//mg; }
+        elsif ( $action{type}=~m/LOAD/ )    { $allconfig.='active'; $allconfig=~s/^_.*\n//mg; }
+        elsif ( $action{type}=~m/DELETE/ )  { $allconfig=~s/^default$|^boot$//g; $allconfig=~s/^_.*\n//mg; }
+        elsif ( $action{type}=~m/Templet/ ) { $allconfig=$alltempletconfig; $allconfig=~s/^_//mg; }
+        elsif ( $action{type}=~m/EXPORT/ )  { $allconfig=~s/^default$//g; $allconfig.='active'; $allconfig=~s/^_.*\n//mg; }
+        elsif ( $action{type}=~m/UPGRADE/ ) {}
+        
+        my @configlist=split(/\n/, $allconfig);
+        return sort @configlist;
+    }
+}
+#maintainConfig
+#
+1

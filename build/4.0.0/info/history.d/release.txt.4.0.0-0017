@@ -1,0 +1,2 @@
+   1.To fix ARP Proxy mode need to bind wan IP on LAN.(Ver:0016 can work intermittently)
+    The modification include : do_qbarp.pl,qbmon.sh

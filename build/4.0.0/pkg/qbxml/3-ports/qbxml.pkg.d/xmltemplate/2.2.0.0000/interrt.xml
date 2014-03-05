@@ -1,0 +1,4 @@
+<opt status="lock" lastupdate="" file="interrt">
+  <route nic="system" isp="system" gateway="system" subnet="system" />
+  <route nic="eth2" isp="nat1" gateway="" gwnatid="" subnet="192.168.1.0/24" />
+</opt>

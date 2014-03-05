@@ -1,0 +1,214 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showCountry
+{
+    my (%action)=@_;
+    my $countryref=XMLread($gPATH.'country.xml');
+    my $countrylist=$countryref->{country};
+ 
+    my @titleHeadList=('Name', 'Address Detail', 'Edit');
+    my %titleWidth=('Name'=>150, 'Address'=>300, 'Edit'=>50);
+ 
+#    my $temp=runCommand(command=>"ls", params=>'/usr/local/apache/qbconf/subnet*');
+#    my @showcountrylist=split(' ',$temp);
+#    foreach my $showcontry ( @showcontrylist )
+#    {
+#    	$showcontry=~s/\/usr\/local\/apache\/qbconf\///;
+#    	print qq ( $showcontry );
+#    }
+
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0" style="table-layout:fixed;word-break:break-all">);
+    print qq (<tr><td class="bigtitle">Country  <input class="qb" type="button" width="100" value="$qblang[162]" onclick="Newcountry();">);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    print qq (<div class="divframe" style="height:200; width:800">);
+    print qq (<table id="countryList" width="100%"  class="body" border="0">);
+    print qq (<thead><tr bgcolor="#332211"><th width="150" align="center">$qblang[29]</th>);
+    print qq (<th width="" align="center">$qblang[161]</th>);
+    print qq (<th width="50" align="center">$qblang[25]</th>);
+
+#gary
+    my $status;
+    foreach my $item ( @$countrylist )
+    {
+        $status = ( $item->{countryname} eq "system" && $item->{allbyPolicy} eq '1' ) ? ('CHECKED') : ('');
+    }
+    print qq (<th width="110" align="center">Used by Policy);
+    print qq (<input type="checkbox" onclick="setAllCheckBoxValue('byPolicy', this.checked);allusedPolicy(this.checked)" $status title="select or deselect all items">);
+    
+    foreach my $item ( @$countrylist )
+    {
+        $status = ( $item->{countryname} eq "system" && $item->{allbyGSLB} eq '1' ) ? ('CHECKED') : ('');
+    }
+    print qq (<th width="110" align="center">Used by GSLB);
+    print qq (<input type="checkbox" onclick="setAllCheckBoxValue('byGSLB', this.checked);allusedGSLB(this.checked)" $status title="select or deselect all items">);
+
+    print qq (<th width="100" align="center"><a href="javascript:delcountry()">);
+    print qq (<img border="0" title="Delete Checked country(s)" src="image/del.gif"></a>);
+    print qq (<input type="checkbox" onclick="setAllCheckBoxValue('country', this.checked)" title="select or deselect all items">);
+    print qq (</th></tr></thead>);
+    
+    my $lineCount=0;
+    foreach my $item ( @$countrylist )
+    {
+        if ( $item->{countryname} eq "system" ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+        my $showname=$item->{countryname};
+        #$showname=~s/country-//g;
+        print qq (<td style="center: 0px; width: 150px; table-layout: fixed;  word-wrap: break-word;">$showname</td>);
+        #print qq (<td style="center: 0px; width: 350px; table-layout: fixed;  word-wrap: break-word;">$item->{countryaddress}</td>);
+        #print qq (<td style="center: 0px; width: 350px; table-layout: fixed;  word-wrap: break-word;" onclick="showdetail();">);
+        print qq (<td style="center: 0px; width: 350px; table-layout: fixed;  word-wrap: break-word;">);
+        print qq (<a href="javascript:showdetail('$item->{countryname}')" title="touch me to show detial">view </a></td>);
+        print qq (</td>);
+        print qq (<td align="center" width="50px" height="25">);
+        #print qq (<a href="editcountry.cgi?schname=$item->{countryname}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit country properties" border="0"></a></td>);
+        #print qq (<a href="editcountry.cgi?countryname=$item->{countryname}&countrytype=$item->{countrytype}&countryaddress=$item->{countryaddress}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit country properties" border="0"></a></td>);
+        print qq (<a href="editcountry.cgi?countryname=$item->{countryname}&countrytype=$item->{countrytype}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit country properties" border="0"></a></td>);
+
+#gary
+        print qq (<td align="center" width="50px" height="25">);
+        if ($item->{byPolicy})
+        {print qq (<input type="checkbox" CHECKED id="byPolicy" name="byPolicy" value="$item->{countryname}" onclick="unusedPolicy('$item->{countryname}');">);}
+        else
+        {print qq (<input type="checkbox" id="byPolicy" name="byPolicy" value="$item->{countryname}" onclick="usedPolicy('$item->{countryname}');">);}
+        
+        
+        print qq (<td align="center" width="50px" height="25">);
+        if ($item->{byGSLB})
+        {print qq (<input type="checkbox" CHECKED id="byGSLB" name="byGSLB" value="$item->{countryname}" onclick="unusedGSLB('$item->{countryname}');">);}
+        else
+        {print qq (<input type="checkbox" id="byGSLB" name="byGSLB" value="$item->{countryname}" onclick="usedGSLB('$item->{countryname}');">);}
+
+        print qq (<td align="center" width="50px" height="25">);
+        print qq (<input type="checkbox" id="country" name="country" value="$item->{countryname}">);
+        print qq (</tr>);
+        $lineCount++;
+    }
+    
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="$qblang[162]" onclick="Newcountry();">);
+}
+#showCountry
+    
+
+
+#=============================================================================================
+
+sub scriptCountry
+{
+    print << "scriptCountry";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function Newcountry() { window.top.mainFrame.location.href="editcountry.cgi?countrytype=networklist"; }
+    
+    function showdetail(countryname)
+    {
+    	//alert("Building");
+    	var targetcgi='viewcountry.cgi'+'?countryname='+countryname;
+    	var strFeatures='dialogWidth=700px;dialogHeight=500px;center=yes;'
+    	    strFeatures+='scrollbars=no;border=thin;help=no;status=no;'
+    	return window.showModalDialog(targetcgi, '', strFeatures);
+    }
+    
+    function delcountry()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+    
+    
+    function allusedGSLB(checked)
+    {
+    	//alert (checked);
+        if ( checked )
+        {
+            //alert ('yes ok');
+    	    myform.action.value='ALLUSEDGSLB';
+    	    myform.submit();
+        }
+        if ( !checked )
+        {
+            //alert ('no no');
+    	    myform.action.value='ALLUNUSEDGSLB';
+    	    myform.submit();
+        }
+    }
+                    
+    function allusedPolicy(checked)
+    {
+        //alert (checked);
+        if ( checked )
+        {
+            //alert ('yes ok');
+    	    myform.action.value='ALLUSEDPOLICY';
+    	    myform.submit();
+        }
+        if ( !checked )
+        {
+            //alert ('no no');
+    	    myform.action.value='ALLUNUSEDPOLICY';
+    	    myform.submit();
+        }
+    }
+    
+    function usedPolicy(countryname)
+    {
+    	//alert(countryname+' usedPOLICY');
+    	myform.action.value='USEDPOLICY';
+    	myform.countryname.value=countryname;
+    	myform.submit();
+    }
+    
+    function unusedPolicy(countryname)
+    {
+    	//alert(countryname+' unusedPOLICY');
+    	myform.action.value='UNUSEDPOLICY';
+    	myform.countryname.value=countryname;
+    	myform.submit();
+    }
+    
+    function usedGSLB(countryname)
+    {
+    	//alert(countryname+' usedGSLB');
+    	myform.action.value='USEDGSLB';
+    	myform.countryname.value=countryname;
+    	myform.submit();
+    }
+    
+    function unusedGSLB(countryname)
+    {
+    	//alert(countryname+' unusedGSLB');
+    	myform.action.value='UNUSEDGSLB';
+    	myform.countryname.value=countryname;
+    	myform.submit();
+    }
+    
+    </script>
+    
+scriptCountry
+}
+#CountryScript
+#
+1

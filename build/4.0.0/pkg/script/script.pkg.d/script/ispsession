@@ -1,0 +1,51 @@
+#!/bin/bash
+#set -x
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+Mode=$1
+if [ "$Mode" = "src" ];then
+ cat /proc/net/ip_conntrack|awk '{print $5}'|grep 'src='|awk '{count[$1]++}END{for(i in count)print i,count[i]}'|sort -g -r -k 2
+else
+ cat /proc/net/ip_conntrack|awk '{print $12}'|grep 'dst='|awk '{count[$1]++}END{for(i in count)print i,count[i]}'|sort -g -r -k 2 >/tmp/session_SNAT
+ cat /proc/net/ip_conntrack|awk '{print $6}'|grep 'dst='|awk '{count[$1]++}END{for(i in count)print i,count[i]}'|sort -g -r -k 2 >/tmp/session_DNAT
+ iplist_SNAT=`cat /tmp/session_SNAT|awk '{ print $1 }'|sed -e "s/dst=//"`
+ iplist_DNAT=`cat /tmp/session_DNAT|awk '{ print $1 }'|sed -e "s/dst=//"`
+ subnetlist=`grep "subnet=" $ACTIVEBASICXML|sed -e "s/  <isp.*subnet=\"//"|sed -e "s/\".*//"`
+ for ip in $iplist_SNAT
+ do
+   for subnet in $subnetlist
+   do
+     maskCHK=`echo $subnet|awk -F "\/" '{print $2}'`
+     if [ "$maskCHK" -le 32 ]; then #ipcalc doesn't support ipv6
+     
+     chk_result=`/opt/qb/bin/script/ipsubnet.chk $ip $subnet`
+     if [ $chk_result = '1' ];then
+      ispname=`grep subnet=\"$subnet\" $ACTIVEBASICXML|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+      session_num=`grep $ip /tmp/session_SNAT|awk '{print $2}'`
+      echo "snat=$ip($ispname) $session_num" 
+      break 1;
+     fi
+     
+     fi
+   done
+ done
+ rm -f /tmp/session_SNAT
+
+ for ip in $iplist_DNAT
+ do
+   for subnet in $subnetlist
+   do
+     if [ "$maskCHK" -le 32 ]; then #ipcalc doesn't support ipv6
+
+     chk_result=`/opt/qb/bin/script/ipsubnet.chk $ip $subnet`
+     if [ $chk_result = '1' ];then
+      ispname=`grep subnet=\"$subnet\" $ACTIVEBASICXML|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+      session_num=`grep $ip /tmp/session_DNAT|awk '{print $2}'`
+      echo "dnat=$ip($ispname) $session_num" 
+      break 1; 
+     fi
+
+     fi
+   done
+ done
+ rm -f /tmp/session_DNAT
+fi

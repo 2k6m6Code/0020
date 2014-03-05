@@ -1,0 +1,264 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml">
+<!--
+20030721 @ DeanSoft
+-->
+<head>
+<title>Graph08 + PolyLine02</title>
+<link rel="stylesheet" href="../gui.css" type="text/css">
+<style>
+v\:*{behavior:url(#default#vml)}
+</style>
+
+
+<script>
+//GraphMaster
+//GraphMaster.add()
+//GraphMaster.show()
+//GraphMaster.clear()
+
+function graphmaster(element_id){
+	
+	var PA = document.all[element_id];
+	if(!PA){
+		return null;
+	}
+	while(PA.childNodes.length){
+		PA.firstChild.removeNode(1);
+	}
+	
+	this.cards = new Array();
+	this.count = 0;
+	this.obj = document.createElement("TABLE");
+	
+	this.rx_total = 0;
+	this.tx_total = 0;
+	this.RX_total = 0;
+	this.TX_total = 0;
+	this.DL_total = 0;
+	this.UL_total = 0;
+	
+	PA.appendChild(this.obj);
+}
+
+
+function graphmaster.prototype.add(name,port,gway,tx,rx,TX,RX,DL,UL,alive){
+
+	if(this.count < this.cards.length){
+		var GCARD = this.cards[this.count];
+	}
+	else{
+		var GCARD = new graphcard(this);
+		this.cards.push(GCARD);
+		this.obj.insertRow().insertCell().appendChild(GCARD.obj);
+	}
+	GCARD.set(name,port,gway,tx,rx,TX,RX,DL,UL,alive);
+	this.count++;
+}
+
+function graphmaster.prototype.show(){
+	
+	this.rx_total = 0;
+	this.tx_total = 0;
+	this.RX_total = 0;
+	this.TX_total = 0;
+	this.DL_total = 0;
+	this.UL_total = 0;
+		
+	for(var i=0;i<this.count;i++){
+		this.rx_total += this.cards[i].rx;
+		this.tx_total += this.cards[i].tx;
+		this.RX_total += this.cards[i].RX;
+		this.TX_total += this.cards[i].TX;
+		this.DL_total += this.cards[i].DL;
+		this.UL_total += this.cards[i].UL;
+	}
+	
+	for(i=0;i<this.count;i++){
+		this.cards[i].show();
+	}
+	
+	//balance
+	while(this.count < this.cards.length){
+		this.cards.pop();
+		this.obj.rows[this.count].removeNode(1);
+	}
+}
+
+function graphmaster.prototype.clear(){
+	 this.count = 0;
+}
+
+//GraphCard
+//GraphCard.set()
+//GraphCard.show()
+//GraphCard.del()
+
+
+function graphcard(GraphMasterObj){
+	
+	this.tx = null;
+	this.rx = null;
+	this.RX = null;
+	this.TX = null;
+	this.DL = null;
+	this.UL = null;
+	this.alive = null;
+	this.parent = GraphMasterObj;
+	this.obj = document.createElement("FIELDSET");
+	this.obj2 = document.createElement("TABLE");
+	this.obj3 = document.createElement("LEGEND");
+	this.nameobj = document.createElement("SPAN");
+	this.nameobj.style.fontWeight = "bold";
+	this.portobj = document.createElement("SPAN");
+	this.gwayobj = document.createElement("SPAN");
+	this.line0 = document.createElement("SPAN");
+	this.line1 = document.createElement("SPAN");
+	this.line2 = document.createElement("SPAN");
+	this.line3 = document.createElement("SPAN");
+
+	for(var i=0;i<4;i++){
+		eval("this.line"+i).innerHTML = "&nbsp;";
+		eval("this.line"+i).style.width = "0";
+		eval("this.line"+i).style.fontSize = "8";
+		eval("this.line"+i).style.height = "8";
+		eval("this.line"+i).style.backgroundColor = (i&1?"pink":"lightgreen");
+		eval("this.line"+i).style.filter="progid:DXImageTransform.Microsoft.Gradient(gradientType=0,startColorStr=white,endColorStr="+(i>1?"purple":"green")+")";
+	}
+	
+
+	this.obj3.style.color = "white";
+	this.obj3.style.font = "12 Verdana";
+	this.obj3.appendChild(this.nameobj);
+	this.obj3.appendChild(document.createTextNode(" Interface: [ Port "));
+	this.obj3.appendChild(this.portobj);
+	this.obj3.appendChild(document.createTextNode(" ] GateWay: [ "));
+	this.obj3.appendChild(this.gwayobj);
+	this.obj3.appendChild(document.createTextNode(" ]"));
+	this.obj.appendChild(this.obj3);
+
+	
+	this.obj2.cellSpacing = "1";
+	this.obj2.cellPadding = "0";
+	this.obj2.style.font = "9 Verdana";
+	this.obj2.style.color = "white";
+	
+	with(this.obj2.insertRow()){
+		insertCell();
+		insertCell().appendChild(this.line0);
+		insertCell();
+		insertCell().appendChild(this.line1);
+	}
+	with(this.obj2.insertRow()){
+		insertCell();
+		insertCell().appendChild(this.line2);
+		insertCell();
+		insertCell().appendChild(this.line3);
+	}
+
+	for(i=0;i<2;i++){
+		for(j=0;j<2;j++){
+			this.obj2.rows[i].cells[j<<1].width = "90";
+			this.obj2.rows[i].cells[j<<1].align = "right";
+			this.obj2.rows[i].cells[j<<1].style.paddingRight = "2";
+			this.obj2.rows[i].cells[(j<<1)+1].width = "120";
+			this.obj2.rows[i].cells[(j<<1)+1].style.background = "black";
+			this.obj2.rows[i].cells[(j<<1)+1].style.border = "2 ridge white";
+		}
+	}
+	this.obj.appendChild(this.obj2);
+}
+
+function graphcard.prototype.set(name,port,gway,tx,rx,TX,RX,DL,UL,alive){
+
+	this.nameobj.innerText = name;
+	this.portobj.innerText = port;
+	this.gwayobj.innerText = gway;
+	
+	this.tx = parseInt(tx);
+	this.rx = parseInt(rx);
+	this.TX = parseInt(TX);
+	this.RX = parseInt(RX);
+	this.DL = parseInt(DL);
+	this.UL = parseInt(UL);
+	
+	this.alive = parseInt(alive);
+}
+
+
+function graphcard.prototype.show(){
+       if(this.rx > this.DL * 1.1){
+                this.rx = this.DL;
+        }
+       if(this.tx > this.UL * 1.1){
+                this.tx = this.UL;
+        }
+	
+	this.obj2.rows[0].cells[0].innerText = this.rx + "(Kb/s)";
+	this.line0.style.width = this.DL? this.rx / this.DL * 100 + "%" :0;
+	this.line0.innerHTML = this.DL? "&nbsp;":"";	
+	
+	this.obj2.rows[0].cells[2].innerText = this.RX + "(KB)";
+	this.line1.style.width = this.parent.RX_total ? this.RX / this.parent.RX_total * 100 + "%" : 0;
+	this.line1.innerHTML = this.parent.RX_total ? "&nbsp;":"";
+	
+	this.obj2.rows[1].cells[0].innerText = this.tx + "(Kb/s)";
+	this.line2.style.width = this.UL ? this.tx / this.UL * 100 + "%":0;
+	this.line2.innerHTML = this.UL ? "&nbsp;":"";
+	
+	this.obj2.rows[1].cells[2].innerText = this.TX + "(KB)";
+	this.line3.style.width = this.parent.TX_total ? this.TX / this.parent.TX_total * 100 + "%":0;
+	this.line3.innerHTML = this.parent.TX_total ? "&nbsp;":"";
+	
+	this.obj.style.filter = this.alive?"":"progid:DXImageTransform.Microsoft.Gradient(gradientType=1,startColorStr=yellow,endColorStr=red)";
+	this.obj2.style.color = this.alive?"white":"black";
+	this.obj3.style.color = this.alive?"white":"black";
+}
+function resetVolumn(){
+        graphIF.location.href='rate.cgi?action=reset';
+}
+
+function refresh(){
+	graphIF.location.href='rate.cgi';
+
+	if(refreshtimer){
+		setTimeout("refresh();",parseInt(refreshtime.value)*1000);
+	}
+	
+}
+
+function auto_refresh(){
+
+	if(REF.innerText!="STOP"){
+		REF.innerText="STOP";
+		refreshtimer = setTimeout("refresh();",refreshtime.value);
+	}
+	else{
+		REF.innerText="AUTO";
+		refreshtimer = 0;
+	}
+}
+
+</script>
+<body style="margin:0;text-align:center" bgcolor="#336699">
+<DIV>
+<span style="width:100;color:white;font:12 Verdana;border:2 ridge white;filter:progid:DXImageTransform.Microsoft.Gradient(gradientType=0,startColorStr=white,endColorStr=green)"><b>INBOUND</b></span>
+<span style="width:100;color:white;font:12 Verdana;border:2 ridge white;filter:progid:DXImageTransform.Microsoft.Gradient(gradientType=0,startColorStr=white,endColorStr=purple)"><b>OUTBOUND</b></span>
+</DIV>
+<div id="graphspace"></div>
+<script>gmaster = new graphmaster("graphspace");</script>
+<DIV class="body">
+ Auto refresh per
+ <select class="qbopt" ID=refreshtime>
+  <option value="9">9</option>
+  <option value="7">7</option>
+  <option value="5">5</option>
+  <option value="3">3</option>
+ </select>
+ seconds
+ <button ID=REF class="qb" style="font:12 Verdana;width:70" onclick="auto_refresh();">AUTO</button>
+ <script>REF.click()</script>
+ <button class="qb" style="font:12 Verdana;width:70" onclick="resetVolumn();">Reset</button>
+</DIV>
+<iframe name="graphIF" src="rate.cgi" style="display:none"></iframe>
+</body>
+</html>

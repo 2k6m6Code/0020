@@ -1,0 +1,295 @@
+TEMPXML="/tmp/temp.xml"
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+MNTBASICXML="/tmp/boot/basic.xml"
+BASICXML="/usr/local/apache/qbconf/basic.xml"
+ACTIVEIPADDRXML="/usr/local/apache/active/ipaddr.xml"
+MNTIPADDRXML="/tmp/boot/ipaddr.xml"
+IPADDRXML="/usr/local/apache/qbconf/ipaddr.xml"
+ACTIVEIPBANKXML="/usr/local/apache/active/ipbank.xml"
+MNTIPBANKXML="/tmp/boot/ipbank.xml"
+IPBANKXML="/usr/local/apache/qbconf/ipbank.xml"
+ACTIVEPROUTEXML="/usr/local/apache/active/proute.xml"
+MNTPROUTEXML="/tmp/boot/proute.xml"
+PROUTEXML="/usr/local/apache/qbconf/proute.xml"
+ACTIVERTABLEXML="/usr/local/apache/active/rtable.xml"
+MNTRTABLEXML="/tmp/boot/rtable.xml"
+RTABLEXML="/usr/local/apache/qbconf/rtable.xml"
+ACTIVELVSXML="/usr/local/apache/active/lvs.xml"
+MNTLVSXML="/tmp/boot/lvs.xml"
+LVSXML="/usr/local/apache/qbconf/lvs.xml"
+ACTIVEDNSXML="/usr/local/apache/active/dns.xml"
+MNTDNSXML="/tmp/boot/dns.xml"
+DNSXML="/usr/local/apache/qbconf/dns.xml"
+
+DIALFLAG="/tmp/dialflag"
+TMPSYSIP="253.253.253.253"
+TMPSYSGW="253.253.253.254"
+TMPSYSSB="253.253.253.253\/32"
+TMPPPDEV="ppp999"
+
+set -x
+    #If pppoe reconnect,refresh configuration and qbserv update
+        xmlsystemip=$4
+        xmlgateway=$5
+        pppdev=$1
+        ispname=$6
+
+    #
+    if [ "$xmlsystemip" = "" ] || [ "$xmlgateway" = "" ] || [ "$pppdev" = "" ] || [ "$ispname" = "" ];then 
+        echo $(date) "$ispname has error info: IP:$xmlsystemip GW:$xmlgateway Dev:$pppdev" >>/mnt/log/ppperr.log
+        exit 1
+    fi 
+
+        #PPPoE Status
+        echo "PPPoE Up Time:" >>/tmp/pppoestatus
+        date >>/tmp/pppoestatus
+        echo "PPPoE Status:" >>/tmp/pppoestatus
+        ifconfig $pppdev >>/tmp/pppoestatus
+        echo "......................................................" >>/tmp/pppoestatus
+case "$ispname" in *[0-9]*\.*[0-9]*\.*[0-9]*\.*[0-9]*) exit 0;; esac #PPTP Server
+ if [ "$xmlsystemip" != "" ];then
+  if [ "$ispname" != "" ];then    #Use ISP name to correct original pppoe information.
+
+    if [ -f /sbin/qbserv ] || [ -f $BASICXML ];then  #Check qb can do update
+    pppori_ip=`grep ispname=\"$ispname\" $ACTIVEBASICXML|sed -e "s/  <.*systemip=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+
+     if [ "$pppori_ip" != "" ];then    #pppori_ip is empty before qbstart.
+        sleeptime=2
+        while [ -f "$TEMPXML" ] || [ -f /tmp/basiclock ]
+        do
+          sleep $sleeptime  #wait to modify the xml file
+          #let sleeptime=$sleeptime+3
+          let sleeptime=$(( $RANDOM % 20 ))
+        done
+        touch $TEMPXML                            
+        touch /tmp/basiclock                  
+       #Get original information again,because it sometimes will be changed.
+          if [ -f $DIALFLAG ];then
+             sleep 20 #Wait GUI to modify the config file
+             cp -af /usr/local/apache/qbconf/*.xml /usr/local/apache/active/
+             /opt/snmpd/snmptrap.sh linkup $pppori_iid $pppori_iid $pppdev $ispname
+             /opt/qb/bin/script/maillink.sh $pppori_iid $ispname $xmlsystemip $xmlgateway $pppdev &
+             echo 101 > /tmp/fifo.qbserv  #Do QB update 
+             sleep 20  #wait update finish
+             rm -f $TEMPXML
+             rm -f /tmp/basiclock
+             exit 0
+          fi
+          pppori_ip=`grep ispname=\"$ispname\" $ACTIVEBASICXML|sed -e "s/  <.*systemip=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_gw=`grep ispname=\"$ispname\" $ACTIVEBASICXML|sed -e "s/  <.*gateway=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_dev=`grep ispname=\"$ispname\" $ACTIVEBASICXML|sed -e "s/  <.*nic=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_iid=`grep ispname=\"$ispname\" $ACTIVEBASICXML|sed -e "s/  <.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppisptype=`grep ispname=\"$ispname\" $ACTIVEBASICXML|sed -e "s/  <.*isptype=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_subnet="$pppori_ip\/32"
+          xmlsubnet="$xmlsystemip\/32"       
+       if [ "$xmlsystemip" != "$pppori_ip" ] || [ "$pppdev" != "$pppori_dev" ] || [ "$xmlgateway" != "$pppori_gw" ];then
+         if [ "$pppori_ip" != "" ] && [ "$pppori_dev" != "" ] && [ "$pppori_gw" != "" ];then
+          sed -i -e '{
+          s/'\"$xmlsystemip\"'/'\"$TMPSYSIP\"'/g
+          s/'\>$xmlsystemip\<'/'\>$TMPSYSIP\<'/g
+          s/'\"$xmlsubnet\"'/'\"$TMPSYSSB\"'/g
+          #s/'\"$xmlgateway\"'/'\"$TMPSYSGW\"'/g
+          s/'\"$pppdev\"'/'\"$TMPPPDEV\"'/g
+          }' /usr/local/apache/active/*.xml /usr/local/apache/qbconf/*.xml /etc/ddclient/ddclient_sh
+          #Refresh all xml files
+          sed -i -e '{
+          s/'\"$pppori_ip\"'/'\"$xmlsystemip\"'/g
+          s/'\>$pppori_ip\<'/'\>$xmlsystemip\<'/g
+          s/'\"$pppori_subnet\"'/'\"$xmlsubnet\"'/g
+          s/'\"$pppori_gw\"'/'\"$xmlgateway\"'/g
+          s/'\"$pppori_dev\"'/'\"$pppdev\"'/g
+          }' /usr/local/apache/active/*.xml /usr/local/apache/qbconf/*.xml /etc/ddclient/ddclient_sh
+          update="$?"
+          sed -i -e '{
+          s/'\"$TMPSYSIP\"'/'\"$pppori_ip\"'/g
+          s/'\>$TMPSYSIP\<'/'\>$pppori_ip\<'/g
+          s/'\"$TMPSYSSB\"'/'\"$pppori_subnet\"'/g
+          #s/'\"$TMPSYSGW\"'/'\"$pppori_gw\"'/g
+          s/'\"$TMPPPDEV\"'/'\"$pppori_dev\"'/g
+          }' /usr/local/apache/active/*.xml /usr/local/apache/qbconf/*.xml /etc/ddclient/ddclient_sh
+          sync  #prevent write data error
+         else
+          echo $(date) "$ispname has error original info: IP:$pppori_ip GW:$pppori_gw Dev:$pppori_dev" >>/mnt/log/ppperr.log
+          exit 1
+         fi
+       fi 
+          #qbserv update
+          if [ "$update" != "1" ];then
+            if [ "$xmlsystemip" != "" ];then
+                 /opt/snmpd/snmptrap.sh linkup $pppori_iid $pppori_iid $pppdev $ispname
+                 /opt/qb/bin/script/maillink.sh $pppori_iid $ispname $xmlsystemip $xmlgateway $pppdev &
+                if [ "$pppisptype" != "pptp" ];then
+                  echo 101 > /tmp/fifo.qbserv  #Do QB update 
+                fi
+                 sleep 20  #wait update finish
+            fi
+          fi #end qbserv update
+        rm -f $TEMPXML
+        rm -f /tmp/basiclock
+      else   #Need to check pppori_ip for L2TP
+           pppori_ip=`grep ispname=\"$ispname\" $BASICXML|sed -e "s/  <.*systemip=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+           pppisptype=`grep ispname=\"$ispname\" $BASICXML|sed -e "s/  <.*isptype=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+           if [ "$pppori_ip" != "" ] && [ "$pppisptype" = "l2tp" ];then    
+           #Replace IP
+           sleeptime=5
+           while [ -f "$TEMPXML" ] || [ -f /tmp/basiclock ]
+           do
+             sleep $sleeptime  #wait to modify the xml file
+             let sleeptime=$(( $RANDOM % 15 ))
+           done
+           touch $TEMPXML                            
+           touch /tmp/basiclock                  
+           pppori_ip=`grep ispname=\"$ispname\" $BASICXML|sed -e "s/  <.*systemip=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+           pppori_gw=`grep ispname=\"$ispname\" $BASICXML|sed -e "s/  <.*gateway=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+           pppori_dev=`grep ispname=\"$ispname\" $BASICXML|sed -e "s/  <.*nic=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+           pppori_iid=`grep ispname=\"$ispname\" $BASICXML|sed -e "s/  <.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+           pppisptype=`grep ispname=\"$ispname\" $BASICXML|sed -e "s/  <.*isptype=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+           pppori_subnet="$pppori_ip\/32"
+           xmlsubnet="$xmlsystemip\/32"       
+            if [ "$xmlsystemip" != "$pppori_ip" ] || [ "$pppdev" != "$pppori_dev" ] || [ "$xmlgateway" != "$pppori_gw" ];then
+               if [ "$pppori_ip" != "" ] && [ "$pppori_dev" != "" ] && [ "$pppori_gw" != "" ];then
+                sed -i -e '{
+                s/'\"$xmlsystemip\"'/'\"$TMPSYSIP\"'/g
+                s/'\>$xmlsystemip\<'/'\>$TMPSYSIP\<'/g
+                s/'\"$xmlsubnet\"'/'\"$TMPSYSSB\"'/g
+                s/'\"$pppdev\"'/'\"$TMPPPDEV\"'/g
+                }' /usr/local/apache/qbconf/*.xml /etc/ddclient/ddclient_sh
+                #Refresh all xml files
+                sed -i -e '{
+                s/'\"$pppori_ip\"'/'\"$xmlsystemip\"'/g
+                s/'\>$pppori_ip\<'/'\>$xmlsystemip\<'/g
+                s/'\"$pppori_subnet\"'/'\"$xmlsubnet\"'/g
+                s/'\"$pppori_gw\"'/'\"$xmlgateway\"'/g
+                s/'\"$pppori_dev\"'/'\"$pppdev\"'/g
+                }' /usr/local/apache/qbconf/*.xml /etc/ddclient/ddclient_sh
+                sed -i -e '{
+                s/'\"$TMPSYSIP\"'/'\"$pppori_ip\"'/g
+                s/'\>$TMPSYSIP\<'/'\>$pppori_ip\<'/g
+                s/'\"$TMPSYSSB\"'/'\"$pppori_subnet\"'/g
+                s/'\"$TMPPPDEV\"'/'\"$pppori_dev\"'/g
+                }' /usr/local/apache/qbconf/*.xml /etc/ddclient/ddclient_sh
+                sync  #prevent write data error
+                sleep 1
+               else
+                echo $(date) "$ispname has error original info: IP:$pppori_ip GW:$pppori_gw Dev:$pppori_dev" >>/mnt/log/ppperr.log
+                exit 1
+               fi
+               rm -f $TEMPXML
+               rm -f /tmp/basiclock
+            fi   
+           
+           else
+               exit 0 #If no pppori_ip or not L2TP Link
+           fi
+      fi
+   else
+       while [ -d "/tmp/boot" ]
+       do
+           sleep 1
+       done
+
+       #Copy boot cfg to /tmp,because sed can't be used to replace file directly in the FAT system
+         cp -a /mnt/qb/conf/set/boot /tmp/
+   
+       #Get original information again,because it sometimes will be changed.
+          pppori_ip=`grep ispname=\"$ispname\" $MNTBASICXML|sed -e "s/  <.*systemip=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_gw=`grep ispname=\"$ispname\" $MNTBASICXML|sed -e "s/  <.*gateway=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_dev=`grep ispname=\"$ispname\" $MNTBASICXML|sed -e "s/  <.*nic=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_iid=`grep ispname=\"$ispname\" $MNTBASICXML|sed -e "s/  <.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_subnet="$pppori_ip\/32"
+          xmlsubnet="$xmlsystemip\/32"       
+       
+       if [ "$xmlsystemip" != "$pppori_ip" ] || [ "$pppdev" != "$pppori_dev" ] || [ "$xmlgateway" != "$pppori_gw" ];then
+          sed -i -e '{
+          s/'\"$xmlsystemip\"'/'\"$TMPSYSIP\"'/g
+          s/'\>$xmlsystemip\<'/'\>$TMPSYSIP\<'/g
+          s/'\"$xmlsubnet\"'/'\"$TMPSYSSB\"'/g
+          #s/'\"$xmlgateway\"'/'\"$TMPSYSGW\"'/g
+          s/'\"$pppdev\"'/'\"$TMPPPDEV\"'/g
+          }' /tmp/boot/*
+          #Refresh all xml files
+          sed -i -e '{
+          s/'\"$pppori_ip\"'/'\"$xmlsystemip\"'/g
+          s/'\>$pppori_ip\<'/'\>$xmlsystemip\<'/g
+          s/'\"$pppori_subnet\"'/'\"$xmlsubnet\"'/g
+          s/'\"$pppori_gw\"'/'\"$xmlgateway\"'/g
+          s/'\"$pppori_dev\"'/'\"$pppdev\"'/g
+          }' /tmp/boot/*
+          sed -i -e '{
+          s/'\"$TMPSYSIP\"'/'\"$pppori_ip\"'/g
+          s/'\>$TMPSYSIP\<'/'\>$pppori_ip\<'/g
+          s/'\"$TMPSYSSB\"'/'\"$pppori_subnet\"'/g
+          #s/'\"$TMPSYSGW\"'/'\"$pppori_gw\"'/g
+          s/'\"$TMPPPDEV\"'/'\"$pppori_dev\"'/g
+          }' /tmp/boot/*
+          if [ -d "/tmp/boot" ];then
+          cp -a /mnt/qb/conf/set/boot /mnt/qb/conf/set/boot.bak
+          rm -rf /mnt/qb/conf/set/boot
+          mv /tmp/boot /mnt/qb/conf/set/
+          if [ "$?" != "0" ];then
+            mv -f /mnt/qb/conf/set/boot.bak /mnt/qb/conf/set/boot
+            rm -rf /tmp/boot  #20100806 Brian To make sure other links can refresh ip
+            echo $(date) "$ispname:Fail to refresh IP on the boot procedure" >>/mnt/log/bootlog
+          fi
+          rm -rf /mnt/qb/conf/set/boot.bak
+          sync;sync  #prevent write data error
+          fi
+       fi 
+       if [ -d "/tmp/boot" ];then   #Brian 20100818 Need to delete the directory or other links will be stopped.
+       rm -rf /tmp/boot
+       exit 0 # No need to change anything   
+       fi 
+   fi
+  else #For PPPoE
+        #Get old ip and gateway
+        while [ "$pppori_ip" = "" ]
+        do
+          pppori_ip=`grep nic=\"$pppdev\" $ACTIVEBASICXML|sed -e "s/  <.*systemip=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_gw=`grep nic=\"$pppdev\" $ACTIVEBASICXML|sed -e "s/  <.*gateway=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_name=`grep nic=\"$pppdev\" $ACTIVEBASICXML|sed -e "s/  <.*ispname=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          pppori_iid=`grep nic=\"$pppdev\" $ACTIVEBASICXML|sed -e "s/  <.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          targetip=`grep nic=\"$pppdev\" $ACTIVEBASICXML|sed -e "s/  <.*target=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+          sleep 25
+        done
+          ping -I $pppdev $targetip >/dev/null 2>&1 & >/tmp/$pppdev.$!
+
+     if [ "$pppori_ip" != "" ];then    #pppori_ip is empty before qbstart.
+        sleeptime=2
+        while [ -f "$TEMPXML" ]
+        do
+          sleep $sleeptime  #wait to modify the xml file
+          #echo "PPPoE $pppdev sleep: $sleeptime" >>/tmp/pppoestatus
+          let sleeptime=$sleeptime+3
+          #echo "PPPoE $pppdev oriip: $pppori_ip" >>/tmp/pppoestatus
+          #echo "PPPoE $pppdev xmlsystemip: $xmlsystemip" >>/tmp/pppoestatus
+        done
+        touch $TEMPXML                            
+        #Refresh all xml files
+        sed -i -e '{
+        s/'\"$pppori_ip\"'/'\"$xmlsystemip\"'/g
+        s/'\"$pppori_gw\"'/'\"$xmlgateway\"'/g
+        }' /usr/local/apache/active/*.xml /usr/local/apache/qbconf/*.xml
+        update="$?"
+        sync  #prevent write data error
+
+          #qbserv update
+          if [ "$update" != "1" ];then
+            if [ "$xmlsystemip" != "" ];then
+             case $xmlsystemip in
+                #20090708 Brian Remove the check of 10.x.
+                #10?* )  echo "Wait real IP..." ;;   #Don't do QB update 
+                   * )  
+                        /opt/snmpd/snmptrap.sh linkup $pppori_iid $pppori_iid $pppdev $pppori_name
+                        echo 101 > /tmp/fifo.qbserv  #Do QB update 
+                        sleep 5  #wait update finish
+                      ;;
+             esac
+            fi
+          fi #end qbserv update
+        rm -f $TEMPXML
+      else
+      exit 0 #If no pppori_ip or $pppori_ip=$xmlsystemip
+      fi
+  fi
+ fi
+

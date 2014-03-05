@@ -1,0 +1,1572 @@
+#=============================================================================================
+sub showNewMPV
+{
+    my (%action)=@_;
+    
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    my $target;
+    
+    foreach my $isp ( @$isplist ) { if ( $isp->{iid} eq $action{iid}  ) { $target = $isp; } }
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr>);
+    print qq (<td width="5%"></td>);
+    print qq (<td class="bigtitle">MPV Configuration);
+
+    #Gary#######################################################################################################
+    
+    #get all tmv name
+    my $alltmvtype;
+    foreach my $isp ( @$isplist ) 
+    { 
+        if ( $isp->{isptype} eq 'tunnel'  ) 
+        { 
+            $alltmvtype = $alltmvtype.','.$isp->{ispname};
+        } 
+    }
+    print qq (<input type="hidden" class="qbtext" name="tmvtype" value="$alltmvtype">);
+    
+    my $tmpnum=maintainRtable( action=>'GETTABLENUM', isp=>$target->{iid} );
+    my @num=split( ',' ,$tmpnum );
+    my $showvalue;
+    my $alltmv;
+    my $alltmvname;
+    
+    if($tmpnum){ $action{allpool}=$tmpnum; } 
+    print qq (<input type="hidden" class="qbtext" name="allpool" value="$action{allpool}">);
+    
+    my $i=0;
+    foreach my $tmpalltmv (@num)
+    {
+        if($tmpalltmv eq ''){ next;}
+        my @tables=maintainRtable( action=>'GETPOOLISP', table_num=>$tmpalltmv );
+        $alltmv=$alltmv."Pool:".$tmpalltmv.",";
+        $alltmvname=$alltmvname."Pool:".$tmpalltmv.",";
+        foreach my $test (@tables)
+        {
+            $alltmv=$alltmv.','.$test.',';
+            foreach my $tmvname ( @$isplist )
+            {
+                if ( $tmvname->{iid} eq $test ){ $alltmvname=$alltmvname.','.$tmvname->{ispname};}
+            }
+        }
+        print qq (<input type="hidden" class="qbtext" name="alltmvname$i" value="$alltmvname">);
+        print qq (<input type="hidden" class="qbtext" name="alltmv$i" value="$alltmv">);
+        $i=$i+1;
+        $alltmv='';
+        $alltmvname=''; 
+    }
+    $action{alltmv}=$alltmv;
+    print qq (<input type="hidden" class="qbtext" name="alltmv"  id="alltmv" value="$action{alltmv}">);
+    print qq (<input type="hidden" class="qbtext" name="tmvend" id="tmvend" value="$i">);
+    ############################################################################################################
+
+
+    print qq (<hr size=1>);
+    print qq (<table onMouseout="hideTableInfo()">);
+    print qq (<td width="5%"></td>);
+    #-------------------------------------------------------------------------------------------
+    #  MPV: Interface
+    #-------------------------------------------------------------------------------------------
+    print qq (<input type="hidden" class="qbtext" name="nic" style="WIDTH: 120px" value="$target->{nic}" >);
+    foreach my $isp ( @$isplist ) { if ( $isp->{local} ne ""  ) { $local = $isp->{local}; } }
+    print qq (<input type="hidden" class="qbtext" style="WIDTH: 120px" id="localhost" value="$local">);
+        
+    #-------------------------------------------------------------------------------------------
+    #  MPV: Name 
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 260px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="ispname" style="WIDTH: 120px" value="$target->{ispname}" > (e.g.Hinet));
+    print qq (</td></tr>);
+    #-------------------------------------------------------------------------------------------
+    #  MPV: Tunnel Header Local IP
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Tunnel Header Local IP :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<select class="qbopt" name="wanisp" id="wanisp" style="width:120">\n); 
+    my @WANISPNAME = maintainBasic(action=>'GETWANISPNAME');
+    foreach my $wan ( @WANISPNAME )
+    {
+        my $showip = maintainBasic(action=>'GETIP', ispname=>$wan);
+        my $status = ( $target->{local} eq $showip ) ? ( 'selected' ) : ( '' );
+        print qq (<option $status value="$wan" title="$showip">$wan</option>\n);
+    }
+    print qq (/select);
+    print qq (</td></tr>);
+    print qq (<input type="hidden" class="qbtext" name="local" style="WIDTH: 120px" value="" >);
+    #-------------------------------------------------------------------------------------------
+    #  MPV: Tunnel Header Remote IP
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Tunnel Header Remote IP :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="remote" id="remote"  style="WIDTH: 120px" value="$target->{remote}" >);
+    print qq (</td></tr>);
+    
+    #-------------------------------------------------------------------------------------------
+    #  MPV: Remote Domain name
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Tunnel Header Remote Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="remotename" style="WIDTH: 120px" value="$target->{remotename}" >);
+    print qq (</td></tr>);
+    
+    #-------------------------------------------------------------------------------------------
+    #  MPV: Tunnel Virtual Local IP
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Tunnel Virtual Local IP :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="systemip" id="systemip" style="WIDTH: 120px" value="$target->{systemip}" onchange="iprange_dep();">);
+    print qq (</td></tr>);
+    
+    #-------------------------------------------------------------------------------------------
+    #  MPV: Tunnel Virtual Remote IP
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Tunnel Virtual Remote IP :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="gateway" id="gateway" style="WIDTH: 120px" value="$target->{gateway}" >);
+    print qq (</td></tr>);
+   
+        #-------------------------------------------------------------------------------------------
+    #  MPV: Download/Upload Speed
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (Download/Upload :);
+    my $bylist=( $target->{download} && $target->{upload} ) ? ('') : ('checked');
+    my $byhand=( $bylist eq 'checked' ) ? ('') : ('checked');
+    
+    #-->A by List
+    print qq (<td class="body" align="left">);
+    print qq (<input type="radio" name="udmethod"  id="bylist" value="bylist" $bylist>);
+    print qq (<select class="qbopt" name="downupspeed" id="downupspeed" style="width:180">\n);
+    foreach my $rate ( sort @gDOWNUPRATE ) { print qq (<option value="$rate">$rate</option>\n); }
+    print qq (</select></td>);
+
+    if ($action{iid})
+    {
+        print qq (<td width="10%">);
+        print qq (<select class="qbopt"  name="poolDownUp" id="poolDownUp" onclick="showTableInfo('downup')" style="width:120">);
+        foreach my $table_num (888,999,@num)
+        {
+            if ( $table_num eq '' ){ next; }
+    	    $showvalue="Pool : ".$table_num;
+    	    if ($table_num eq '888'){ $showvalue="Apply to this links"; }
+    	    if ($table_num eq '999'){ $showvalue="Apply to all links"; }
+    	    print qq (<option $status value="$table_num">$showvalue</option>);
+        }
+        print qq (<input class="qb" type="button" width="10" value="Save" onclick="Apply('downup');" title="Apply Download/Upload "></td>);
+        print qq (<td width="15%"></td>);
+    }
+
+    print qq (</tr>);
+
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    #-->B by user keying in
+    print qq (<td class="body" align="left">);
+    print qq (<input type="radio" name="udmethod" id="byhand" value="byhand" $byhand>);
+    print qq (<input class="qbtext" type="text" maxlength="8" size="8" name="download" value="$target->{download}">/);
+    print qq (<input class="qbtext" type="text" maxlength="8" size="8" name="upload" value="$target->{upload}">(Kbit));
+    print qq (</td></tr>);
+    
+    #-------------------------------------------------------------------------------------------
+    #  MPV MTU
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 20px">);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 220px">);
+    print qq (MPV MTU:);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 450px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    my $status=( $target->{mtu} eq '' || $target->{mtu} eq "1" ) ? ('checked') : ('');
+    print qq (<input type="radio" name="mtu" value="1" $status onclick="default_mtu_click();">1500);
+    my $status=( $target->{mtu} eq "0" ) ? ('checked') : ('');
+    print qq (<input type="radio" name="mtu" value="0" $status onclick="default_mtu_click();">1476);
+    my $status=( $target->{mtu} ne '' && $target->{mtu} ne "0" && $target->{mtu} ne "1" ) ? ('checked') : ('');
+    print qq (<input type="radio" name="mtu" value="" $status>User Defined );
+    print qq (<input class="qbtext" type="text" maxlength="4" size="4" name="mtu_value" value="$target->{mtu_value}">);
+    print qq (</td>);
+
+    if ($action{iid})
+    {
+        print qq (<td width="10%">);
+        print qq (<select class="qbopt"  name="poolMtu" id="poolMtu" onclick="showTableInfo('mtu')" style="width:120">);
+        foreach my $table_num (888,999,@num)
+        {
+    	    if ( $table_num eq '' ){ next; }
+    	    $showvalue="Pool : ".$table_num;
+    	    if ($table_num eq '888'){ $showvalue="Apply to this links"; }
+    	    if ($table_num eq '999'){ $showvalue="Apply to all links"; }
+    	    print qq (<option value="$table_num" >$showvalue</option>);
+        }
+        print qq (<input class="qb" type="button" width="10" value="Save" onclick="Apply('mtu');" title="Apply MTU">);
+        print qq (</td>);
+    }    
+    print qq (</tr>);
+
+    
+    #-------------------------------------------------------------------------------------------
+    #  MSS MSS
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 20px">);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 220px">);
+    print qq (MPV MSS:);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 450px">);
+    my $status=( $target->{mss} eq '' || $target->{mss} eq "1" ) ? ('checked') : ('');
+    print qq (<input type="radio" name="mss" value="1" $status onclick="default_mss_click();">1428);
+    my $status=( $target->{mss} eq "0" ) ? ('checked') : ('');
+    print qq (<input type="radio" name="mss" value="0" $status onclick="default_mss_click();">Orginal);
+    my $status=( $target->{mss} ne '' && $target->{mss} ne "0" && $target->{mss} ne "1" ) ? ('checked') : ('');
+    print qq (<input type="radio" name="mss" value="" $status>User Defined );
+    print qq (<input class="qbtext" type="text" maxlength="4" size="4" name="mss_value" value="$target->{mss_value}">);
+    print qq (</td>);
+
+    if ($action{iid})
+    {
+        print qq (<td width="10%">);
+        print qq (<select class="qbopt"  name="poolMss" id="poolMss" onclick="showTableInfo('mss')" onMouseout="hideTableInfo()" style="width:120">);
+
+        foreach my $table_num (888,999,@num)
+        {
+    	    if ( $table_num eq '' ){ next; }
+    	    $showvalue="Pool : ".$table_num;
+    	    if ($table_num eq '888'){ $showvalue="Apply to this links"; }
+    	    if ($table_num eq '999'){ $showvalue="Apply to all links"; }
+    	    print qq (<option value="$table_num" >$showvalue</option>);
+        }
+        print qq (<input class="qb" type="button" width="10" value="Save" onclick="Apply('mss');" title="Apply MSS">);
+        print qq (</td>);
+    }
+
+    print qq (</tr>);
+
+    if ($action{iid})
+    {
+        print qq (<input type="hidden" class="qbtext" name="stophide"  id="stophide" value="14">);
+    }
+    else
+    {
+        print qq (<input type="hidden" class="qbtext" name="stophide"  id="stophide" value="11">);
+    }
+   
+    #****************************************************************************************
+    # Advanced Option:
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 220px">);
+    print qq (<span id="adv" onClick="showhide('adv');">&raquo; Advanced Option:</span>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 450px"></td>);
+    print qq (<td width="10%"></td>);
+    print qq (</tr>);
+
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 220px">);
+    print qq (<span ul id="adv1" style="display:none;">);
+    print qq (<hr size=1>);
+    print qq (</td>);
+    print qq (</ul>);
+    print qq (</tr>);
+    
+    #****************************************************************************************
+    # NAT Support
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 220px">);
+    print qq (<span ul id="adv2" style="display:none;">);
+    print qq (NAT Support:);
+    print qq (</ul>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 450px">);
+    my $status=( $target->{mpv_nat} ) ? ('checked') : ('');
+    print qq (<span ul id="adv3" style="display:none;">);
+    print qq (<input type="radio" name="mpv_nat" value="1" $status>On);
+    my $status=( $target->{mpv_nat} ) ? ('') : ('checked');
+    print qq (<input type="radio" name="mpv_nat" value="0" $status>Off );
+    print qq (<input type="hidden" name="mpv_nat_ip" value="">);
+    print qq ($target->{mpv_nat_ip});
+    print qq (</ul>);
+
+    if ($action{iid})
+    {
+        print qq (<td width="10%">);
+        print qq (<span ul id="adv12" style="display:none;">);
+        print qq (<select class="qbopt"  name="poolNaSup" id="poolNaSup" onclick="showTableInfo('nasup')" onMouseout="hideTableInfo()" style="width:120">);
+        foreach my $table_num (888,999,@num)
+        {
+    	    if ( $table_num eq '' ){ next; }
+    	    $showvalue="Pool : ".$table_num;
+    	    if ($table_num eq '888'){ $showvalue="Apply to this links"; }
+    	    if ($table_num eq '999'){ $showvalue="Apply to all links"; }
+    	    print qq (<option value="$table_num" >$showvalue</option>);
+        }
+        print qq (<input class="qb" type="button" width="10" value="Save" onclick="Apply('nasup');" title="Apply NAT Support">);
+        print qq (</ul>);
+        print qq (</td>);
+    }
+    print qq (</tr>);
+   
+    
+    #-------------------------------------------------------------------------------------------
+    #  COMPRESSION
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 220px">);
+    print qq (<span ul id="adv4" style="display:none;">);
+    print qq (Compression :);
+    print qq (</ul>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 450px">);
+    my $status = ( $target->{ipcom} ) ? ('checked') : ('');
+    print qq (<span ul id="adv5" style="display:none;">);
+    print qq (<input type="radio" id="ipcom_on" name="ipcom" value="1" onclick="comp_check();" $status>On);
+    my $status = ( $target->{ipcom} ) ? ('') : ('checked');
+    print qq (<input type="radio" id="ipcom_off" name="ipcom" value="0" $status>Off);
+    print qq (</ul>);
+
+    print qq (<input type="hidden" name="enabletb" value="$target->{enabletb}">);
+    
+    if ($action{iid})
+    {
+        print qq (<td width="10%">);
+        print qq (<span ul id="adv13" style="display:none;">);
+        print qq (<select class="qbopt"  name="poolComp"  id="poolComp"  onclick="showTableInfo('comp')" onMouseout="hideTableInfo()" style="width:120">);
+        foreach my $table_num (888,999,@num)
+        {
+    	    if ( $table_num eq '' ){ next; }
+    	    $showvalue="Pool : ".$table_num;
+    	    if ($table_num eq '888'){ $showvalue="Apply to this links"; }
+    	    if ($table_num eq '999'){ $showvalue="Apply to all links"; }
+    	    print qq (<option value="$table_num" >$showvalue</option>);
+        }
+        print qq (<input class="qb" type="button" width="10" value="Save" onclick="Apply('comp');" title="Apply Compression">);
+        print qq (</ul>);
+        print qq (</td>);
+    }
+    print qq (</tr>);
+
+    
+    #-------------------------------------------------------------------------------------------
+    #  ENCRYPTION
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 220px">);
+    print qq (<span ul id="adv6" style="display:none;">);
+    print qq (Encryption :);
+    print qq (</ul>);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 450px">);
+    my $status = ( $target->{enc} ) ? ('checked') : ('');
+    print qq (<span ul id="adv7" style="display:none;">);
+    print qq (<input type="radio" id="enc_on" name="enc" value="1" onclick="document.getElementById('algslt').value = 'aes 128';" $status>On);
+    my $status = ( $target->{enc} ) ? ('') : ('checked');
+    print qq (<input type="radio" id="enc_off" name="enc" value="0" $status onclick="enc_off_click();">Off);
+    print qq (</ul>);
+#    print qq (</td>);
+
+    if ($action{iid})
+    {
+        print qq (<td width="10%">);
+        print qq (<span ul id="adv14" style="display:none;">);
+        print qq (<select class="qbopt"  name="poolEnc" id="poolEnc" onclick="showTableInfo('enc')" onMouseout="hideTableInfo()" style="width:120">);
+        foreach my $table_num (888,999,@num)
+        {
+    	    if ( $table_num eq '' ){ next; }
+    	    $showvalue="Pool : ".$table_num;
+    	    if ($table_num eq '888'){ $showvalue="Apply to this links"; }
+    	    if ($table_num eq '999'){ $showvalue="Apply to all links"; }
+    	    print qq (<option value="$table_num" >$showvalue</option>);
+        }
+        print qq (<input class="qb" type="button" width="10" value="Save" onclick="Apply('enc');" title="Apply Encryption & Algorithm">);
+        print qq (</ul>);
+        print qq (</td>);
+    }
+    print qq (</tr>);
+
+    
+    #-------------------------------------------------------------------------------------------
+    #  ALGORITHM
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 220px">);
+    print qq (<span ul id="adv8" style="display:none;">);
+    print qq (Algorithm :);
+    print qq (</ul>);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 450px">);
+    @ALGORITHM=("none", "des", "3des", "aes 128", "aes 192", "aes 256");
+    print qq (<span ul id="adv9" style="display:none;">);
+    print qq (<select class="qbopt" name="algslt" id="algslt" style="width:180">\n);
+    foreach my $algo ( @ALGORITHM )
+    {
+        my $status = ( $algo eq $target->{alg} ) ? ('selected') : ('');
+        print qq (<option $status value="$algo">$algo</option>\n);
+    }
+    print qq (</select>);
+    print qq (</ul>);
+    print qq (</td>);
+
+    #-------------------------------------------------------------------------------------------
+    # MPV:Remote Port
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 220px">);
+    print qq (<span ul id="adv10" style="display:none;">);
+    print qq (Management Port To Client:);
+    print qq (</ul>);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 1px; width: 450px">);
+    print qq (<span ul id="adv11" style="display:none;">);
+    print qq (<input class="qbtext" name="port" id="port" style="WIDTH: 120px" value="$target->{port}" onchange="tip();" > (4001~50000)<a id="tip">);
+    print qq (</ul>);
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (<hr size=1>);
+    
+    print qq (<table style="width:100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="Save" onclick="SaveMPV();">);
+    #print qq (<input class="qb" type="button" width="100" value="Back" onclick="BackMPV();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</table>);
+    
+}
+#showNewMPV
+
+
+#=============================================================================================
+
+sub scriptNewMPV
+{
+    print << "scriptNewHost";
+
+   <div id="TableDiv" class="infodiv"></div>
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    var tmvend=document.getElementById("tmvend").value;
+
+    
+    function tip(port,remote)
+    {
+        var port =document.getElementById("port").value;
+        var remote =document.getElementById("localhost").value;
+               
+       if (port != "")
+       {
+           if ( port > 50000 || port < 4001)
+           {
+               alert("Port Is Illegal!!//n");
+           }
+           if (remote != "")
+           {
+               document.getElementById("tip").innerHTML="(You Can Access The Client By 'Http://" + remote + ":" + port + "')";
+           }
+        }
+    }
+                   
+    function cgi_dep_onload() 
+    { 
+    	myform=window.document.forms[0]; 
+    	checkState();
+    }
+
+    function showTableInfo(select)
+    {
+    	var allpool=document.getElementById("allpool").value;
+    	allpool=allpool.split(',');
+    	var alltmvname=document.getElementById("tmvtype").value;
+    	alltmvname=alltmvname.split(',');
+       
+        if (select == 'ip' ){var poolid=document.getElementById('poolIp').value;}
+        if (select == 'downup' ){var poolid=document.getElementById('poolDownUp').value;}
+        if (select == 'mtu' ){var poolid=document.getElementById('poolMtu').value;}
+        if (select == 'mss' ){var poolid=document.getElementById('poolMss').value;}
+        if (select == 'enc' ){var poolid=document.getElementById('poolEnc').value;}
+        if (select == 'comp' ){var poolid=document.getElementById('poolComp').value;}
+        if (select == 'txqueue' ){var poolid=document.getElementById('poolTxqueue').value;}
+        if (select == 'nasup' ){var poolid=document.getElementById('poolNaSup').value;}
+//        if (select == 'alg' ){var poolid=document.getElementById('poolAlg').value;}
+        
+        if (poolid == '888' )
+	{}
+        else if (poolid != '999' )
+        {
+            var tmvid='Pool:'+poolid;
+               
+            for(var k=0;k<100;k++)
+            {
+                var stmv=document.getElementById("alltmvname"+k).value;
+                stmv=stmv.split(",");
+                if ( tmvid == stmv[0] ){ break; }
+            }
+	        with(TableDiv)
+  	        {
+  	            innerText='';
+	            innerText="<table class=infodivtable>";
+                    innerText+="<tr><td>"+stmv[0]+"</td>";
+                    innerText+="<td>Tmv name:</td>";
+	            for (var j=1;j<stmv.length;j++)
+	            {
+	                if (stmv[j] == ''){ continue; }
+                        TableDiv.innerText+="<td>"+stmv[j]+"</td>";
+                    }
+                    innerText+="</tr></table>";
+	            innerHTML=innerText;
+	            style.pixelRight = document.body.scrollRight;
+	            style.pixelTop = document.body.scrollTop + event.y;
+	            style.display="block";
+	        }
+        }
+        // all tmv links
+        if (poolid == '999')
+        { 
+            TableDiv.innerText='';
+	    TableDiv.innerText="<table class=infodivtable>";
+            TableDiv.innerText+="<td>Tmv name:"+"</td>";
+            for( var i=0;i<alltmvname.length;i++)
+            {
+	        if (alltmvname[i] == ''){ continue; }
+                TableDiv.innerText+="<td>"+alltmvname[i]+"</td>";
+	    }
+    	    with(TableDiv)
+    	    {
+                innerText+="</tr>";
+    	        innerText+="</table>";
+	        innerHTML=innerText;
+	        style.pixelRight = document.body.scrollRight;
+	        style.pixelTop = document.body.scrollTop + event.y;
+	        style.display="block";
+	    }
+        }
+    }
+    
+    function hideTableInfo(){TableDiv.style.display="none";}
+
+    function Apply(select)
+    {
+        var slt_wan = document.getElementById('wanisp');
+        var bylist = document.getElementById('bylist');
+        var systemip = document.getElementById('systemip').value;
+        var port = document.getElementById('port').value;
+        var gateway = document.getElementById('gateway').value;
+        var remote = document.getElementById('remote').value;
+        var ipcom_on = document.getElementById('ipcom_on');
+        var poolDownUp = document.getElementById('poolDownUp').value;
+        var poolMtu = document.getElementById('poolMtu').value;
+        var poolMss = document.getElementById('poolMss').value;
+        var poolEnc = document.getElementById('poolEnc').value;
+        var poolComp = document.getElementById('poolComp').value;
+        var poolNaSup = document.getElementById('poolNaSup').value;
+//        var poolAlg = document.getElementById('poolAlg').value;
+        var enc_on = document.getElementById('enc_on');
+        var algslt = document.getElementById('algslt').value;
+        var local;
+
+        if (!checkIP(systemip) || !checkIP(gateway))
+            return;
+        if (systemip == gateway)
+        {
+            alert('Tunnel Virtual Local IP and Remote IP can not be the same\\n');
+            return;
+        }
+        if (remote != '' && !isValidIP(remote))
+        {
+            alert("IP format error !!");
+            return;
+        }
+        for (var i = 0; i < slt_wan.length; i++)
+        {
+            if ( slt_wan[i].selected == true )
+            {
+                local = slt_wan[i].title;
+            }
+        }
+        if (port !="")
+        {
+            if ( port > 50000 || port < 4001)
+            {
+                alert('Port Is Illegal!!\\n');
+                return;
+            }
+        }
+        if (local == remote)
+        {
+            alert('Tunnel Header Source IP and Remote IP can not be the same\\n');
+            return;
+        }
+        if ( enc_on.checked == true && algslt == 'none' )
+        {
+            alert('MUST select Algorithm\\n');
+            return;
+        }
+        
+        //if (udmethod == 'bylist')
+        if (bylist.checked == true)
+        {
+            var downupspeed = document.getElementById('downupspeed').value;
+            var regex = /[a-zA-Z]/g;
+            downupspeed = downupspeed.replace(regex, "");
+            var rate = downupspeed.split('/');;
+            myform.download.value = rate[0];
+            myform.upload.value = rate[1];
+        }
+        
+        if ( ipcom_on.checked == false && enc_on.checked == false )
+        {
+           myform.algslt.value = 'none';
+        }
+        
+        /*alert(mtu);
+        if ( mtu == '' )
+        {
+            myform.mtu.value = mtu_value;
+        }
+        if ( mss == '' )
+        {
+            myform.mss.value = mss_value;
+        }*/
+
+        if (select == 'downup' && poolDownUp == '888')
+        	{SaveMPV();return;}        
+        else if(select == 'downup'){myform.action.value = 'APPLYDOWNUP';}
+
+	if (select == 'mtu' && poolMtu == '888')
+        	{SaveMPV();return;}
+        else if(select == 'mtu'){myform.action.value = 'APPLYMTU';}
+
+        if (select == 'mss' && poolMss == '888')
+        	{SaveMPV();return;}        
+        else if(select == 'mss'){myform.action.value = 'APPLYMSS';}
+
+        if (select == 'enc' && poolEnc == '888')
+        	{SaveMPV();return;}
+        else if(select == 'enc'){myform.action.value = 'APPLYENC';}
+
+        if (select == 'nasup' && poolNaSup == '888')
+        	{SaveMPV();return;}
+        else if(select == 'nasup'){myform.action.value = 'APPLYNASUP';}
+        if(select == 'alg'){myform.action.value = 'APPLYALG';}
+
+        if (select == 'comp' && poolComp == '888')
+        	{SaveMPV();return;}
+        else if(select == 'comp'){myform.action.value = 'APPLYCOMP';}
+        
+        myform.local.value = local;
+        myform.submit();
+        for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+
+
+    function iprange_dep()
+    {
+        var systemip = document.getElementById('systemip').value;
+        var gateway = document.getElementById('gateway');
+        var iparray = systemip.split('.');
+        gateway.value = iparray[0] + '\.' + iparray[1] + '\.' + iparray[2] + '\.';
+    }
+
+    function showhide(field)
+    {
+      var stop=document.getElementById("stophide").value;
+         for (var i = 1; i <= stop; i++)
+         {
+           var advs_name = field + i;
+           var advs = document.getElementById(advs_name).style;
+           if (advs.display =='none') advs.display='';
+           else advs.display='none';
+         }
+    }
+
+
+    function comp_check()
+    {
+        var algslt = document.getElementById('algslt');
+        document.getElementById('enc_on').checked = true;
+        if ( algslt.value == 'none' )
+        {
+            algslt.value = 'aes 128';
+        }
+        //Gary test close
+//        for (var i = 1; i <= 1; i++)
+//        {
+//            var advs_name = 'adv' + i;
+//            var advs = document.getElementById(advs_name).style;
+            //if (advs.display =='none') advs.display='';
+            //else advs.display='none';
+//            advs.display='none';
+//        }
+    }
+    
+    function enc_off_click() 
+    {
+        var algslt = document.getElementById('algslt');
+        var ipcom_on = document.getElementById('ipcom_on');
+        var ipcom_off = document.getElementById('ipcom_off');
+        
+        ipcom_on.checked = false;
+        ipcom_off.checked = true;
+        algslt.value = 'none';
+    }
+
+    function default_mtu_click()
+    {
+        var mtu_value = document.getElementById('mtu_value');
+        mtu_value.value = '';
+    }
+
+    function default_mss_click()
+    {
+        var mss_value = document.getElementById('mss_value');
+        mss_value.value = '';
+    }
+    
+    function SaveMPV()
+    {
+        var slt_wan = document.getElementById('wanisp');
+        //var udmethod = document.getElementById('udmethod').value;
+        var bylist = document.getElementById('bylist');
+        var systemip = document.getElementById('systemip').value;
+        var gateway = document.getElementById('gateway').value;
+        var port = document.getElementById('port').value;
+        var remote = document.getElementById('remote').value;
+        //var mtu = document.getElementById('mtu').value;
+        //var mss = document.getElementById('mss').value;
+        //var mtu_value = document.getElementById('mtu_value').value;
+        //var mss_value = document.getElementById('mss_value').value;
+        var enc_on = document.getElementById('enc_on');
+        var ipcom_on = document.getElementById('ipcom_on');
+        var algslt = document.getElementById('algslt').value;
+        var local;
+        
+        if (!checkIP(systemip) || !checkIP(gateway))
+            return;
+        if (systemip == gateway)
+        {
+            alert('Tunnel Virtual Local IP and Remote IP can not be the same\\n');
+            return;
+        }
+        if (remote != '' && !isValidIP(remote))
+        {
+            alert("IP format error !!");
+            return;
+        }
+        for (var i = 0; i < slt_wan.length; i++)
+        {
+            if ( slt_wan[i].selected == true )
+            {
+                local = slt_wan[i].title;
+            }
+        }
+        if (port !="")
+        {
+            if ( port > 50000 || port < 4001)
+            {
+                alert('Port Is Illegal!!\\n');
+                return;
+            }
+        }
+        if (local == remote)
+        {
+            alert('Tunnel Header Source IP and Remote IP can not be the same\\n');
+            return;
+        }
+        if ( enc_on.checked == true && algslt == 'none' )
+        {
+            alert('MUST select Algorithm\\n');
+            return;
+        }
+        
+        //if (udmethod == 'bylist')
+        if (bylist.checked == true)
+        {
+            var downupspeed = document.getElementById('downupspeed').value;
+            var regex = /[a-zA-Z]/g;
+            downupspeed = downupspeed.replace(regex, "");
+            var rate = downupspeed.split('/');;
+            myform.download.value = rate[0];
+            myform.upload.value = rate[1];
+        }
+        
+        if ( ipcom_on.checked == false && enc_on.checked == false )
+        {
+           myform.algslt.value = 'none';
+        }
+        
+        /*alert(mtu);
+        if ( mtu == '' )
+        {
+            myform.mtu.value = mtu_value;
+        }
+        if ( mss == '' )
+        {
+            myform.mss.value = mss_value;
+        }*/
+        myform.action.value = 'SAVE';
+        myform.local.value = local;
+        myform.submit();
+	for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+    
+    function BackMPV()
+    {
+        window.top.mainFrame.location.href = "mpv.cgi";
+    }
+    
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        
+        if ( action != '' )
+            window.top.mainFrame.location.href="mpv.cgi";
+    }
+    
+    </script>
+    
+scriptNewHost
+}
+#scriptNewHost
+
+sub byName
+{
+    $a->{hostname} cmp $b->{hostname};
+}
+#byName
+
+sub maintainMPV
+{
+    %action = @_;
+    my $ispref = XMLread($gPATH.'basic.xml');
+    my $isplist = $ispref->{isp};
+    my $exist = 0;
+    
+    if ( !$action{action} ) { return; } 
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        delete($action{action});
+	$action{state}='FORMATOK';
+	$action{enabled}='1';
+	$action{isptype}='tunnel';
+        $action{target} = $action{gateway};
+        
+        #------------------------------------
+        #  to check local and  remote ip
+        #------------------------------------
+        foreach my $isp ( @$isplist )
+        {
+            if ( $action{iid} eq $isp->{iid} ) { next; }
+            if ( $isp->{local} eq $action{local} && $isp->{remote} eq $action{remote} && $isp->{isptype} eq $action{isptype}) 
+            {
+                $gMSGPROMPT.=qq ( ERROR : Duplicated local and remote IP with ISP$isp->{iid} $isp->{ispname}\\n );
+                return;
+            }
+        }
+        if ($action{port} ne "")
+        {
+            if ( $action{port} eq $isp->{port} && !$action{port})
+            {
+            	$gMSGPROMPT.=qq ( ERROR : PORT $action{port} IS REPEAT!!\\n );
+            	return;
+            }
+          #20130816 Brian To add reply rules for management port automatically.
+           my @service = ("maintain", "ssh");
+           my @rservers = ($action{gateway}, "system");
+           maintainIniroute(action=>'SMARTADD', viewpoint=>'lvs', local=>$action{local}, isptype=>$action{isptype}, rservers=>\@rservers, service=>\@service);	
+        }
+        if ( $action{mtu_value} ne '' )
+        {
+            $action{mtu} = $action{mtu_value};
+        }
+        if ( $action{mss_value} ne '' )
+        {
+            $action{mss} = $action{mss_value};
+        }
+        #------------------------------------
+        #  mpv already exist
+        #------------------------------------
+        if ( $action{iid} )
+        {
+            #--- dmpv -----
+            #
+            $action{remote} = ($action{remote} eq "" ) ? ("0.255.0.".$action{iid}) : ($action{remote});
+            
+            #--- ddns -----
+            #
+            if ($action{remotename} ne "")
+            {
+                $dnsip=runCommand(command=>'/opt/qb/bin/script/ns ', params=>$action{remotename});
+                $dnsip=~s/\n//g;
+                if ($dnsip eq "")
+                {
+                    $gMSGPROMPT.=qq ( ERROR : Can't get the domain name's IP\\n );
+                    return;
+                }
+                $action{remote}=$dnsip;
+            }
+            
+            if ( $action{mpv_nat} eq "1" )
+            {
+                my $mpv_nat_ip=runCommand(command=>'/sbin/wget ', params=>'--bind-address='.$action{local}.' -O - -q icanhazip.com --timeout=10');
+                $mpv_nat_ip=~s/\n//g;
+                #wget -O - -q icanhazip.com --bind-address=192.168.1.110 --timeout=10
+                $action{mpv_nat_ip}=$mpv_nat_ip;
+            }
+            
+            #--- find target mpv and replace it-----
+            #
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{iid} eq $action{iid} )
+                {
+		    maintainIPBank(from=>'isp'.$action{iid}.'system', action=>'remove', ipset=>["$isp->{systemip}"]);
+                    maintainProute( action=>'SAVEMPV', isp=>$action{iid}, ip=>$action{systemip} );
+                    maintainIPaddress( action=>"DEL", ip=>$isp->{systemip}, nic=>$isp->{nic}, isp=>$isp->{iid} );
+                    $isp = \%action;
+                }
+            }
+        }
+        #------------------------------------
+        # new mpv
+        #------------------------------------
+        else
+        {
+            #----- check mpv numbers -----
+            #
+            $totalmpv = 0;
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{isptype} eq "tunnel" ) { $totalmpv++; }
+            }
+            if ( $gMAXMPVISP  && $totalmpv >= $gMAXMPVISP && $action{isptype} eq "tunnel" )
+            {
+                $gMSGPROMPT.=qq( Upper bound of MPV ISP is $gMAXMPVISP \\n);
+                #print " Upper bound of MPV ISP is $gMAXMPVISP \n";
+                return;
+            }
+            
+            #----- check mpv name -----
+            #
+            if ( $action{ispname}!~/.{3,12}/ || $action{ispname}=~m/$gBIG5/ || $action{ispname}=~m/\s+/ )
+            {
+                $gMSGPROMPT.=qq (ERROR:ISPNAME is a MUST or Format Error\\n);
+                #print "ERROR:ISPNAME is a MUST or Format Error\n";
+                return; 
+            }
+            
+            #----- check if this ISP name conflicts with other ISP -----
+            #
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{ispname} ne $action{ispname} ) { next; }
+                $gMSGPROMPT.=qq (ERROR:$action{ispname} has been used by ISP$isp->{iid}\\n);
+                #print "ERROR:$action{ispname} has been used by ISP$isp->{iid}\n";
+                return;
+            }
+            
+            #------ get isp iid ------
+            #
+            my $ispiid = 1;
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{iid} eq 'system' ) { next; }
+                if ( $isp->{iid} ne $ispiid )
+                {
+                    $action{iid} = $ispiid;  
+                    last;
+                }
+                $ispiid++;
+				if ( $ispiid eq '154' ) { $ispiid+=2; }
+                $action{iid} = $ispiid;  
+            }
+            
+            #---- get mpv iid ----
+            #
+            my %mpv_nic;
+            foreach my $isp ( @$isplist )
+            {
+            	if ( $isp->{isptype} eq 'tunnel' || $isp->{isptype} eq 'dtunnel' )
+            	{
+            	    $mpv_nic{$isp->{nic}} = 1;
+            	}
+            	
+            }
+            for my $mpv ( 0..$gMAXMPVISP )
+            {
+            	my $nic = 'mpv'.$mpv;
+            	
+            	if( !exists($mpv_nic{$nic}) )
+            	{
+            	    $action{nic} = $nic;
+            	    last;
+            	}
+            }
+            #----- dmpv ------
+            #
+            $action{remote} = ($action{remote} eq "" ) ? ("0.255.0.".$action{iid}) : ($action{remote});
+            
+            #----- ddns ------
+            #
+            if ($action{remotename} ne "")
+            {
+                $dnsip=runCommand(command=>'/opt/qb/bin/script/ns ', params=>$action{remotename});
+                $dnsip=~s/\n//g;$dnsip=~s/\n//g;
+                if ($dnsip eq "")
+                {
+                    $gMSGPROMPT.=qq ( ERROR : Can't get the domain name's IP\\n );
+                    return;
+                }
+                $action{remote}=$dnsip;
+            }
+            
+            #----- push new mpv to hash array -----
+            #
+            push( @$isplist, \%action);
+            maintainZone( action=>"ADDISPOFDMZ", dmzid=>$action{iid} );
+            maintainDNS( action=>'NEWISP', isp=>$action{iid} );
+            maintainIPBank(action=>'createisp', isp=>$action{iid} );
+            maintainService( action=>'ADDISP', isp=>$action{iid} );
+            maintainFwmark( action=>'ADDISP', isp=>$action{iid} );
+            maintainProute( action=>'ADDMPV', isp=>$action{iid}, ip=>$action{systemip} );
+            $action{dport} += $action{iid};
+        }
+        #----- save xml before dependence -----
+        #
+        @$isplist = sort { $a->{iid} <=> $b->{iid} } @$isplist;
+        $gIid = $action{iid};
+        XMLwrite($ispref, $gPATH."basic.xml");
+
+	#@dep5: update ipaddr for system IP and VS IP of ISP $action{iid}
+        #**************************************************************************************
+        my %dmzip_of_this_isp=maintainDMZreg(isp=>$action{iid}, action=>"GETDMZIPHASH");
+        my @vsIP=maintainIPBank(from=>'isp'.$action{iid}.'public', action=>'read');
+        my $isVSIP=( grep(/$action{systemip}/, @vsIP) ) ? 1 : 0;
+        if ( !$isVSIP || exists($dmzip_of_this_isp{$action{systemip}}) )
+        {
+            maintainIPaddress( action=>"DEL", ip=>$action{systemip}, nic=>$action{nic}, isp=>$action{iid} );
+        }
+
+        if ( !exists($dmzip_of_this_isp{$action{systemip}}) )
+        {
+            maintainIPaddress( action=>"ADD", ip=>$action{systemip}, nic=>$action{nic}, isp=>$action{iid} );
+        }
+
+        #@dep: 
+        #maintainIPBank(from=>'isp'.$action{iid}.'system', action=>'remove', ipset=>["$target->{systemip}"]);
+	maintainIPBank(to=>'isp'.$action{iid}.'system', action=>'append', ipset=>["$action{systemip}"]);
+	maintainRtable(action=>'NEWISP', isp=>$action{iid} );
+
+	#$gMSGPROMPT.=qq (Save Success!!\\n); 
+        LogUserAction( action=>'SAVEMPV', iid=>$action{iid}, ispname=>$action{ispname}, systemip=>$action{systemip}, target=>$action{target}, remote=>$action{remote}, nic=>$action{nic} );
+    }
+    elsif ( $action{action}=~m/^APPLYDOWNUP$/ )
+    {
+    
+    	my $ispref=XMLread($gPATH.'basic.xml');
+    	my $isplist=$ispref->{isp};
+    	
+        if ( $action{poolDownUp} eq '999' )
+        {
+    	     foreach my $item ( @$isplist )
+    	     {
+    	     	if ($item->{isptype} eq 'tunnel')
+    	     	{
+    	     	     $item->{download}=$action{download};
+    	     	     $item->{upload}=$action{upload};
+    	     	}
+    	     }
+        }
+        else
+        {
+    	     my @tables=maintainRtable( action=>'GETPOOLISP', table_num=>$action{poolDownUp} );
+    	     foreach my $path ( @tables )
+    	     {
+    	         $poolisp=$poolisp.','.$path;
+    	     }
+    	     $action{poolisp}=$poolisp;
+             my @iid=split( ',', $action{poolisp} );
+    	 
+    	     foreach my $tmvisp (@iid)
+    	     {
+    	         if ( $tmvisp eq '' ){ next; }
+    	         foreach my $item ( @$isplist )
+    	         {
+    	     	     if ($item->{iid} eq $tmvisp && $item->{isptype} eq 'tunnel')
+    	     	     {
+    	     	         $item->{download}=$action{download};
+    	     	         $item->{upload}=$action{upload};
+    	     	     }
+    	          }
+              }
+         }
+         XMLwrite($ispref, $gPATH."basic.xml");
+    }
+    elsif ( $action{action}=~m/^APPLYMTU$/ )
+    {
+    
+    	my $ispref=XMLread($gPATH.'basic.xml');
+    	my $isplist=$ispref->{isp};
+    	
+        if ( $action{poolMtu} eq '999' )
+        {
+    	     foreach my $item ( @$isplist )
+    	     {
+    	     	if ($item->{isptype} eq 'tunnel')
+    	     	{
+    	     	         if ( $action{mtu} eq '1' || $action{mtu} eq '0' )
+    	     	         { 
+    	     	    	     $item->{mtu}=$action{mtu}; 
+    	     	    	     $item->{mtu_value}='';
+    	     	         }
+    	     	         else 
+    	     	         { 
+    	     	    	     $item->{mtu}=$action{mtu_value}; 
+    	     	    	     $item->{mtu_value}=$action{mtu_value};
+    	     	         }
+    	     	}
+    	     }
+        }
+        else
+        {
+    	     my @tables=maintainRtable( action=>'GETPOOLISP', table_num=>$action{poolMtu} );
+    	     foreach my $path ( @tables )
+    	     {
+    	         $poolisp=$poolisp.','.$path;
+    	     }
+    	     $action{poolisp}=$poolisp;
+             my @iid=split( ',', $action{poolisp} );
+    	 
+    	     foreach my $tmvisp (@iid)
+    	     {
+    	         if ( $tmvisp eq '' ){ next; }
+    	         foreach my $item ( @$isplist )
+    	         {
+    	     	     if ($item->{iid} eq $tmvisp && $item->{isptype} eq 'tunnel')
+    	     	     {
+    	     	         if ( $action{mtu} eq '1' || $action{mtu} eq '0' )
+    	     	         { 
+    	     	    	     $item->{mtu}=$action{mtu}; 
+    	     	    	     $item->{mtu_value}='';
+    	     	         }
+    	     	         else 
+    	     	         { 
+    	     	    	     $item->{mtu}=$action{mtu_value}; 
+    	     	    	     $item->{mtu_value}=$action{mtu_value};
+    	     	         }
+    	     	     }
+    	          }
+              }
+         }
+         XMLwrite($ispref, $gPATH."basic.xml");
+    }
+    elsif ( $action{action}=~m/^APPLYMSS$/ )
+    {
+    
+    	my $ispref=XMLread($gPATH.'basic.xml');
+    	my $isplist=$ispref->{isp};
+    	
+        if ( $action{poolMss} eq '999' )
+        {
+    	     foreach my $item ( @$isplist )
+    	     {
+    	     	if ($item->{isptype} eq 'tunnel')
+    	     	{
+    	     	         if ( $action{mss} eq '1' || $action{mss} eq '0' )
+    	     	         { 
+    	     	    	     $item->{mss}=$action{mss}; 
+    	     	    	     $item->{mss_value}='';
+    	     	         }
+    	     	         else 
+    	     	         { 
+    	     	    	     $item->{mss}=$action{mss_value}; 
+    	     	    	     $item->{mss_value}=$action{mss_value};
+    	     	         }
+    	     	}
+    	     }
+        }
+        else
+        {
+    	     my @tables=maintainRtable( action=>'GETPOOLISP', table_num=>$action{poolMss} );
+    	     foreach my $path ( @tables )
+    	     {
+    	         $poolisp=$poolisp.','.$path;
+    	     }
+    	     $action{poolisp}=$poolisp;
+             my @iid=split( ',', $action{poolisp} );
+    	 
+    	     foreach my $tmvisp (@iid)
+    	     {
+    	         if ( $tmvisp eq '' ){ next; }
+    	         foreach my $item ( @$isplist )
+    	         {
+    	     	     if ($item->{iid} eq $tmvisp && $item->{isptype} eq 'tunnel')
+    	     	     {
+    	     	         if ( $action{mss} eq '1' || $action{mss} eq '0' )
+    	     	         { 
+    	     	    	     $item->{mss}=$action{mss}; 
+    	     	    	     $item->{mss_value}='';
+    	     	         }
+    	     	         else 
+    	     	         { 
+    	     	    	     $item->{mss}=$action{mss_value}; 
+    	     	    	     $item->{mss_value}=$action{mss_value};
+    	     	         }
+    	     	     }
+    	          }
+              }
+         }
+         XMLwrite($ispref, $gPATH."basic.xml");
+    }
+    elsif ( $action{action}=~m/^APPLYENC$/ )
+    {
+    
+    	my $ispref=XMLread($gPATH.'basic.xml');
+    	my $isplist=$ispref->{isp};
+    	
+        if ( $action{poolEnc} eq '999' )
+        {
+    	     foreach my $item ( @$isplist )
+    	     {
+    	     	if ($item->{isptype} eq 'tunnel')
+    	     	{
+    	     	    if ( $action{enc} eq '0' )
+    	     	    {
+    	     	        $item->{ipcom}=$action{ipcom};
+    	     	        $item->{alg}=$action{alg};
+    	     	        $item->{enc}=$action{enc};
+    	     	    }
+    	     	    else
+    	     	    {
+    	     	        $item->{enc}=$action{enc};
+    	     	        $item->{alg}=$action{alg};
+    	     	    }
+    	     	}
+    	     }
+        }
+        else
+        {
+    	     my @tables=maintainRtable( action=>'GETPOOLISP', table_num=>$action{poolEnc} );
+    	     foreach my $path ( @tables )
+    	     {
+    	         $poolisp=$poolisp.','.$path;
+    	     }
+    	     $action{poolisp}=$poolisp;
+             my @iid=split( ',', $action{poolisp} );
+    	 
+    	     foreach my $tmvisp (@iid)
+    	     {
+    	         if ( $tmvisp eq '' ){ next; }
+    	         foreach my $item ( @$isplist )
+    	         {
+    	     	     if ($item->{iid} eq $tmvisp && $item->{isptype} eq 'tunnel')
+    	     	     {
+    	     	         if ( $action{enc} eq '0' )
+    	     	         {
+    	     	             $item->{ipcom}=$action{ipcom};
+    	     	             $item->{alg}=$action{alg};
+    	     	             $item->{enc}=$action{enc};
+    	     	         }
+    	     	         else
+    	     	         {
+    	     	             $item->{enc}=$action{enc};
+    	     	             $item->{alg}=$action{alg};
+    	     	         }
+    	     	     }
+    	          }
+              }
+         }
+         XMLwrite($ispref, $gPATH."basic.xml");
+    }
+    #####Gary
+    elsif ( $action{action}=~m/^APPLYNASUP$/ )
+    {
+    
+    	my $ispref=XMLread($gPATH.'basic.xml');
+    	my $isplist=$ispref->{isp};
+        if ( $action{mpv_nat} eq "1" )
+        {
+            my $mpv_nat_ip=runCommand(command=>'/sbin/wget ', params=>'--bind-address='.$action{local}.' -O - -q icanhazip.com --timeout=10');
+            $mpv_nat_ip=~s/\n//g;
+            $action{mpv_nat_ip}=$mpv_nat_ip;
+        }
+    	
+        if ( $action{poolNaSup} eq '999' )
+        {
+    	     foreach my $item ( @$isplist )
+    	     {
+    	     	if ($item->{isptype} eq 'tunnel')
+    	     	{
+    	     	    $item->{mpv_nat}=$action{mpv_nat};
+    	     	}
+    	     }
+        }
+        else
+        {
+    	     my @tables=maintainRtable( action=>'GETPOOLISP', table_num=>$action{poolNaSup} );
+    	     foreach my $path ( @tables )
+    	     {
+    	         $poolisp=$poolisp.','.$path;
+    	     }
+    	     $action{poolisp}=$poolisp;
+             my @iid=split( ',', $action{poolisp} );
+    	 
+    	     foreach my $tmvisp (@iid)
+    	     {
+    	         if ( $tmvisp eq '' ){ next; }
+    	         foreach my $item ( @$isplist )
+    	         {
+    	     	     if ($item->{iid} eq $tmvisp && $item->{isptype} eq 'tunnel')
+    	     	     {
+       	     	         $item->{mpv_nat}=$action{mpv_nat};
+    	     	     }
+    	          }
+              }
+         }
+         XMLwrite($ispref, $gPATH."basic.xml");
+    }     
+    elsif ( $action{action}=~m/^APPLYALG$/ )
+    {
+    
+        my $ispref=XMLread($gPATH.'basic.xml');
+        my $isplist=$ispref->{isp};
+    	
+        if ( $action{poolEnc} eq '999' )
+        {
+    	    foreach my $item ( @$isplist )
+    	    {
+    	        if ($item->{isptype} eq 'tunnel')
+    	     	{
+    	     	    if ( $action{enc} eq '0' )
+    	     	    {
+    	     	        $item->{ipcom}=$action{ipcom};
+    	     	        $item->{alg}=$action{alg};
+    	     	        $item->{enc}=$action{enc};
+    	     	    }
+    	     	    else
+    	     	    {
+    	     	        $item->{enc}=$action{enc};
+    	     	    }
+    	     	}
+    	     }
+        }
+        else
+        {
+    	     my @tables=maintainRtable( action=>'GETPOOLISP', table_num=>$action{poolEnc} );
+    	     foreach my $path ( @tables )
+    	     {
+    	         $poolisp=$poolisp.','.$path;
+    	     }
+    	     $action{poolisp}=$poolisp;
+             my @iid=split( ',', $action{poolisp} );
+    	 
+    	     foreach my $tmvisp (@iid)
+    	     {
+    	         if ( $tmvisp eq '' ){ next; }
+    	         foreach my $item ( @$isplist )
+    	         {
+    	     	     if ($item->{iid} eq $tmvisp && $item->{isptype} eq 'tunnel')
+    	     	     {
+      	     	         if ( $action{ipcom} eq '0' )
+    	     	         {
+    	     	             $item->{ipcom}=$action{ipcom};
+    	     	             $item->{alg}=$action{alg};
+    	     	             $item->{enc}=$action{enc};
+    	     	         }
+    	     	         else
+    	     	         {
+       	     	             $item->{enc}=$action{enc};
+       	     	         }
+    	     	     }
+    	          }
+              }
+         }
+         XMLwrite($ispref, $gPATH."basic.xml");
+    }
+    ####     
+    elsif ( $action{action}=~m/^APPLYCOMP$/ )
+    {
+    
+    	my $ispref=XMLread($gPATH.'basic.xml');
+    	my $isplist=$ispref->{isp};
+    	
+        if ( $action{poolComp} eq '999' )
+        {
+    	     foreach my $item ( @$isplist )
+    	     {
+    	     	if ($item->{isptype} eq 'tunnel')
+    	     	{
+    	     	    if ( $action{ipcom} eq '1' )
+    	     	    {
+    	     	        $item->{ipcom}=$action{ipcom};
+    	     	        $item->{alg}=$action{alg};
+    	     	        $item->{enc}=$action{enc};
+    	     	    }
+    	     	    else
+    	     	    {
+    	     	        $item->{ipcom}=$action{ipcom};
+    	     	    }
+    	     	}
+    	     }
+        }
+        else
+        {
+    	     my @tables=maintainRtable( action=>'GETPOOLISP', table_num=>$action{poolComp} );
+    	     foreach my $path ( @tables )
+    	     {
+    	         $poolisp=$poolisp.','.$path;
+    	     }
+    	     $action{poolisp}=$poolisp;
+             my @iid=split( ',', $action{poolisp} );
+    	 
+    	     foreach my $tmvisp (@iid)
+    	     {
+    	         if ( $tmvisp eq '' ){ next; }
+    	         foreach my $item ( @$isplist )
+    	         {
+    	     	     if ($item->{iid} eq $tmvisp && $item->{isptype} eq 'tunnel')
+    	     	     {
+    	     	         if ( $action{ipcom} eq '1' )
+    	     	         {
+    	     	             $item->{ipcom}=$action{ipcom};
+    	     	             $item->{alg}=$action{alg};
+    	     	             $item->{enc}=$action{enc};
+    	     	         }
+    	     	         else
+    	     	         {
+       	     	             $item->{ipcom}=$action{ipcom};
+       	     	         }
+    	     	     }
+    	         }
+              }
+         }
+         XMLwrite($ispref, $gPATH."basic.xml");
+    }
+
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet = $action{mpv};
+        
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some MPV first\\n\\n);
+            return;
+        }
+	foreach my $del ( @$delet )
+	{
+
+            #@dep1
+            ###########################################################################################
+            #1:ipbank.xml:clear ip bank of focused ISP in ipbank.xml
+            maintainIPBank(action=>'delisp', isp=>$del);
+
+            #@dep2
+            ###########################################################################################
+            #2:dmzreg.xml:  clear all DMZ zone hosts of $del in dmzreg.xml
+            #maintainDMZreg(action=>'CLEAR', isp=>$del);
+
+            #@dep3
+            ###########################################################################################
+            #3:ipneigh.xml:  clear ipneigh entries of $target->{subnet} in ipneigh.xml
+            maintainIPneigh( action=>'CLEAR', isp=>$del );
+
+            #@dep4
+            ###########################################################################################
+            #4:ipaddr.xml:  clear ipaddress entries of $target->{subnet} in ipaddr.xml
+            maintainIPaddress(  action=>'CLEAR', isp=>$del  );
+
+            #@dep5
+            ###########################################################################################
+            #5:subnet.xml:CLEAR ALL DMZ SUBNET Belonging to this ISP *********
+            #maintainDMZ( action=>"MARKDMZSUBNETOFISP", isp=>$del );
+
+            #@dep6
+            ###########################################################################################
+            #6:lvs.xml:  MARK lvs set with the Vertual IP of isp$del in lvs.xml as DIRTY
+            #maintainVS( action=>'MARKVSERVERS', isp=>"$del" );
+
+            #@dep7
+            ###########################################################################################
+            #7.interrt.xml ²¾°£³o­?ISP ©Ҧ³ªº interroute entries
+            #maintainInterrt( action=>"CLEAR", isp=>$del );
+
+            #@dep8
+            ###########################################################################################
+            #8. overview.xml ±N¦¹ ISP ªº DMZ §R°£
+            #maintainZone( action=>"DELISPOFDMZ", dmzid=>$del );
+
+	    #@dep9
+            ###########################################################################################
+            #9. rtable.xml ±N¦¹ ISP ªº DMZ §R°£
+            maintainRtable( action=>"DELISP", isp=>$del );
+
+            #@dep10
+            ###########################################################################################
+            #10. dns.xml §R°£ ISP ªº DNS entry
+            #maintainDNS( action=>'DELISP', isp=>$del  );
+
+            maintainService( action=>'DELISP', isp=>$del );
+            maintainFwmark( action=>'DELISP', isp=>$del );
+            maintainProute( action=>'DELMPV', isp=>$del );
+	}
+        my @temparray;
+        foreach my $isp ( @$isplist) 
+        {
+            if ( grep(/^$isp->{iid}$/, @$delet) )
+            {
+              LogUserAction( action=>'DELMPV', iid=>$isp->{iid}, ispname=>$isp->{ispname} );
+              next;
+            }
+            push(@temparray, $isp);
+        }
+        $ispref->{isp}=\@temparray;
+        XMLwrite($ispref, $gPATH."basic.xml");
+        maintainFwmark( action=>'ISPUPDATED' );
+        #LogUserAction( action=>'DELISP', iid=>$isp->{iid}, ispname=>$isp->{ispname} );
+    }
+    maintainRtable( action=>"DSIPUPDATE" );
+}
+#
+1

@@ -1,0 +1,178 @@
+#!/bin/bash
+#set -x
+gateway=$1        #Remote role:Tunnel fake system IP
+newremoteip=$2    #Remote role:Local real IP
+systemip=$3       #Remote role:Tunnel fake remote IP
+localip=$4        #Remote role:Remote real IP
+remote_ipcom=$5   #Remote role:ipcom
+remote_enc=$6     #Remote role:Encrypt
+remote_encalg=$7  #Remote role:Encrypt Algorithm
+
+if [ "$remote_encalg" = "aes128" ];then
+remote_encalg="aes 128"
+elif [ "$remote_encalg" = "aes192" ];then
+remote_encalg="aes 192"
+elif [ "$remote_encalg" = "aes256" ];then
+remote_encalg="aes 256"
+fi
+
+BASICXML="/usr/local/apache/qbconf/basic.xml"
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+
+# to check which tunnel match and get tunnel info.
+#
+ispinfo=`grep "gateway=\"$gateway\"" $ACTIVEBASICXML|grep "systemip=\"$systemip\""`
+if [ "$localip" != "" ];then
+    ispinfo=`echo $ispinfo|grep "local=\"$localip\""`
+fi
+if [ "$ispinfo" == "" ];then
+    exit
+fi
+remoteip=`echo $ispinfo|sed -e "s/<isp.*remote=\"//g"|sed -e "s/\".*//"`    #Local role:Remote real IP
+alive=`echo $ispinfo|sed -e "s/<isp.*alive=\"//g"|sed -e "s/\".*//"`
+isptype=`grep "gateway=\"$gateway\"" $ACTIVEBASICXML|sed -e "s/  <isp.*isptype=\"//"|sed -e "s/\".*//"`
+line=`grep -n "gateway=\"$gateway\"" $ACTIVEBASICXML|grep "systemip=\"$systemip\""|sed -e "s/:.*//"|sed -e "s/\n//"`
+
+# if the same and tunnel alive ,don't need to change
+#
+if [ "$remoteip" == "$newremoteip" ] && [ "$alive" == "1" ] && [ "$remote_ipcom" != "1" ] && [ "$remote_enc" != "1" ];then  #alive=1 for ipsec
+  exit
+elif [ "$remoteip" == "$newremoteip" ] && [ "$alive" == "0" ] && [ "$isptype" != "ipsec" ] && [ "$remote_ipcom" != "1" ] && [ "$remote_enc" != "1" ];then  #dead loop will lock the config file
+  exit
+#else
+elif [ "$remoteip" != "$newremoteip" ] && [ "$alive" == "0" ];then
+  #Remote QB has changed ADSL's IP.
+  tunneldev=`grep "gateway=\"$gateway\"" $ACTIVEBASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`
+  localorg_ip=`grep "gateway=\"$gateway\"" $ACTIVEBASICXML|sed -e "s/  <isp.*local=\"//"|sed -e "s/\".*//"`
+
+  # wait other process  
+  while [ -f /tmp/basiclock ]
+  do sleep 1
+  done
+
+  # make a flag to lock basic.xml 
+  touch /tmp/basiclock
+
+  #To get the line number in the xml
+  duplicate=`grep -n "remote=\"$newremoteip\"" $ACTIVEBASICXML|sed -e "s/:.*//"|sed -e "s/\n//"`
+
+  cp -a $ACTIVEBASICXML /tmp/   #If fail to modify basic.xml,use this one to recover
+
+  #  New remote IP has been used for other tunnel,other tunnel's remote IP need to be changed to fake IP  
+  #  change duplicate ip to fake ip 
+  #
+  if [ "$duplicate" != "" ] && [ "$duplicate" != "$line" ] && [ "$isptype" = "tunnel" ];then
+    dupid=`grep "remote=\"$newremoteip\"" $ACTIVEBASICXML|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"`
+    duptunneldev=`grep "iid=\"$dupid\"" $ACTIVEBASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`
+    duplocalorg_ip=`grep "iid=\"$dupid\"" $ACTIVEBASICXML|sed -e "s/  <isp.*local=\"//"|sed -e "s/\".*//"`
+    #echo $dupid
+    fakeip=0.255.0.$dupid
+    sed -i -e $duplicate,$duplicate's/'$newremoteip'/'$fakeip'/g' $ACTIVEBASICXML
+    sedresult=$?
+    if [ "$sedresult" == '0' ];then
+      /sbin/ip tunnel change $duptunneldev  mode gre remote $fakeip local $duplocalorg_ip ttl 255
+    else
+      echo $(date) "checkmpvip sed duplicate ip ACTIVEBASICXML error" >>/mnt/log/error.log   
+      rm -f /tmp/basiclock
+      rm -f /tmp/basic.xml
+      exit
+    fi
+  fi
+
+  #  update  basic.xml and ip tunnel remote ip 
+  #
+  if [ "$remoteip" != "" ];then
+  sed -i -e $line,$line's/'$remoteip'/'$newremoteip'/g' $ACTIVEBASICXML
+  else
+  sed -i -e $line,$line's/'remote=\"\"'/'remote=\"$newremoteip\"'/g' $ACTIVEBASICXML
+  fi
+  sedresult=$?
+  if [ "$sedresult" == '0' ];then
+    nat=`grep "gateway=\"$gateway\"" $ACTIVEBASICXML|sed -e "s/  <isp.*mpv_nat=\"//"|sed -e "s/\".*//"`
+
+    if [ "$isptype" = "tunnel" ];then
+    /sbin/ip tunnel change $tunneldev  mode gre remote $newremoteip local $localorg_ip ttl 255
+    fi
+    cp -a $ACTIVEBASICXML $BASICXML
+
+    if [ "$isptype" = "ipsec" ] && [ "$nat" = "1" ];then
+    /sbin/setkey -f /etc/racoon/flush
+    killall -9 racoon
+    rm -f /etc/racoon/*.conf
+    /usr/local/apache/qb/setuid/do_qbipsec.pl
+    /usr/local/apache/qb/setuid/do_qbipsec_route.pl
+    /usr/local/apache/qb/setuid/do_qbracoon.pl
+    sleep 5
+    grep "sainfo address" /etc/racoon/racoon.conf
+    ipsecremote=$?
+     if [ $ipsecremote == '0' ]; then
+      /sbin/setkey -f /etc/racoon/ipsec.conf
+      /etc/racoon/ipsecroute
+      /usr/sbin/racoon
+      if [ -f /etc/racoon/delipsecrule ]; then
+         /etc/racoon/delipsecrule
+      fi
+      /etc/racoon/ipsecrule
+     fi
+    fi
+    
+    if [ "$isptype" = "dtunnel" ] && [ "$nat" = "1" ];then
+     dtunnel_pid=`ps -ef|grep openvpn|grep -v grep|grep "\-\-remote $remoteip \-\-"|awk '{print $2}'|head -n 1`
+     dtunnel_param=`ps -ef|grep openvpn|grep -v grep|grep "\-\-remote $remoteip \-\-"|awk -F "openvpn" '{print $2}'|head -n 1|sed -e 's/'$remoteip'/'$newremoteip'/g'`
+     if [ $dtunnel_pid ];then
+       kill -9 $dtunnel_pid
+       /usr/sbin/openvpn $dtunnel_param
+     fi
+    fi 
+  else
+    cp -a /tmp/basic.xml $ACTIVEBASICXML    
+    echo $(date) "checkmpvip sed ACTIVEBASICXML error" >>/mnt/log/error.log
+  fi
+  rm -f /tmp/basiclock
+  rm -f /tmp/basic.xml
+fi
+
+
+#  Sync Compression and Encryption parameters
+#
+
+if [ "$remote_ipcom" = "1" ] || [ "$remote_enc" = "1" ];then
+ipcom=`grep "gateway=\"$gateway\"" $ACTIVEBASICXML|sed -e "s/  <isp.*ipcom=\"//"|sed -e "s/\".*//"`
+enc=`grep "gateway=\"$gateway\"" $ACTIVEBASICXML|sed -e "s/  <isp.*enc=\"//"|sed -e "s/\".*//"`
+enc_alg=`grep "gateway=\"$gateway\"" $ACTIVEBASICXML|sed -e "s/  <isp.*alg=\"//"|sed -e "s/\".*//"`
+   if [ "$remote_ipcom" != "$ipcom" ] || [ "$remote_enc" != "$enc" ] || [ "$remote_encalg" != "$enc_alg" ];then
+
+     # make a flag to lock basic.xml 
+     touch /tmp/basiclock
+
+     cp -a $ACTIVEBASICXML /tmp/   #If fail to modify basic.xml,use this one to recover
+
+     if [ "$ipcom" != "" ];then
+       sed -i -e $line,$line's/'ipcom=\"0\"'/'ipcom=\"1\"'/g' $ACTIVEBASICXML
+     else
+       sed -i -e $line,$line's/'ipcom=\"\"'/'ipcom=\"1\"'/g' $ACTIVEBASICXML
+     fi
+
+     if [ "$enc" != "" ];then
+       sed -i -e $line,$line's/'enc=\"0\"'/'enc=\"1\"'/g' $ACTIVEBASICXML
+     else
+       sed -i -e $line,$line's/'enc=\"\"'/'enc=\"1\"'/g' $ACTIVEBASICXML
+     fi
+
+     if [ "$enc_alg" != "" ];then
+       sed -i -e $line,$line"s@alg=\"$enc_alg\"@alg=\"$remote_encalg\"@" $ACTIVEBASICXML
+     else
+       sed -i -e $line,$line's/'alg=\"\"'/alg=\"$remote_encalg\"/g' $ACTIVEBASICXML
+     fi
+     sedresult=$?
+
+     if [ "$sedresult" == '0' ];then
+      cp -a $ACTIVEBASICXML $BASICXML
+     else
+       cp -a /tmp/basic.xml $ACTIVEBASICXML    
+       echo $(date) "checkmpvip sed ACTIVEBASICXML error" >>/mnt/log/error.log
+     fi                                   
+     rm -f /tmp/basiclock
+     rm -f /tmp/basic.xml
+   fi
+fi

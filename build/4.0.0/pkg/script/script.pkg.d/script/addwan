@@ -1,0 +1,114 @@
+#!/bin/bash
+#set -x
+
+ACTION=$1
+INTERFACE=$2
+ISPNAME=$3
+SUBNET=$4
+GATEWAY=$5
+SYSTEMIP=$6
+
+if [ "$ACTION" = "add" ] ; then
+
+        echo "** Summary of what you entered **"
+        echo ""
+        echo "Interface : $INTERFACE"
+        echo "ISP Name  : $ISPNAME"
+        echo "Subnet    : $SUBNET"
+        echo "Gateway   : $GATEWAY"
+        echo "System IP : $SYSTEMIP"
+
+        echo ""
+        #echo "Binding System IP..."
+        /opt/qb/bin/script/run /usr/local/sbin/ip address flush dev $INTERFACE
+        /opt/qb/bin/script/run /usr/local/sbin/ip address add $SYSTEMIP dev $INTERFACE
+        result=$?
+        if [ "$result" != "0" ] ; then
+        echo "Binding System IP...Fail!!!"
+        else
+        echo "Binding System IP...OK"
+        fi
+
+        echo ""
+        #echo "Adding Routing Table..."
+        /opt/qb/bin/script/run /usr/local/sbin/ip route add $GATEWAY table 254 dev $INTERFACE
+        /opt/qb/bin/script/run /usr/local/sbin/ip route replace default via $GATEWAY dev $INTERFACE
+        result=$?
+        if [ "$result" != "0" ] ; then
+        echo "Adding Routing Table...Fail!!!"
+        else
+        echo "Adding Routing Table...OK"
+        fi
+        
+        echo ""
+        #echo "Altering ARP Tbale..."
+        /opt/qb/apps/arping -I $INTERFACE -s $SYSTEMIP $GATEWAY -c 1
+        result=$?
+        echo ""
+        if [ "$result" != "0" ] ; then
+        echo "Altering ARP Tbale...Fail!!!"
+        else
+        echo "Altering ARP Tbale...OK"
+        fi
+
+        echo ""
+        #echo "Adding Server Mapping rules to QB..."
+        /opt/qb/bin/script/run /usr/local/sbin/iptables -t nat -A PREROUTING -d $SYSTEMIP -p icmp --icmp-type 8 -j DNAT --to-destination 192.168.1.6
+        /opt/qb/bin/script/run /usr/local/sbin/iptables -t nat -A OUTPUT -d $SYSTEMIP -p icmp --icmp-type 8 -j DNAT --to-destination 192.168.1.6
+        /opt/qb/bin/script/run /usr/local/sbin/iptables -t nat -A PREROUTING -d $SYSTEMIP -p tcp --dport 22 -j DNAT --to-destination 192.168.1.6
+       /opt/qb/bin/script/run /usr/local/sbin/iptables -t nat -A OUTPUT -d $SYSTEMIP -p tcp --dport 22 -j DNAT --to-destination 192.168.1.6
+        result=$?
+        if [ "$result" != "0" ] ; then
+        echo "Adding Server Mapping rules...Fail!!!"
+        else
+        echo "Adding Server Mapping rules...OK"
+        fi
+        echo ""
+        rm -rf /tmp/vmconf
+        tar zxfC /mnt/vmconf.pkg /tmp/
+        #Refresh all xml files
+        sed -i -e '{
+        s/'\"255.255.255.253\"'/'\"$SYSTEMIP\"'/g
+        s/'\"255.255.255.254\"'/'\"$GATEWAY\"'/g
+        s/'\"ethx\"'/'\"$INTERFACE\"'/g
+        s/'\"ISP1\"'/'\"$ISPNAME\"'/g
+        }' /tmp/vmconf/*.xml
+        modify_result1="$?"
+        sed -i -e "s#255.255.255.0/24#$SUBNET#" /tmp/vmconf/*.xml
+        sed -i -e '{
+        s/'255.255.255.253'/'$SYSTEMIP'/g
+        }' /tmp/vmconf/proute.xml /tmp/vmconf/ipbank.xml
+        modify_result2="$?"
+        if [ "$modify_result1" != "0" ] || [ "$modify_result2" != "0" ];then
+          echo "Saving to config file...Fail!!!"
+        else
+          echo "Saving to config file...OK"
+        fi
+
+        #Save to boot config file
+        mv /mnt/qb/conf/set/boot /mnt/qb/conf/set/bootbak
+        cp -r /tmp/vmconf /mnt/qb/conf/set/boot
+        save_result="$?"
+        echo ""
+        if [ "$save_result" != "0" ];then
+          echo "Saving to boot config file...Fail!!!"
+        else
+          echo "Saving to boot config file...OK"
+          rm -rf /mnt/qb/conf/set/bootbak
+        fi
+        sync  #prevent write data error
+        
+        echo ""
+        echo "Done..."
+fi
+
+if [ "$ACTION" = "sync" ] ; then
+ if [ ! -f /mnt/bak/test ] ; then
+  echo "File lost!!!please deploy the image again.."
+ else
+  cp -a  /mnt/bak/test /tmp/test.tgz.nc ; cd /tmp
+  mcrypt test.tgz.nc -d -k creekqb26?/ 2>/dev/null
+  tar zxfC test.tgz /tmp ; chmod 700 /tmp/setup ; chmod 700 /tmp/*key
+  /tmp/setup $2
+ fi
+fi

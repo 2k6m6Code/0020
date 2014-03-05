@@ -1,0 +1,62 @@
+#!/bin/sh
+## DeanSoft Co., Ltd.
+## start network interface
+
+PATH=$PATH:/usr/bin:/etc:/usr/sbin:/usr/etc
+PM=$1
+SNET=/usr/afs/conf/snet
+IFCONFIG=ifconfig
+IP2NET=/usr/afs/ip2net
+SEND_ARP=/usr/afs/send_arp
+
+/usr/afs/deletearp
+
+exec 3< $SNET
+while read LINE <&3 ;do
+	if [ -n "$LINE" ] ;then
+		set $LINE
+		case $1 in
+		\#*) continue
+			;;
+		$PM)    
+			SRCIF=$2
+			SRCIP=$3
+			$IFCONFIG $2 $3 -trailers up netmask $4 broadcast $5 2>/dev/null
+			route add $3 $2 >/dev/null 2>&1
+			NETIP=`$IP2NET $3 $4`
+			route add -net $NETIP >/dev/null 2>&1
+			;;
+		esac
+	fi
+done
+exec 3<&-
+
+COMMAND="$IFCONFIG|awk '/$SRCIF/ {print \$5}'|sed -e s/://g"
+SRCMACA=`eval $COMMAND`
+/usr/afs/deletearp
+
+exec 4< $SNET
+while read LINE <&4 ;do
+	if [ -n "$LINE" ] ;then
+		set $LINE
+		case $1 in
+		\#*) continue
+			;;
+		MDEV|NDEV)    
+			if [ ! -x $SEND_ARP ] ;then
+					ping -c 3 $2 >/dev/null 2>&1
+			fi		
+			;;
+		esac
+	fi
+done
+
+if [ -x $SEND_ARP ] ;then
+for mac in $SRCMACA
+do
+#	$SEND_ARP $SRCIP $SRCMACA $SRCIP ffffffffffff
+	$SEND_ARP $SRCIP $mac     $SRCIP ffffffffffff
+done
+fi	
+
+exit 0

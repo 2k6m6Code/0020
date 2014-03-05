@@ -1,0 +1,31 @@
+sub resetIfconfigStatistics
+{
+    # Save Initial Traffic Volume to Cookie
+    my $allstatus=(`/sbin/ifconfig -s`);
+    my @statusrecord=split(/\n/, $allstatus);
+
+    foreach my $record ( @statusrecord ) 
+    {   
+        if ($record=~m/Kernel|available|lo|Iface/)   { next; }  
+        my @statRecord=split(/\s+/,$record);
+        &SetCookies("$statRecord[0]", $statRecord[3].':'.$statRecord[7]);
+    }
+}
+
+sub resetFlowStatistics
+{
+    # Save Initial Traffic Volume to Cookie
+    my $allispnic=maintainBasic(action=>'GETALLISPNIC');
+    my $allrate=runCommand(command=>$gSETUIDPATH.'flow', params=>$allispnic);
+    my @raterecord=split(/\n/, $allrate);
+    
+    foreach my $record ( @raterecord ) 
+    {   
+        if ($record=~m/Gateway|Interface|failed/)   { next; }  
+        my @rateRecord=split(/\s+/,$record);
+        my $ratedata=$rateRecord[0].':'.$rateRecord[2].':'.$rateRecord[3].':'.$rateRecord[8];
+    }
+}
+
+#
+1

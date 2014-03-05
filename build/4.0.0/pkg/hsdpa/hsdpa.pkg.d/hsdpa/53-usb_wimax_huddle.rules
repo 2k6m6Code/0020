@@ -1,0 +1,6 @@
+#####################################
+# Huddle device block
+#####################################
+
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="19f2", ATTRS{idProduct}=="1700", RUN+="/bin/sh /usr/local/apache/qb/setuid/checkHuddlestate.sh up"
+

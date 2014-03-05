@@ -1,0 +1,97 @@
+#!/bin/bash
+#set -x
+Reason=$1
+
+CF_Space=$(df|grep -v extra| awk '/mnt/ {print $4}')
+if [ $CF_Space -le 2048 ]; # Available CF space <= 2MB
+then
+        echo $(date) "Available CF space is smaller than 2 mb, clean the CF." >> /mnt/log/alert.log
+        rm -rf /mnt/bak/*
+        sync
+fi
+
+if [ ! -d /mnt/error ]
+then
+     mkdir /mnt/error
+fi
+
+case "$Reason" in
+     Ramdisk)
+             count=0
+             FILENAME=`date +%m%d`.er$count
+             ps -ef >/mnt/log/process.log
+             /usr/bin/top n 1 b >/mnt/log/top.log
+             top n 1 b
+             df -h >/mnt/log/disk.log
+             while test -f /mnt/error/$FILENAME
+             do 
+               let count=count=$count+1
+               FILENAME=`date +%m%d`.er$count
+             done
+             tar jcvf /mnt/error/$FILENAME /var/log /mnt/log
+             echo $(date) "Ramdisk full !!!" >>/mnt/error/issue.log
+             cat /dev/null >/var/log/qbalancer.log
+             cat /dev/null >/var/log/daemon.log
+             cat /dev/null >/var/log/wtmp
+             cat /dev/null >/var/log/diagnose.log
+             cat /dev/null >/mnt/log/runway.log
+             cat /dev/null >/mnt/log/alert.log
+             rm -f /mnt/log/bootlog
+             rm -f /mnt/log/daemon.log
+             rm -f /mnt/log/disk.log
+             rm -f /mnt/log/panic.log
+             rm -f /mnt/log/process.log
+             rm -f /mnt/log/qbalance.log
+             sync;sync
+           ;;
+     Route)
+             count=0
+             FILENAME=`date +%m%d`.er$count
+             ps -ef >/mnt/log/process.log
+             /usr/bin/top n 1 b >/mnt/log/top.log
+             df -h >/mnt/log/disk.log
+             /sbin/iptables -t mangle -L -vn >/mnt/log/mangle
+             /sbin/iptables -t nat -L -vn >/mnt/log/nat
+             /sbin/ip route show table 254 >/mnt/log/iproute
+             /sbin/ip rule >/mnt/log/iprule
+             /sbin/ip addr >/mnt/log/ipaddr
+             ls -al /var/run >/mnt/log/varrun
+              
+             while test -f /mnt/error/$FILENAME
+             do 
+               let count=count=$count+1
+               FILENAME=`date +%m%d`.er$count
+             done
+             tar jcvf /mnt/error/$FILENAME /var/log /mnt/log /usr/local/apache/qbconf /usr/local/apache/active
+             echo $(date) "Routing issue !!!" >>/mnt/error/issue.log
+             cat /dev/null >/var/log/qbalancer.log
+             cat /dev/null >/var/log/daemon.log
+             cat /dev/null >/var/log/wtmp
+             cat /dev/null >/var/log/diagnose.log
+             cat /dev/null >/mnt/log/runway.log
+             cat /dev/null >/mnt/log/alert.log
+             rm -f /mnt/log/bootlog
+             rm -f /mnt/log/daemon.log
+             rm -f /mnt/log/disk.log
+             rm -f /mnt/log/panic.log
+             rm -f /mnt/log/process.log
+             rm -f /mnt/log/qbalance.log
+             sync;sync
+           ;;
+          *)
+             count=0
+             FILENAME=`date +%m%d`.er$count
+             ps -ef >/mnt/log/process.log
+             ls -al /var/run >/mnt/log/varrun
+             /usr/bin/top n 1 b >/mnt/log/top.log
+             df -h >/mnt/log/disk.log
+             while test -f /mnt/error/$FILENAME
+             do 
+               let count=count=$count+1
+               FILENAME=`date +%m%d`.er$count
+             done
+             tar jcvf /mnt/error/$FILENAME /var/log /mnt/log /usr/local/apache/qbconf /usr/local/apache/active
+             echo $(date) "$Reason issue!!!" >>/mnt/error/issue.log
+             sync;sync
+           ;;
+esac

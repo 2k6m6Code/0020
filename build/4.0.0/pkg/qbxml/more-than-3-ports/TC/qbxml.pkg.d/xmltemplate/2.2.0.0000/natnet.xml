@@ -1,0 +1,21 @@
+<opt file="natnet" status="lock">
+  <nat>
+    <subnet dirty="1" region="system" />
+    <subnet dirty="1" region="host-www.facebook.com">
+      <dservice>system</dservice>
+      <sservice>system</sservice>
+    </subnet>
+    <subnet dirty="1" region="host-apps.facebook.com">
+      <dservice>system</dservice>
+      <sservice>system</sservice>
+    </subnet>
+    <subnet dirty="1" region="host-Facebook_Subnets">
+      <dservice>system</dservice>
+      <sservice>system</sservice>
+    </subnet>
+    <subnet dirty="1" region="host-www.youtube.com">
+      <dservice>system</dservice>
+      <sservice>system</sservice>
+    </subnet>
+  </nat>
+</opt>

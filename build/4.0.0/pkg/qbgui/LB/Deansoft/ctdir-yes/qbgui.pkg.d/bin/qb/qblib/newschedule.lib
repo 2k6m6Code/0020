@@ -1,0 +1,1102 @@
+#=============================================================================================
+sub showNewSchedule
+{
+    my (%action)=@_;
+    my $schref=XMLread($gPATH.'schedule.xml');
+    my $schlist=$schref->{schedule};
+    my $edit; 
+    
+    foreach my $sh ( @$schlist )
+    {
+        if ( $sh->{schname} eq $action{schname} ) { $edit=$sh; }
+    }
+    
+    
+    my @titleHeadList=('Days', 'Start Time', 'Stop Time');
+    my %titleWidth=('Days'=>300, 'Start Time'=>100, 'Stop Time'=>100);
+    my @showdays=split(/\;/, $edit->{days});
+    my @showtimestart=split(/\;/, $edit->{timestart});
+    my @showtimestop=split(/\;/, $edit->{timestop});
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">New Schedule);
+
+    print qq (<hr size=1>);
+    #print qq (<table bgcolor="#332211" style="width:680" border="0"><tr>);
+    
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input class="qbtext" id="schname_show" name="schname_show" style="WIDTH: 120px" value="$edit->{schname}" >);
+    print qq (<input type="hidden" class="qbtext" id="schname" name="schname" value="$action{schname}" >);
+    print qq (</td></tr>);
+    print qq (<tr>);
+    print qq (</table>); 
+    print qq (<div class="divframe" style="width:680; height:150" >); 
+
+
+    print qq (<table id="scheduleList" style="display: none;" border="0"><tr bgcolor="#332211">);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    print qq (<td>);
+    print qq (<a href="javascript:DeleteSchedule()"><image src="image/del.gif" title="Delete Checked Schdule(s)" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('subschs', this.checked)">);
+    print qq (</td></tr>);
+    #my $index = 0;
+    my $showlist = $edit->{subsch};
+    foreach my $show ( @$showlist )
+    {
+		my @splitsche=split(',', $show->{days});
+		foreach my $splitlist ( @splitsche )
+		{
+			print qq (<tr>);
+			print qq (<td align="center" width="$titleWidth{Days}">$splitlist</td>);
+			print qq (<td align="center" width="100">$show->{timestart}</td>);
+			print qq (<td align="center" width="100">$show->{timestop}</td>);
+			print qq (<td><input type="checkbox" name="subschs" ></td>);
+			print qq (</tr>);
+		}
+        #print qq (<tr>);
+        #print qq (<td align="center" width="$titleWidth{Days}">$show->{days}</td>);
+        #print qq (<td align="center" width="100">$showtimestart[$index]</td>);
+        #print qq (<td align="center" width="100">$showtimestop[$index]</td>);
+        #print qq (<td align="center" width="100">$show->{timestart}</td>);
+        #print qq (<td align="center" width="100">$show->{timestop}</td>);
+        #print qq (<td><input type="checkbox" name="subschs" ></td>);
+	  #print qq (<input class="qb" type="button" style="width:50" value="load" onclick="mytest('$show->{days}','$show->{timestart}','$show->{timestop}');">);
+        #$index++;
+        #print qq (</tr>);
+    }
+
+	print qq (<input class="qb" type="button" style="display: none;" id="AutoSubmit" value="load" onclick=");
+	foreach my $show ( @$showlist )
+    	{
+			my @splitsche=split(',', $show->{days});
+			foreach my $splitlist ( @splitsche )
+			{
+				print qq (mytest('$splitlist','$show->{timestart}','$show->{timestop}'););
+			}
+			#print qq (mytest('$show->{days}','$show->{timestart}','$show->{timestop}'););
+    	}
+	print qq (del_tr();add_other_data(););
+	print qq (">);
+
+    print qq (</table></div>);
+    
+    #print qq (<div class="divframe" style="height:150">);
+    #print qq (<table id="scheduleList" style="width:680;" >);
+    #print qq (</table>);
+    #print qq (</div>);
+    
+    
+    print qq (<table id="mytable" bgcolor="#667788" width="680">);
+    #-------------------------------------------------------------------------------------------
+    #  Schedule: Days , Start time , Stop Time
+    #-------------------------------------------------------------------------------------------
+#    print qq (<tr>);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+#    print qq (Days :);
+#    print qq (</td>);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+#    print qq (<input type="checkbox" id="alldays" name="alldays" onClick="setAllCheckBoxValue('selectDay', this.checked)"> All Days);
+#    print qq (<br>);
+#    my @week=("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+#    foreach my $day ( @week )
+#    {
+#        print qq (<INPUT type="checkbox" id="selectDay" name="selectDay"  $status value="$day" > $day&#32&#32);
+#    }
+#    print qq (</td></tr>);
+#=======================================new============================================
+         print qq (<tr>);
+         print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+         print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+         print qq (<INPUT type="checkbox" id="selectAllDay" name="selectAllDay" onClick="setAlltest('selectDay', this.checked)"> All Day);
+         print qq (</td>);
+         print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 400px">);
+#         print qq (<INPUT type="checkbox" id="selectAllHour" name="selectAllHour"  $status value="selectAllHour" > All Hour);
+         print qq (</td>);
+         print qq (</tr>);
+                     my $DayNum=0;
+	     my $HourNum=0;
+	     
+         my @week=("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+         my @time=("0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "23:59");
+         foreach my $day ( @week )
+         {
+         print qq (<tr>);
+         print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+         print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+                     
+         print qq (<INPUT type="checkbox" id="selectDay[$DayNum]" name="selectDay[$DayNum]"  $status value="$day" onClick="setDaytest('selectDay', [$DayNum], this.checked, 'selectAllDay')"> $day :);
+                     $DayNum++;
+         print qq (</td>);
+         print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+#    print qq (<input type="checkbox" id="alldays" name="alldays" onClick="setAllCheckBoxValue('selectDay', this.checked)"> All Days);
+         print qq (<br>);
+	     my $HourNum2=0;
+		 my $i = 0;
+         foreach my $hour ( @time )
+         {
+    		print qq (<INPUT type="checkbox" id="selectDay[$HourNum][$HourNum2]" name="selectDay[$HourNum][$HourNum2]"  $status value="$hour" onClick="setHourtest('selectDay', this.checked, [$HourNum],[$HourNum2])"> );
+			if ($i<10)
+			{
+				print qq (0$hour&#32&#32);
+				$i++;
+			}
+			else
+			{print qq ($hour&#32&#32);}
+    		$HourNum2++;
+	     }
+	     $HourNum++;
+    	print qq (</td>);
+         print qq (</tr>);
+         }
+#===========================================================================================
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Custom :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 500px">);
+    #     print qq (<td>);
+         print qq (Day :);
+    print qq (<select class="qb" id="other_select" name="other_select" style="width:80">); 
+    OtherSelect("Sun"); 
+    print qq (</select>);
+    print qq (Start Time :);
+    print qq (<select class="qb" id="timestart" name="timestart" style="width:80">);
+    #timeSelect( $edit->{timestart} ); 
+    timeSelect("0:00");
+    print qq (</select>);
+    print qq ( Stop Time :);
+    print qq (<select class="qb" id="timestop" name="timestop" style="width:80">);
+    #timeSelect( $edit->{timestop} );
+    timeSelect("23:59");
+    print qq (</select>);
+    print qq (<td class="body"  valign="center" align="right" style="height: 30px; width: 80px">);
+    print qq (<input class="qb" type="button" style="width: 40" value="Add" onclick="add_new_data();">);
+    #print qq (<input class="qb" type="button" style="width: 40" value="Del" onclick="remove_data();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    #print qq (<tr><hr size=1></tr>);
+    #print qq (<table>);
+    print qq (<tr><td><hr size=1></td></tr>);
+    #print qq (</table>);
+    #-------------------------------------------------------------------------------------------
+    #  Schedule: Name and Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<table>);
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    #print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    #print qq (Name :);
+    #print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    #print qq (<input class="qbtext" id="schname_show" name="schname_show" style="WIDTH: 120px" value="$edit->{schname}" >);
+    #print qq (<input type="hidden" class="qbtext" id="schname" name="schname" value="$action{schname}" >);
+    #print qq (</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Description :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    #print qq (<input class="qbtext" name="description" style="WIDTH: 120px; HEIGHT: 60px" value="$edit->{description}" >);
+    print qq (<textarea class="qbtext" id="description" name="description" style="width:200;height:80" >$edit->{description}</textarea>);
+    print qq (</td></tr>);
+    
+    print qq (</table>);
+    #-----------------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 680px">);
+    print qq (<input class="qb" type="button" style="width:50" value="Save" onclick="DeleteSchedule(),AddSchedule(),AddSchedule2(),DeleteSchedule(),AddSchedule(),AddSchedule2(),SaveSchedule();">);
+    #print qq (<input class="qb" type="button" style="width:50" value="a1" onclick="AddSchedule();">);
+    #print qq (<input class="qb" type="button" style="width:50" value="a2" onclick="AddSchedule2();">);
+    #print qq (<input class="qb" type="button" style="width:50" value="atest" onclick="DeleteSchedule(),AddSchedule(),AddSchedule2(),DeleteSchedule(),AddSchedule(),AddSchedule2()">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showSchedule
+
+
+#=============================================================================================
+
+sub scriptNewSchedule
+{
+    print << "scriptNewSchedule";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; checkState(); showclick(); }
+    
+
+          var mydays = [];
+          var arr = [];
+    function AddSchedule()
+    {
+        var subsch = document.getElementById('scheduleList').rows;
+        var total = subsch.length;
+        var select = document.getElementsByName('selectDay');
+        //var timestart=document.getElementById('timestart').value;
+        //var timestop=document.getElementById('timestop').value;
+        var timestart=0;
+        var timestop=0;
+        //var start=timestart.split(':');
+        //var stop=timestop.split(':');
+        var days='';
+        var isOK=1;
+
+        //if ( parseInt(start[0]) > parseInt(stop[0]) || 
+        //     ( parseInt(start[0]) == parseInt(stop[0]) && parseInt(start[1]) >= parseInt(stop[1]) ) )
+        //{
+        //    alert("ERROR:Time Format Error.\\n");
+        //    isOK = 0;
+        //    return false;
+        //}
+        //for (var i = 0; i < 6; i++) 
+        //{
+	  //	oo=document.getElementById('selectDay'+'['+i+']');		
+        //    if ( oo.checked == true )
+        //  	days += oo.value + ','; 
+        //}
+        //if ( days == '' )
+        //{
+        //    alert("ERROR:Please select Days.\\n");
+        //    isOK = 0;
+        //    return false;
+        //}	
+
+        var color=(total % 2) ? ( "#556677" ) : ( "#334455" );
+        //schedule.setAttribute("bgcolor", color);
+        //schedule.setAttribute("originalColor", color);
+        //schedule.setAttribute("onmouseover", "focusedColor(this)");
+        //schedule.setAttribute("onmouseout", "blurColor(this)");
+        
+        var len = days.length;
+        days = days.substring(0, len-1);
+        
+        for (var i = 0; i < total; i++)
+        {
+            if ( subsch[i].cells[0].innerHTML == days && subsch[i].cells[1].innerHTML == timestart 
+                 && subsch[i].cells[2].innerHTML == timestop ) {
+                 alert("schedule already exist");
+            	 isOK = 0;
+                 return false;
+            }   
+        }
+       
+	for ( n=0; n < 7; n++)
+	{
+		oo=document.getElementById('selectDay'+'['+n+']');		
+	 	if ( oo.checked == true )
+	           	mydays.push(oo.value); 
+		myday=document.getElementById("selectDay"+"["+n+"]");
+		if(myday.checked==true)
+		{	
+			for(var a=0; a<25; a++)
+			{
+				myhour=document.getElementById("selectDay"+"["+n+"]"+"["+a+"]");
+				if(myhour.checked==true)
+				{
+					arr.push(myhour.value);
+					//alert(myhour.value);
+				}
+			}
+			if ( isOK == 1) 
+        		{
+			days=mydays.shift();
+			timestart=arr.shift();
+			timestop=arr.shift();
+			if(days==undefined|timestart==undefined|timestop==undefined){alert('ERROR');break;}
+			else{
+            		var schedule = document.getElementById('scheduleList').insertRow(total);
+            		var insertdays = schedule.insertCell(0);
+            		var inserttimestart = schedule.insertCell(1);
+            		var inserttimestop = schedule.insertCell(2);
+            		var checkitem = schedule.insertCell(3);
+            
+            		//insertdays.setAttribute("style", "width:250");
+            		insertdays.setAttribute("name", "schdays");
+            		insertdays.innerHTML = days;
+            		inserttimestart.innerHTML = timestart;
+            		inserttimestop.innerHTML = timestop;
+            		var tochecked = '<input type=\"checkbox\" name=\"subschs\" >';
+            		checkitem.innerHTML = tochecked;
+			}
+        		} 
+		}
+		
+	}        
+        //document.getElementById('alldays').checked = false;
+    }
+    function DeleteSchedule()
+    {
+        var sch = document.getElementsByName('subschs'); 
+        total = sch.length;
+        
+        //alert(total);
+        
+        for (var i = total ; i > 0; i--)
+        {
+            //if ( sch[i-1].checked == true )
+                document.getElementById('scheduleList').deleteRow(i);
+        }
+    }
+    
+
+    function SaveSchedule() 
+    {
+        var subsch = document.getElementById('scheduleList').rows;
+        var total = subsch.length;
+        //var daysarray = new Array();
+        //var timestartarray = new Array();
+        //var timestoparray = new Array();
+        var daysarray = '';
+        var timestartarray = '';
+        var timestoparray = '';
+        
+        if (total < 2)
+        {
+            alert('Must add Schedule');
+            return;
+        }
+        
+        for (var i = 1; i < total; i++)
+        {
+            if (subsch[i].cells[0].innerHTML == '')
+            	continue;
+            daysarray += subsch[i].cells[0].innerHTML + ';';
+            timestartarray += subsch[i].cells[1].innerHTML + ';';
+            timestoparray += subsch[i].cells[2].innerHTML + ';';
+        }
+        //alert(daysarray);
+        
+  	var schname_show=document.getElementById('schname_show');
+        var schname=schname_show.value;
+        var description=document.getElementById('description').value;
+
+	if ( schname == '' )
+        {
+            alert('Schedule Name must be English or nember');
+            return;
+        }
+        
+        if ( schname_show.value == 'All Week' )
+        {
+            alert('All Week is Default Schedule');
+            return;
+        }
+
+	for (i = 0; i < schname.length; i++)
+        {
+            var ch = schname.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Schedule Name must be English or nember");
+               return;
+            }
+        }
+
+	for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Schedule Description must be English ");
+               return;
+            }
+        }
+        
+        if ( schname_show.disabled != true )
+            myform.schname.value = schname_show.value;
+        
+         
+        myform.action.value = 'SAVE';
+        myform.days.value = daysarray;
+        myform.schtimestart.value = timestartarray;
+        myform.schtimestop.value = timestoparray;
+        myform.submit();
+    }
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var schname=document.getElementById('schname');
+        var schname_show=document.getElementById('schname_show');
+        
+        if ( schname.value != '' )
+            schname_show.disabled = true; 
+        
+        if ( action != '' )
+            window.top.mainFrame.location.href="schedule.cgi";
+        
+    }
+
+	function setAlltest(checkboxname, boolvalue)
+	{
+    		var myform=window.document.forms[0];
+		var n=0;
+		var m=0;
+		var oo2=document.getElementById(checkboxname+"["+n+"]"+"["+m+"]");
+    		for ( var i=0; i < myform.elements.length; i++)
+    		{
+        		var ctrlobj=myform.elements[i];
+			
+        		if (ctrlobj.name==checkboxname+"["+n+"]") 
+        		{
+            			ctrlobj.checked=boolvalue;
+				for ( m=0; m < 25; m++)
+    				{
+					oo2=document.getElementById(checkboxname+"["+n+"]"+"["+m+"]");
+					if (ctrlobj.checked==false)
+        				{
+						oo2.checked=false;
+						oo2.disabled=false;
+						maxx=0;
+						maxx0=0;
+						maxx1=0;
+						maxx2=0;
+						maxx3=0;
+						maxx4=0;
+						maxx5=0;
+						maxx6=0;
+						maxx7=0;
+					}
+				}
+				n++;
+			}
+    		}
+	}
+
+	function setDaytest(checkboxname,daynum,boolvalue,allday)
+	{
+		var n=0;
+		var i=0;
+		var allday=document.getElementById(allday);
+		var oo=document.getElementById(checkboxname+"["+daynum+"]");
+		var oo2=document.getElementById(checkboxname+"["+n+"]"+"["+i+"]");
+		for ( i=0; i < 25; i++)
+    		{
+			oo2=document.getElementById(checkboxname+"["+daynum+"]"+"["+i+"]");
+			if (oo.checked==false) 
+        			{
+				oo2.checked=false;
+				oo2.disabled=false;
+				allday.checked=false;
+				maxx=0;
+				maxx0=0;
+				maxx1=0;
+				maxx2=0;
+				maxx3=0;
+				maxx4=0;
+				maxx5=0;
+				maxx6=0;
+				maxx7=0;
+			}
+		}
+	}
+
+	var maxx=0;
+	var maxx0=0;
+	var maxx1=0;
+	var maxx2=0;
+	var maxx3=0;
+	var maxx4=0;
+	var maxx5=0;
+	var maxx6=0;
+	var maxx7=0;
+
+	function setHourtest(checkboxname, boolvalue, num,num2)
+	{
+		var n=0;
+		var i=0;
+		var max=0;
+		var arr = [];
+		var oo=document.getElementById(checkboxname+"["+n+"]");
+		var oo2=document.getElementById(checkboxname+"["+n+"]"+"["+i+"]");
+		var allday=document.getElementById('selectAllDay');
+		oo3=document.getElementById(checkboxname+"["+num+"]");
+		var def=document.getElementById(checkboxname+"["+num+"]"+"["+num2+"]");
+		if(oo3.checked==false)
+		{
+			oo3.checked=true;
+		}
+		if(allday.checked==true)
+		{
+			if (def.checked==true)
+				maxx++
+			else
+				maxx--
+
+			for(var a=0; a<25; a++)
+			{
+				oo2=document.getElementById(checkboxname+"["+num+"]"+"["+a+"]");			
+			
+				if(oo2.checked==boolvalue)
+				{
+					if(oo2.checked==true)
+					{	
+						max+=1;
+						arr.push(a);
+					}
+					if(max>2)
+					{
+							
+						for ( n=0; n < 7; n++)
+						{
+							if(maxx<3)
+							{
+								oo=document.getElementById(checkboxname+"["+n+"]");
+								oo4=document.getElementById(checkboxname+"["+n+"]"+"["+a+"]");
+								if(oo.checked==true)
+								{
+									oo4.checked=false;
+								}
+							}
+						}
+						maxx--;
+						def.checked=false;
+						window.alert('you cant select more!');
+					}
+					if(max<2)
+					{
+						oo2.disabled=false;
+						if(maxx<3)
+						{
+							for ( n=0; n < 7; n++)
+							{
+								oo=document.getElementById(checkboxname+"["+n+"]");
+								oo2=document.getElementById(checkboxname+"["+n+"]"+"["+num2+"]");
+								oo3=document.getElementById(checkboxname+"["+num+"]");
+								oo4=document.getElementById(checkboxname+"["+n+"]"+"["+a+"]");
+								if(oo.checked==true)
+								{
+									oo2.checked=boolvalue;
+									oo4.disabled=false;
+								}
+								else if(oo3.checked==false)
+								{
+									oo3.checked=true;
+								}
+							}
+						}
+					}
+				
+					if(max==2)
+					{
+						a=arr.pop();
+						b=arr.pop();
+						b=b+1;
+						if(maxx<3)
+						{
+							for(b;b<a;b++)
+							{
+								dis=document.getElementById(checkboxname+"["+num+"]"+"["+b+"]");
+								//alert(oo2.name)
+								dis.disabled=boolvalue;
+								for ( n=0; n < 7; n++)
+								{
+									oo=document.getElementById(checkboxname+"["+n+"]");
+									oo2=document.getElementById(checkboxname+"["+n+"]"+"["+b+"]");
+									oo3=document.getElementById(checkboxname+"["+n+"]");
+									if(oo.checked==true)
+									{
+										oo2.disabled=boolvalue;
+									}
+								}
+							}
+						}
+					}
+				}							
+			}
+		}
+		else{
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+			def.checked=boolvalue;
+			if (def.checked==true)
+				eval('maxx' + num + '++')
+			else
+				eval('maxx' + num + '--')
+
+			for(var a=0; a<25; a++)
+			{
+				oo2=document.getElementById(checkboxname+"["+num+"]"+"["+a+"]");
+
+				if(oo2.checked==boolvalue|oo2.checked==true)
+				{
+					if(oo2.checked==true)
+					{	
+						max+=1;
+						arr.push(a);
+					}
+					if(max>2)
+					{
+							
+						//for ( n=0; n < 7; n++)
+						//{
+							if(eval('maxx' + num)<3)
+							{
+								oo=document.getElementById(checkboxname+"["+num+"]");
+								oo4=document.getElementById(checkboxname+"["+num+"]"+"["+a+"]");
+								if(oo.checked==true)
+								{
+									oo4.checked=false;
+								}
+							}
+						//}
+						eval('maxx' + num + '--');
+						def.checked=false;
+						window.alert('you cant select more!');
+					}
+					if(max<2)
+					{
+						oo2.disabled=false;
+						if(eval('maxx' + num)<3)
+						{
+							//for ( n=0; n < 7; n++)
+							//{
+								oo=document.getElementById(checkboxname+"["+num+"]");
+								oo2=document.getElementById(checkboxname+"["+num+"]"+"["+num2+"]");
+								oo3=document.getElementById(checkboxname+"["+num+"]");
+								oo4=document.getElementById(checkboxname+"["+num+"]"+"["+a+"]");
+								if(oo.checked==true)
+								{
+									oo2.checked=boolvalue;
+									oo4.disabled=false;
+								}
+								else if(oo3.checked==false)
+								{
+									oo3.checked=true;
+								}
+							//}
+						}
+					}
+				
+					if(max==2)
+					{
+						a=arr.pop();
+						b=arr.pop();
+						b=b+1;
+						//alert(eval('maxx' + num));
+						if(eval('maxx' + num)<3)
+						{
+							for(b;b<a;b++)
+							{
+								dis=document.getElementById(checkboxname+"["+num+"]"+"["+b+"]");
+								//alert(dis.disabled)
+								dis.disabled=boolvalue;
+								//for ( n=0; n < 7; n++)
+								//{
+									oo=document.getElementById(checkboxname+"["+num+"]");
+									oo2=document.getElementById(checkboxname+"["+num+"]"+"["+b+"]");
+									oo3=document.getElementById(checkboxname+"["+num+"]");
+									if(oo.checked==boolvalue)
+									{
+										oo2.disabled=boolvalue;
+									}
+								//}
+							}
+						}
+					}
+				}							
+			}
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		}
+	}
+	
+	var other_data=["a"];
+	var data_count=0;
+	var other_data2=[];
+	function mytest(day,start,stop)
+	{
+		if(!Array.indexOf)
+		{
+			Array.prototype.indexOf = function(obj)
+			{
+				for(var i=0; i<this.length; i++)
+				{
+					if(this[i]==obj)
+					{
+						return i;
+					}
+				}
+				return -1;
+			}
+		}
+		if(day=='Sun,Mon,Tue,Wed,Thu,Fri,Sat')
+		{
+			add_new_data();
+			data_count+=1;
+			other_data2.push(day);
+			other_data2.push(start);
+			other_data2.push(stop);
+		}
+		else if(other_data.indexOf(day)=='-1')
+		{	
+			other_data.push(day)
+			for ( n=0; n < 7; n++)
+    		{
+				oo=document.getElementById('selectDay'+"["+n+"]");
+				for ( a=0; a < 25; a++)
+				{
+					oo2=document.getElementById('selectDay'+"["+n+"]"+"["+a+"]");
+	        		if (oo.value==day) 
+        			{
+						if(oo2.value==start|oo2.value==stop)
+						{
+							setHourtest('selectDay', 'true', n, a);
+						}
+        			}
+				}
+    		}
+		}
+		else
+		{
+			add_new_data();
+			data_count+=1;
+			other_data2.push(day);
+			other_data2.push(start);
+			other_data2.push(stop);
+			//alert(other_data2)
+			//add_other_data();
+		}
+		
+	}
+
+	function add_other_data()
+	{
+		var myform=window.document.forms[0];
+
+    		for ( var i=0; i < myform.elements.length; i++)
+    		{
+        			var ctrlobj=myform.elements[i];
+			
+			if (ctrlobj.id=='other_select') 
+        			{
+				day=other_data2.shift();
+				if(day=='Sun,Mon,Tue,Wed,Thu,Fri,Sat'){ctrlobj.value='All Day'}
+				else{ctrlobj.value=day;}				
+        			}
+			if (ctrlobj.id=='timestart') 
+        			{
+				start=other_data2.shift();
+				ctrlobj.value=start;
+        			}
+			if (ctrlobj.id=='timestop') 
+        			{
+				stop=other_data2.shift();
+				ctrlobj.value=stop;
+        			}
+		}
+	}
+
+	var oday=[];
+	var ostarth=[];
+	var ostoph=[];	
+	function AddSchedule2()
+    	{
+		var subsch = document.getElementById('scheduleList').rows;
+     	   	var total = subsch.length;
+    	  	var select = document.getElementsByName('selectDay');
+        	//var other_select=document.getElementById('other_select').value;
+        	//var timestart=document.getElementById('timestart').value;
+        	//var timestop=document.getElementById('timestop').value;
+        	//var start=timestart.split(':');
+        	//var stop=timestop.split(':');
+        	//var days='';
+        	var isOK=1;
+       	
+		var myform=window.document.forms[0];
+
+    		for ( var i=0; i < myform.elements.length; i++)
+    		{
+        		var ctrlobj=myform.elements[i];
+
+        		if (ctrlobj.name=='other_select') 
+        		{
+				if(ctrlobj.value=='All Day'){oday.push('Sun,Mon,Tue,Wed,Thu,Fri,Sat')}
+				else{oday.push(ctrlobj.value);}
+				
+        		}
+			if (ctrlobj.name=='timestart') 
+        		{
+				ostarth.push(ctrlobj.value)
+        		}
+			if (ctrlobj.name=='timestop') 
+        		{
+				ostoph.push(ctrlobj.value)
+        		}
+
+    		}
+
+        	//if ( parseInt(start[0]) > parseInt(stop[0]) || 
+             	//( parseInt(start[0]) == parseInt(stop[0]) && parseInt(start[1]) >= parseInt(stop[1]) ) )
+        	//{
+            	//	alert("ERROR:Time Format Error.\\n");
+           	//	isOK = 0;
+           	//	return false;
+        	//}
+        	//days += other_select + ','; 
+        	//if ( days == '' )
+        	//{
+            	//	alert("ERROR:Please select Days.\\n");
+            	//	isOK = 0;
+            	//	return false;
+        	//}
+        	var color=(total % 2) ? ( "#556677" ) : ( "#334455" );
+        	//schedule.setAttribute("bgcolor", color);
+        	//schedule.setAttribute("originalColor", color);
+        	//schedule.setAttribute("onmouseover", "focusedColor(this)");
+        	//schedule.setAttribute("onmouseout", "blurColor(this)");
+        
+        	//var len = days.length;
+        	//days = days.substring(0, len-1);
+        
+        	// for (var i = 0; i < total; i++)
+        	// {
+            		// if ( subsch[i].cells[0].innerHTML == days && subsch[i].cells[1].innerHTML == timestart 
+              	// && subsch[i].cells[2].innerHTML == timestop ) 
+			// {
+              		// alert("schedule already exist");
+            			// isOK = 0;
+                 		// return false;
+            		// }   
+        	// }
+       	for ( n=0; n <= oday.length; n++)
+		{
+			if ( isOK == 1) 
+       		{
+				days=oday.shift();
+				timestart=ostarth.shift();
+				timestop=ostoph.shift();
+				if(days==''|timestart==''|timestop==''){break;}
+            			var schedule = document.getElementById('scheduleList').insertRow(total);
+            			var insertdays = schedule.insertCell(0);
+            			var inserttimestart = schedule.insertCell(1);
+            			var inserttimestop = schedule.insertCell(2);
+            			var checkitem = schedule.insertCell(3);
+            
+            			//insertdays.setAttribute("style", "width:250");
+            			insertdays.setAttribute("name", "schdays");
+            			insertdays.innerHTML = days;
+            			inserttimestart.innerHTML = timestart;
+            			inserttimestop.innerHTML = timestop;
+            			var tochecked = '<input type=\"checkbox\" name=\"subschs\" >';
+            			checkitem.innerHTML = tochecked;
+        		}
+		}
+	 	//document.getElementById('alldays').checked = false;
+    	}
+	var count=0;	
+	function add_new_data() 
+	{
+		var num = document.getElementById("mytable").rows.length;
+		var tr = document.getElementById("mytable").insertRow(num);
+		count+=1;
+        tr.setAttribute("id", count);
+		td = tr.insertCell(tr.cells.length);
+		td.setAttribute("class", "body");
+		td.setAttribute("valign", "center");
+		td.setAttribute("align", "left");
+		td.setAttribute("style", "height:30px; width: 20px;");
+		td.setAttribute("className", "body"); // for IE
+		td.innerHTML='<td class="body"  valign="center" align="left" style="height: 30px; width: 20px;"></td>';
+		td = tr.insertCell(tr.cells.length);
+		td.setAttribute("class", "body");
+		td.setAttribute("valign", "center");
+		td.setAttribute("align", "left");
+		td.setAttribute("style", "height:30px; width: 20px;");
+		td.setAttribute("className", "body"); // for IE
+		td.innerHTML='<td class="body"  valign="center" align="left" style="height: 30px; width: 20px;"></td>';
+		td = tr.insertCell(tr.cells.length);
+		td.setAttribute("class", "body");
+		td.setAttribute("valign", "center");
+		td.setAttribute("align", "left");
+		td.setAttribute("style", "height:30px; width: 20px;");
+		td.setAttribute("className", "body"); // for IE
+		//td.innerHTML='<td class="body"  valign="center" align="left" style="height: 30px; width: 400px;"></td>';
+		add_other(num);
+	}
+	function add_other(num) 
+	{
+		var tt='<td class="body" valign="center" align="left" style="height:30px; width:400px;">';
+		var arr = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "All Day"];
+		var time = ["0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "23:59"];
+		var day='<select class="qb" id="other_select" name="other_select" style="width:80">';
+		var day2="";
+		for(i=0;i<8;i++){
+			day2 += '<option other_select value="' + arr[i] + '">'+arr[i]+'</option>';
+		}
+		day2 += '</select>';
+
+		var starth='<select class="qb" id="timestart" name="timestart" style="width:80">';
+		var starth2="";
+		for(i=0;i<24;i++){
+			starth2 += '<option value="' + time[i] + '">'+time[i]+'</option>';
+		}
+		starth2 +='<option value="23:59">23:59</option></select>';
+
+		var stoph='<select class="qb" id="timestop" name="timestop" style="width:80">';
+		var stoph2="";
+		for(i=0;i<24;i++){
+			stoph2 += '<option value="' + time[i] + '">'+time[i]+'</option>';
+		}
+		stoph2 +='<option value="23:59">23:59</option></select>';
+		var del = '<a href="#" onclick="remove_data('+count+'); return false;"><image src="image/del.gif" valign="center" align="center" title="Delete Checked Schdule" border="0"></a>';
+		//var del = '<input class="qb" type="button" style="width: 40" value="Del" onclick="remove_data('+count+');">';
+		del+='</td>';
+
+		td.innerHTML=tt+'Day :'+day+day2+'Start Time :'+starth+starth2+' Stop Time :'+stoph+stoph2+del;
+	}
+	function remove_data(num) 
+	{
+		if(num!=null)
+		//alert(num.id)
+		var tb=document.getElementById('mytable');
+		var tr=document.getElementById(num);
+		tb.deleteRow(tr.rowIndex);
+	}
+
+	function del_tr() 
+	{
+		var num = document.getElementById("mytable").rows.length;
+		if(num >9)
+		{
+			document.getElementById("mytable").deleteRow(-1);
+		}
+	}	
+
+	function  showclick()
+	{  
+		document.getElementById("AutoSubmit").click(); 
+		//setInterval("showclick()",10000);  
+	}
+    </script>
+    
+scriptNewSchedule
+}
+#scheduleScript
+
+sub byName
+{
+    $a->{schname} cmp $b->{schname};
+}
+#byName
+
+sub maintainSchedule
+{
+    my (%action)=@_;
+    
+    my $schref=XMLread($gPATH.'schedule.xml');
+    my $schlist=$schref->{schedule};
+    my $exist=0;
+    my @days;
+    my @timestart;
+    my @timestop;
+    my @subscharrary;
+    my %newschedule;
+
+    @days=split(/;/, $action{days});
+    @timestart=split(/;/, $action{timestart});
+    @timestop=split(/;/, $action{timestop});
+    
+    $action{schname}=~s/^\s*|\s*$//g;
+    
+    if ( !$action{action} ) { return; }
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        @days=split(/;/, $action{days});
+        @timestart=split(/;/, $action{timestart});
+        @timestop=split(/;/, $action{timestop});
+        my $index=0;
+        foreach my $item ( @days )
+        {
+            my %newschedule;
+            $newschedule{timestart}=$timestart[$index];
+            $newschedule{timestop}=$timestop[$index];
+            $newschedule{days}=$item;
+            push(@subscharray, \%newschedule);
+            $index++;
+        }
+        $newschedule{subsch}=\@subscharray;
+        $newschedule{schname}=$action{schname};
+        $newschedule{description}=$action{description};
+
+        foreach my $sh ( @$schlist )
+        {
+            if ( $sh->{schname} eq $action{schname} )
+            {
+                $exist=1;
+                #delete($action{action});
+                $sh=\%newschedule;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            #delete($action{action});
+            push( @$schlist, \%newschedule); 
+            @$schlist=sort byName @$schlist;
+        }
+        #@$schlist=sort byName @$schlist;
+        
+        LogUserAction( action=>'SAVESCH', schname=>$action{schname}, days=>$action{days} );
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{schedule};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some SUBNET first\\n\\n);
+            return;
+        }
+        
+        my @temparray;
+        foreach my $item ( @$schlist )
+        {
+            if ( grep(/^$item->{schname}$/, @$delet) ) { LogUserAction( action=>'DELSCH', schname=>$item->{schname} ); next; }
+            push(@temparray, $item); 
+            
+        }
+        $schref->{schedule}=\@temparray;
+        
+    }
+    #@$schlist=sort byName @$schlist;
+    XMLwrite($schref, $gPATH."schedule.xml");
+    
+}
+sub OtherSelect()
+{
+         my @week=("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "All Day");
+         foreach my $day ( @week )
+         {
+	print qq (<option other_select value="$day" >$day</option>);
+         }
+}
+#OtherSelect
+sub timeSelect()
+{
+    my $time=shift;
+   my @time=("0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "23:59");
+
+    foreach my $seq ("0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "23:59")
+    {
+         #my $tm=$seq.":00";
+         #my $status = ( $time eq $tm ) ? ( "selected" ) : ( "" );
+         print qq (<option $status value="$seq" >$seq</option>);
+         #my $tm=$seq.":30";
+         #my $status = ( $time eq $tm ) ? ( "selected" ) : ( "" );
+         #print qq (<option $status value="$tm" >$tm</option>);
+    }
+    #my $status = ( $time eq "23:59" ) ? ( "selected" ) : ( "" );
+    #print qq (<option $status value="23:59" >23:59</option>);
+}
+#timeSelect
+
+#
+1

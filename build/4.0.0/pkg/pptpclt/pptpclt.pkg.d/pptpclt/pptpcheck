@@ -1,0 +1,69 @@
+#!/bin/bash
+#set -x
+
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+PPTPIID=`grep isptype=\"pptp\" $ACTIVEBASICXML|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+
+for ispid in $PPTPIID
+do
+ ispname=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+ pppispid=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pppispid=\"//"|sed -e "s/\".*//"`
+ eth=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`                                              
+ targetip=`grep iid=\"$ispid.*\" $ACTIVEBASICXML|sed -e "s/  <isp.*target=\"//"|sed -e "s/\".*//"`
+
+ ping -I $eth $targetip -c 1 >/dev/null 2>&1
+ pingresult1=$?
+ sleep 10 
+ ping -I $eth $targetip -c 1 >/dev/null 2>&1
+ pingresult2=$?
+ sleep 10 
+ ping -I $eth $targetip -c 1 >/dev/null 2>&1
+ pingresult3=$?
+    if [ $pingresult1 != '0' ]
+    then
+        if [ $pingresult2 != '0' ]
+        then
+            if [ $pingresult3 != '0' ]
+            then
+                #/usr/sbin/poff $ispname
+                #sleep 1
+                #/usr/sbin/pon $ispname
+                #sleep 60
+                #ps -ef|grep pppd|grep $ispname >/dev/null 2>&1
+                #pptpcheck=$?
+                #if [ $pptpcheck = '0' ] #if still reconnecting,no need to delete the process.
+                #then
+                    echo $(date) "PPTP Link ISP$ispid dead and can be reconnected!!!" >>/mnt/log/link.log
+                    update=1
+                #fi
+            fi
+        fi
+     fi
+done
+
+if [ "$update" = "1" ]
+then
+           PPTPIID=`grep isptype=\"pptp\" $ACTIVEBASICXML|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+           for ispid in $PPTPIID
+           do
+              ispname=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+              echo $(date) "Disconnect PPTP Link ISP$ispid !!!" >>/mnt/log/link.log
+              /usr/sbin/poff $ispname
+              sleep 1
+              ps -ef|grep pppd|grep $ispname >/dev/null 2>&1
+              pptpreconnect=$?
+              if [ $pptpreconnect != '0' ] #if still reconnecting,no need to delete the process.
+               then
+                   pppispid=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pppispid=\"//"|sed -e "s/\".*//"`
+                   pptproutegw=`grep iid=\"$pppispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*gateway=\"//"|sed -e "s/\".*//"`
+                   pptproutenic=`grep iid=\"$pppispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`
+                   pptpserver=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pptpserver=\"//"|sed -e "s/\".*//"`
+                   case "$pptpserver" in *[a-zA-Z]*) pptpserver=`/opt/qb/bin/script/ns $pptpserver`;; esac
+                   /sbin/ip route replace $pptpserver via $pptproutegw dev $pptproutenic table 254
+                   echo $(date) "Reconnect PPTP Link ISP$ispid !!!" >>/mnt/log/link.log
+                   /usr/sbin/pon $ispname
+              fi
+           done
+     sleep 60
+     #echo 101 >/tmp/fifo.qbserv
+fi

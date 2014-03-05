@@ -1,0 +1,725 @@
+#=============================================================================================
+sub showNewCountry
+{
+    my (%action)=@_;
+    
+    my $countryref=XMLread($gPATH.'country.xml');
+    my $countrylist=$countryref->{country};
+    
+    my $targetcountry;
+    foreach my $item ( @$countrylist )
+    {
+    	if ( $item->{countryname} eq $action{countryname} )
+    	{
+    	    $targetcountry=$item;
+    	}
+    }
+    #$gMSGPROMPT.=qq ( $targetcountry->{countryaddress}\\n\\n);
+
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Country);
+
+    print qq (<hr size=1>);
+    print qq (<table>);
+    #-------------------------------------------------------------------------------------------
+    #  country: Name and Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="countryname_show" id="countryname_show" style="WIDTH: 120px" value="$action{countryname}" >);
+    print qq (<input type="hidden" name="countryname" id="countryname" value="$action{countryname}" >);
+    my $status=($targetcountry->{countryaddress} eq '')?(checked):('');
+    if ($targetcountry->{countryaddress} ne '')
+    {
+        if ($targetcountry->{countryaddress}=~m/\d{1,3}\./){$status=checked;}
+        else{$status1=checked;}
+    }
+    print qq (<input type="radio" name="version" id="version" value="6" onclick = "document.getElementById('countrytype').click();" $status1 >IPv6);
+    print qq (<input type="radio" name="version" id="version" value="4" onclick = "document.getElementById('countrytype').click();" $status >IPv4);
+    print qq (</td></tr>);
+    #-------------------------------------------------------------------------------------------
+    #  country: Type 
+    #-------------------------------------------------------------------------------------------
+	#=================2013-12-04-JianYu_hidden_type============
+    print qq (<tr style="display:none;">);
+	#==========================================================
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Type: );
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    #my $status = ( $action{countrytype} eq "ip" || $action{countrytype} eq "" ) ? ( 'checked' ): ''; 
+    #print qq (<input type="radio" name="countrytype" id="countrytype" value="ip" onclick="changetype(this);" $status>IP);
+    #my $status = ( $action{countrytype} eq "network" ) ? ( 'checked' ): ''; 
+    #print qq (<input type="radio" name="countrytype" id="countrytype" value="network" onclick="changetype(this);" $status>Network);
+    #my $status = ( $action{countrytype} eq "iprange" ) ? ( 'checked' ): ''; 
+    #print qq (<input type="radio" name="countrytype" id="countrytype" value="iprange" onclick="changetype(this);" $status>IP Range);
+    #my $status = ( $action{countrytype} eq "iplist" ) ? ( 'checked' ): ''; 
+    #print qq (<input type="radio" name="countrytype" id="countrytype" value="iplist"  onclick="changetype(this);" $status>IP List);
+    #my $status = ( $action{countrytype} eq "networklist" ) ? ( 'checked' ): ''; 
+    my $status = ( $action{countrytype} eq "networklist" ) ? ( 'checked' ): ''; 
+    print qq (<input type="radio" name="countrytype" id="countrytype" value="networklist"  onclick="changetype(this);" $status>Network List);
+    #my $status = ( $action{countrytype} eq "fqdnlist" ) ? ( 'checked' ): ''; 
+    #print qq (<input type="radio" name="countrytype" id="countrytype" value="fqdnlist"  onclick="changetype(this);" $status>FQDN List);
+    print qq (<input type="hidden" class="qbtext" name="showaddress" id="showaddress" value="$targetcountry->{countryaddress}" >);
+ 
+    print qq (<input type="hidden" class="qbtext" name="showtype" id="showtype" value="$action{countrytype}" >);
+    print qq (</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (IP Address: );
+    print qq (<td id="ipaddress" class="body"  valign="center" align="left" style="height: 30px; width: 500px">);
+    print qq (<input class="qbtext" name="address" id="address" style="WIDTH: 120px" value="" >); 
+    
+    print qq (</td></tr>);
+    
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 600px">);
+    print qq (<input class="qb" type="button" width="100" value="Save" onclick="Savecountry();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+}
+#CountrySchedule
+
+
+#=============================================================================================
+
+sub scriptNewCountry
+{
+    print << "scriptNewCountry";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() 
+    { 
+        var showtype = document.getElementById('showtype');
+    	myform=window.document.forms[0]; 
+    	checkState();
+    	changetype(showtype);
+    }
+    
+    function changetype(obj)
+    {
+    	var type = obj.value;
+        var ipaddress = document.getElementById('ipaddress');
+        //var showaddress = document.getElementById('showaddress').value;
+        var showtype = document.getElementById('showtype').value;
+        var showaddress = ( showtype == type ) ? document.getElementById('showaddress').value : '';
+        document.getElementById('showtype').value = type;
+        
+        switch(type)
+        {
+            case 'ip':
+            	ipaddress.innerHTML = '<input class="qbtext" name="address" id="address" style="WIDTH: 120px" value="' + showaddress + '" >';
+            	break;
+            case 'network':
+            	var suboption = '';
+            	var address = showaddress.split("/");
+            	if (address == '')
+            	     address[1] = '';
+            	if (document.getElementById('version').checked == false)
+            	{
+            	    for (var i = 0; i < 32; i++)
+            	    {
+            	        suboption += '<option id="mask' + String(i+1) + '" value="' + String(i+1) + '">' + String(i+1) + '</option>';    
+            	    }
+            	}
+            	if (document.getElementById('version').checked == true)
+            	{
+            	    for (var i = 0; i < 128; i++)
+            	    {
+            	        suboption += '<option id="mask' + String(i+1) + '" value="' + String(i+1) + '">' + String(i+1) + '</option>';
+            	    }
+            	}
+                ipaddress.innerHTML = '<input class="qbtext" name="address" id="address" style="WIDTH: 120px" value="' + address[0] +'" > / ' + 
+                			'<select class="qbtext" name="subnet" id="subnet"" style="width:50">' + suboption;
+                var selectmask = 'mask' + address[1];
+                if ( address[1] )
+                    document.getElementById(selectmask).selected = true;
+                break;
+            case 'iprange':
+            	var address = showaddress.split("-");
+            	if (address == '')
+            	     address[1] = '';
+            	ipaddress.innerHTML = '<input class="qbtext" name="iprange1" id="iprange1" style="WIDTH: 120px" value="' + address[0] + '" > - ' +
+            				'<input class="qbtext" name="iprange2" id="iprange2" style="WIDTH: 120px" value="' + address[1] + '" >';
+            	break;
+            case 'iplist':
+            	if (document.getElementById('version').checked== false)
+            	{
+            	    ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' + 
+            				    'e.g. 192.168.1.10,10.0.0.3';
+                }
+                if (document.getElementById('version').checked== true)
+                {
+                    ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' +
+                                            'e.g. 2000:2000::200,2000:2000::100';
+                }
+            	break;
+            case 'networklist':
+            	if (document.getElementById('version').checked== false)
+            	{
+            	    ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' + 
+            				    'e.g. 192.168.1.0/24 ,10.0.0.0/24';
+                }
+                if (document.getElementById('version').checked== true)
+                {
+                    ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' +
+                                             'e.g. fe80::c0a8:100/120,fe80::c0a8:200/120,fe80::c0a8:300/120';
+                }
+            	break;
+            case 'fqdnlist':
+            	ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' + 
+            				'e.g. www.cnn.com, www.plurk.com  <Br>   This will only block the ip address from first dns query to a domain.';
+            	break;
+        }
+    }
+    
+    function Savecountry()
+    {
+        var showtype = document.getElementById('showtype').value;
+        var countryname_show = document.getElementById('countryname_show').value;
+	if ( countryname_show == '' )
+        {
+            alert('country Name must be English or nember');
+            return;
+        }
+        for (i = 0; i < countryname_show.length; i++)
+        {
+            var ch = countryname_show.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+                alert('country Name must be English or nember');
+                return;
+            }
+        }
+       
+        switch(showtype)
+        {
+            case 'ip': 
+            	var address = document.getElementById('address').value;
+            	if (document.getElementById('version').checked == false)
+            	{
+            	    if (!isValidIP(address))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	}
+            	if (document.getElementById('version').checked == true)
+            	{
+            	    if (!isValidIP_v6(address))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	}
+            	
+            	myform.countryaddress.value = address;
+            	break;
+            case 'network':
+            	var network = document.getElementById('address').value + '/' + document.getElementById('subnet').value;
+            	if (document.getElementById('version').checked == false )
+            	{
+            	    if (!isValidSubnet(network))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	    
+            	}
+            	if (document.getElementById('version').checked == true)
+            	{
+            	    if (!isValidSubnet_v6(network))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	}
+            	myform.countryaddress.value = network;
+            	break;
+            case 'iprange':
+                var iprange1 = document.getElementById('iprange1').value;
+                var iprange2 = document.getElementById('iprange2').value;
+                if (document.getElementById('version').checked == false )
+                {
+                    var subiprange1 = iprange1.split('.');
+                    var subiprange2 = iprange2.split('.');
+                    if (!isValidIP(iprange1) || !isValidIP(iprange2))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	    if (subiprange1[0] + subiprange1[1] + subiprange1[2] != subiprange2[0] + subiprange2[1] + subiprange2[2])
+            	    {
+            	        alert('IP range MUST the same subnet!!\\n e.g : 192.168.1.10-192.168.1.20');
+            	        return;
+            	    }
+               	    if (parseInt(subiprange1[3]) >=  parseInt(subiprange2[3]))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+                }
+                if (document.getElementById('version').checked == true)
+                {
+                    var subiprange1 = iprange1.split(':');
+                    var subiprange2 = iprange2.split(':');
+                    if (!isValidIP_v6(iprange1) || !isValidIP_v6(iprange2))
+                    {
+                        alert('Invalid Address!!');
+                        return;
+                    }
+                    if (parseInt(subiprange1[7],16) >=  parseInt(subiprange2[7],16))
+                    {
+                        alert('IP range MUST the same subnet!!\\n e.g : fe80::c0a8:10f-fe80::c0a8:16f');
+                        alert('Invalid Address!!');
+                        return;
+                    }
+                }
+            	myform.countryaddress.value = iprange1 + '-' + iprange2;
+            	break;
+            case 'iplist':
+            	var address = document.getElementById('address').value;
+            	var iparray = address.split(',');
+            	for (var i = 0; i < iparray.length; i++)
+            	{
+            	    if (document.getElementById('version').checked == false)
+            	    {
+            	        if (!isValidIP(iparray[i]))
+            	        {
+            	            alert('Invalid Address!!');
+            	            return;
+            	        }
+            	    }
+            	    if (document.getElementById('version').checked == true)
+            	    {
+            	        if (!isValidIP_v6(iparray[i]))
+            	        {
+            	            alert('Invalid Address!!');
+            	            return;
+            	        }
+            	    }
+            	}
+            	myform.countryaddress.value = address;
+            	break;
+            case 'networklist':
+            	var address = document.getElementById('address').value;
+            	var iparray = address.split(',');
+            	for (var i = 0; i < iparray.length; i++)
+            	{
+            	    if (document.getElementById('version').checked == false)
+            	    {
+            	        if (!isValidSubnet(iparray[i]))
+            	        {
+            	            alert(iparray[i]+'\\nInvalid Address!!!');
+            	            return;
+            	        }
+            	    }
+            	    if (document.getElementById('version').checked == true)
+            	    {
+            	        if (!isValidSubnet_v6(iparray[i]))
+            	        {
+            	            alert('Invalid Address!!');
+            	            return;
+            	        }
+            	    }
+            	}
+            	myform.countryaddress.value = address;
+            	break;
+            case 'fqdnlist':
+            	var address = document.getElementById('address').value;
+            	var iparray = address.split(',');
+            	/*for (var i = 0; i < iparray.length; i++)
+            	{
+            	    if (!isValidSubnet(iparray[i]))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	}*/
+            	myform.countryaddress.value = address;
+            	break;
+        }
+        
+        myform.action.value = 'SAVE';
+        if (document.getElementById('version').checked == true){myform.countryname.value = countryname_show + "-IPv6-";}
+        else{myform.countryname.value = countryname_show;}
+        myform.submit();
+   	 
+    }
+    
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var countryname=document.getElementById('countryname');
+        var countryname_show=document.getElementById('countryname_show');
+                                
+        if ( countryname.value != '' )
+            countryname_show.disabled = true;
+        
+        
+        if ( action != '' )
+            window.top.mainFrame.location.href="country.cgi";
+    }
+    
+    </script>
+    
+scriptNewCountry
+}
+#scriptNewCountry
+
+sub byName
+{
+    $a->{countryname} cmp $b->{countryname};
+}
+#byName
+
+sub maintainCountry
+{
+    %action=@_;
+    my $countryref=XMLread($gPATH.'country.xml');
+    my $countrylist=$countryref->{country};
+    my $exist=0;
+    my @sservices;
+    my @dservices;
+    #Gary 20130725 country byPolicy
+    my $hostref=XMLread($gPATH.'host.xml');
+    my $hostlist=$hostref->{host};
+    
+    
+    if ( !$action{action} ) { return; } 
+    
+    $action{countryname}=~s/^\s*|\s*$//g;
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+    	
+        #if ($action{version} eq "4"){if ( $action{countrytype} eq 'network' ) { $action{countryaddress}=get_subnet($action{countryaddress}); }}
+        #if ($action{version} eq "6"){if ( $action{countrytype} eq 'network' ) { $action{countryaddress}=get_subnet_v6($action{countryaddress}); }} 
+	foreach my $country ( @$countrylist )
+        {
+            if ( $country->{countryname} eq $action{countryname} )
+            {
+                $exist=1;
+                delete($action{action});
+            	$action{byGSLB}='1';
+            	$action{byPolicy}='0';
+                $country=\%action;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            push(@sservices, "system");
+            push(@dservices, "system");
+            delete($action{action});
+            $action{byGSLB}='1';
+            $action{byPolicy}='0';
+            push( @$countrylist, \%action);
+        }
+        @$countrylist=sort byName @$countrylist;
+        XMLwrite($countryref, $gPATH."country.xml");
+        
+        
+        
+        my $COUNTRYADDR="/usr/local/apache/qbconf/".$action{countryname};
+        my $COUNTRYHEAD="acl \"".$action{countryname}."\" \{";
+        my $COUNTRYEND="\}; ";
+        
+        open( COUNTRY, ">$COUNTRYADDR" );
+        
+        print COUNTRY qq ( $COUNTRYHEAD );  # head
+	foreach my $country ( @$countrylist )
+        {
+            if ( $country->{countryname} eq $action{countryname} )
+            {
+            	my @arry_country=split(/,/, $country->{countryaddress});
+            	foreach my $arry_country_ip ( @arry_country )
+            	{
+        	    print COUNTRY qq ($arry_country_ip;);
+        	}
+            }
+        }
+        
+        print COUNTRY qq ( $COUNTRYEND \n\n );   # end
+        
+        
+        
+        #LogUserAction( action=>'SAVEcountry', countryname=>$action{countryname}, countrytype=>$action{countrytype}, countryaddress=>$action{countryaddress} );
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{country};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some Country first\\n\\n);
+            return;
+        }
+        my @temparray;
+        foreach my $item ( @$countrylist )
+        {
+            if ( grep(/^$item->{countryname}$/, @$delet) ) 
+            { 
+                #LogUserAction( action=>'DELcountry', countryname=>$item->{countryname} ); 
+				runCommand(command=>"rm", params=>'/usr/local/apache/qbconf/'.$item->{countryname});
+                next; 
+            }
+            #$gMSGPROMPT.=qq (item $item\\n\\n);
+            push(@temparray, $item);
+        }
+        my @temp= map{$_}@$delet;
+        $countryref->{country}=\@temparray;
+        #$gMSGPROMPT.=qq (this $countryref->{country}\\n\\n);
+        XMLwrite($countryref, $gPATH."country.xml");
+    }
+    elsif ( $action{action}=~m/^GETADDRESSLIST$/ )
+    {
+        foreach my $country ( @$countrylist )
+        {
+           if( $country->{countryname} eq $action{countryname} ) 
+           {
+        	return $country->{countryaddress};
+           }
+        }
+        return '';
+    }
+    elsif ( $action{action}=~m/^USEDGSLB$/ )
+    {
+	my $dns=XMLread($gPATH.'dns.xml');
+	my $isplist=$dns->{isp};
+        foreach my $country ( @$countrylist ) { if( $country->{countryname} eq $action{countryname} ) { $country->{byGSLB}='1'; } }
+        @$countrylist=sort byName @$countrylist;
+        XMLwrite($countryref, $gPATH."country.xml");
+        
+	foreach my $isp ( @$isplist )
+	{
+	    if ( $isp->{ispnum} eq 'system' ) {next;}
+	    my $domainlist=$isp->{domain};
+	    my $targetdomain;
+	    foreach my $domain ( @$domainlist )
+	    {
+	    	if ( $domain->{d_name} eq 'system' ) {next;}
+	    	if ( $domain->{countryname} eq $action{countryname} ) { $targetdomain=$domain; last; }
+	    }
+	    $targetdomain->{set}='1';
+	}
+    	XMLwrite($dns, $gPATH."dns.xml");
+    
+    }
+    elsif ( $action{action}=~m/^UNUSEDGSLB$/ )
+    {
+	my $dns=XMLread($gPATH.'dns.xml');
+	my $isplist=$dns->{isp};
+        foreach my $country ( @$countrylist ) { if( $country->{countryname} eq $action{countryname} ) { $country->{byGSLB}='0'; }  if( $country->{countryname} eq 'system' ) { $country->{allbyGSLB}='0'; } }
+        @$countrylist=sort byName @$countrylist;
+        XMLwrite($countryref, $gPATH."country.xml");
+	foreach my $isp ( @$isplist )
+	{
+	    if ( $isp->{ispnum} eq 'system' ) {next;}
+	    my $domainlist=$isp->{domain};
+	    my $targetdomain;
+	    foreach my $domain ( @$domainlist )
+	    {
+	    	if ( $domain->{d_name} eq 'system' ) {next;}
+	    	if ( $domain->{countryname} eq $action{countryname} ) { $targetdomain=$domain; last; }
+	    }
+	    #if ( !$targetdomain ) { $gMSGPROMPT.=qq( Domain $action{countryname} does not exist !!! \\n); reurn; }
+	    $targetdomain->{set}='0';
+	}
+    	XMLwrite($dns, $gPATH."dns.xml");
+    }
+    
+    elsif ( $action{action}=~m/^ALLUSEDGSLB$/ )
+    {
+ #$gMSGPROMPT.=qq( $action{action} !!! \\n);
+	my $dns=XMLread($gPATH.'dns.xml');
+	my $isplist=$dns->{isp};
+        foreach my $country ( @$countrylist ) { if( $country->{byGSLB} eq '0' ) { $country->{byGSLB}='1'; } if( $country->{countryname} eq 'system' ) { $country->{allbyGSLB}='1'; } }
+        @$countrylist=sort byName @$countrylist;
+        XMLwrite($countryref, $gPATH."country.xml");
+        return;
+        
+	foreach my $isp ( @$isplist )
+	{
+	    if ( $isp->{ispnum} eq 'system' ) {next;}
+	    my $domainlist=$isp->{domain};
+	    my $targetdomain;
+	    foreach my $domain ( @$domainlist )
+	    {
+	    	if ( $domain->{d_name} eq 'system' ) {next;}
+	    	if ( $domain->{countryname} eq $action{countryname} ) { $targetdomain=$domain; last; }
+	    }
+	    #if ( !$targetdomain ) { $gMSGPROMPT.=qq( Domain $action{countryname} does not exist !!! \\n); reurn; }
+	    $targetdomain->{set}='0';
+	}
+    	XMLwrite($dns, $gPATH."dns.xml");
+    }
+    
+    elsif ( $action{action}=~m/^ALLUNUSEDGSLB$/ )
+    {
+ #$gMSGPROMPT.=qq( $action{action} !!! \\n);
+	my $dns=XMLread($gPATH.'dns.xml');
+	my $isplist=$dns->{isp};
+        foreach my $country ( @$countrylist ) { if( $country->{byGSLB} eq '1' ) { $country->{byGSLB}='0'; } if( $country->{countryname} eq 'system' ) { $country->{allbyGSLB}='0';} }
+        @$countrylist=sort byName @$countrylist;
+        XMLwrite($countryref, $gPATH."country.xml");
+        return;
+	foreach my $isp ( @$isplist )
+	{
+	    if ( $isp->{ispnum} eq 'system' ) {next;}
+	    my $domainlist=$isp->{domain};
+	    my $targetdomain;
+	    foreach my $domain ( @$domainlist )
+	    {
+	    	if ( $domain->{d_name} eq 'system' ) {next;}
+	    	if ( $domain->{countryname} eq $action{countryname} ) { $targetdomain=$domain; last; }
+	    }
+	    #if ( !$targetdomain ) { $gMSGPROMPT.=qq( Domain $action{countryname} does not exist !!! \\n); reurn; }
+	    $targetdomain->{set}='0';
+	}
+    	XMLwrite($dns, $gPATH."dns.xml");
+    }
+    elsif ( $action{action}=~m/^ALLUSEDPOLICY$/ )
+    {
+ 	#$gMSGPROMPT.=qq( $action{action} !!! \\n);
+        foreach my $country ( @$countrylist ) 
+        { 
+            $exist=0;
+            if( $country->{countryname} eq 'system' ) { $country->{allbyPolicy}='1'; next;} 
+            if( $country->{byPolicy} eq '0' ) { $country->{byPolicy}='1'; } 
+            foreach my $host ( @$hostlist )
+            {
+                if ( $host->{hostname} eq 'host-'.$country )
+                {
+                    $exist=1;
+                    $action{hostname}='host-'.$country->{countryname};
+                    $action{hostaddress}=$country->{countryaddress};
+                    $action{hosttype}=$country->{countrytype};
+                    $action{hide}='1';
+
+                    delete($action{action});
+                    delete($action{countryname});
+                    $host=\%action;
+                }
+            }
+            if ( $exist eq '0' )
+            {
+            	my %action;
+ 		
+                $action{hostname}='host-'.$country->{countryname};
+                $action{hostaddress}=$country->{countryaddress};
+                $action{hosttype}=$country->{countrytype};
+                $action{hide}='1';
+ 
+                delete($action{action});
+                delete($action{countryname});
+                push( @$hostlist, \%action);
+            }
+        }
+        push ( @$hostlist, @temparray);
+        @$hostlist=sort byName @$hostlist;
+        XMLwrite($hostref, $gPATH."host.xml");
+        
+        @$countrylist=sort byName @$countrylist;
+        XMLwrite($countryref, $gPATH."country.xml");
+        return;
+    }
+    elsif ( $action{action}=~m/^ALLUNUSEDPOLICY$/ )
+    {
+ 	#$gMSGPROMPT.=qq( $action{action} !!! \\n);
+        foreach my $country ( @$countrylist ) { if( $country->{byPolicy} eq '1' ) { $country->{byPolicy}='0'; } if( $country->{countryname} eq 'system' ) { $country->{allbyPolicy}='0'; } }
+        foreach my $host ( @$hostlist )
+        {
+            if ( grep(/^$host->{hide}$/, '1') ) {next;}
+            push(@temparray, $host);
+        }
+        $hostref->{host}=\@temparray;
+        XMLwrite($hostref, $gPATH."host.xml");
+        @$countrylist=sort byName @$countrylist;
+        XMLwrite($countryref, $gPATH."country.xml");
+        return;
+    }
+    
+    elsif ( $action{action}=~m/^USEDPOLICY$/ )
+    {
+ 	#$gMSGPROMPT.=qq( $action{action} !!! \\n);
+        foreach my $country ( @$countrylist ) 
+        { 
+            if( $country->{countryname} eq $action{countryname} ) 
+            { 
+                $country->{byPolicy}='1'; 
+                foreach my $host ( @$hostlist )
+                {
+                    if ( $host->{hostname} eq 'host-'.$action{countryname} )
+                    {
+                    	$exist=1;
+                    	$action{hostname}='host-'.$action{countryname};
+                    	$action{hostaddress}=$country->{countryaddress};
+                    	$action{hosttype}=$country->{countrytype};
+                    	$action{hide}='1';
+                    	
+                    	
+                    	delete($action{action});
+                    	delete($action{countryname});
+                    	$host=\%action;
+                    }
+                }
+                if ( $exist eq '0' )
+                {
+                    $action{hostname}='host-'.$action{countryname};
+                    $action{hostaddress}=$country->{countryaddress};
+                    $action{hosttype}=$country->{countrytype};
+                    $action{hide}='1';
+                    	
+                    	
+                    delete($action{action});
+                    delete($action{countryname});
+                    push( @$hostlist, \%action);
+                }
+            }
+        }
+        @$hostlist=sort byName @$hostlist;
+        XMLwrite($hostref, $gPATH."host.xml");
+        
+        @$countrylist=sort byName @$countrylist;
+        XMLwrite($countryref, $gPATH."country.xml");
+        return;
+    }
+    elsif ( $action{action}=~m/^UNUSEDPOLICY$/ )
+    {
+ 	#$gMSGPROMPT.=qq( $action{action} !!! \\n);
+ 	my @temparray;
+        foreach my $country ( @$countrylist ) 
+        { 
+            if( $country->{countryname} eq $action{countryname} ) 
+            { 
+            	$country->{byPolicy}='0'; 
+                foreach my $host ( @$hostlist )
+                {
+                    if ( grep(/^$host->{hostname}$/, 'host-'.$action{countryname}) ) {next;}
+                    push(@temparray, $host);
+            	}
+            	$hostref->{host}=\@temparray;
+            	XMLwrite($hostref, $gPATH."host.xml");
+            } 
+        }
+        
+        
+        @$countrylist=sort byName @$countrylist;
+        XMLwrite($countryref, $gPATH."country.xml");
+        return;
+    }
+}
+#
+1
+

@@ -1,0 +1,513 @@
+###############################################################################################
+#                                           Pxyinit Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showPxyinit 
+{
+    my (%action)=@_;
+    my $pxyinit=XMLread($gPATH.'pxyinit.xml');
+    
+    # Initializing Variables
+    #my $table_num=shift;
+    #my $rtable  = XMLread($gPATH.'rtable.xml');
+    #my $ispinfo = XMLread($gPATH.'basic.xml' );
+    #my @rtablelist=maintainRtable( action=>'GETREDIRECTLIST' );
+    #my $temptables=$rtable->{table};
+    #my @sortedTables=sort sort_table_by_id @$temptables;
+    #my $target;
+    #my $allpath;
+    #my $allisp=$ispinfo->{isp};
+    #my $backup_table;
+    #my $measure_time;
+
+    #if (!$table_num ) { $table_num=$rtablelist[0]; }
+
+    #foreach my $table ( @$temptables ) { if ( $table->{table_num} eq $table_num ) { $target=$table; last; } }
+    
+    #Get Hard Disk Information
+    #my $hddinfo5=runCommand(command=>'df ', params=>qq(-h \|grep hdb\|awk \'\{print \$5\}\') );
+    #my $hddinfo4=runCommand(command=>'df ', params=>qq(-h \|grep hdb\|awk \'\{print \$4\}\') );
+    #my $hddinfo3=runCommand(command=>'df ', params=>qq(-h \|grep hdb\|awk \'\{print \$3\}\') );
+    #my $hddinfo2=runCommand(command=>'df ', params=>qq(-h \|grep hdb\|awk \'\{print \$2\}\') );
+
+    #Get Cache Information
+    #my $cacheinfo5=runCommand(command=>'df ', params=>qq(-h \|grep squid\|awk \'\{print \$5\}\') );
+    #my $cacheinfo4=runCommand(command=>'df ', params=>qq(-h \|grep squid\|awk \'\{print \$4\}\') );
+    #my $cacheinfo3=runCommand(command=>'df ', params=>qq(-h \|grep squid\|awk \'\{print \$3\}\') );
+    #my $cacheinfo2=runCommand(command=>'df ', params=>qq(-h \|grep squid\|awk \'\{print \$2\}\') );
+
+    #my $memfree;
+    #open(MEM, "< /proc/meminfo");
+    #while($memfree=<MEM>) { if ($memfree=~m/MemFree:/) { last; } }
+    #close(MEM);
+    #my @memfree=split(/\s+/, $memfree);
+    #my $availmem=$memfree[1];
+    #my $freemem=int $memfree[1]/1000;
+    #my $maxcachesize= int $memfree[1]/2/1000;
+
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[397] ); #</td></tr>);
+    #print qq (<a href="javascript:qbShowHelp('pxyinit')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[398]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $pxyinit->{enablepxy} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="enablepxy"  $status >); 
+    print qq (</td>);
+    print qq (</tr>);  
+
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Proxy Balance Algorithm);
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">WRR By Connection);
+    #print qq (<input type="hidden" class="qbtext" name="algorithm" value="WRR" >);
+    #print qq (<select class="qbopt"  name="algorithm" style="width:130">);
+    #print qq (<option value="WRR" >WRR By Connection</option>);
+    #print qq (</select>);
+    #print qq (</td>);
+    #print qq (</tr>); 
+ 
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Proxy Outbound Pool);
+    #print qq (</td>);
+    
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (<select class="qbopt"  name="pxypool" style="width:130">);
+    #foreach my $table ( sort num_sort @rtablelist )
+    #{
+    #    if ( $table >= $gBALANCE ) { last; }
+    #    my $status=($table eq $pxyinit->{pxypool}) ? ( 'selected' ) : ( '' );
+    #    my $showtable=presentTable($table);
+    #    print qq (<option $status value="$table">$showtable</option>\n);
+    #}
+    #print qq (</select>);
+    #print qq (</td>);
+    #print qq (</tr>); 
+ 
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Get The Data From);
+    #print qq (</td>);
+    
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (<select class="qbopt"  name="pxydatafrom" style="width:130">);
+    #foreach my $datafrom ( Parent,Direct,Local )
+    #{
+    #    my $status=($datafrom eq $pxyinit->{pxydatafrom}) ? ( 'selected' ) : ( '' );
+    #    my $showtable=( $datafrom eq "Parent" ) ? ( 'Only parent proxy' ) : ( 'Parent and destination');
+    #    $showtable=( $datafrom eq "Local" ) ? ( 'Local/Parent/Destination' ) : ($showtable);
+    #    print qq (<option $status value="$datafrom">$showtable</option>\n);
+    #}
+    #print qq (</select>);
+    #print qq (</td>);
+    #print qq (</tr>); 
+ 
+    #****************************************************************************************
+#    print qq (<tr>);
+#    print qq (<td class="body"  valign="top" align="left">);
+#    print qq (Http Proxy Port Number);
+#    print qq (</td>);
+#    print qq (<td class="body"  valign="top" align="left">);
+    #print qq (<INPUT type="text" maxlength="15" class="qbtext" name="pxyhttpportno" value="$pxyinit->{pxyhttpportno}" onChange="checkAndSetpxyhttpportno()">);
+     print qq (<INPUT type="hidden" class="qbtext" name="pxyhttpportno" value="3128" >);
+#    print qq (</td>);
+#    print qq (</tr>); 
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[399]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text" maxlength="15" class="qbtext" name="maxobj" value="$pxyinit->{maxobj}" title="Objects larger than this size will not be saved on disk." >);
+    print qq ((KB));
+    print qq (</td>);
+    print qq (</tr>); 
+    
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[400]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text" minlength="15" class="qbtext" name="minobj" value="$pxyinit->{minobj}" title="" >);
+    print qq ((KB));
+    print qq (</td>);
+    print qq (</tr>); 
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[401]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    #print qq (<INPUT type="text" maxlength="15" class="qbtext" name="replace_usage" value="$pxyinit->{replace_usage}" title="Replacement begins when the disk usage is above the mark and attempts to maintain utilization near the mark." onChange="checkobjReplacement()">);
+    print qq (<INPUT type="text" maxlength="15" class="qbtext" name="replace_usage" value="$pxyinit->{replace_usage}" title="Replacement begins when the disk usage is above the mark and attempts to maintain utilization near the mark.">);
+    print qq ((%));
+    print qq (</td>);
+    print qq (</tr>); 
+
+    #****************************************************************************************
+
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (HDD Information);
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Total:$hddinfo2 Used:$hddinfo3 Available:$hddinfo4 Percent:$hddinfo5</td>);
+    #print qq (</tr>); 
+    
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[402]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text" maxlength="15" class="qbtext" name="pxycachesize" value="$pxyinit->{pxycachesize}">);
+    #print qq (<INPUT type="text" maxlength="15" class="qbtext" name="pxycachesize" value="$pxyinit->{pxycachesize}" onChange="checkAndSetpxycachesize('$maxcachesize')">);
+    #print qq (Freesize =$freemem ; Maxsize=$maxcachesize );
+    
+    my $usb=runCommand(command=>'df ', params=>qq(-h \|grep tclog\|awk \'\{print \$2\}\') );
+    my $byte=$usb;
+    my $usbsize=(int $usb) / 2;    
+    $byte=~s/[\d\.\n\s]//g;
+    $byte=$byte . "B";
+    print qq ((MB) $qblang[403]=$usbsize );
+    print qq ($byte);
+    print qq (</td>);
+    print qq (</tr>); 
+
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Cache information);
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Total:$cacheinfo2 Used:$cacheinfo3 Available:$cacheinfo4 Percent:$cacheinfo5</td>);
+    #print qq (</tr>); 
+=cut
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Https Proxy Port Number);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<INPUT type="text" maxlength="15" class="qbtext" name="pxyhttpsportno" value="$pxyinit->{pxyhttpsportno}" onChange="checkAndSetpxyhttpsportno()">);
+    print qq (</td>);
+    print qq (</tr>); 
+=cut
+    #****************************************************************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Administrator's E-mail);
+    #print qq (</td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    #my $maillist=$overview->{mail};
+    #foreach my $mail ( @$maillist )
+    #{
+    #     my $mailValue=$mail->{value};
+    #     if ( $mailValue eq 'system' ) { next; }
+         print qq (<input type="hidden" class="qbtext" name="pxyadmmail" value="$pxyinit->{pxyadmmail}" >);
+    #     $pxyinit->{pxyadmmail}=$mailValue;
+    # }
+                                                
+    #print qq (<INPUT type="hidden" class="qbtext" name="pxyadmmail" value="$pxyinit->{pxyadmmail}" onChange="checkAndSetpxyadmmail()">);
+    #print qq (</td>);
+    #print qq (</tr>); 
+=cut
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Enable Proxy Log on Local);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $pxyinit->{locallog} ) ? ('checked') : (''); 
+    print qq (<INPUT type="checkbox" name="locallog"  $status >);
+    print qq (<input class="qb" type="button" value="Clean Log" title="Clean All connection log !" onClick="goSubmit('CLEAN')" style="width:100">);
+    print qq (</td>);
+    print qq (</tr>); 
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (</table>);
+
+
+#=cut
+    print qq (<tr><td class="body"  align="center" colspan="3" width="90%">);
+    print qq (<table class="body" width="90%">);
+    print qq (<tr><td width="95%">); #20080220 Brian To modify "+/S" button become "Add/Save".
+            
+    # Print Path Title first
+    print qq (<div class="divframe">);
+    print qq (<table bgcolor="#332211" width="100%" border="0">);
+    #**************************************************************************************************************
+    #for printing format
+    my @titlelist=('Enable' ,'Weight', 'ISP ID', 'Name', 'Interface', 'Gateway');
+    print qq (<tr>);
+    foreach my $title ( @titlelist ) { print qq (<td class="body" align="center" width="10%">$title</td>); }
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</div>);
+    #=======================================================================================================
+    $allpath=$target->{path};
+
+    print qq (<div class="divframe" style="height:100">);
+    print qq (<table bgcolor="#112233" width="100%" border="0"><tr>);
+    my $lineCount=0;
+    foreach my $isp ( @$allisp )
+    {
+        my $path;
+        if ( $isp->{iid} eq 'system' ) { next; }
+        if ( $isp->{isptype} eq 'tunnel' ) { next; }  #Tunnel can't be used for Transparent proxy server.
+        foreach my $item ( @$allpath ) { if ( $item->{isp} == $isp->{iid} ) { $path=$item; last;} }
+
+        my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        my $originalColor=$bgcolor;
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+
+        my $status='';
+        if ( !($isp->{state}=~m/^FORMATOK$|^HEALTHYOK$/ ) ) { next; }
+        if ( $path->{weight} ) { $status="checked"; }
+        else { $status=''; }
+
+        print qq (<td class="body" align="center" width="10%"><input type="checkbox" name="select$isp->{iid}" onClick="switch_weight('$isp->{iid}')" $status></td>);
+
+        my $status=( $path->{weight} ) ? ( '' ) : ( 'disabled' );
+        print qq (<td class="body" align="center" width="10%"><select class="qbopt" name="weight$isp->{iid}" $status>);
+        foreach my $weight (0..20)
+        {
+            my $status=( $weight==$path->{weight}) ? ('selected') : ('');
+            print qq (<option $status value="$weight">$weight</option>);
+        }
+        print qq (</select></td>);
+        print qq (<td class="body" align="center" width="10%">ISP $isp->{iid}</td>);
+
+        print qq (<td class="body" align="center" width="10%">$isp->{ispname}</td>);
+
+        my $interface=$isp->{nic};
+
+        if ( $interface!~m/mpv/ )
+        {
+            $interface=~s/eth//g; $interface++; $interface='PORT '.$interface;
+        }
+
+        print qq (<td class="body" align="center" width="10%">$interface</td>);
+
+        print qq (<td class="body" align="center" width="10%">$isp->{gateway}</td></tr>);
+
+        print qq (<input type="hidden" name="subnet$isp->{iid}" value="$isp->{subnet}">);
+
+        $lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+
+    # Command Table
+    print qq (<td align="right" valign="bottom"><table>);
+    print qq (<tr><td><input type="button"  name="SAVE" class="qb" value="Save" title="Save Updated Table Information" onClick="ok_to_update()" style="width:40;height:20"></td></tr>);
+    print qq (</table></td></tr>);
+
+=cut
+    #************************************ Command Button  ********************************************
+    print qq (<tr>);
+    print qq (<td colspan="2" align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[139]" title="Save All Parameters and apply now !" onClick="goSubmit('APPLY')" style="width:120">);
+    print qq (</td></tr>);
+    print qq (</table>);
+
+}
+#showConsole
+
+
+#======================================================================================================================
+sub pxyinitScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+        //switchpxyportno();   
+    }
+                                                            
+    function checkAndSetpxyhttpportno()
+    {
+        if ( !isValidPort(myform.pxyhttpportno.value) ) 
+        { 
+            myform.pxyhttpportno.value=""; 
+            alert("Http Port format Error");
+        }
+    }
+    
+    function checkAndSetpxyhttpsportno()
+    {
+        if ( !isValidPort(myform.pxyhttpsportno.value) ) 
+        { 
+            myform.pxyhttpsportno.value=""; 
+            alert("Https Port format Error");
+        }
+    }
+    function checkAndSetpxycachesize(cachemaxsize)
+    {
+        if ( !isValidPort(myform.pxycachesize.value) ) 
+        { 
+            myform.pxycachesize.value=""; 
+            alert("Size format Error");
+        }
+        if ( myform.pxycachesize.value > cachemaxsize ) 
+        { 
+            myform.pxycachesize.value=""; 
+            alert("Size is too big");
+        }
+    }
+
+    function checkobjReplacement()
+    {
+        if ( !isValidPort(myform.replace_usage.value) ) 
+        { 
+            myform.replace_usage.value=""; 
+            alert("Size format Error");
+        }
+        if ( myform.replace_usage.value > 95 ) 
+        { 
+            myform.replace_usage.value=""; 
+            alert("Percentage is too big");
+        }
+    }
+
+    function checkAndSetpxyadmmail()
+    {
+        if ( !isValidMail(myform.pxyadmmail.value) ) 
+        { 
+            myform.pxyadmmail.value=""; 
+            alert("Administrator's Mail format Error");
+        }
+    }
+                                
+    function switch_weight(isp)
+    {
+        var sel=eval("document.rtableform.select"+isp);
+        var weight=eval("document.rtableform.weight"+isp);
+                        
+        if (!sel) { return; }
+        if(!sel.checked)
+        {
+            if(!sel.disabled) { weight.selectedIndex=0; }
+            weight.disabled=true;
+        }
+        else
+        {
+            if ( weight.selectedIndex <=0 ) { weight.selectedIndex=1;}
+            weight.disabled=false;
+        }
+    }
+                                                                                                                                    
+    </script>
+SCRIPT
+}
+#pxyinitScript
+
+
+#======================================================================================================================
+#maintainPxyinit( %action )
+sub maintainPxyinit 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $pxyinit=XMLread($gPATH.'pxyinit.xml');
+    #my $overview=XMLread($gPATH.'overview.xml');
+    #my $maillist=$overview->{mail};
+    #foreach my $mail ( @$maillist )
+    #{
+    #     my $mailValue=$mail->{value};
+    #     if ( $mailValue eq 'system' ) { next; }
+    #     $action{pxyadmmail}=$mailValue;
+    # }
+    
+    if ( $action{action}=~m/^APPLY$/ ) 
+    {
+        $pxyinit->{enablepxy}=$action{enablepxy};
+        $pxyinit->{pxyhttpportno}=$action{pxyhttpportno};
+        $pxyinit->{pxycachesize}=$action{pxycachesize};
+        $pxyinit->{maxobj}=$action{maxobj};
+        $pxyinit->{minobj}=$action{minobj};
+        $pxyinit->{replace_usage}=$action{replace_usage};
+        
+        if ( $pxyinit->{pxyhttpportno}=~m/\D/ || $pxyinit->{pxyhttpportno} < 0 || $pxyinit->{pxyhttpportno} >= 65536 )
+        {
+             $gMSGPROMPT.=qq (ERROR:Proxy Number is NOT valid\\n);
+             return;
+        }
+        if ( $pxyinit->{replace_usage}=~m/\D/ || $pxyinit->{replace_usage} >= 85 || $pxyinit->{replace_usage} < 0 )
+        {
+            $gMSGPROMPT.=qq (ERROR:Object Replacement is NOT valid\\n);
+             return;
+        }
+        
+        if ( $pxyinit->{pxycachesize}=~m/\D/ || $pxyinit->{pxycachesize} < 0)
+        {
+            $gMSGPROMPT.=qq (ERROR:Cache Size is NOT valid\\n);
+            return;
+        }
+        
+        if ( $pxyinit->{minobj}=~m/\D/ || $pxyinit->{minobj} < 0)
+        {
+            $gMSGPROMPT.=qq (ERROR:Minimum Object Size is NOT valid\\n);
+            return;
+        }
+        
+        if ( $pxyinit->{maxobj}=~m/\D/ || $pxyinit->{maxobj} < $pxyinit->{minobj} )
+        {
+            $gMSGPROMPT.=qq (ERROR:Maximum Object Size is NOT valid\\n);
+            return;
+        }
+      
+        LogUserAction( action=>'APPLYPROXY', enablepxy=>$action{enablepxy}, maxobj=>$action{maxobj}, minobj=>$action{minobj}, replace_usage=>$action{replace_usage}, pxycachesize=>$action{pxycachesize} );
+        
+        #$pxyinit->{pxyhttpsportno}=$action{pxyhttpsportno};
+        #$pxyinit->{pxyadmmail}=$action{pxyadmmail};
+        #$pxyinit->{enablepxy}=$action{enablepxy};
+        #$pxyinit->{algorithm}=$action{algorithm};
+        #$pxyinit->{pxypool}=$action{pxypool};
+        #$pxyinit->{pxydatafrom}=$action{pxydatafrom};
+        #$pxyinit->{pxycachesize}=$action{pxycachesize};
+        #$pxyinit->{locallog}=$action{locallog};
+        #$pxyinit->{maxobj}=$action{maxobj};
+        #$pxyinit->{replace_usage}=$action{replace_usage};
+
+    }
+    #if ( $action{action}=~m/^CLEAN$/ ) 
+    #{
+    #    #runCommand(command=>'rm', params=>'-f ');
+     #}  
+     #-------updating pxyinit.xml------------------------ 
+     
+    XMLwrite($pxyinit, $gPATH."pxyinit.xml");
+    
+    runCommand(command=>'/usr/local/squid/etc/squidstop', params=>'');
+
+    #@dep
+        #runCommand(command=>'/opt/qb/bin/script/enable_squid.sh', params=>'');
+    runCommand(command=>'echo', params=>"200 >/tmp/fifo.qbserv");
+
+}
+#maintainPxyinit
+#
+1

@@ -1,0 +1,417 @@
+# #!/usr/local/sbin/perl
+
+use POSIX;
+#use Data::Dumper;
+
+$CSVPATH = "/tmp";
+
+require "his.lib";
+
+# key --  proto,srcip,dstip,srcprt,dstprt,sprts,dprts,icmpid
+# value --  pkts,bytes
+# CSV file format: key,value
+
+#--------------
+# $_[0]: hash records to put information to
+# $_[1]: name and path of the rile to read from
+#
+# Read rule file 
+# Example format of the rulefile:
+# number rule endtime
+# 1|,,,,,,|1325166
+# 2|,,,,,,|active
+#
+# Hash to return to has key rule and value the rule number
+sub readRuleNumbers_rule
+{
+    my $a = $_[0];
+    %$a = (); # clean the hash
+    open(FIN, "<$_[1]") || die "readRuleNumbers_rule, cannot open $_[1]: $!\n";
+    while(<FIN>)
+    {
+        my @fields = split(/\|/, $_);
+        $a->{$fields[1]} = $fields[0];
+    }
+    close(FIN);
+}
+
+sub readRuleNumbers_number
+{
+    my $a = $_[0];
+    %$a = (); # clean the hash
+    open(FIN, "<$_[1]") || die "readRuleNumbers_rule, cannot open $_[1]: $!\n";
+    while(<FIN>)
+    {
+        my @fields = split(/\|/, $_);
+        $a->{$fields[0]} = $fields[1];
+    }
+    close(FIN);
+}
+
+#-------------------------------------
+# write a set of rules into rule file
+# Notice: Weed out rules that are no longer in the kernel
+#         but need to keep it long enough till all record of it are out of the 7-day time frame.
+# Example format of the rulefile:
+# number rule endtime
+# 1|,,,,,,|1325166
+# 2|,,,,,,|active
+# 
+# Description: first the key(index) of a rule, then the rule, then the time when the rule ends.
+# If a rule is still in kernel, the endtime is labeled active.
+# If a rule is not in kernel, endtime is marked.
+# If a rule whose endtime is not within the last seven days it'll be removed.
+# If a rule has endtime but the rule is issued again, then the timestamp is removed and the field is labeled active.
+#
+# $_[0]: kernel rules from parseMangle()
+sub logRules()
+{
+    #--- grab the current traffics
+    # parseMangle(\%kernel);
+
+    #-------------
+    # write rules
+
+    open(FIN, "<$CSVPATH/qbnethis/rules");
+    #--- current time(get rid of seconds)
+    my $cur_time = time;
+    my %dd = date($cur_time);
+    $dd{'date_ftag'} =~ m#(....)(..)(..)_(..)(..)#;
+    my $cur_time = mktime(0, $5, $4, $3, $2-1, $1 - 1900);
+    
+    my %rulefile;
+    while(<FIN>)
+    {
+        # $1 is the number of the rule, $2 is rule, $3 is time stamp or "active"
+        # $_ =~ m#(.*,.*,.*,.*,.*,.*,.*,.*),(.*)";
+
+        $_ =~ m#(.*)\|(.*)\|(.*)#;
+        $rulefile{$2} = "$1|$3";
+    }
+    close(FIN);
+
+    # 1. If some rule in rule file is marked active but doesn't exists in kernel, mark endtime.
+    # 2. If some rule in rule time is marked endtime but exists in kernel, mark it active.
+    # 3. If some rule in rule file marked endtime that is DAYSTOKEEP days ago, and doesn't 
+    #    exists in kernel, wipe it out
+    # 4. If some rule exists in kernel but doesn't exists in rule file, add the new rule to rule file.
+    foreach my $key (keys %rulefile)
+    {
+        #----------------
+        # $1 is number of the rule, $2 is time stamp or "active"
+        $rulefile{$key} =~ m#(.*\|)(.*)#;
+
+        #--- 1 && 2
+        if (!(exists $_[0]->{$key}) && $2 eq 'active') { $rulefile{$key} = $1 . $cur_time; }
+        if (exists $_[0]->{$key} && $2 ne 'active') { $rulefile{$key} = $1 . 'active'; }
+
+        #--- 3
+        my $time_diff = $DAYSTOKEEP * 86400;
+        if (!(exists $_[0]->{$key}) && $2 ne 'active' && ($cur_time - $2) > $time_diff)
+        {
+            # --- save now available key in some temp file by appending to it
+            if (open(FOUT_KEY, ">>$CSVPATH/qbnethis/keys"))
+            {
+                print FOUT_KEY "$1\n";
+                close(FOUT_KEY);
+            }
+
+            delete $rulefile{$key};
+        }
+    }
+
+    foreach my $key (keys %{$_[0]})
+    {
+        #--- 4
+        if (!(exists $rulefile{$key}))
+        {
+            # print "adding new rule of key: $key and value: $_[0]->{$key}\n";
+            my $unused_key = '';
+
+            #--- find an unused key
+            # see if any key is in key file, if not, use the number of rules in the rule file
+            # to get new key
+            if (open(FIN_KEY, "<$CSVPATH/qbnethis/keys"))
+            {
+                my $keyfile_string = "";
+                while (<FIN_KEY>)
+                {
+                    if ($unused_key eq '') { $unused_key = $_; }
+                    else { $keyfile_string = $keyfile_string . $_; }
+                }
+                close(FIN_KEY);
+
+                # --- write the new key file
+                if (open (FOUT_KEY, ">$CSVPATH/qbnethis/keys"))
+                {
+                    print FOUT_KEY $keyfile_string;
+                    close(FOUT_KEY);
+                }
+            }
+
+            #--------------------
+            # If no available key in key file, use the length of the rule_file
+            # to calculate a new unused key
+            if ($unused_key eq '') { $unused_key = scalar (keys %rulefile)+1; }
+
+            #--- add the new rule
+            $rulefile{$key} = "$unused_key|active";
+        }
+    }
+
+    #--- write the resulting rulefile back
+    if (open(FOUT, ">$CSVPATH/qbnethis/rules"))
+    {
+        foreach $key (keys %rulefile)
+        {
+            $rulefile{$key} =~ m#(.*)\|(.*)#;
+            print FOUT "$1|$key|$2\n";
+        }
+        close(FOUT);
+    }
+}
+
+
+
+#--------------
+# $_[0]: hash information to write about
+# $_[1]: name and path of the file to write to
+# $_[2]: current time
+#
+# This function appends traffic data in rule files given
+#
+# NOTICE: The input hash is the MangleHash
+# This is different from the output hash from readCSVFile
+#
+# Note: file format is
+# time in secs|rule number, pkts, bytes| .....
+# example:
+# 234234|1,23443,256|2,2314,128 ....
+# 234234|1,14234,256|2,2342,128 ....
+sub writeCSVFile
+{
+    my $a=$_[0];
+
+    my %rulehash;
+    readRuleNumbers_rule(\%rulehash, "$CSVPATH/qbnethis/rules");
+
+    open(FOUT, ">>$_[1]") || die "writeCSVFile, cannot open $_[1]: $!\n";
+    print FOUT "$_[2]";
+
+    while (($key, $value) = each(%$a))
+    {
+        #--- insert the rule number with help from rulehash
+        print FOUT "|$rulehash{$key},$value";
+    }
+    print FOUT "\n";
+
+    close(FOUT);
+}
+
+#--------------
+# $_[0]: hash records to put information to
+# $_[1]: name and path of the file to read from
+# $_[2]: optional argument: search from this time
+# $_[3]: optional argument: search end on this time
+#
+# Return Hash: key is time, value is a chain of "rule,pkts,bytes" triplets: 1,23434,254|2,23423,128....
+sub readCSVFile
+{
+    my $a=$_[0];
+    %$a = (); # clean the hash
+
+    open(FIN, "<$_[1]") || die "readCSVFile, cannot open $_[1]: $!\n";
+    if ($_[2] == '')
+    {
+        while(<FIN>) { if ($_ =~ m#(.*?)\|(.*)#) { $a->{$1} = $2;}}
+    }
+    else
+    {
+        while(<FIN>)
+        {
+            $_ =~ /(.*?)\|(.*)/;
+            $a->{$1} = $2;
+            if ($_[2] <= $fields[0] && $fields[0] <= $_[3])
+            {
+                if ($_ =~ m#(.*?)\|(.*)#) { $a->{$1} = $2;}
+            }
+        }
+    }
+    close(FIN);
+}
+
+#--------------
+# $_[0]: Starting time  in format ccyymmdd_hhmmss
+# $_[1]: Ends time in format ccyymmdd_hhmmss
+# $_[2]: Query argument: a hash (key index, value hash queries)
+# hash key to form qry with: proto,srcip,dstip,srcprt,dstprt,sprts,dprts,icmpid, pkts, bytes
+# NOTICE: If query is not to be made, then leave the key empty
+# $_[3]:  Answer argument: An hash with key time, value hashes that has 
+#         key index (same index as in $_[2]), values pkts,bytes
+sub query()
+{
+    my $queries = $_[2];
+    my $retval = $_[3]; # hash to return to
+
+    #print Dumper($queries);
+
+    # evaluate time
+    # Get time in the correct format
+
+    # string to match time for
+    $_[0] =~ m#(....)(..)(..)_(..)(..)#;
+    my $start_time = mktime(0,$5,$4,$3,$2-1,$1-1900);
+    my $start_time_file = mktime(0,0,0,$3,$2-1,$1-1900);
+    $_[1] =~ m#(....)(..)(..)_(..)(..)#;
+    my $year = $1;
+    my $month = $2;
+    my $day = $3;
+    my $end_time = mktime(0,$5,$4,$3,$2-1,$1-1900);
+    my $end_time_file = mktime(0,0,0,$3,$2-1,$1-1900);
+
+    my %rulehash;
+    readRuleNumbers_number(\%rulehash, "$CSVPATH/qbnethis/rules");
+
+    my $ctime = $start_time;
+    my $filelast; # file last opened
+
+    # each day is 86400 seconds, so that's what the filename is based on
+    while ($ctime <= $end_time)
+    {
+        my $filetime = calcFileTime($ctime);
+
+        # --- if we've end up calculating the same file we had last time,
+        # --- it means it's over. Time you're looking for doesn't exist
+        # --- fill empty and return
+        if ($filetime == $filelast)
+        {
+            for (my $i = $ctime; $i <= $end_time; $i += 300)
+            {
+                # -- loop through query, fill in 0
+                my %rethash;
+                foreach my $index (keys %$queries) { $rethash{$index} = 0; }
+                $retval->{$i} = \%rethash;
+            }
+            return;
+        }
+
+#        my %rulehash;
+#        readRuleNumbers_number(\%rulehash, "$CSVPATH/qbnethis/rules");
+        if (!open(FIN, "$CSVPATH/qbnethis/new/$filetime"))
+        {
+            # --- if such file doesn't exists, time you're looking for doesn't exists.
+            # --- fill empty, find the next time
+
+            my %rethash;
+            foreach my $index (keys %$queries)
+            {
+                $rethash{$index} = 0;
+            }
+            $retval->{$ctime} = \%rethash;
+            $ctime += 300;
+            next;
+        }
+
+        # --- opened successfully, now find records
+        # --- read the next line
+        while(<FIN>)
+        {
+            # even if it's in the right file, you would still have to match the right time
+            my $current_line = $_;
+            $current_line =~ /(.*?)\|(.*)/;
+            my $ctime_thisline = $1;
+            my $rest_of_line = $2;
+
+
+            # --- this is for anytime a lookup is needed for the same line
+            while(1)
+            {
+                # --- is the time you're looking for currently on this line?
+                if ($ctime == $ctime_thisline)
+                {
+                    # --- yes, it's on this line.
+
+                    # --- splits different policies
+                    my @fields = split('\|', $rest_of_line);
+
+		    # --- loop through every single policy, if any matches the query rule we want, fill in the data.
+		    my %rethash;
+                    foreach my $item (@fields)
+                    {
+                        $item =~ m#(.*?),(.*),(.*)#;
+                        my $rule_number = $1;
+                        my $pkts = $2;
+                        my $bytes = $3;
+
+                        # obtain rule
+                        my $rule = $rulehash{$rule_number};
+                        
+                        # --- 
+                        # loops through the queries, see if any matches,
+                        # if any query you want is not in here, fill it with 0.
+			# (If next item in the field is the rule we're looking for, fill the data back in.)
+			# (But we need to avoid over-riding the data that is already found and inserted)
+                        foreach my $index (keys %{$queries})
+                        {
+			    my $cur_query = "$queries->{$index}->{'proto'},$queries->{$index}->{'srcip'},".
+					    "$queries->{$index}->{'dstip'},";
+			    $cur_query .= $queries->{$index}->{'srcprt'} ? "spt:$queries->{$index}->{'srcprt'}," : ',';
+			    $cur_query .= $queries->{$index}->{'dstprt'} ? "dpt:$queries->{$index}->{'dstprt'}," : ',';
+			    $cur_query .= $queries->{$index}->{'sprts'} ? "spts:$queries->{$index}->{'sprts'}," : ',';
+			    $cur_query .= $queries->{$index}->{'dprts'} ? "dpts:$queries->{$index}->{'dprts'}," : ',';
+			    $cur_query .= "$queries->{$index}->{'icmpid'}";
+
+			    if ($rule eq $cur_query)
+                            {
+				$rethash{$index} = "$bytes";
+                                #$retval->{$ctime_thisline} = \%rethash;
+                            }
+                            #elsif (!(exists $retval->{$ctime_thisline}->{$index}))
+                            elsif (!(exists $rethash{$index}))
+		 	    #--- if not matched, fill 0(but make sure it isn't already there)
+                            {
+                                $rethash{$index} = "0";
+                            }
+                        }
+                    }
+		    $retval->{$ctime_thisline} = \%rethash;
+
+
+                    # --- now get the next time
+                    $ctime += 300;
+                    last;
+                }
+                elsif ($ctime > $end_time) # time exceeded, return
+                {
+                    close(FIN);
+                    return;
+                }
+                elsif ($ctime < $ctime_thisline)
+                {
+                    # --- Your time doesn't exist in file.
+                    # --- Therefore, the traffic would be 0 for this time.
+                    # --- use empty key, empty value to denote none recorded
+                    my %rethash;
+                    foreach my $index (keys %$queries) { $rethash{$index} = '0'; }
+                    $retval->{$ctime} = \%rethash;
+
+                    # --- time to move on to the next time.
+                    # --- incrment the time you're looking for
+                    # --- and see if it matches $ctime_thisline
+                    $ctime += 300;
+                    next;
+                }
+                else
+                {
+                    # haven't find it yet, try the next line
+                    last;
+                }
+            }
+        }
+        # --- end of file, read next file
+        close(FIN);
+        $filelast = $filetime;
+    }
+}
+
+1;

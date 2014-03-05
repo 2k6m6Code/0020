@@ -1,0 +1,20 @@
+#!/bin/sh
+
+ARGS=$*
+
+PATH=$PATH:/bin;		export PATH
+
+case "x$ARGS" in
+	"x-t")
+	    ENGINE_NAME=`grep ENGINE /opt/qb/conf/registry | awk '{print $2}'`
+	    if [ ! "x$ENGINE_NAME" = "x" ]; then
+	        sed -e "s/QBALANCER/$ENGINE_NAME/g" | /usr/sbin/sendmail $ARGS
+	    else
+	        /usr/sbin/sendmail $ARGS
+	    fi
+	    ;;
+	*)
+	    /usr/sbin/sendmail $ARGS
+	    ;;
+esac
+

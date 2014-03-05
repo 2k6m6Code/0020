@@ -1,0 +1,3 @@
+<opt file="layer7">
+  <layer7 dst_subnet="system" l7action="system" l7service="system" src_subnet="system" />
+</opt>

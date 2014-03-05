@@ -1,0 +1,24 @@
+<opt lastupdate="" status="lock" file="proute">
+  <subadv>
+  </subadv>
+  <sys>
+    <class natmethod="ls" fwmark="0x8FF2710" service="domain" route_table="100" destination="" source="" priority="1000">
+      <time>0:1439</time>
+    </class>
+    <class natmethod="ls" fwmark="0x8FF2711" service="smtp" route_table="100" destination="" source="" priority="1000">
+      <time>0:1439</time>
+    </class>
+    <class natmethod="ls" fwmark="0x8FF2712" service="ftp" route_table="100" destination="" source="" priority="1000">
+      <time>0:1439</time>
+    </class>
+  </sys>
+  <fw>
+  </fw>
+  <qb></qb>
+  <fwadv>
+  </fwadv>
+  <to>
+  </to>
+  <sub>
+  </sub>
+</opt>

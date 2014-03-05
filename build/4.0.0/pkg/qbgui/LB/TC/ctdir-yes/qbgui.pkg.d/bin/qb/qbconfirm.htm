@@ -1,0 +1,55 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="gui.css" type="text/css">
+    </head>
+    
+    <body bgcolor="#336699">
+    <script type="text/javascript" src="qb.js"></script>
+    <script language="javascript">
+        var msgObj=window.dialogArguments;
+        var draw=msgObj.draw;
+        var msg=msgObj.msg;
+        
+        var allPage='';
+        var yesStr='';
+        var noStr='';
+        var cancelStr='';
+
+        if ( getcookie('language') == "chinese" )
+        {
+            allPage='<div class="body" align="center"><br><br><br>'+msg+'<br><br>';
+            yesStr='<input class="qb" type="button" value="¬O" onClick="Answer(1)" style="width:60">';
+            noStr='<input class="qb" type="button" value="§_" onClick="Answer(2)" style="width:60">';
+            cancelStr='<input class="qb" type="button" value="¨ú®ø" onClick="Answer(3)" style="width:60">';
+        }
+        else
+        {
+            allPage='<div class="body" align="center"><br><br><br>'+msg+'<br><br>';
+            yesStr='<input class="qb" type="button" value="Yes" onClick="Answer(1)" style="width:60">';
+            noStr='<input class="qb" type="button" value="No" onClick="Answer(2)" style="width:60">';
+            cancelStr='<input class="qb" type="button" value="Cancel" onClick="Answer(3)" style="width:60">';
+        }
+
+        switch (draw) 
+        {
+            case 2:
+                allPage=allPage+yesStr+noStr;
+                break;
+            case 3:    
+                allPage=allPage+yesStr+noStr+cancelStr;
+                break;
+        }
+
+        allPage=allPage+'</div>';
+        document.write(allPage);
+    </script>
+    
+    <script language="javascript">
+        function Answer(answer) 
+        {
+            window.returnValue=answer;
+            window.close();
+        }
+    </script>
+    </body>
+</html>

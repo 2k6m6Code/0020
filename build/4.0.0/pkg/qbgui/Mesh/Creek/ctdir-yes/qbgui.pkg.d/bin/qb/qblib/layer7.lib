@@ -1,0 +1,280 @@
+#===================================================================================================
+sub listLayer7
+{
+    my (%action)=@_;
+    my @iidlist=maintainBasic(action=>'GETGOODIIDLIST');
+    my $l7info=XMLread($gPATH."layer7.xml");
+    my $layer7List=$l7info->{layer7};
+    my %titleWidth=(Source=>'80',  Destination=>'80', Service=>'120', Atcion=>'50' );
+    my @titleList=('Source', 'Destination', 'Service', 'Atcion');
+    
+    print qq (<font class="bigtitle">Layer 7 Policy Configuration</font><hr size="1">);
+    print qq (<table cellspacing="0" cellpadding="0" class="body" >);
+    print qq (<tr bgcolor="#664422">);
+    foreach my $title ( @titleList ) { print qq (<td class="body" width="$titleWidth{$title}" align="center">$title</td>); }
+    print qq (<td align="center" width="50"><image src="image/del.gif" border="0"></td>);
+    print qq (</tr>);
+    
+    my $lineCount=1;
+    foreach my $layer7 ( @$layer7List ) 
+    {
+        my $bgColor=($lineCount%2) ? ("#556677") : ("#334455");
+        my $layer7key=$action{src_subnet}.$action{dst_subnet}.$action{l7service}.$action{l7action};
+        #my $portkey=$layer7->{src_subnet};
+        
+        if ( $layer7->{l7service} eq 'system' ) { next; }
+        
+        print qq (<tr bgcolor="$bgColor" originalColor="$bgColor" cellspacing="0" cellpadding="0" onclick="selectedColor(this);focusLayer7Info('$layer7->{src_subnet}', '$layer7->{dst_subnet}', '$layer7->{l7service}', '$layer7->{l7action}')" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+        #===================================================================      
+        my $display=$layer7->{src_subnet};
+        print qq (<td class="body"  align="center"  width="$titleWidth{Source}">$display</td>);
+        #===================================================================      
+        my $display=$layer7->{dst_subnet};
+        print qq (<td class="body" align="center" width="$titleWidth{Destination}">$display</td>);
+        #===================================================================      
+        my $service=$layer7->{l7service};
+        #my $display=( $layer7->{l7service} eq 'system' ) ? ('*') : ($service);
+        my $display=$layer7->{l7service};
+        print qq (<td class="body" align="center" width="$titleWidth{Service}">$display</td>);
+        #print qq (<td class="body" align="center" width="$titleWidth{Service}" onmousedown="showServiceInfo('$service')" onmouseout="hideServiceInfo()">$display</td>);
+        #===================================================================      
+        my $display=( $layer7->{l7action} );
+        print qq (<td class="body" align="center" width="$titleWidth{Atcion}">$display</td>);
+        #===================================================================      
+        print qq (<td class="body" align="center" width="50">);
+        print qq (<input type="button" class="qb" onclick="delLayer7('$layer7key')" value="-" style="width:20;height:20" title="Delete this layer7 policy">);
+        print qq (</td>);
+        print qq (</tr>);
+        
+        $lineCount++;
+    }
+
+    print qq (<tr><td colspan="8"><hr size="1"></td></tr>);
+    print qq (<tr><td colspan="8" align="left" class="body">);
+    print qq (Source: <input class="qbtext" name="src_subnet" type="text" style="width:100" onChange="VALUE_input()"><font color="#336699">||</font>);
+
+    print qq (Destination:  <input class="qbtext"  name="dst_subnet" type="text" style="width:100"  onChange="VALUE_input()"><font color="#336699">||</font>);
+
+    print qq (Service:  <select class="qbopt"  name="l7service" style="width:285"><font color="#336699">||</font>);
+    foreach my $mode ( sort keys %gL7PROTOCOLHASH )
+    {
+        print qq (<option $mode value="$mode"  >$gL7PROTOCOLHASH{$mode}</option>);
+    }
+#    foreach my $mode ( sort keys %gL7FILEHASH )
+#    {
+#        print qq (<option $mode value="$mode"  >$gL7FILEHASH{$mode}</option>);
+#    }
+    print qq (</select>);
+
+    print qq (Action:  <select class="qbopt"  name="l7action" style="width:55"><font color="#336699">||</font>);
+    foreach my $isp ( @iidlist ) { print qq (<option value="ISP$isp">ISP $isp</option>); }
+    print qq (<option value="Drop" >Drop</option>);
+    print qq (<option value="Log" >Log</option>);
+    print qq (</select>);
+    print qq (<input type="button" name="ADDL7POLICY" class="qb" onclick="goSubmit('ADDL7POLICY')" value="+" title="Add New Layer7" style="width:20;height:20">);
+    print qq (<input type="button" class="qb" onclick="updateLayer7Info()" value="U" title="Update Layer7 Info" style="width:20;height:20">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#listLayer7
+
+#===================================================================================================
+sub editLayer7
+{
+    my (%action)=@_;
+    my $l7info=XMLread($gPATH."layer7.xml");
+    my $layer7List=$l7info->{layer7};
+    
+    if ( !$action{action} ) { return; }
+
+    if ( $action{action}=~m/^UPDATELAYER7INFO$/ )
+    {
+        my $targetLayer7;
+        
+        foreach my $layer7( @$layer7List )
+        {
+            print qq (<td>Layer7_act=$action{keyofrule} ; </td>);
+            my $layer7key=$layer7->{src_subnet}.$layer7->{dst_subnet}.$layer7->{l7service}.$layer7->{l7action}; 
+            if ( $layer7key ne $action{keyofrule} )
+            { 
+            print qq (<td>TargetLayer7=$layer7key ; </td>);
+            print qq (<td>Layer7_act=$action{keyofrule} ; </td>);
+              next;
+            }
+            $targetLayer7=$layer7;
+            last;
+        }
+
+        #if ( !$targetLayer7 ) { $gMSGPROMPT.=qq($action{newl7service} Only support to modify status!!!\\n); }
+        #else
+        #{
+            print qq (<td>TargetLayer7=</td>);
+            print qq (<td>Layer7=$layer7</td>);
+            #$targetLayer7->{src_subnet}=$action{src_subnet};
+            print qq (<td>TargetLayer7=$targetLayer7->{src_subnet}</td>);
+            #$targetLayer7->{dst_subnet}=$action{dst_subnet};
+            #$targetLayer7->{l7service}=$action{l7service};
+            print qq (<td>TargetLayer7=$targetLayer7->{l7service}</td>);
+            #$targetLayer7->{l7action}=$action{l7action};
+            $gMSGPROMPT.=qq($action{keyofrule} Updated OK\\n);
+        #}
+    }
+    elsif ( $action{action}=~m/^ADDL7POLICY$/ )
+    {
+        my %template;
+
+        foreach my $layer7 ( @$layer7List ) 
+        {
+            my $layer7key=$layer7->{src_subnet}.$layer7->{dst_subnet}.$layer7->{l7service}.$layer7->{l7action}; 
+            if ( $layer7key ne $action{keyofrule} ) { next;}
+            $gMSGPROMPT.=qq ( Layer7: This policy exists already\\n);
+            return;
+        }
+        
+        foreach my $layer7 ( @$layer7List ) 
+        {
+            if ( $layer7->{l7service} ne 'system' ) { next;}
+            %template=%$layer7;
+            last;
+        }
+        $template{l7service}=$action{l7service};
+        $template{src_subnet}=$action{src_subnet};
+        $template{l7action}=$action{l7action};
+        $template{dst_subnet}=$action{dst_subnet};
+        
+        push(@$layer7List, \%template);
+    }
+    elsif ( $action{action}=~m/^DELLAYER7$/ )
+    {
+        my  @newLayer7Array;
+        foreach my $layer7 ( @$layer7List ) 
+        {
+            my $layer7key=$layer7->{src_subnet}.$layer7->{dst_subnet}.$layer7->{l7service}.$layer7->{l7action}; 
+            if ( $layer7key eq $action{keyofrule} ){next;}
+            push(@newLayer7Array, $layer7);
+        }
+        $l7info->{layer7}=\@newLayer7Array;
+    }
+    elsif ( $action{action} eq "GETLAYER7DEVLIST" )
+    {
+        my %layer7listhash;
+        foreach my $layer7 ( @$layer7List )
+        {
+            if( $layer7->{l7action} ne 'system' && $layer7->{l7action} ne '0' ) { $layer7listhash{"$layer7->{l7service}"}=1; }
+        }
+
+        return sort num_sort keys %layer7listhash;
+    }
+ 
+    #--------updating layer7.xml------------------------ 
+    XMLwrite($l7info, $gPATH."layer7.xml");
+
+    #--------overwrite  layer7.xml from $gPATH  to  /mnt/qb/conf/layer7.xml
+    #runCommand(command=>'cp', params=>'-f '.$gPATH.'layer7.xml /mnt/qb/conf/layer7.xml');
+    runCommand(command=>'do_qblayer7.pl', params=>'');
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    qbSync();
+}
+#editLayer7
+
+sub layer7Script
+{
+    
+    print << "LAYER7SCRIPT";
+    <div id="ServiceDiv" class="infodiv"></div>
+
+    <script type="text/javascript" src="grid.js"></script>
+    
+    <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=document.forms[0]; }
+    function showServiceInfo(service)
+    {
+        var pattern=/\\.|\\*|system|others|\\:d|\\:s|\\:/g; service=service.replace(pattern,'');
+        if(!service) { return; }
+        var service=eval(service);
+        ServiceDiv.innerText="<table class=infodivtable><tr><td>"+"Service Name:"+service.info[1]+"</td><td>"+"Type:"+service.info[0]+"</td></tr>";
+
+        with(service)
+        for(count=0;count<port.length;count++)
+        {
+            ServiceDiv.innerText+="<tr><td>Protocol:"+port[count].protocol+"</td><td>Port:"+port[count].port+"</td></tr>";
+        }
+
+        with(ServiceDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop + event.y;
+            style.display="block";
+        }
+    }
+    function hideServiceInfo(){ServiceDiv.style.display="none";} 
+    function VALUE_input()
+    {
+        myform.ADDL7POLICY.disabled=false;
+        //document.getElementById('newl7service').value = document.getElementById('src_subnet').value+'.'+document.getElementById('dst_subnet').value;
+    } 
+
+    function focusLayer7Info(src_subnet,dst_subnet,l7service,l7action)    
+    {   
+        myform.src_subnet.value=src_subnet; 
+        myform.dst_subnet.value=dst_subnet; 
+        myform.l7service.value=l7service; 
+        myform.l7action.value=l7action; 
+        //myform.newl7service.value=portkey+'.'+dst_subnet;
+ 
+        //for(var i=0;i<myform.dst_subnet.options.length;i++) 
+        //{ if (myform.dst_subnet.options[i].value==dst_subnet) { myform.dst_subnet.options[i].selected=true; } }
+        
+        myform.ADDL7POLICY.disabled=true;
+    }
+    
+    function updateLayer7Info()
+    {
+        goSubmit('UPDATELAYER7INFO');
+    }
+    
+    function delLayer7(l7service)
+    {
+        //myform.layer7.value=l7service;
+        goSubmit('DELLAYER7');
+    }
+
+    function importXML()
+    {
+        if ( window.ActiveXObject )
+        {
+            xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
+            xmlDoc.onreadystatechange=checkXMLReadyState;
+        }
+        xmlDoc.load("data.xml");
+    }
+    
+    function  checkXMLReadyState()
+    {
+        if ( xmlDoc.readyState==4 )  initXML();
+    }
+
+    function   initXML()
+    {
+        var layer7=xmlDoc.getElementsByTagName('employee');
+        for ( var i=0; i< layer7.length; i++)
+        {
+            alert(layer7[i].childNodes[0].firstChild.nodeValue);
+        }
+    }  
+    
+    </script>
+
+LAYER7SCRIPT
+}
+#layer7Script
+
+# must do this
+1

@@ -1,0 +1,60 @@
+ #!/bin/sh
+ #set -x
+ TEMPCONF="/tmp/ddclient.conf"
+ DDNSCONF="/etc/ddclient/ddclient.conf"
+ login=$1
+ password=$2
+ wildcard=$3
+ protocol=$4
+ server=$5
+ domain=$6
+ devnum=$7
+if [ "$protocol" != "dnspark" ] && [ "$protocol" != "noip" ] && [ "$protocol" != "dyndns2" ];then 
+#if [ "$protocol" != "dnspark" ] ;then 
+sed -e '{
+	    s/if=.*/if='$devnum',                          \\/g	
+            s/login=.*\\/login='$login',              \\/g
+            s/password=.*\\/password='$password',          \\/g
+            s/wildcard=.*\\/wildcard='$wildcard',          \\/g
+            s/protocol=.*\\/protocol='$protocol',          \\/g
+            s/server=.*/'$domain'/g
+         }' $DDNSCONF > $TEMPCONF.$devnum
+fi
+if [ "$protocol" = "dyndns2" ] || [ "$protocol" = "noip" ];then
+DDNSCONF="/etc/ddclient/ddclient.conf"
+sed -e '{
+	    s/if=.*/if='$devnum',                \\/g	
+            s/protocol=.*\\/protocol='$protocol',          \\/g
+            s/login=.*\\/login='$login',              \\/g
+            s/password=.*\\/password='$password'          \\/g
+            s/protocol=.*\\/protocol='$protocol',          \\/g
+            s/server=.*/'$domain'/g
+         }' $DDNSCONF > $TEMPCONF.$devnum
+fi
+#if [ "$protocol" = "noip" ];then
+#DDNSCONF="/etc/ddclient/ddclient.conf.noip" 
+#sed -e '{
+#            s/protocol=.*\\/protocol='$protocol',          \\/g
+#            s/login=.*\\/login='$login',              \\/g
+#            s/password=.*\\/password='$password'          \\/g
+#            s/server=.*/'$domain'/g
+#         }' $DDNSCONF > $TEMPCONF.$devnum
+#fi
+if [ "$protocol" = "dnspark" ];then 
+sed -e '{
+            s/# use/use/g
+            s/login=.*\\/login='$login',              \\/g
+            s/password=.*\\/password='$password',          \\/g
+            s/wildcard=.*\\/wildcard='$wildcard',          \\/g
+            s/protocol=.*\\/protocol='$protocol',          \\/g
+            s/server=.*/'$domain'/g
+         }' $DDNSCONF > $TEMPCONF.$devnum
+fi
+chmod 600 $TEMPCONF.$devnum
+cp -af $TEMPCONF.$devnum /etc/ddclient/
+Command_PATH="/etc/ddclient/ddclient_sh"
+DDNSCONF="/etc/ddclient/ddclient.conf"
+cat >> $Command_PATH <<!
+/usr/sbin/ddclient -daemon -use=if -if=$devnum -file $DDNSCONF.$devnum -cache $DDNSCONF.$devnum.cache
+!
+rm -rf $TEMPCONF.$devnum

@@ -1,0 +1,293 @@
+#=============================================================================================
+sub showNewService
+{
+    my (%action)=@_;
+    $gMSGPROMPT.=qq(aaaaaaa $action{SN});
+    
+    print qq (<table class="body" width="400" cellspacing="0" border="0">);
+    print qq (<tr><td class="bigtitle" colspan="2">Service Settings);
+	print qq (<tr><td width="120" align="right">Service Name :</td>);
+    print qq (<td width="280" align="center"><input type="text" class="qbtext" align="center" id="SN" name="SN" style="WIDTH:280" value="$action{SN}">);	
+	print qq (<input type="hidden" id="saveSN" name="saveSN" value="$action{SN}"/>);	
+    print qq (</td></tr>);
+    print qq (<tr><td align="right">TCP : </td>);
+    print qq (<td align="center"><input type="text" class="qbtext" id="newtcp" name="newtcp" style="WIDTH:280" value="$action{newtcp}">);
+    print qq (</td></tr>);
+	print qq (<tr><td align="right">UDP :</td>);
+    print qq (<td align="center"><input type="text" class="qbtext" id="newudp" name="newudp" style="WIDTH:280" value="$action{newudp}">);	
+    print qq (</td></tr>);
+	print qq (<tr><td align="right">Protocol defined :</td>);
+    print qq (<td align="center"><input type="text" class="qbtext" id="newprotocol" name="newprotocol" style="WIDTH:280" value="$action{newprotocol}">);	
+    print qq (</td></tr>);
+	print qq (<tr><td colspan="2"><hr size=1></td></tr>);
+	print qq (<tr><td colspan="2" align="center">);
+	print qq (<input type="button" class="qb" align="center" value="Save" style="width:60" onClick="SaveService()">);
+	print qq (<input type="button" class="qb" align="center" value="Cancel" style="width:60" onClick="window.close()">);
+    print qq (</td></tr></table>);
+    
+}
+#showNewService
+#=============================================================================================
+sub scriptNewService
+{
+    print << "scriptNewService";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() 
+    {
+    	myform=window.document.forms[0]; 
+    	checkState();
+    }
+	
+    function SaveService()
+    {
+        var SN = document.getElementById('SN').value;
+		var saveSN = document.getElementById('saveSN');
+		var newtcp = document.getElementById('newtcp');
+		var newudp = document.getElementById('newudp');
+		var newprotocol = document.getElementById('newprotocol');
+		var newdescription = document.getElementById('newdescription');
+		var exist = document.getElementById('exist').value;
+		
+		var msg='';
+        var OK=true;
+		
+		if ( SN == '' )
+        {
+            alert('Host Name must be English or nember');
+            return;
+        }
+        for (i = 0; i < SN.length; i++)
+        {
+            var ch = SN.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+                alert('Host Name must be English or nember');
+                return;
+            }
+        }
+		
+		/* for (i = 0; i < newdescription.length; i++)
+        {
+            var ch = newdescription.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Service Description must be English ");
+               return;
+            }
+        } */
+		
+		if ( newtcp.value != '' ) 
+        {
+			var portparams=newtcp.value.split(',');
+			for (var i = 0; i < portparams.length; i++)
+            {
+				if ( !isValidPort(portparams[i]) ) { msg+= portparams[i] +' NOT Valid\\n'; OK=false; }
+			}
+        }
+		
+		if ( newudp.value != '' ) 
+        {
+			var portparams=newudp.value.split(',');
+			for (var i = 0; i < portparams.length; i++)
+            {
+				if ( !isValidPort(portparams[i]) ) { msg+= portparams[i] +' NOT Valid\\n'; OK=false; }
+			}
+        }
+		
+        if ( !OK ) { alert(msg); return;}
+		
+		if(newdescription.value == '')
+		{
+			if(newprotocol.value != '')
+			{
+				//alert('newprotocol enter');
+				newdescription.value+='Protocol:'+newprotocol.value;
+			}
+			if(newtcp.value != '')
+			{
+				//alert('newtcp enter');
+				newdescription.value+='\\r\\ntcp:'+newtcp.value;
+			}
+			if(newudp.value != '')
+			{
+				//alert('newudp enter');
+				newdescription.value+='\\r\\nudp:'+newudp.value;
+			}
+		}
+		
+		saveSN.value = SN;
+		if(!exist){myform.action.value = 'SAVE';}
+		if(exist=='1'){myform.action.value = 'ADDPORT';}
+        myform.submit();
+    }
+    
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var SN=document.getElementById('SN');
+                                
+        if ( SN.value != '' ){SN.disabled = true;}
+        
+        if ( action != '')
+		{
+			window.opener.location.replace('service.cgi');
+			window.close();
+		}
+    }
+    
+    </script>
+    
+scriptNewService
+}
+#scriptNewService
+
+sub byName
+{
+    $a->{hostname} cmp $b->{hostname};
+}
+#byName
+
+sub maintainService
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};
+    
+	$action{newdescription} =~ s/(\r?\n)+/<br>/g;
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        my %newservice;
+        my @service_list_after_new;
+        foreach my $service ( @$servicelist ) 
+        {
+            if ( $service->{title} eq $action{saveSN} ) 
+            { 
+               if ( $service->{type} eq 'layer7' || $service->{type} eq 'user' )
+               { 
+                  $gMSGPROMPT.=qq(The service name $action{saveSN} has been used.);
+               }
+                return;
+            }
+            if ( $service->{title} ne $action{saveSN} ) { push(@service_list_after_new, $service);}
+            if ( $service->{title} eq 'system' ) { %newservice=%$service; }
+        }
+        my %port=(protocol=>'system', value=>'system');
+        $newservice{title}=$action{saveSN};
+        #$newservice{type}='user';
+        $newservice{type}=( $action{group} )? $action{group} : 'user';
+        $newservice{port}=\%port;
+		$newservice{description}=$action{newdescription};
+        $newservice{tmvdefault}=$action{tmvdefault};
+        
+        push( @service_list_after_new, \%newservice );
+        
+        $service->{service}=\@service_list_after_new;
+		
+		XMLwrite($service, $gPATH."service.xml");
+		
+		my $service2=XMLread($gPATH.'service.xml');
+		my $servicelist2=$service2->{service};
+		my $targetservice2;
+		
+        foreach $service2 ( @$servicelist2 ) 
+        { 
+            if ( $service2->{title} ne $action{saveSN} ) { next; }
+            $targetservice2=$service2; 
+            last;
+        } 
+		
+		my $portlist2=$targetservice2->{port};
+        if($action{newtcp} ne '')
+		{
+			my @newtcp = split(/,/,$action{newtcp});
+			foreach my $tcp ( @newtcp )
+			{
+				my %port=( protocol=>'tcp', value=>$tcp);
+				push( @$portlist2, \%port );
+			}
+        }
+		if($action{newudp} ne '')
+		{
+			my @newudp = split(/,/,$action{newudp});
+			foreach my $udp ( @newudp )
+			{
+				my %port=( protocol=>'udp', value=>$udp);
+				push( @$portlist2, \%port );
+			}
+        }
+		if($action{newprotocol} ne '')
+		{
+			my @newprotocol = split(/,/,$action{newprotocol});
+			foreach my $protocol ( @newprotocol )
+			{
+				my %port=( protocol=>$protocol, value=>'');
+				push( @$portlist2, \%port );
+			}
+        }
+		XMLwrite($service2, $gPATH."service.xml");
+        LogUserAction( action=>'ADDSERVICE', title=>$action{newservice} );
+    }
+    elsif ( $action{action}=~m/^ADDPORT$/ ) 
+    {
+        my $targetservice;
+        foreach $service ( @$servicelist ) 
+        { 
+            if ( $service->{title} ne $action{saveSN} ) { next; }
+            $targetservice=$service; 
+            last;
+        } 
+    
+        if ( !$targetservice ) { return; }
+		
+		my $portlist=$targetservice->{port};
+		
+		my @newPortList;
+        foreach my $port ( @$portlist )
+        {
+            if ( $port->{protocol} eq 'system' ) { push ( @newPortList, $port ); next;}
+        }
+		$targetservice->{description}=$action{newdescription};
+		$targetservice->{port}=\@newPortList;
+		
+        if($action{newtcp} ne '')
+		{
+			my @newtcp = split(/,/,$action{newtcp});
+			foreach my $tcp ( @newtcp )
+			{
+				my %port=( protocol=>'tcp', value=>$tcp);
+				push( @newPortList, \%port );
+			}
+        }
+		if($action{newudp} ne '')
+		{
+			my @newudp = split(/,/,$action{newudp});
+			foreach my $udp ( @newudp )
+			{
+				my %port=( protocol=>'udp', value=>$udp);
+				push( @newPortList, \%port );
+			}
+        }
+		if($action{newprotocol} ne '')
+		{
+			my @newprotocol = split(/,/,$action{newprotocol});
+			foreach my $protocol ( @newprotocol )
+			{
+				my %port=( protocol=>$protocol, value=>'');
+				push( @newPortList, \%port );
+			}
+        }
+		$targetservice->{port}=\@newPortList;
+		XMLwrite($service, $gPATH."service.xml");
+        LogUserAction( action=>'ADDPORT', title=>$action{servicelist}, title=>$action{saveSN}, protocol=>$action{protocol}, value=>$action{portvalue});
+    }
+    #--------updating service.xml------------------------ 
+    #XMLwrite($service, $gPATH."service.xml");
+}
+#
+1

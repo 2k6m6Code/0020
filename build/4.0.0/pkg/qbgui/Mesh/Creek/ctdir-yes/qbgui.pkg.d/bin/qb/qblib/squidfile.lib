@@ -1,0 +1,285 @@
+###############################################################################################
+#                                           Pptpinit Management Console
+###############################################################################################
+sub showSquidfile 
+{
+    my (%action)=@_;
+    #my $squid=XMLread($gPATH.'squidgen.xml');
+    my $squidfile=XMLread($gPATH.'squidfil.xml');
+    
+    print qq (<tr><td colspan="8" class="bigtitle">File Download</td></tr>);
+    
+    #********************************** Prohibit Multi-thread Download*******************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" style="width: 600px">[ Prohibit Multi-thread Download ]</td></tr>);
+    #********************************** ***************************************************
+    print qq (<tr>);
+    print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 200px">Prohibit Multi-thread Download</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{prohibitmulti} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="prohibitmulti"  $status >);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 300px">);
+    print qq (</td>);
+    print qq (</table>); 
+    #********************************** Block File Download ********************************************
+    print qq (<table>);
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Block File Download ]</td></tr>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{mp3} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="mp3"  $status >MP3);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{mp4} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="mp4"  $status >MP4);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{wma} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="wma"  $status >WMA);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{wmv} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="wmv"  $status >WMV);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{mpg} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="mpg"  $status >MPG);
+    print qq (</td>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{mpeg} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="mpeg"  $status >MPEG);
+    print qq (</td>);
+    
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{rm} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="rm"  $status >RM);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{rmvb} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="rmvb"  $status >RMVB);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{avi} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="avi"  $status >AVI);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{mov} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="mov"  $status >MOV);
+    print qq (</td>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{zip} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="zip"  $status >ZIP);
+    print qq (</td>);
+    
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{rar} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="rar"  $status >RAR);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{tgz} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="tgz"  $status >TGZ);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{gz} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="gz"  $status >GZ);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{z7z} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="z7z"  $status >7Z);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{exe} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="exe"  $status >EXE);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{bin} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="bin"  $status >BIN);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{dll} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="dll"  $status >DLL);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{msi} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="msi"  $status >MSI);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{bat} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="bat"  $status >BAT);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{iso} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="iso"  $status >ISO);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{doc} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="doc"  $status >DOC);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{pdf} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="pdf"  $status >PDF);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{ppt} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="ppt"  $status >PPT);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{reg} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="reg"  $status >REG);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{pif} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="pif"  $status >PIF);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{chm} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="chm"  $status >CHM);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{vbs} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="vbs"  $status >VBS);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{scr} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="scr"  $status >SCR);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px">);
+    my $status=( $squidfile->{hta} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="hta"  $status >HTA);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<tr>);
+    print qq (<td></td><td></td><td>);
+    print qq (<input class="qb" type="button" align="center" value="Apply" title="Apply All Parameters now !" onClick="goSubmit('SAVE')" style="width:60">);
+}
+#showConsole
+
+
+#======================================================================================================================
+sub squidfileScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+                                                            
+    function checkAndSetidletime()
+    {
+        if ( !isValidPort(myform.idletime.value) ) 
+        { 
+            myform.idletime.value=""; 
+            alert("Time format Error");
+        }
+    }
+    </script>
+SCRIPT
+}
+#squidgenScript
+
+
+#======================================================================================================================
+#maintainsquidgen( %action )
+sub maintainSquidfile 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    my $squidfile=XMLread($gPATH.'squidfil.xml');
+    my @temparray;
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+    	$squidfile->{prohibitmulti}=$action{prohibitmulti};
+    	$squidfile->{mp3}=$action{mp3};
+    	$squidfile->{mp4}=$action{mp4};
+    	$squidfile->{wma}=$action{wma};
+    	$squidfile->{wmv}=$action{wmv};
+    	$squidfile->{mpg}=$action{mpg};
+    	$squidfile->{mpeg}=$action{mpeg};
+    	$squidfile->{rm}=$action{rm};
+    	$squidfile->{rmvb}=$action{rmvb};
+    	$squidfile->{avi}=$action{avi};
+    	$squidfile->{mov}=$action{mov};
+    	$squidfile->{zip}=$action{zip};
+    	$squidfile->{rar}=$action{rar};
+    	$squidfile->{mp4}=$action{mp4};
+    	$squidfile->{tgz}=$action{tgz};
+    	$squidfile->{gz}=$action{gz};
+    	$squidfile->{z7z}=$action{z7z};
+    	$squidfile->{exe}=$action{exe};
+    	$squidfile->{bin}=$action{bin};
+    	$squidfile->{dll}=$action{dll};
+    	$squidfile->{msi}=$action{msi};
+    	$squidfile->{bat}=$action{bat};
+    	$squidfile->{iso}=$action{iso};
+    	$squidfile->{doc}=$action{doc};
+    	$squidfile->{pdf}=$action{pdf};
+    	$squidfile->{ppt}=$action{ppt};
+    	$squidfile->{reg}=$action{reg};
+    	$squidfile->{pif}=$action{pif};
+    	$squidfile->{chm}=$action{chm};
+    	$squidfile->{vbs}=$action{vbs};
+    	$squidfile->{scr}=$action{scr};
+    	$squidfile->{hta}=$action{hta};
+    	
+        
+        #-------updating squidgen.xml------------------------ 
+        XMLwrite($squidfile, $gPATH."squidfil.xml");
+        runCommand(command=>'/usr/local/apache/qb/setuid/do_qbsquidfile.pl', params=>'');
+    }
+    
+    if ( $squid->{isenable} eq "1" )
+    {
+       #runCommand(command=>'/usr/local/squid/sbin/squid', params=>'-k'.' '.'reconfigure');
+       runCommand(command=>'killall', params=>'-9'.' '.'squid');
+       runCommand(command=>'sleep', params=>'5');
+       #runCommand(command=>'/usr/local/squid/sbin/squid', params=>'');
+       runCommand(command=>'/usr/local/squid/sbin/squid', params=>'-k'.' '.'reconfigure');
+    }
+    
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    qbSync();
+}
+#maintainPptpinit
+#
+1

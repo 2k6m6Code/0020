@@ -1,0 +1,266 @@
+#===================================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub listVlan
+{
+    my (%action)=@_;
+    my $vinfo=XMLread($gPATH."vlan.xml");
+    my $vlanList=$vinfo->{vlan};
+    my %titleWidth=(Interface=>'160',  VlanID=>'160', NIC=>'60', Mac=>'170', Status=>'50' );
+    my @titleList=($qblang[28], $qblang[145], $qblang[66], $qblang[146], $qblang[24]);
+    
+    print qq (<font class="bigtitle">$qblang[147]</font><hr size="1" width="700">);
+    print qq (<table cellspacing="0" cellpadding="0" class="body" width="700">);
+    print qq (<tr bgcolor="#664422">);
+    foreach my $title ( @titleList ) { print qq (<td class="body" width="$titleWidth{$title}" align="center">$title</td>); }
+    print qq (<td align="center" width="50"><image src="image/del.gif" border="0"></td>);
+    print qq (</tr>);
+    
+    my $lineCount=1;
+    foreach my $vlan ( @$vlanList ) 
+    {
+        my $bgColor=($lineCount%2) ? ("#556677") : ("#334455");
+        my $vlankey=$vlan->{vlannic};
+        my $portkey=$vlan->{portnum};
+        if ( $vlan->{vlannic} eq 'system' ) { next; }
+        print qq (<tr bgcolor="$bgColor" originalColor="$bgColor" cellspacing="0" cellpadding="0" onclick="selectedColor(this);focusVlanInfo('$portkey', '$vlan->{enablevlan}', '$vlan->{vid}', '$vlan->{mac_addr}')" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+        #===================================================================      
+        my $pnum=$vlan->{portnum}; $pnum=~s/eth//;
+        my $display=( $vlan->{vlannic} eq 'system' ) ? ('*') : ('Port '.++$pnum);
+        print qq (<td class="body"  align="center"  width="$titleWidth{Interface}">$display</td>);
+
+        #===================================================================      
+        my $display=$vlan->{vid};
+        print qq (<td class="body" align="center" width="$titleWidth{VlanID}">VID $display</td>);
+        #===================================================================      
+        my $display=$vlan->{vlannic};
+        print qq (<td class="body" align="center" width="$titleWidth{NIC}">$display</td>);
+        #===================================================================      
+        my $display=$vlan->{mac_addr};
+        print qq (<td class="body" align="center" width="$titleWidth{Mac}">$display</td>);
+
+        #===================================================================      
+        my $display=( $vlan->{enablevlan} ) ? ($qblang[100]) : ( $qblang[101] );
+        print qq (<td class="body" align="center" width="$titleWidth{Status}">$display</td>);
+        
+        #===================================================================      
+        print qq (<td class="body" align="center" width="50">);
+        print qq (<input type="button" class="qb" onclick="delVlan('$vlankey')" value="-" style="width:20;height:20" title="Delete this vlan tag">);
+        print qq (</td>);
+        print qq (</tr>);
+        
+        $lineCount++;
+    }
+
+    print qq (<tr><td colspan="8"><hr size="1"></td></tr>);
+    print qq (<tr><td colspan="8" align="left" class="body">);
+    print qq ($qblang[28]:  <select class="qbopt"  name="portnum" style="width:80" onChange="goSubmit()"><font color="#336699">||</font>);
+        foreach my $eth ( -1..$gNUMOFPORT-1-$gRESERVEDLANPORT )
+        {
+            my $ethvalue=( $eth eq "-1" ) ? ('-1'):('eth'.$eth);
+            my $status=( $ethvalue eq $action{portnum} ) ? ('selected'):('');
+            my $portvalue=( $eth eq "-1" ) ? ('None') : ('PORT '.++$eth);
+            print qq (<option $status value="$ethvalue">$portvalue</option>);
+        }
+        print qq (</select>);
+        
+    my $mac_addr_show=runCommand(command=>'/sbin/ifconfig ', params=>qq($action{portnum} \|grep HWaddr\|awk \'\{print \$5\}\') ); 
+    $mac_addr_show=~s/\n//g;
+
+    print qq (        $qblang[145]:  <select class="qbopt"  name="vid" style="width:80"  onChange="VALUE_input()"><font color="#336699">||</font>);
+    foreach my $count ( 2..4096 ) {  print qq (<option value="$count">VID $count</option>); }
+    print qq (</select>);
+    print qq (<input type="hidden" name="newvlannic" value="$action{portnum}.$action{vid}">);
+    my $mac_addr_show;
+    if ($action{portnum})
+    {
+    $mac_addr_show=runCommand(command=>'/sbin/ifconfig ', params=>qq($action{portnum} \|grep HWaddr\|awk \'\{print \$5\}\') ); 
+    $mac_addr_show=~s/\n//g;
+    }
+    print qq (        $qblang[146]:<input class="qbtext" type=text name="mac_addr" style="width:120px" value="$mac_addr_show">\n);
+
+    print qq (        $qblang[26]:  <select class="qbopt"  name="enablevlan" ><font color="#336699">||</font>);
+    print qq (<option value="1">$qblang[100]</option>); 
+    print qq (<option value="0">$qblang[101]</option>);  
+    print qq (</select>);
+
+    #print qq (<input type="button" name="ADDVID" class="qb" onclick="goSubmit('ADDVID')" value="+" title="Add New Vlan" style="width:20;height:20">);
+    #print qq (<input type="button" class="qb" onclick="updateVlanInfo()" value="U" title="Update Vlan Info" style="width:20;height:20">);
+    #20080220 Brian To modify "+/U" button become "Add/Update".
+    print qq (<input type="button" name="ADDVID" class="qb" onclick="goSubmit('ADDVID')" value="$qblang[57]" title="Add New Vlan" >);
+    print qq (<input type="button" class="qb" onclick="updateVlanInfo()" value="$qblang[58]" title="Update Vlan Info" >);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#listVlan
+                    
+#===================================================================================================
+sub editVlan
+{
+    my (%action)=@_;
+    my $vinfo=XMLread($gPATH."vlan.xml");
+    my $vlanList=$vinfo->{vlan};
+    
+    if ( !$action{action} ) { return; }
+
+    if ( $action{action}=~m/^UPDATEVLANINFO$/ )
+    {
+        my $targetVlan;
+        
+        foreach my $vlan( @$vlanList )
+        {
+            if ( $vlan->{vlannic} ne $action{newvlannic} ) { next; }
+            $targetVlan=$vlan;
+            last;
+        }
+
+        if ( !$targetVlan ) { $gMSGPROMPT.=qq($action{newvlannic} Only support to modify status or mac address!!!\\n); }
+        else
+        {
+            $targetVlan->{enablevlan}=$action{enablevlan};
+            $targetVlan->{mac_addr}=$action{mac_addr};
+            $targetVlan->{vid}=$action{vid};
+            $gMSGPROMPT.=qq($action{newvlannic} Updated OK\\n);
+        }
+        
+        LogUserAction( action=>'UPDATEVLAN', enablevlan=>$action{enablevlan}, portnum=>$action{portnum}, vid=>$action{vid}, vlannic=>$action{newvlannic}, mac_addr=>$action{mac_addr} );
+    }
+    elsif ( $action{action}=~m/^ADDVID$/ )
+    {
+        my %template;
+
+        foreach my $vlan ( @$vlanList ) 
+        {
+            if ( $vlan->{vlannic} ne $action{newvlannic} ) { next;}
+            $gMSGPROMPT.=qq ( Vlan: $action{newvlannic} exists already\\n);
+            return;
+        }
+        
+        foreach my $vlan ( @$vlanList ) 
+        {
+            if ( $vlan->{vlannic} ne 'system' ) { next;}
+            %template=%$vlan;
+            last;
+        }
+        $template{vlannic}=$action{newvlannic};
+        $template{portnum}=$action{portnum};
+        $template{enablevlan}=$action{enablevlan};
+        $template{mac_addr}=$action{mac_addr};
+        $template{vid}=$action{vid};
+        
+        push(@$vlanList, \%template);
+        
+        LogUserAction( action=>'ADDVLAN', enablevlan=>$action{enablevlan}, portnum=>$action{portnum}, vid=>$action{vid}, vlannic=>$action{newvlannic}, mac_addr=>$action{mac_addr} );
+    }
+    elsif ( $action{action}=~m/^DELVLAN$/ )
+    {
+        my  @newVlanArray;
+        
+        foreach my $vlan ( @$vlanList ) 
+        {
+            if ( $vlan->{vlannic} eq $action{newvlannic} ){next;}
+            push(@newVlanArray, $vlan);
+        }
+
+        $vinfo->{vlan}=\@newVlanArray;
+        LogUserAction( action=>'DELVLAN', enablevlan=>$action{enablevlan}, portnum=>$action{portnum}, vid=>$action{vid}, vlannic=>$action{newvlannic}, mac_addr=>$action{mac_addr} );
+    }
+    elsif ( $action{action} eq "GETVLANDEVLIST" )
+    {
+        my %vlanlisthash;
+        foreach my $vlan ( @$vlanList )
+        {
+            if( $vlan->{enablevlan} ne 'system' && $vlan->{enablevlan} ne '0' ) { $vlanlisthash{"$vlan->{vlannic}"}=1; }
+        }
+
+        return sort num_sort keys %vlanlisthash;
+    }
+ 
+    #--------updating vlan.xml------------------------ 
+    XMLwrite($vinfo, $gPATH."vlan.xml");
+
+    #--------overwrite  vlan.xml from $gPATH  to  /mnt/qb/conf/vlan.xml
+    runCommand(command=>'do_qbvlan.pl', params=>'');
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    qbSync();
+}
+#editVlan
+
+sub vlanScript
+{
+    
+print << "VLANSCRIPT";
+
+    <script type="text/javascript" src="grid.js"></script>
+    
+    <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=document.forms[0]; }
+    
+    function VALUE_input()
+    {
+        myform.ADDVID.disabled=false;
+        document.getElementById('newvlannic').value = document.getElementById('portnum').value+'.'+document.getElementById('vid').value;
+    } 
+
+    function focusVlanInfo(portkey, enablevlan, vid, mac_addr)    
+    {   
+        myform.enablevlan.value=myform.enablevlan.value=enablevlan; 
+        myform.portnum.value=portkey; 
+        myform.newvlannic.value=portkey+'.'+vid;
+        myform.mac_addr.value=mac_addr;
+ 
+        for(var i=0;i<myform.vid.options.length;i++) 
+        { if (myform.vid.options[i].value==vid) { myform.vid.options[i].selected=true; } }
+        
+        myform.ADDVID.disabled=true;
+    }
+    
+    function updateVlanInfo()
+    {
+        goSubmit('UPDATEVLANINFO');
+    }
+    
+    function delVlan(vlannic)
+    {
+        myform.vlan.value=vlannic;
+        goSubmit('DELVLAN');
+    }
+
+    function importXML()
+    {
+        if ( window.ActiveXObject )
+        {
+            xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
+            xmlDoc.onreadystatechange=checkXMLReadyState;
+        }
+        xmlDoc.load("data.xml");
+    }
+    
+    function  checkXMLReadyState()
+    {
+        if ( xmlDoc.readyState==4 )  initXML();
+    }
+
+    function   initXML()
+    {
+        var vlan=xmlDoc.getElementsByTagName('employee');
+        for ( var i=0; i< vlan.length; i++)
+        {
+            alert(vlan[i].childNodes[0].firstChild.nodeValue);
+        }
+    }  
+    
+    </script>
+
+VLANSCRIPT
+}
+#vlanScript
+
+#================================================================================================
+# must do this
+1

@@ -1,0 +1,695 @@
+#=============================================================================================
+sub showUPG 
+{
+    my (%action)=@_;
+    my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+
+    #remeber select upg 
+    my $selectnum=runCommand(command=>'cat', params=>'/tmp/number');
+    $selectnum=~s/\n//g; 
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0"  >);
+    print qq (<tr><td class="bigtitle">UPG Management );
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+    
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    
+    #==============================================================
+    # Print Title first
+    # show UPG1 UPG2 UPG3 UPG4 UPG5
+    #===============================================================
+    print qq (<div class="divframe" style="width:1000">);
+    print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    print qq (<td width="25%">UPG</td>);
+    print qq (<td width="75%">UPG Version</td>);
+    print qq (</table>);
+    print qq (</div>);
+    
+    # show UPG1 UPG2 UPG3
+    print qq (<div class="divframe" style="width:1000;height:100">);
+    print qq (<table id="upgList" border="0" width="100%" height="100%">);
+    foreach my $num ( 1..5 )
+    {
+        my $originalColor=$bgcolor=($num%2) ? ( '#556677' ) : ( '#334455' );
+        print qq(<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="25%">UPG$num</td>);
+        my $version=runCommand(command=>'/usr/bin/find', params=>'/tmp/upg'.$num.' '.'-name \*\.upg');
+        $version=~s/\/tmp\/upg.*\///g;
+        #$version=~s/\.upg//g;
+        print qq (<td width="75%">$version</td>);
+        print qq (</tr>);
+    }
+		my $originalColor=$bgcolor=  '#334455' ;
+        print qq(<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="25%">Image1</td>);
+        my $versionpkg=runCommand(command=>'/usr/bin/find', params=>'/tmp/PKG1'.' '.'-name \*\.pkg');
+        $versionpkg=~s/\/tmp\/PKG1.*\///g;
+		$versionpkg=~s/\n//g;
+        #$version=~s/\.upg//g;
+        print qq (<td width="75%">$versionpkg</td>);
+        print qq (</tr>);
+		my $originalColor=$bgcolor='#556677' ;
+        print qq(<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="25%">Image2</td>);
+        my $versionpkg2=runCommand(command=>'/usr/bin/find', params=>'/tmp/PKG2'.' '.'-name \*\.pkg');
+        $versionpkg2=~s/\/tmp\/PKG2.*\///g;
+		$versionpkg2=~s/\n//g;
+        #$version=~s/\.upg//g;
+        print qq (<td width="75%">$versionpkg2</td>);
+        print qq (</tr>);
+    print qq (</table></div>);
+    #print qq (<tr><td colspan="5">);
+    #==========================================================
+    # show Library and Filesystem 
+    #===========================================================
+    # Print Title first
+    #print qq (<div class="divframe" style="width:1000">);
+    #print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    #print qq (<td width="25%">Image</td>);
+    #print qq (<td width="45%">Filename</td>);
+    #print qq (<td width="30%">Size</td>);
+    #print qq (<td>);
+    #print qq (</td>);
+    #print qq (</tr></table>);
+    #print qq (</div>);
+    #print qq (<div class="divframe" style="width:1000;height:40">);
+    #print qq (<table id="imageList" border="0" width="100%" >);
+       
+    #foreach my $img ( "Library",  "Filesystem" )
+    #{
+    #    my $size;
+    #    my $originalColor=$bgcolor=($num%2) ? ( '#556677' ) : ( '#334455' );
+    #    print qq(<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+    #    print qq (<td width="25%">$img</td>);
+    #    my $pkgname=runCommand(command=>'/usr/bin/find', params=>'/tmp/'.$img.'/ '.'-name \*\.pkg');
+    #    if ( $pkgname ne "" ) { $size=runCommand(command=>'du', params=>'-k'.' '.$pkgname); }
+    #    $size=~s/$pkgname//g;
+    #    $pkgname=~s/\/tmp\/$img\///g; 
+    #    print qq (<td width="45%">$pkgname</td>);
+    #    print qq (<td width="30%">$size KB</td>);
+    #    print qq (</tr>);
+    #}
+    
+    #print qq (</table></div>);
+    #print qq (<tr><td>);
+    #===============================================================================
+    # show client sn & upg info  
+    # Print Title first
+    #==============================================================================  
+    # print qq (<div class="divframe" style="width:1000">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0">);
+#    print qq (<td width="2%"></td>);
+    # print qq (<td width="13%" align="center">Serial Number</td>);
+#    print qq (<td width="2%"></td>);
+    # print qq (<td width="10%" align="center">MPV/TMV</td>);
+    #
+    #print qq (<td width="5%">Libary</td>);
+    #print qq (<td width="10%">Filesystem</td>);
+    #
+#    print qq (<td width="2%"></td>);
+    # print qq (<td width="19%" align="center">Current Firmware Version</td>);
+    # print qq (<td width="10%" align="center">State</td>);
+    # print qq (<td width="10%" align="center">Registered Date</td>);
+    # print qq (<td width="10%" align="center">Warranty Expiry</td>);
+    # print qq (<td width="15%" align="center">Uptime  </td>);
+    # print qq (<td width="10%">);
+    # print qq (<table><tr><td width="50%">Schedule reboot </td>);
+    # print qq (<td width="50%"><input class="qb" type="button" value="Apply all" onClick="goSubmit('RETIME');" ></td></tr></table></td>);
+    # print qq (<td width="5%">);
+    # print qq (</td>);
+    
+    # print qq (</tr></table>);
+    # print qq (</div>);
+    
+    print qq (<div class="divframe" id="table" style="width:1000;height:250" >);
+    print qq (<table id="qbList" border="0" width="100%" style="border-collapse: collapse;">);
+	
+	print qq (<thead style="background-color:#332211;">
+        <tr>
+          <th align="center">Serial Number</th>
+          <th align="center">MPV/TMV</th>
+          <th align="center">Current Firmware Version</th>
+          <th align="center">Filesystem</th>
+	  <th align="center">Library Version</th>
+          <th align="center">State</th>
+          <th align="center">Registered Date</th>
+          <th align="center">Warranty Expiry</th>
+          <th align="center">Uptime</th>
+          <th>Schedule reboot</th>
+          <th>
+            <input class="qb" onclick="goSubmit(&#39;RETIME&#39;);" type="button" value="Apply all" />
+          </th>
+        </tr>
+      </thead>);
+	
+	# print qq(<tr class="body" align="center">);
+   
+    #get all qb from ative/basic.xml 
+    my @SN=GETALLSN();
+    my $lineCount=0;
+    
+    my $shownum=$selectnum;
+    $shownum=~s/UPG//g;
+    
+    #upg version
+    my $upgversion=runCommand(command=>'/usr/bin/find', params=>'/tmp/upg'.$shownum.' '.'-name \*\.upg');
+    $upgversion=~s/\n//g;
+    $upgversion=~s/\/tmp\/upg.*\///g;
+    $upgversion=~s/\.upg//g;
+    my @actionver=split('-', $upgversion);
+    my $upgid=$actionver[0].'-'.$actionver[1];
+    
+    foreach my $sn ( @SN )
+    {
+        my $originalColor=$bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' ); 
+        my $version;
+        my $upgradestate;
+        my $regist;
+        my $warranty;
+        my $uptime;
+        my $time;
+        #image and filesystem
+        #my $image;
+        #my $fs;
+        
+        
+        #print qq(<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        #print qq (<tr>);
+        @sninfo=split('\s', $sn);
+        
+        if ( $sninfo[0] eq '' ) { next; }
+        
+        $sninfo[1]=~s/VERSIONDETAIL://g;
+        
+        #my @actionver=split('-', $upgversion);
+        my @showver=split('-', $sninfo[1]); 
+        
+        #if upg version different show bg color oringe
+        if ( $selectnum ne 'None' && $selectnum ne 'Library'&& $selectnum ne 'Filesystem' )
+        {
+            if ( $actionver[0] ne $showver[0] || $actionver[1] ne $showver[1] ) { next; }
+            if ( $upgversion ne $sninfo[1] ) { $originalColor=$bgcolor='#FF6600'; }
+        }
+        #my $mydate=runCommand(command=>'date', params=>'+\"%Y-%m-%d\"');
+        #$mydate=~s/\n//g;
+        #my @datearray=split('-', $mydate); 
+        
+        foreach my $isp ( @$isplist )
+        {
+            if ( $isp->{qbsn} eq $sninfo[0] )
+            {
+                $version = $isp->{info};
+                $upgradestate = $isp->{upgradestate};
+                $regist = $isp->{regist};
+                $warranty = $isp->{warranty};
+                $uptime=$isp->{uptime};
+                $reboot_time = $isp->{reboot_time};
+                $remoteip=$isp->{gateway};
+                $image = $isp->{image};
+                $fs = $isp->{fs};
+                #print qq ($isp->{ispname}); 
+                #print qq (<br>);
+                last;
+            }
+        }
+        $version=~s/VERSIONDETAIL://g;
+        
+        #if ( $upgradestate eq 'Success' ) { $originalColor=$bgcolor='#00FF00'; }
+#        if ( $upgradestate ne 'Success' )
+#        {
+#            my $upgmsg = runCommand(command=>'cat ', params=>'/tmp/log');
+#	    print qq (<input type="hidden" name="upgmsg" value="$upgmsg">);
+#        }
+        #if ( grep(/Error/, $upgradestate) ) { $originalColor=$bgcolor='#CC0000'; } 
+        my $mytime=runCommand(command=>'date', params=>'\+\%s');
+        my $wtime=runCommand(command=>'date', params=>'-d'.' '.$warranty.' '.'\+\%s');
+        
+        #if ( $mytime > $wtime ) { $originalColor=$bgcolor='#999999'; $upgradestate='Warranty Expiried'; } 
+        #elsif ( $upgradestate eq 'Success' ) { $originalColor=$bgcolor='#00FF00'; }
+        #elsif ( grep(/Error/, $upgradestate) ) { $originalColor=$bgcolor='#CC0000'; } 
+        
+        if ( grep(/Error/, $upgradestate) ) { $originalColor=$bgcolor='#CC0000'; } 
+        elsif ( $mytime > $wtime ) { $originalColor=$bgcolor='#999999'; $upgradestate='Warranty Expired'; } 
+       
+        if ( $upgradestate ne 'Success' )
+        {
+            my $upgmsg = runCommand(command=>'cat ', params=>'/tmp/'.$remoteip.'/log');
+            if ( $upgmsg eq '' ){ $upgmsg='None'; }
+	    print qq (<input type="hidden" name="upgmsg$remoteip" id="upgmsg$remoteip" value="$upgmsg">);
+        }
+       
+        print qq(<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+	my $logfile = "/mnt/qb/conf/cms/";
+	if (-e $logfile.$sninfo[0])
+	{
+	}else{runCommand(command=>'mkdir' ,params=>$logfile.$sninfo[0]);}
+        print qq (<td>$sninfo[0]</td>);
+        print qq (<td>);
+        #foreach my $isp ( @$isplist )
+        #{
+        #    if ( $isp->{qbsn} eq $sninfo[0] )
+        #    {
+          #        print qq ($isp->{gateway} ); 
+        #    }
+        #}
+        #print qq (">);
+        #print mpv tunnel 
+        print qq (<table>);
+        foreach my $isp ( @$isplist )
+        {
+            if ( $isp->{qbsn} eq $sninfo[0] )
+               {
+                print qq (<tr><td title="$isp->{remote}">);
+                print qq (<a href="javascript:openclient('$isp->{remote}')" style="text-decoration:none" >$isp->{ispname}</a>); 
+                print qq (</td>);
+                my $state = ( $isp->{alive} ) ? "alive.png" : "dead.png";
+                print qq (<td align="right">);
+                print qq (<span id=$isp->{remote} ><img id="img" src="image/$state" width="14" height="14" border="0" />);
+                print qq (</span></td></tr>);
+            }
+        }
+        print qq (</table>);
+        print qq (</td>);
+        #$version=~s/VERSIONDETAIL://g;
+        #@imagestr=split('\s', $image);
+        #print qq (<td width="5%">$imagestr[3]);
+        #print qq (</td>);
+        #print qq (<td width="10%">$fs);
+        #print qq (</td>);
+        print qq (<td>$version);
+        print qq (</td>);
+	@fsver= split('=',$fs);	
+		print qq (<td>$fsver[1]);
+        print qq (</td>);
+		@library = split(' ',$image);
+		print qq (<td>$library[2]);
+        print qq (</td>);
+        
+        print qq (<td title="Show error message">);
+        print qq (<a href="javascript:whyerror('$remoteip')" style="text-decoration:none" >$upgradestate</a>); 
+        #print qq (<td width="10%" onClick="whyerror('$remoteip')">$upgradestate);
+        print qq (</td>);
+        
+        print qq (<td>$regist);
+        print qq (</td>);
+        print qq (<td>$warranty);
+        print qq (</td>);
+        print qq (<td>$uptime);
+        print qq (</td>);
+        print qq (<td><table><tr><td></td><td><select class="qbopt"  name=reboot_time style="width:100">);
+        foreach my $time ( 24, 0..23,$reboot_time )
+        {
+            my $status=( $time eq $reboot_time ) ? ('selected'):('');
+	    my $showvalue;
+            my $showvalue=( $time eq "24" ) ? ('the moment') : ($time.':00');
+            if( $time eq ''){ $showvalue='';}
+            print qq (<option $status value="$time">$showvalue</option>);
+        }
+        print qq (</td></tr></table>);
+        print qq (<td><input type="checkbox" name="qbtoupgrade" value="$sninfo[0],$lineCount"></td>);
+        print qq (</td>);
+        
+        $lineCount++;
+    }
+    print qq (</table></div>);
+    print qq (</td></tr>); 
+    
+    #print qq (<div>);
+    
+    #=============================================================================
+    # select upg or image to upgrade client
+    #==========================================================================
+    print qq (<table>);
+    print qq (<tr>);
+
+    print qq (<td width="15%" align="left">);
+    print qq (<input class="qb" type="button" value="Collect info from all clients" title="Get all firmware version of MPV/TMV" onClick="goSubmit('QUERY')" style="width:200">   );
+    print qq (</td>);
+    print qq (</tr>);
+    #------------------------------------------------------
+
+    print qq (<tr>);
+    print qq (<td class="body" align="left" valign="center" width="15%" >Display by );
+    
+    #@UPG=("None", "UPG1", "UPG2", "UPG3", "Library", "Filesystem");
+    @UPG=("None", "UPG1", "UPG2", "UPG3", "UPG4" ,"UPG5");
+    print qq (<select class="qbopt" name="number" style="width:80" onChange="goSubmit('RESHOWUPG')";>\n);
+    foreach my $num ( @UPG )
+    {
+        my $status=( $num eq $selectnum ) ? ( "selected") : ( '' ) ;
+        print qq (<option $status value="$num">$num</option>);
+    }
+    print qq (</select></td>);
+    print qq (</tr>);
+    #------------------------------------------------------
+    
+    print qq (<tr>);
+    print qq (<td align="left">);
+    print qq (<input class="qb" type="button" value="UpgradeUPG" title="Upgrade UPG firmware version of MPV/TMV" onClick="upgrade('$upgvers/ion');" > );
+    print qq (<input class="qb" id="pkgbtn" type="button" value="UpgradeImage" title="Upgrade PKG firmware version of MPV/TMV" onClick="upgradePKG('$versionpkg,$versionpkg2')" > );
+    print qq (</td>);
+
+
+    print qq (</tr>);
+    print qq (</table>); 
+
+    #------------------------------------------------------
+    
+    print qq (<input type="hidden" name="upgid" value="$upgid">);
+
+}
+#editVIP
+
+#=============================================================================================
+
+sub scriptUPG
+{
+    print << "scriptUPG";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var queryReqHandler;
+    var myform;
+    var i=0;
+    
+    function whyerror(reip)
+    {
+       // alert(reip);
+        var msg = document.getElementById('upgmsg'+reip).value;
+        alert(msg);
+    }
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; checkwarranty();}
+        
+    function ajax()
+    {
+        
+        i=(new Date()).getTime();
+	if (window.XMLHttpRequest){
+            	queryReqHandler=new XMLHttpRequest();
+    }else if (window.ActiveXObject){
+            	queryReqHandler=new ActiveXObject("Microsoft.XMLHTTP");
+    }
+	queryReqHandler.onreadystatechange = fno;
+	queryReqHandler.open("GET","gettrafficlight.cgi?a="+i,true);
+	queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+	var str='';
+	queryReqHandler.send(str);
+  
+    }
+
+    function fno()
+    {
+	if( (queryReqHandler.readystate == 4) && (queryReqHandler.status == 200) )
+	{
+		var msg=queryReqHandler.responseText;
+		if ( msg == '' ){ return;}
+		var len=msg.length;
+		msg=msg.slice(0,len-1);
+		msg=msg.split(",");
+		for (var n=0; n<(msg.length); n+=2)
+		{
+       		    document.getElementById(msg[n]).innerHTML="<img src='image/"+msg[n+1]+"' width='14' height='14' border='0' />";
+		}
+		queryReqHandler = null;
+		ajax();
+	}
+    }
+    ajax();
+    function upgrade(select)
+    {
+        
+        var oktogo=true;
+        var errmsg='';
+        var msg='';
+        var qblist=document.getElementById('qbList').rows;
+        var qb=document.getElementsByName("qbtoupgrade");
+       
+        if ( myform.number.value == 'None' ) { errmsg+="ERROR:Please select UPG to upgrade.\\n"; oktogo=false;}
+          
+        if ( !oktogo )
+        {
+            alert(errmsg);
+            return;
+        }
+        //var qb=document.getElementsByName("qbtoupgrade");
+        
+        for (var i = 0; i < qb.length; i++)
+        {
+             if ( qb[i].checked )
+                 msg += qblist[i+1].cells[0].innerHTML + " Version " + qblist[i+1].cells[2].innerHTML + " Upgrade to " + select + ".<br>"; 
+        }
+        if ( msg == '' )
+        {
+            alert("Please Select QB to Upgrade");
+            return;
+        }
+      
+        if ( upgConfirm(2, msg) == 1 )
+        {
+            myform.action.value = 'UPGRADE';
+            myform.submit();
+            for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+        }
+        
+        
+    }
+	function upgradePKG(select){
+	var msg='';
+	var qblist=document.getElementById('qbList').rows;
+	var tunnlsn=new Array();
+	var qb=document.getElementsByName("qbtoupgrade");
+	var pkgbtn=document.getElementById("pkgbtn");
+	
+		for (var i = 0; i < qb.length; i++)
+        {
+             if ( qb[i].checked ){
+                 msg += qblist[i+1].cells[0].innerHTML + " Version " + qblist[i+1].cells[2].innerHTML + " Upgrade to " + select + "\\n"; 
+				var tsfr = qb[i].value.split(',')
+				tunnlsn.push(tsfr[0]);
+			 }
+        }
+        if ( msg == '' )
+        {
+            alert("Please Select QB to Upgrade");
+            return;
+        }
+		if ( confirm(msg) ){
+		var djjik = tunnlsn;
+		for(var eei=0;eei<djjik.length;eei++){
+			var xmlhttp;
+			pkgbtn.value ="Waiting...";
+			pkgbtn.disabled =true;
+			if (window.XMLHttpRequest)
+			  {// code for IE7+, Firefox, Chrome, Opera, Safari
+			  xmlhttp=new XMLHttpRequest();	  
+			  }
+			else
+			  {// code for IE6, IE5
+			  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+			  }
+		
+			xmlhttp.open("GET","cmsPkgupgrade.cgi?client="+djjik[eei],false);
+			xmlhttp.send();
+			alert("["+(eei+1)+"/"+djjik.length+"]"+xmlhttp.responseText);
+		}
+		pkgbtn.value ="UpgradeImage";
+		pkgbtn.disabled =false;
+		}else{
+		alert("Cancel");
+		}
+	
+	}
+    function upgConfirm(draw, msg)
+    {
+        var msgObj=new Object();
+        msgObj.draw=draw;
+        msgObj.msg=msg;
+                
+        var strFeatures='dialogWidth=600px;dialogHeight=150px;center=yes;'
+        strFeatures+='scrollbars=yes;border=thin;help=no;status=no;edge=raised';
+        return window.showModalDialog("qbconfirm.htm", msgObj, strFeatures);
+    }
+    function checkwarranty()
+    {
+        var qb=document.getElementsByName("qbtoupgrade");
+        var time=document.getElementsByName("reboot_time");
+        var qblist=document.getElementById('qbList').rows;
+        for (var i = 0; i < qb.length; i++)
+        {
+             var state=qblist[i+1].cells[3].innerHTML
+             if ( state == 'Warranty Expiried' )
+             {
+                  //qb[i].disabled = true;
+                  //time[i].disabled = true;
+             }
+        }
+        
+    }
+    
+    function openclient(ip)
+    {
+       var url='http://' + ip + ':4000';
+       window.open(url);             
+    }
+                                
+    </script>
+    
+scriptUPG
+}
+#UPGScript
+
+sub maintainUPG
+{
+    my (%action)=@_;
+    
+   
+    my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    
+    if ( !$action{action} ) { return; }
+    
+    if ( $action{action}=~m/^QUERY$/ )
+    {
+        runCommand(command=>'/usr/local/apache/qb/setuid/do_qbclient.pl', params=>'');
+        #runCommand(command=>'/usr/local/apache/qb/setuid/test1.sh',params=>"218.211.253.69");
+    }
+    elsif ( $action{action}=~m/^RESHOWUPG$/ )
+    {
+        runCommand(command=>'echo', params=>$action{number}.' '.'>/tmp/number');
+    }
+    elsif ( ( $action{action}=~m/^UPGRADE$/ )||( $action{action}=~m/^RETIME$/) )
+    {
+        if ( $action{action}=~m/^UPGRADE$/ )
+        {
+          if ( $action{number} eq 'None' )
+           {
+            $gMSGPROMPT.=qq ( ERROR:Please select UPG to upgrade\\n);
+            return;
+           }
+        }
+        my $reboot_time = $action{reboot_time};
+        @TIME;
+        foreach my $time ( @$reboot_time )
+        {
+            my $hour = ($time eq 'the moment') ? ('24') : ($time);
+            push(@TIME, $hour);
+        }
+        my $qbtoupgrade = $action{qbtoupgrade};
+        if ( $action{action}=~m/^UPGRADE$/ )
+        {
+            $num=$action{number};
+            $num=~s/UPG/upg/g;
+        }
+        $count=0;
+	foreach my $qb ( @$qbtoupgrade )
+        {
+            @tmpqb=split(',' ,$qb);
+            my @QB=GETUPGSN( upgid=>$action{upgid} );
+
+            foreach my $item ( @QB )
+            {
+                $item=~s/\s.*//g;
+                if ( $item eq $tmpqb[0] ) { last; }
+                $count++;
+            }
+            $count=$tmpqb[1];            
+            foreach my $isp ( @$isplist )
+            {
+                if ( $isp->{alive} eq '1' && $isp->{qbsn} eq $tmpqb[0] )
+                {
+                    #runCommand(command=>'echo', params=>$count.' '.'>/tmp/hhh');
+                    if( $action{action}=~m/^UPGRADE$/ )
+                    {
+		        runCommand(command=>'/usr/local/apache/qb/setuid/upgradeclient.sh', params=>"$isp->{gateway} $num $TIME[$count]");
+		        #runCommand(command=>'/usr/local/apache/qb/setuid/upgradeclient1.sh', params=>"$isp->{gateway} $num $TIME[$count]");
+    		        last;
+    		    }
+		    if ( $action{action}=~m/^RETIME$/ )
+        	    {
+            		runCommand(command=>'/usr/local/apache/qb/setuid/upgretime.sh ',params=>"$isp->{gateway} $TIME[$count]");
+		        runCommand(command=>'/usr/local/apache/qb/setuid/do_qbclient.pl', params=>'');
+            		last;
+        	    }
+		}
+	    }
+	}
+    }
+}
+
+sub GETALLSN 
+{
+    my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    
+         my @allsn;
+         foreach my $isp ( @$isplist )
+         {
+             if ( $isp->{isptype} eq 'tunnel' || $isp->{isptype} eq 'dtunnel' )
+             {
+                 my $ismatch = 0;
+                 foreach my $sn ( @allsn )
+                 {
+                     if ( $isp->{qbsn}.' '.$isp->{info}  eq $sn )
+                     {
+                         $ismatch = 1;
+                         last;
+                     }
+                 }
+             
+                 if ( $ismatch ne '1' && $isp->{qbsn} ne '' )
+                 { 
+                     if ( $isp->{qbsn} ne '' ) { push(@allsn, $isp->{qbsn}.' '.$isp->{info}); }
+                 }
+             }
+         }
+         #sort @allsn;
+         return @allsn;
+
+}
+#GETALLSN
+
+sub GETUPGSN
+{
+    	my (%action)=@_;
+    
+    	my $ispref=XMLread($gACTIVEPATH.'basic.xml');
+    	my $isplist=$ispref->{isp};
+    
+    	my @upgsn;
+    
+    	foreach my $isp ( @$isplist )
+    	{
+  		if ( $isp->{isptype} eq 'tunnel' || $isp->{isptype} eq 'dtunnel' )
+  		{
+  	    
+                 	my $ismatch = 0;
+                 	foreach my $sn ( @upgsn )
+                 	{
+                     		if ( $isp->{qbsn}  eq $sn )
+                     		{
+                         		$ismatch = 1;
+                         		last;
+                     		}
+                 	}
+                 	
+                 	my $upginfo=$isp->{info};
+                 	$upginfo=~s/VERSIONDETAIL://g;
+                 	my @getid=split('-', $upginfo);
+                 	if ( $ismatch ne '1' && $isp->{qbsn} ne '' && $action{upgid} eq $getid[0].'-'.$getid[1] )
+                 	{
+                     		 push(@upgsn, $isp->{qbsn}); 
+                 	}
+  		} 	 
+    	}
+    	return @upgsn;
+}
+#GETUPGSN
+#
+1

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#Gary 20130624 access webstr string
+iptables_access='/usr/local/apache/active/iptables_access'
+if [ -f "$iptables_access" ]; then
+$iptables_access
+fi
+
+

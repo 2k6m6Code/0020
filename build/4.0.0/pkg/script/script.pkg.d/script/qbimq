@@ -1,0 +1,15 @@
+#!/bin/bash
+#set -x
+action=$1
+if [ "$action" != "add" ]&&[ "$action" != "del" ];then
+	echo "need argument action \"add\" or \"del\""
+	exit
+fi
+IMQNUM=64
+for (( i = 0; i < "$IMQNUM"; i++ ))
+do
+	/usr/local/sbin/tc qdisc $action dev imq$i root handle 100: htb default 3
+	if [ "$action" = "add" ];then
+		/usr/local/sbin/tc class $action dev imq$i parent 100: classid 100:1 htb rate 1000000kbit
+	fi
+done

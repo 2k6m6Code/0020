@@ -1,0 +1,49 @@
+#! /bin/sh
+
+set SNMPCONFPATH=/etc/snmp
+export SNMPCONFPATH=/etc/snmp
+
+#SNMPCONF_FILE=/mnt/conf/snmpd.conf
+SNMPCONF_FILE=/mnt/conf/snmpd.con
+
+
+if [ ! -d /etc/snmp ];
+then
+   mkdir /etc/snmp
+   ln -s /mnt/conf/snmpd.con /etc/snmp/snmpd.conf
+fi
+
+# cp /mnt/conf/snmpd.conf /etc/snmp
+
+
+if [ ! -d /var/net-snmp ];
+then 
+    mkdir /var/net-snmp
+fi
+
+cp -f /opt/snmpd/net-snmp.conf /var/net-snmp/snmpd.conf # full path... nancy 041006
+
+sync
+
+
+if [ -f $SNMPCONF_FILE ];
+then
+	SNMPD=$(awk '/#snmpd/{print $2}' $SNMPCONF_FILE )
+else
+	SNMPD=disable
+fi
+
+if [ "$SNMPD" = "enable" ];
+then
+	echo "snmpd starting ...."
+	/opt/snmpd/snmptrap.sh coldstart &
+else
+	exit 0 
+fi
+
+
+/opt/snmpd/snmpd udp:161,udp6:161&
+
+
+
+ 

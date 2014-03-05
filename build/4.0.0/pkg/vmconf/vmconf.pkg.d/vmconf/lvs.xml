@@ -1,0 +1,16 @@
+<opt file="lvs" lastupdate="" network="192.168.2.0/24" status="lock">
+  <virtual_server dirty="0" isnew="0" isp="system" service="system" vip="system" warning="0" />
+  <virtual_server dirty="0" isnew="0" isp="1" service="system" vip="255.255.255.253" warning="0" />
+  <virtual_server dirty="0" isnew="1" isp="1" real_service="" service="maintain" vip="255.255.255.253">
+    <real_server>localhost</real_server>
+    <real_server>system</real_server>
+  </virtual_server>
+  <virtual_server dirty="0" isnew="1" isp="1" real_service="" service="ping" vip="255.255.255.253">
+    <real_server>localhost</real_server>
+    <real_server>system</real_server>
+  </virtual_server>
+  <virtual_server dirty="0" isnew="1" isp="1" real_service="" service="ssh" vip="255.255.255.253">
+    <real_server>localhost</real_server>
+    <real_server>system</real_server>
+  </virtual_server>
+</opt>

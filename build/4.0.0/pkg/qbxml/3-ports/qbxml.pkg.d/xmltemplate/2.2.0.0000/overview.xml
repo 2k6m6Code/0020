@@ -1,0 +1,10 @@
+<opt igwpermnt="0" httpsport="443" aggregate="0" resolve="127.0.0.1" sendarp="0" express="0" mssmodify="1" ntptimeserver="time.nist.gov">
+  <mail value="system" />
+  <mail value="system" />
+  <mail value="system" />
+  <mail value="system" />
+  <mail value="system" />
+  <destination>
+    <opt>system</opt>
+  </destination>
+</opt>

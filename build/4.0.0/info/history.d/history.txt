@@ -1,0 +1,3024 @@
+======== Tue Feb 11 19:18:37 CST 2014 ========
+Version : 4.0.0-0019
+
+   1.New algorithm named BBLP which support latency and packet loss detection.
+    The modification include : qbserv();qbkflow.ko(qbkflow.h,qbkf_core.c,qbkf_util.c);global.cgi,rtable.cgi,rtable.lib,proute.lib,isphis,rate.cgi
+   2.Split BALANCE(BSWLT) algorithm into ISWLT/OSWLT and refine BSWLT.
+     Add latency and packet loss detection function for the three algorithms.
+    The modification include : qbserv();qbkflow.ko(qbkflow.h,qbkf_core.c,qbkf_util.c);global.cgi,rtable.cgi,rtable.lib,proute.lib
+   3.Fix NA-110's panic issue.
+    The modification include : linux(af_inet.c)
+   4.To check tunnel's default policy when click update.   (EVAL_01)(20140212)
+    The modification include : proute.lib qbmod.cgi
+   5.To add enable/disable function in firewall page. 	   (EVAL_01)(20140212)
+    The modification include : access.lib enable_disable_firewall.cgi 
+   6.To fix crond stop working since ver:0016		   (20140213)
+    The modification include : sysinit
+   7.To fix ipsec can't be reconnect automatically since ver:0018   (20140220)
+    The modification include : ispdown
+   8.To fix viewflow conflict with HA mode (20140221)
+    The modification include : sysinit
+   9.To fix download speed sometimes can't be limited by Policy-based QoS (20140221)
+    The modification include : qbkf_core.c,xt_ingw.c,
+  10.To limit HA can't set virtual mac to port 2 or it will show red GUI. (20140224)
+    The modification include : ha.lib
+  11.To correct some words on the GUI.(Letancy=>Latency;Volumn=>Volume;Piechart=>Pie Chart) (20140224)
+    The modification include : traffic.cgi,traffic.htm,qblanguage.cgi
+
+======== Wed Jan  8 15:08:32 CST 2014 ========
+Version : 4.0.0-0018
+
+   1.PPPoE link shouldn't do update if the link can't reach healthy check IP. (EVAL_01)(20140108)(Confirmed by Brian)
+     (Link can get IP from ISP,but can't access internet.QB do update will cause packet loss.)
+    The modification include : ip-up.local
+   2.Fix squid can not work.                                (EVAL_03) (20140114)
+    The modification include : squid.pkg sysinit enable_squid.sh search_data_squid.pl search_data_squid_detail.pl do_qbremark.pl do_qbsquidurl.pl do_qbcontent.pl do_qbsquidgen.pl svsquidlog.pl restart_squid.pl every_one.sh restart_squid.sh newcontent.cgi
+   3.To add fool-proofing function for Unit and Transparent Subnets	(EVAL_04)(20140116)
+    The modification include : file_import.cgi file_export.cgi
+   4.To modify Link Health Check page	(EVAL_04)(20140116)
+    The modification include : qblanguage.cgi hcconf.lib
+   5.TO fix error message cause ramdisk crash				   (EVAL_04)(20140116)
+    The modification include : dashboard.pl
+   6.To fix DoS Prevention Settings Bug
+    The modification include : neweditflood.lib neweditdos.lib dos_make_shell.cgi	(20140121)
+   7.To fix the upload speed sometimes can't be limited by QoS function.
+    (Upload speed modify proute.lib:GETACTIVEISPINFO=>GETISPINFO )
+    The modification include : proute.lib
+   8.To fix the Link IP Binding can't work.
+    The modification include : editbasic.lib
+   9.To modify ViewFlow Host Query can show port number in flow
+    The modification include : search_flow.pl
+
+======== Wed Dec 11 15:12:23 CST 2013 ========
+Version : 4.0.0-0017
+
+   1.To fix ARP Proxy mode need to bind wan IP on LAN in some case.(Ver:0016 can only work intermittently) (EVAL_01)(20131211)(Confirmed by Brian)
+    The modification include : do_qbarp.pl,qbmon.sh
+   2.To fix Service and Application can't edit problem (EVAL_02)	(Confirmed by JianYu)
+    The modification include : service.lib appgroup.lib
+   3.To record the previous version into user action log when upgrade the firmware.(Confirmed by Brian)
+    The modification include :qbupg.sh
+   4.Fail to upgrade firmware will delete logs from the CF and retry again.(Confirmed by Brian)
+    The modification include :qbupg.sh
+   5.To fix Host object add new ip range error               (EVAL_03)(20131216) (Confirmed by JianYu)
+    The modification include :newhost.lib
+   6.To fix Firewall->rules(Deny) cause update time too long (EVAL_03)(20131216) (Confirmed by Gary)
+    The modification include :overview.lib 
+   7.To add mac grouping                         	         (EVAL_04)(20131216) (Confirmed by Shane)
+    The modification include :qbserv 
+   8.To add default blocked time to locked user.             (EVAL_05)(20131217) (Confirmed by Gary)
+    The modification include :userflow.htm showblacklist.cgi lockuser.cgi at
+   9.To fix PPTP client will be unstable when QB has two pppoe links with same gateway.(Confirmed by Brian)
+    The modification include :pptpaddroute
+  10.To fix PPTP can't be work when Firewall->rules(Deny)    (EVAL_06)(20131218) (Confirmed by Gary)
+    The modification include :access.lib
+  11.To fix Policy Routing rule priority	(EVAL_09)(20131219) (Confirmed by JianYu)
+    The modification include :proute.lib
+  12.To modify ViewFlow search can view src port and dst port	(EVAL_09)(20131219) (Confirmed by JianYu)
+    The modification include :search*.cgi search*.pl
+  13.To mark IMQ del,because new QoS seems not use it.(Confirmed by Brian)
+    The modification include :enable_qos.sh
+  14.To change tmp directory's privilege when user export config from GUI.(Confirmed by Brian)
+    The modification include :export.sh
+  15.To reduce the CPU usage of dashboard.	(Confirmed by Shane)
+    The modification include : dashboard.pl
+  16.To fix if management port is empty,QB will add error command.    (EVAL_10)(20131220)(Confirmed by Brian)
+    The modification include :nf.c
+  17.Tof fix PortScan can't work					(EVAL_11)(20131220) (Confirmed by JianYu)
+    The modification include :dos_make_shell.cgi neweditportscan.cgi neweditportscan.lib
+  18.To fix FQDN source query failed 				(EVAL_12)(20131223) 		(Confirmed by Gary)
+    The modification include :xtables.c libxtables.so.5.0.0
+  19.To fix run iptables_access cause some error message   (EVAL_12)(20131223) 	(Confirmed by Gary)
+    The modification include :access.lib
+  20.To extend the trial expiry time to 45 days. (Confirmed by Gary)
+    The modification include :trialtime test.sh
+  21.To limit PPTP's "Server IP" field can only type IP,or update will disconnect the connected pptp link.(EVAL_13)(20131224i)(Confirmed by Brian)
+    The modification include :editbasic.lib
+  22.Add Default FQDN & Auth log. (EVAL_13)(20131225) (Confirmed by Shane)
+    The modification include :host.lib fqdn_import.pl viewflow.pl newhost.lib object_link.php object_link_controller.php object_link_model.php object_link_view.php host_import.htm fqdn_import.pl english_flow.xml 
+  23.To reduce packet loss when click update.       (EVAL_14)(20131226)(Confirmed by Brian)
+    The modification include :rtable.C,proute.C,qroute.c,utils.c,qbserv
+  24.To fix Policy Routing rule priority	(EVAL_15)(20131227)(Confirmed by JianYu)
+    The modification include :qbmod.cgi
+  25.To change pptp client's reconnect method.(Confirmed by Brian)
+    The modification include :pptp(pptp-1.7.2 source code),pptpcheck,ip-up.local
+
+  26.Add Transparent Subnets in Logs and Reports -> General Setting	(EVAL_16) (20140102)(Confirmed by JianYu)
+    The modification include :flow_user_sec.cgi newsflow_user_sec.lib
+  27.Add ServicGroup already message in Server Mapping	(EVAL_16) (20140102)(Confirmed by JianYu)
+    The modification include :vs.lib
+  28.To fix IPV6's snmp status cause QB hang.(Confirmed by Brian)
+    The modification include:af_inet.c,notifier.h,addrconf.c,addrconf_core.c,linux
+  29.To fix can't show link status meter
+	The modification include:highcharts-more.js  rttraffic.cgi  speed_page.php
+
+======== Tue Nov 19 14:06:50 CST 2013 ========
+Version : 4.0.0-0016
+
+   1.Add packet loss rate and latency for healthy check.
+   The modification include : hcconf.cgi,hcconf.lib,pppoechk.pl,rttraffic.cgi,qbserv,fileparse.C,fileparse.h,qbker22.h,qbping.c,newqbhc.c,qbserv.c,qbhc.h,qbping.h,newqbhc.h
+   2.Add default tunnel rules in Firewall->rules
+   The modification include : access.lib
+   3.To modify View Flow information
+   The modification include : search.cgi search_local.cgi search.js search_data.pl search_data_icmp.pl search_data_local.pl search_data_port.pl search_data_topN.pl search_data_unit.pl search_data_web.pl search_flow.pl english_flow.xml
+   4.Add Radius for Authentication
+   The modification include : radius.pkg sysinit
+   5.Fix bug Multi-DNS Configuration
+   The modification include : dns.lib
+   6.Fix bug DoS Prevention Configuration for use Safari Browser
+   The modification include : newflood.lib
+   7.To add function When Quota bandwidth full limit speed by user define.
+   The modification include : quota_add.cgi quota_status.cgi editbasic.lib newsauth_user.lib proute.lib quotawork.lib activequota.pl quotawork.pl
+   8.To modify When PPPoE click save,need to check the existed ipaddr.xml & ipbank.xml & lvs.xml.If existed ip is not belong to the isp,QB need to remove it atuomatically.
+   The modification include : editbasic.lib
+   9.To fix ipsec vpn can't be reconnected automatically.
+   The modification include : ispdown(need to make sure QB use newest racoon)
+  10.To fix Firewall->rules(Deny) cause pppoe health check failed
+   The modification include : access.lib
+  11.To fix client can't alter center's IP when using mpv since ver:0012.
+    The modification include : dmpv.sh
+  12.To fix ARP Proxy mode need to bind wan IP on LAN.
+    The modification include : do_qbarp.pl,qbmon.sh
+
+======== Wed Nov 13 17:15:49 CST 2013 ========
+Version : 4.0.0-0015
+
+   1.HA support hardware NA-320R.
+   The modification include : sysinit,do_qbha.pl,enableha.pl,rc.afs
+   2.Fix SHD sometimes can't be mounted.
+   The modification include : 
+
+======== Tue Nov  5 17:55:43 CST 2013 ========
+Version : 4.0.0-0014
+
+   1.To modify view flow date Chinese to English.
+   The modification include : jquery.ui.datepicker-zh-TW.js dashboard.lib
+lantc1.cgi lantraffic.cgi search_data.pl search.cgi sysinit
+   2.To open TopN session page.
+   The modification include : english.xml userflow_report.cgi
+   3.To fix add two service object cause function failed.
+   The modification include : service.lib
+   4.To add function Quota bandwidth limit by total and Quota bandwidth limit by upload download.
+   The modification include : editbasic.lib proute.lib newsauth_user.cgi newsauth_user.lib quota_add.cgi quota_status.lib quotawork.lib quotawork.pl requota.pl
+   5.To remove fuzzy command ,because fuzzy can't work on v4.0.0
+   The modification include : default_anti_dos.sh
+   6.HA support for hardware NA-320R
+   The modification include : sysinit,do_qbha.pl,enableha.pl,rc.afs
+
+======== Tue Oct 29 10:53:54 CST 2013 ========
+Version : 4.0.0-0013
+
+   1.To prevent user forget to type "Remote Gateway" & "Healthcheck IP" for ipsec tunnel.
+     It may cause QB stop the internet access.
+    The modification include :newipsec.lib
+   2.To fix qbmon.sh can not work.
+    The modification include :qbmon.sh
+   3.To show signal and ISP provider's name for Sierra T77Z.
+    The modification include :3gtwo.cgi,3ginfo.lib,get3gsignal.sh,detectusb
+   4.To fix 3G info occupy the CPU.
+    The modification include :3gone.cgi,3ginfo.lib
+   5.To fix QB always send error message "getsockopt error" on the console since 0012.
+   The modification include :qbserv(qbker22.h),qbkflow.ko(qbkf_mod.c,qbkflow.h)
+   6.To modify SG 1010's Max connection number.
+    The modification include :qbsysctl.sh
+   7.To add "Only for Bonding" for by packets algorithm.
+    The modification include :globol.cgi
+   8.To reduce the timeout value for FQDN.
+    The modification include :libxtables.lib.5.0.0 xtables.c
+
+======== Fri Oct 18 11:18:32 CST 2013 ========
+Version : 4.0.0-0012
+
+   1.Auto negotiate client and center if one side enabled the compression for mpv.
+    The modification include :checkmpvip,dmpv.sh,do_qbracoon.pl,ispdown,ispup,proute.lib,racoon
+   2.To fix user can't enable compression manually for tmv/mpv since ver:3.5.0-0098
+    The modification include :newmpv.cgi,newtmv.cgi,newmpv.lib,newtmv.lib,proute.lib
+   3.To fix policy schedule timer can't work
+    The modification include :xt_time.ko qbserv nf.c
+   4.To detect packet loss percentage and show on the real time traffic page.(EVAL_03)
+    The modification include:rate.cgi(flowlib.h,flow.C),qbserv(qbping.c,qbker22.h),qbkflow.ko(qbkf_mod.c,qbkflow.h),rttraffic.cgi
+   5.To modify auth login change quota ip.
+    The modification include : index.cgi quotalogin.lib
+   6.To add send alert mail when quota full
+    The modification include : requota.pl mailquota.sh newsauth_user.cgi newsauth_user.lib quotawork.lib quotawork.pl
+   7.To add keyword filtering schedule function
+    The modification include : editweburl.cgi weburl.lib
+   8.To modify service object page
+    The modification include : service.cgi service.lib newservice.lib newsergroup.lib
+   9.To modify application object page
+    The modification include : appgroup.cgi appgroup.lib l7-edit.cgi l7-edit.lib newappgroup.lib
+  10.To fix plicy routing rule can't be seen for IE
+    The modification include : policy.cgi
+  11.To fix server mapping rule can't be refresh
+    The modification include : proute.lib
+  12.To fix MAC Binding update and del function can't work for Chrome
+    The modification include : arp.lib
+  13.To fix QB local out to error path on single core version since ver:0010. 
+    The modification include : netfilter_ipv4.h
+
+======== Wed Oct  2 18:58:08 CST 2013 ========
+Version : 4.0.0-0011
+
+   1.To modify Host GUI 
+    The modification include : host.cgi host.lib newhost.cgi newhost.lib keyword.cgi qb.js
+   2.To fix a memory leak problem when link up/down
+    The modification include : qbkf_mod.c,qbkflow.ko
+   3.To modify Quota gui & bug in Policy-based QoS & Link conf
+    The modification include : editbasic.cgi editbasic.lib quota_add.cgi proute.lib newsauth_user.lib
+   4.To modify Quota status
+    The modification include : quota_status.cgi quota_status.lib
+   5.To modify Status option title
+    The modification include : qblanguage.cgi
+   6.To modify DoS Prevention title
+    The modification include : neweditflood.lib neweditdos.lib neweditportscan.lib
+   7.To modify IP-MAC Binding Chrome Browser bug
+    The modification include : arp.lib
+   8.To modify Server Mapping bug
+    The modification include : vs.lib
+   9.To modify Application Filtering add Wan Link and Lan Link in policy option 
+    The modification include : weburl.lib
+  10.To modify DHCP log view localtime.
+    The modification include : dhcplog.cgi dhcplog_localtime.pl
+  11.To modify Hosts add button and gui.
+    The modification include : hosts.cgi hosts.lib newhost.cgi newshot.lib
+  12.To modify Web Filtering Keyword & Content enable button
+    The modification include : weburl.lib newcontent.cgi newcontent.lib
+  13.To modify Policy Routing & Application Filtering & Server Mapping add problem
+    The modification include : proute.lib
+  14.To modify Link conf gui quota setting & add problem.
+    The modification include : editbasic.cgi editbasic.lib showbasic.lib
+  15.To modify Authentication Quota information qui
+    The modification include : newsauth_user.lib
+  16.To fix mpv's compression function can not work since ver:104(ipsec-tools downgrade to 0.7.3)
+    The modification include :racoon
+  17.Auto negotiate client and center if one side enabled the compression for tmv.
+    The modification include : qroute.c
+
+======== Mon Sep 30 11:25:19 CST 2013 ========
+Version : 4.0.0-0010
+
+   1.To add DHCP status and ARP tables in LAN Host page 
+    The modification include : dhcplog.cgi arptable.cgi english.xml
+   2.To fix DNS relay can not be edit .
+    The modification include : dns_relay.cgi editdns.lib qblanguage.cgi
+   3.To modify tree menu.
+    The modification include : english.xml
+   4.To add Quota option in Link conf and Policy base Qos.
+    The modification include : editbasic.lib quotawork.lib proute.lib quotawork.pl requota.pl
+   5.To add Authenticated User/Authenticated User Group for Bandwidth Quota.
+    The modification include : newsauth_user.cgi newsauth_user.lib
+   6.To add Quota status page.
+    The modification include : quota_status.cgi quota_status.lib activequota.pl
+   7.To add option enable in Web Filtering Keyword.
+    The modification include : showweburl.cgi weburl.cgi weburl.lib
+   8.To move General Setting page in Web Filtering Content.
+    The modification include : newcontent.cgi squidgen.cgi newcontent.lib squidgen.lib
+   9.To modify Appliation Filtering hide NAT
+    The modification include : proute.lib
+
+   from Shane 192.168.1.173 history.txt
+   10.To Add Authenticate Option Page.
+    The modification include : auth_option.cgi auth_option.lib auth.sh option.pl Multi-Add.pl test.cgi
+   11.To Add Authenticate Status Page.
+    The modification include : auth_status.cgi object_auth_status.cgi docudownloads inc languages logfile templates index.php installation.txt test.php
+   12.To Add Authenticate User Group Page.
+    The modification include : auth_user.cgi auth_user.lib newsauth_user.cgi newsauth_user.lib
+   13.To Add Authenticate Server Page.
+    The modification include : auth_server.cgi auth_server.lib newsauth_server.cgi newsauth_server.lib
+   14.To Add Authenticate Login Page.
+    The modification include : auth/index.cgi auth/index.htm auth/login.css auth/message.htm auth_open.pl
+   15.To Add Authenticate Page.
+    The modification include : english.xml postqb_general
+
+======== Mon Aug 26 15:32:35 CST 2013 ========
+Version : 4.0.0-0009
+
+   1.To fix if add a new host object into bigger config,GUI will spend 90 sec to wait the return.
+    The modification include :nat.lib
+   2.To fix if click update from GUI with bigger config,GUI will spend more than 5 mins to wait the return.
+    The modification include :qbmod.cgi
+   3.To speed up the booting speed.
+    The modification include :proute.C,nf.c(ipv6)
+   4.To support SNMP V6.
+    The modification include :snmpd,rc.snmp,do_qbsnmp.pl,libimage-007.pkg
+   5.To refine the upgrade process.
+    The modification include :doupgrade.sh,do_upgrade,sysinit
+   6.To fix click update may cause panic and show SNMP for ipv6 error.(flush mpv's ip cause the problem)
+    The modification include :addrconf.c,proute.C
+   7.To support unknown NATed IP establish ipsec tunnel to QB.
+    The modification include :racoon(v0.73=>V0.80),localconf.c,do_qbipsec.pl,do_qbracoon.pl,qbkf_core.c,newipsec.lib,libimage-008.pkg   
+   8.To fix IPSEC/TMV traffic be calculated twice.
+    The modification include :qbkflow.ko(qbkf_core.c)
+   9.To support TMV/MPV can work together.
+    The modification include :qbserv(proute.C,qbker22.h);qbkflow.ko(qbkf_utl.c,qbkf_mod.c,qbkflow.h);newtmv.lib
+
+======== Wed Aug  7 16:51:30 CST 2013 ========
+Version : 4.0.0-0008
+
+   1.To fix WRR by packets route to error path.
+    The modification include :qbkf_util.c,qbkflow.ko
+   2.To limit LogBug's size to make SG can be upgraded.
+    The modification include :qbmon.sh
+   3.To fix management port can't work on mutiple wan link.
+     (DNAT reply to error wan link path)
+    The modification include :qbmod.cgi,proute.lib,newmpv.lib,newtmv.lib
+   4.To fix GSLB can't read old Inbound multi-DNS's config.
+    The modification include :dns.cgi dns.lib
+   5.To fix some kind of inbound policies can't be modified.
+    The modification include :proute.lib
+   6.To fix Port-Scan's information was too long.
+    The modification include :edit.cgi
+   7.To fix Link IP Binding's muti-add function can't work.
+    The modification include :vs.lib
+   8.To refine the GUI of \.Policy Object\.Schedule.
+    The modification include :newschedule.lib,schedule.xml
+   9.To refine the GUI of \.Security\.DoS Prevention\Connection Overflow
+    The modification include :dos.cgi,edit.cgi,newdos.cgi,neweditdos.cgi,newdos.lib,neweditdos.lib
+  10.To speed up the booting speed.(airport's config from 190 sec to 85 sec)
+    The modification include :proute.C
+  11.To fix SNMP need to setup management IP or the SNMP can't be saved into config file.
+    The modification include :snmp.cgi
+  12.To modify Firewall's default rule
+    The modification indlude :show_access.cgi edit_access.cgi access.lib
+
+======== Wed Jul 17 18:45:42 CST 2013 ========
+Version : 4.0.0-0007
+
+   1.To fix DDNS can't work for dyndns.org.
+    The modification include :ddnscfg
+   2.To fix Smart NAT can't work with bridge mode on V4.0 and refine bridge to remove some error messages.
+    The modification include :proute.C,utils.h,utils.c
+   3.To fix real time traffic can't show bridge traffic.
+    The modification include :qbkf_core.c,qbkflow.ko
+   4.To support bridge failover if Link's gateway is unreachable.
+    The modification include :qbserv.h,proute.C,proute.h,qroute.c
+   5.To add web filter function
+    The modification include :english.xml weburl.cgi showweburl.cgi editweburl.cgi proute.lib weburl.lib postqb_general sysinit keyword.cgi host.lib newhost.lib
+   6.To add Firewall function
+    The modification include :access_menu.cgi show_access.cgi edit_access.cgi qbmod.cgi gui.css postqb_general access.xml english.xml access.lib check_iptables_access
+   7.To modify GUI's word: access control -> Firewall
+    The modification include :access_menu.cgi english.xml
+   8.To modify GUI's word: Static ARP setting -> Static MAC Binding
+    The modification include :qblanguage.cgi english.xml
+   9.To modify GUI's word: Dos Prevention -> DoS Prevention
+    The modification include :english.xml
+  10.To modify web filtering select option
+    The modification include :newhost.lib host.lib weburl.cgi weburl.lib 
+  11.To modify GUI's word : QoS -> QoS Class
+    The modification include : english.xml,english_only.xml,qblanguage.cgi
+  12.To modify GUI's word : Policy for Real Servers -> Inbound Policy
+   The modification include : english.xml,english_only.xml,qblanguage.cgi
+  13.To modify GUI's word : High Availablility is not launched. -> High Availablility is not enabled.
+   The modification include : qblanguage.cgi
+  14.To add watchdog driver for NA-551.
+   The modification include :rc.init,watchdog_na550,lib8a550.so.0
+  15.To add watchdog driver for NA-320R.
+   The modification include :rc.init,watchdog_na320,lib8a320.so.0
+  16.To fix QB sometimes can't be accessed from internet if config multiple bridge.
+   The modification include :rtable.C
+  17.To fix DDNS use old IP or error IP to update domain name if config multiple pppoe.
+   The modification include :ddnscfg,ddclient.conf,pppboot,pppstart,dhcpboot,dhcpstart,proute.C,sysinit,ddclient.conf.noip
+  18.To fix Link IP binding's IP sometimes mismatch the wan link's system IP when using PPPoE.
+   The modification include :ip-up.local
+  19.To change the CPU type for dual core CPU
+   The modification include :.config,mod2622.pkg,modules.pkg
+
+======== Mon Jun 24 10:16:31 CST 2013 ========
+Version : 4.0.0-0006
+
+   1.To increase the IMQ device number to 3200 for TM.
+    The modification include :sysinit,imq.c,imq.h,imq.ko,ipt_IMQ.ko
+   2.To fix 3200 IMQ devices cause CPU become 100% when using dashboard.
+    The modification include :getmacrange
+   3.To fix DDNS can't work for dyndns.org.
+    The modification include :ddnscfg
+   4.To fix Smart NAT can't work on V4.0 and refine bridge to remove some error messages.
+    The modification include :proute.C,utils.h,utils.c
+   5.To fix real time traffic can't show bridge traffic.
+    The modification include :qbkf_core.c,qbkflow.ko
+   6.To support bridge failover if Link's gateway is unreachable.
+    The modification include :qbserv.h,proute.C,proute.h,qroute.c
+
+======== Fri May 31 18:27:08 CST 2013 ========
+Version : 4.0.0-0005
+
+   1.To fix historical status doesn't have any data.
+    The modification include :rsync,libimage.squ,image.gz
+   2.To support NA-560's AHCI mode.
+    The modification include :linux,ahci.c
+   3.To combine all image.gz and can be used for TM.
+    The modification include :rc.sysinit,image.gz
+   4.Put country config into qbxml.pkg
+    The modification include :country.xml
+
+    Version : 3.5.0-0100
+    1.To fix bridge bug
+    The modification include :
+    2.To fix config become empty problem.
+    The modification include :qbmod.cgi,proute.lib,user.lib
+    3.To fix kernel panic problem on NA-110 when using BALANCE algorithm.
+    The modification include :qbkflow.ko qbkf_mod.c
+    4.To fix the encrypt function be enabled for mpv automatically since ver:0098.
+    The modification include :proute.lib
+    5.To move Quota page to Link Setup ,and Status page to the top menu.
+    The modification include :english.xml, xtree.cgi
+    6.To fix Historical traffic page can't be displayed correctly.
+    The modification include :LAN_traffic.cgi
+    7.To fix HA's LAN healthy Check can't work.
+    The modification include :afs.h,afs.c,pnet.c(ndev/afsping/HDEV)
+    8.To modify the extract order of qbgui.pkg.
+    The modification include :qbuidec
+
+======== Thu May 23 18:58:05 CST 2013 ========
+Version : 4.0.0-0004
+
+   1.To fix timezone can't be changed.
+    The modification include :libimage-zoneinfo,timeconfig.sh
+
+    Version : 3.5.0-0099
+    1.Add a GSLB function
+    The modification include :qbserv fileparse.C fileparse.h named.C named.h
+qbserv.h qbserv.c newqbhc.h newqbhc.c qbping.h qbping.c qbconnect.h
+qbconnect.c qbhc.h qb.js country.cgi country.lib editcountry.cgi
+editcountry.lib viewcountry.cgi host.cgi host.lib viewdns.cgi viewdns.lib
+dns.cgi dns.lib qblistmx.cgi qblistns.cgi qbserv.chk
+    2.To fix DDNS can't work since ver:0098.
+    The modification include :ddnscfg sysinit
+    3.To reduce the timeout value of FQDN.
+    The modification include :iptables
+    4.To fix some GUI's security holes.
+    The modification include :nat.cgi console.cgi config.cgi admin.cgi
+
+======== Thu May  2 14:02:18 CST 2013 ========
+Version : 4.0.0-0003
+
+   1.To support Max link numbers=1047.Max pool number=250.
+    The modification include :isphis,rate.cgi,qbserv,constants.h,newqbhc.h,qbker22.h,qbserv.h,qroute.c,qroute.h,vs.h(recompile all directories);qbkflow.ko/qbkf_timeout.ko:qbkf_mod.c,qbkflow.h
+   2.To fix IRQ conflict problem on NAR-551.
+    The modification include :linux:MSI-X,igb.ko
+   3.To add watchdog driver for NA-110.
+    The modification include :rc.init,watchdog_na110
+
+   Version : 3.5.0-0098
+   1.To support Gmail's MX can be added into Inbound Multi-DNS.
+    The modification include :dns.lib
+   2.To support IPV6 QOS.(and fix QOS conflict with throughput limit)
+    The modification include : defqos.cgi editbasic.lib newqos.lib proute.lib zone.lib
+   3.Add a "TCP Bonding" algorithm for TMV/MPV.
+    The modification include : global.cgi proute.lib qbmod.cgi rtable.lib
+   4.To support user define layer 7 pattern.
+    The modification include : english.xml l7-object.cgi l7work.cgi proute.lib qbmod.cgi sysinit
+   5.To fix ARP proxy can't be disabled on new transparent GUI.
+    The modification include :zone.lib
+   6.To fix DDNS-dyndns.org can't work.
+    The modification include :ddncfg ddclient.conf.noip
+   7.To fix config file can't be uploaded if QB support CMS.
+    The modification include : rmconfig.lib
+   8.To fix IPV6's policy can't be modified.
+    The modification include :proute.lib
+   9.To fix TMV's encryption can't work.
+    The modification include :proute.lib
+  10.Fix Qos can't be work for bridge
+    The modification include :proute.lib
+
+======== Fri Apr 26 09:50:56 CST 2013 ========
+Version : 4.0.0-0002
+
+   1.To fix 3G dongle can't work for a long time.
+     It's a spinlock problem.Disable sinlock debug and modify allocation method from SLUB to SLAB.
+    The modification include :linux
+   2.Patch mppe/mppc for 2.4.5
+    The modification include :pppd,image.gz
+   3.Add MAKEDEV into fsimage or start_udev will show error message.
+    The modification include :image.gz
+
+======== Tue Jan 15 15:10:34 CST 2013 ========
+Version : 4.0.0-0001
+
+   1.The first version and sync with v3.5.0-0094.
+    The modification include :
+   2.To fix GUI will show 3G's dial message when getting new IP..
+     ( The problem caused by /dev/null's privilege,udev change the privilege to 660.Need to update /etc/udev's rule )
+    The modification include :50-udev-default.rules
+   3.Optimize pppoe's code.
+    The modification include :do_qbha.pl,sysinit
+   4.Add a version information for fsimage
+    The modification include :qbimg.sh,xxfsimage.pkg
+
+======== Thu Jan 31 16:59:22 CST 2013 ========
+Version : 3.5.0-0095
+
+   1.To support JMB368 Jmicron IDE Chip.
+    The modification include :generic.c,linux
+
+
+======== Thu Jan  : : CST 2013 ========
+Version : 3.5.0-0094
+
+   1.To support Wimax.
+    Thi modification include : sysinit postqb_general linux qbserv proute.C proute.h utils.c utils.h usb.ids 53-usb_wimax_huddle.rules detectWimax.cgi checkHuddlestate.sh createisp.htm showbasic.lib editbasic.lib
+   2.To fix ping and traceroute of diagnostic tools can't work from LAN.
+    The modification include :rundiatool.cgi
+   3.To fix Bandwidth Shaper by IP can't work
+    The modification include :proute.lib
+   4.Sync GUI with V4.0.0
+    The modification include :getsysstatus.cgi
+   5.To keep User's action log even if user reboot the QB.
+    The modification include :qbmon.sh,sysinit,keeplog,dumplog.cgi,global.cgi
+   6.To fix after modifing TMV & MPV,QB will make an empty field on ipaddr.xml.
+     It will cause the QB can't be accessed from LAN.
+    The modification include :newtmv.lib newmpv.lib service.lib(20130111)
+   7.To fix the config file sometimes be locked when tmv/mpv is down.
+    The modification include :checkmpvip
+   8.To support Huawei EM770W/EM772W 3G chip.
+    The modification include :usbserial.ko global.cgi
+   9.Remove TMV & MPV auto set policy and server mapping (20130121)
+    The modification include :newtmv.lib newmpv.lib
+    Because CTDIRMARK can be used manger port.
+   10.Enable CTDIRMARK and disable CONNMARK(20130121)
+    The modification include :qbserv
+    Because CONNMARK can't use routing mode on site to site's LAN and CTDIRMARK can be used.
+   11.Fix if config name have "boot" "default" "active" at delete/save/load ,it has a problem
+    The modification include :config.lib
+
+======== Thu Dec 20 18:28:05 CST 2012 ========
+Version : 3.5.0-0093
+
+   1.To fix the inbound traffic can't work with bridge mode since ver:0092.
+    The modification include : xt_state.ko,xt_state.h
+   2.To fix if use "Upload Upgrade Package" to upgrade Lib/FS image and then use "Upload Fs/Lib Image Package" will fail to upload the image.
+    The modification include :rmconfig.lib
+   3.To fix if fail to upload libimage,and not retry again until to be success.Reboot QB will kill QB's GUI.
+    The modification include :qbimg.sh
+   4.Refine Dos Prevention.
+    The modification include :edit.cgi Dosmenu.cgi
+   5.To add aggregated link status on the GUI.
+    The modification include : rttraffic.cgi
+   6.To support IE10.
+    The modification include :xtree.js menu
+   7.To fix some compatibility problems of chrome.
+     (1)To fix the QoS gui bug
+        The modification include :newqos.lib
+     (2)To fix the IP Bandwidth Shaper gui bug
+        The modification include :newappgroup.lib newappgroup.cgi
+     (3)To fix the Application Grouping gui bug
+        The modification include : qoslan.lib
+     (4)To fix the New Host Object gui bug
+        The modification include : newhost.lib
+   8.Use a new method to show the data of "Query by Defined Time Frame" and "Query by Custom Time Frame"..
+     (Link status chart in table and Popup window display chart)
+    The modification include : autoquery.htm autoquery2.htm manualquery.htm manualquery2.htm mrtg.cgi
+   9.QB menu dynamic display of QB ability
+    The modification include :xtree.js english.xml xtree.cgi
+  10.To support Chinese language GUI
+    The modification include : index.htm qblanguage.cgi
+  11.To reduce Menu 2 layer
+    The modification include : trafficALog.htm zone2.cgi sslinit.cgi frmconfig.cgi english.xml
+  12.To Add User ID/Password log
+    the modification include : user.lib qbmod.cgi
+======== Mon Nov 12 11:58:17 CST 2012 ========
+Version : 3.5.0-0092
+   1.To support disable/enable wan or tunnel links.
+   2.To support additional IP/Subnet for wan links.
+   3.To sort transparent IP on dashboard.
+   4.To improve the showing method of 3G info.
+   5.To fix some rules can't be auto deleted
+   6.To log the actions of user's account.
+   7.To add reply policy for static route to firewall.
+   8.To support Huawei E303 3G dongle.
+   9.To support ZTE MF-190 3G dongle.
+ 10.To add some tabs for lAN host historical traffic query.
+ 11.To add pie and bar chart for lan host historical query.
+ 12.To add pie and bar chart for lan host real time traffic.
+ 13.To fix upload image can't work
+ 14.To add IPv6's default route and use mac to bind the link local address.
+ 15.To move the edit and del icons to the left on link config page.
+ 16.To add some time options for auto refresh.
+ 17.To fix if a public IP be mapped ANY service to a LAN IP,the tmv tunnel can't be established.
+ 18.To add warning messages when user delete static route subnet and forget to modify the redirect to transparent ip.
+ 19.To fix traceroute can't work.(Need to upgrade image.gz)
+ 20.QB's GUI compatible with firefox and chrome.
+ 21.To fix Bridge can't add reply rule automatically.
+
+======== Wed May 23 11:52:08 CST 2012 ========
+Version : 3.0.0-0091
+
+   1.To fix schedule report stop working after the reboot.
+    The modification include : sysinit,edit_crontab.php
+   2.To add some debug message on qbrunway.
+    The modification include : qbrunway.c
+   3.To refine pptp client reconnect function.
+    The modification include : pptpreconnect,pptpcheck
+   4.To add a NAT rule for DMZ internal access.
+    The modification include : proute.C,dmz.lib
+   5.User define latency parameters for BBL.
+    The modification include : rtable.cgi,rtable.lib
+   6.To fix 3gdev.cgi show error information for E1550.
+    The modification include : E1750,usb.ids
+   7.To add a Uptime item and reboot_time option in UPG Management.
+    The modification include : upgmanager.lib,do_qbclient.pl,getallinfo.sh,upgradeclient.sh,upgretime.sh
+   8.To modify the traffic lights for real-time in the UPG Management.
+    The modification include : upgmanager.lib,gettrafficlight.cgi
+   9.To fix dashboard become very slow if vmQB fail to get license.
+    The modification include : licensetime
+  10.Remove "Bind Mac Address" from Diagnostic Tools
+    The modification include : diagnose.lib
+  11.Rename "Update" to "Update Config"
+    The modification include : config.lib
+  12.Add a "Management Port to Client" for TMV/MPV.It can be used to access client QB by http://CenterIP:port
+    The modification include : newtmv.cgi newmpv.cgi newtmv.lib newmpv.lib
+  13.Add a hypher link on TMV/MPV configuration page,it can be used to access client QB.
+    The modification include : tmv.lib mpv.lib
+  14.Client & Center can send config file to each other via CMS.
+    The modification include : upgmanager.lib,sendData.cgi datawork.cgi,config.cgi config.lib do_qbclient.pl import.sh loaddom.sh reflash.cgi
+  15.To add an enable/disable option for TCP optimization.
+    The modification include : tcpopt.cgi,overview.lib,tcpopt.lib,postqb_general,enable_3proxy
+  16.Change the 3G page updated
+    The modification include : 3ginfo.cgi,3gone.cgi,3gtwo.cgi,3ginfo.lib,basic.lib,get3gsignal.sh
+  17.To fix Schedule report can't be added new conditions after the reboot.
+    The modification include : edit_crontab.php
+  18.To add an Fine-tune in TMV/MPV.
+    The modification include : newtmv.cgi newmpv.cgi newtmv.lib newmpv.lib rtable.lib
+  19.TO DEBUG LAN-HOST sort
+    The modification include : lantraffic.cgi sorttables.js
+
+
+======== Fri Mar  9 13:27:28 CST 2012 ========
+Version : 3.0.0-0090
+
+   1.To support Huawei E173s 3G dongle.
+    The modification include : global.cgi,usbserial.ko,E173s,generic.c,usb.ids,detectusb,get3gsignal.sh,wvdialsetup
+   2.To record user's action on the GUI.
+    The modification include : global.cgi,user.lib,basic.lib,config.lib,newipsec.lib,newmpv.lib,newtmv.lib,overview.lib,proute.lib,reboot.lib,loganalysis.lib,dumplog.cgi,qbmon.sh(Jason finish it.)
+   3.To show the bandwidth usage of each PC.
+    The modification include : zone.lib
+   4.To add a new busybox V1.19.4 and remove traceroute,comm.
+    The modification include : sysinit
+   5.To bring up all interfaces for qbserver to get the last one.(For NA-550 22 ports machine)
+    The modification include : sysinit
+   6.To support sda partation for external storage
+    The modification include : sotrage.lib
+   7.To support Intel C200 Series Chipset with AHCI mode.(NA-550)
+    The modification include :ahci.c,linux                       ==>upgrade ShinHan 0090
+   8.Recompile squid to disable WCCP and CARP.
+     Add pinger to /usr/local/squid/libexec/pinger.
+    The modification include :squid,pinger
+   9.To support send traffic report daily.
+    The modification include :diskclear.php,sqlclear.php,sql_limit,decode2.php,edit_crontab.php,io1_detail.php,io2.php,io4.php,io5.php,io_detail.php,schedule_list.php,schedule_mdy.php,service_decode.php,postqb_general
+  10.QBserv is dead with unknown reason,so need to kill the process in a period of time.
+    The modification include :sysinit
+  11.To fix QB send license expiry mail when user click dashboard on VMQB.
+    The modification include :test.sh,licensetime_daily,licensetime
+  12.To support user type ip for the query of Sessions Status.
+    The modification include :report.htm
+  13.To fix update QB cause bandwidth shaper sometimes can't work.
+    The modification include :proute.lib,postqb_general,enable_qos.sh
+  14.To show LAN PCs' bandwidth on LAN host Status.
+    The modification include :sysinit,lantc1.cgi,lantc.cgi,lantraffic.cgi,opreset.sh,reset.sh,sorttable.js,perl_lib
+  15.To use analyser@hostname to send the daily report.
+    The modification include :io5.php,diskclear.php
+  16.To change some package's password.
+    The modification include :make-release.sh,qbrunway.h
+  17.To disable the store log.
+    The modification include :squid.conf
+  18.To put the snmp cold start message on the background.
+    The modification include :rc.snmpd
+  19.To fix "Download Management Key" can't work since ver:0089.
+    The modification include :upload.c
+  20.CMS support TMV.
+    The modification include :upgmanager.lib,do_qbclient.pl
+  21.If VMQB will be dead,VMQB will log the reason and keep alive in 30x48 mins.
+     VMQB also send alert mail every 30 mins to notify the user.
+    The modification include :qbrunway.c,mail.sh
+  21.Limit the SQL's size depend on model.
+    The modification include :setupsql,sysinit
+  22.To fix SIP helper can't be disabled.
+    The modification include :overview.lib
+
+======== Mon Jan 16 18:52:27 CST 2012 ========
+Version : 3.0.0-0089
+
+   1.To support Exception Route when using transparent mode.
+    The modification include :extroute.cgi,extroute.lib,extroute.xml,postqb_general,english.xml,english_only.xml,extroute
+   2.To restart ssh daemon automatically if it is dead.
+    The modification include : qbmon.sh
+   3.To show correct pool for QOS object.
+    The modification include : newqos.lib
+   4.To fix license expiry date can't be shown correctly.
+    The modification include : test.sh,licensetime,licensemail.sh
+   5.To fix QB send alter mail every 1 minute.
+    The modification include : sysinit,trialnotice,trialtime          ==>repack 0088
+   6.To support Huawei Vodafone K4605 3G dongle.
+    The modification include : global.cgi,usbserial.ko,K4605,generic.c,usb.ids,detectusb,get3gsignal.sh
+   7.To fix TMV tunnels will be killed when update two times on vmware center.(usleep 100000 = 0.1s )
+    The modification include : proute.C
+   8.To fix Sessions Piechart can't auto refresh.
+    The modification include : ispsession,sessions_decodes.php,sessions_status.php
+   9.To fix web proxy can't work since ver:0087.
+    The modification include :pxyinit.lib
+  10.To fix QB need to update when the dhcp link up agian and persist the old ip.
+    The modification include :dhcpcd.exe
+  11.To show web proxy hit log.
+    The modification include :dumplog.cgi,loganalysis.lib
+  12.To fix Huawei E1762 can't show correct signal strength.
+    The modification include :E1762,usb.ids,global.cgi
+  13.To correct the word "Healthcheck IPHealthcheck IP" to "Healthcheck IP" for ipsec configuration page.
+    The modification include :newipsec.lib
+  14.To disable the "Start" button when QB is uploading firmware.
+    The modification include :upload.c,rmconfig.lib
+  15.To show SIMx device on "3G Modem Information" page. ==>upgrade for john to test E1762 on QB 520
+    The modification include :3ginfo.lib
+  16.To support select all for "Layer7 Log Configuration" page. ==>upgrade 61.220.35.15
+    The modification include :l7log.lib
+  17.To reduce the cpu usage of the two pages: "Dashboard" & "System Status"
+    The modification include :getsysstatus.cgi
+  18.Traffic analyser can work under HA mode.
+    The modification include :enable_analyser,do_qbha.pl
+  19.Need to flush wifi device during every update or traceroute will use old ip to be the next hop.
+    The modification include :proute.C
+  20.To hide the NAT mode of TMV.
+    The modification include :tmv.lib,newtmv.lib
+  21.To correct the chinese "Top-N Application".
+    The modification include :io3_detail.php
+  22.To fix VMQB can't be rebooted from console.
+    The modification include :mainmenu.C
+  23.To refine the session piechart.
+    The modification include :ispsessions.pl,ispsession,sessions_decodes.php,sessions_status.php,ipsubnet.chk
+  24.To fix the record of exception Route can't be deleted.
+    The modification include :extroute.lib
+  25.To speed up the speed of GUI when using the analyser.
+     1.to reduce the sync times:original=3 now=1
+     2.no need to sync after the function authenticate(action=>'RANDOMCHECK');
+    The modification include :qbmod.cgi,user.lib
+  26.To fix 'disable the "Start" button when QB is uploading firmware' caused "Stop" button can't work.(jason)
+    The modification include :rmconfig.lib
+
+======== Mon Nov 28 17:09:08 CST 2011 ========
+Version : 3.0.0-0088
+
+   1.To modify ipt_ingw.ko for TMV QOS. ==>ver:0087
+    The modification include :ipt_ingw.c
+   2.To remove "Change Password" & "Import/Export Config(developing)" from Console.  ==>ver:0087
+    The modification include : mainmenu.C
+   3.To fix QB will delete all policies which associated with the modified service.  ==>ver:0087
+    The modification include : service.lib,newsergroup.lib
+   4.To fix server mapping can't work when map to QB.  ==>ver:0087
+    The modification include : qbmod.cgi
+   5.To add Facebook subnets.
+    The modification include :natnet.xml,hosts.xml
+   6.To support Huawei E372 3G dongle .
+    The modification include :globol.cgi,usb.ids
+   7.To add command on /mnt/qb/conf/extr_cmd will not be effected by firmware upgrade.
+    The modification include :postqb_general
+   8.To fix link ip binding become red color after add a wan link on the console.
+    The modification include :addwan
+   9.To show remote IP for TMV.
+    The modification include : proute.C,qroute.c,fileparser.C,qroute.h,fileparse.h,checkmpvip,rttraffic.cgi
+   10.A new mechanism for vmware license used to generate tmp license for trail VMQB.
+    The modification include : setup,addwan,tmp_license,make_test_VMQB,authorized_keys
+   11.To add default-asyncmap,lcp-echo-interval 30,lcp-echo-failure 8 for pptp client.
+      The parameters can make PPTP client link become stable after the update.
+    The modification include : pptpsetup,ispdown,sysinit
+   12.Mesh serial support reset H20 3G modules from GUI.When the link is down,QB will reset the module every 5 mins.
+    The modification include : 3gctrl,3greconnect,basic.lib
+   13.Support daily reset 3G modem.
+    The modification include : basic.cgi,basic.lib,qbmon.sh,dailyrst3g
+   14.To fix ezio cause ramdisk full.
+    The modification include : qbmon.sh,cputest
+   15.To fix 3G link with SIMx device can't reconnect automatically after the link went down.
+    The modification include : ispdown
+   16.Free memory=total memory-used memory-cache memory.
+    The modification include : getsysstatus.cgi
+   17.To remove TMV from Link IP Binding page.
+    The modification include : basic.lib
+   18.To fix SIM device name saved on pppoeportdev field,it will cause the 3G link can't be dial up.
+    The modification include : basic.lib
+   19.To fix if setup 3g link by SIM device first,and then change the device to modem.The 3G link can't be dial up.
+    The modification include : basic.lib
+   20.To fix analyser can't be disabled from the GUI.
+    The modification include : storage.lib,overview.lib
+   21.To fix update will restart the NIC.
+    The modification include : nicspeed.sh
+   22.To restart the apache server automatically if it is dead.
+    The modification include : qbmon.sh
+   23.To fix dhcp client link sometimes can't get correct ip when get new IP from GUI.
+    The modification include : basic.lib,dhcpcd.exe,dhcpcd.exe1
+   24.Rebuild kernel modules to support MSI inturrupt and support new e1000e/igb driver.
+    Support watchdog for QB3000 with CAR-3005.
+    The modification include : rc.init,linux,e1000e.ko,igb.ko,sysinit
+   25.To split r8139's driver.(because 1120 use r8139+e1000)
+    The modification include : rc.init,linux,r8139too.ko
+   26.To suport RIP v1/v2.
+    The modification include :global.cgi,dynroute.cgi,dynroute.lib,dynroute.xml,english.xml,do_qbdynroute.pl,postqb_general,ripd,zebra,make-release.sh
+   27.To modify the year of copyright secente :"Copyright(c) 2003-2011 Creek Co., Ltd.".
+    The modification include :index.htm
+   28.To show diagnostic result continuously.(jason)
+    The modification include :rundiatool.cgi
+   29.To fix the healthy check of physical links can't wrok properly since ver:0075.
+      (proute.xml can't add healthy check rule.ADDQBROUTE cause the problem.)
+    (Pls test server mapping function for all wan links)
+    The modification include :vs.lib
+   30.To show correct font for wireless config page.(jason)
+    The modification include :wireless.lib
+   31.To add more ntp server.(jason)
+    The modification include :time.lib
+   32.To show the trial time and send alert mail to user.(jason)
+    The modification include :dashboard.lib,licensemail.sh,licensetime,mail.sh,trialmail.sh,trialtime
+
+======== Wed Aug 24 18:34:34 CST 2011 ========
+Version : 3.0.0-0087
+ 
+   1.Add a new daemon to limit the cpu usage.
+    The modification include : cpulimit,cpulimit_daemon.sh,sysinit,qbmon.sh
+   2.Modify some frames of GUI.
+    The modification include : host.lib,category.lib,editweb.lib
+   3.The DHCP log can be qureied on the GUI.
+    The modification include : loganalysis.lib,dumplog.cgi
+   4.Set default IP list for facebook.com and youtube.com.
+    The modification include :natnet.xml,host.xml,fwmark.xml
+   5.IPSEC support NAT traversal.
+    The modification include :qbkflow.ko,checkmpvip,basic.lib,do_qbracoon.pl,dmpb.sh,ispdown
+   6.Mesh support SG's functions except Web filter function.
+    The modification include :gui.css,make-release.sh,modules.pkg,qbgui.pkg
+   7.To support Huawei EC173 3G dongle .
+    The modification include :globol.cgi,usb.ids
+   8.Add a new tunnel type TMV which support nat traversal for SG.
+    The modification include :postqb_general,basic.cgi,basic.lib,createisp.htm,proute.C,proute.h,qroute.c,fileparser.C,qroute.h,fileparse.h
+   9.To fix watchdog stop the boot procedure of 2620 with NA-710 hardware.
+    The modification include :sysinit
+  10.To extend the max healthy check time.
+    The modification include :hcconf.lib
+  11.To add extra routing rules.
+     If u type DEV = ethx and then type the ip list in the file /usr/local/apache/active/extra_route_ip
+     QB will add the extra routing rules every update.
+    The modification include :postqb_general,add_extr
+  12.QB 1120 support SSD.(SATA 2 slot)
+    The modification include :image.gz,fstab,sysinit
+  13.To fix the policy of Filtering By Category can't be deleted.
+    The modification include :iniweb.lib
+  14.To use SIMx(SIM1 SIM2 SIM3 ...) to be the modem name of the fixed device.
+    The modification include :3gdev.cgi,3gdev.lib,basic.cgi,basic.lib,detectusb,ispdown,module_3g.xml,pppboot,ip-up.local
+  15.PPPx device is fixed since ver:0074,so pppx change function can be removed.
+    The modification include :ip-up.local
+  16.To fix Huawei E173 & E1550 can't get signal strength by AT+CSQ.
+    The modification include :get3gsignal.sh
+  17.To fix 3G link can't work for HA when switching to the secondary QB.
+    The modification include :pppstart
+  18.To fix backup pool can't work for tmv.
+    The modification include :rtable.C
+  19.To separate sslvpn and sslvpn client when packing the firmware.
+    The modification include :sysinit,make-release.sh
+  20.To show correct traffic speed on real time traffc page.
+     Use setCrtab to transfer new tunnel device name to kernel's hash.
+    The modification include :proute.C,qbkf_core.c,qbker22.h,qbkf_utl.h
+  21.To fix 3G dongle must plugin the QB or the link can't be dialed automatically.
+    The modification include :3greconnect
+  22.To remove "Invalid Group Name" when selecting the 3G model.
+    The modification include :basic.lib
+  23.When the vmware license expired,QB will not delete the files on the /mnt.
+    The modification include :qbrunway.c
+  24.To fix QB can't be schedule rebooted at 24:00.(Jason)
+    The modification include :diagnose.lib,reboot.lib,upgmanager.lib,rundiatool.cgi
+  25.To hide the proxy port.(Jason)
+    The modification include :pxyinit.lib
+  26.To remove the skype from GUI.
+    The modification include :l7log.lib,l7log.cgi,service.xml
+  27.To skip the module if the module is dead.
+    The modification include :rc.init,catty,get3gsignal.sh,detectusb
+  28.To fix QB sometimes get error imei number from Huawei 3g dongle.
+    The modification include :detectusb
+  29.To prevent QB get error 3G device name or show many device name on the GUI.
+    The modification include :detectusb,ispdown,get3gsignal.sh
+  30.To hide TMV on "Tunnel Header Local IP".
+    The modification include :basic.lib
+  31.To hide TMV on the dashboard.
+    The modification include :dashboard.lib
+  32.To show the cache usage on the dashboard and system status.
+    The modification include :dashboard.lib,getsysstatus.cgi,reload_area2.php,sys_status.php
+  33.To fix QB stop to send traffic log to remote ftp server.
+    The modification include :syslogftp
+  34.To fix QB can't reconnect the 3G link automatically when plugin back the 3G dongle.
+    The modification include :3greconnect,ispdown
+  35.To support DNS relay.
+    The modification include :postqb_general,enable_dnsserver.sh,console.cgi,sysdns.cgi,editdns.cgi,inidns.cgi,inidns.xml
+                              do_qbdnsiptables.pl,do_qbdnsserver.pl,editdns.lib,inidns.lib,overview.lib,sysdns.lib
+  36.To fix HA can't work for 220/420/520 with NA-100 hardware.
+     (monport = ttyS0 , must restart init 4 when booting QB)
+    The modification include :enableha.pl,do_qbha.pl,rc.afs,sysinit
+  37.To fix QB stop recording the traffic when the log size >2GB.
+    The modification include :qbmon.sh
+  38.To support some advance options and encryption for TMV.
+    The modification include :newtmv.cgi,newtmv.lib,qroute.c,fileparser.C,qroute.h,fileparse.h,openvpn-2.2.1,static.key
+  39.Rename "Templet" to "Template".
+    The modification include :english.pl,config.lib
+  40.To split ipsec from link config page.
+    The modification include :ipsec.cgi,newipsec.cgi,ipsec.lib,newipsec.lib,english.xml,english_only.xml,basic.lib,createisp.htm
+  41.update the pattern of bittorrent and Quake III Halflife.
+    The modification include :bittorrent.pat,quake-halflife.pat
+  42.To fix HA cause watchdog can't work for 220/420 with NA-100 hardware.
+    The modification include :sysinit
+  43.To fix QB sometimes can't handle IPSEC traffic without NAT-T on nat environment.
+    (Not sure,but need to remove server mapping)
+    The modification include :qbsysctl.sh (ip_conntrack_udp_timeout_stream 60=>10 ; ip_conntrack_udp_timeout 30=>5)
+  44.To fix QB can't be rebooted from GUI if upgrade QB with ssh.
+    The modification include :do_upgrade
+  45.To fix the parameter "Packet Check" of TMV can't be disabled.
+    The modification include :newtmv.cgi,newtmv.lib
+  46.To fix the policy of application filter can't be modified.
+    The modification include :proute.lib
+  47.To fix the web page can't return after updating the policy of "Policy for Real Servers".
+    The modification include :proute.lib
+  48.To show RSSI for 3G device.
+    The modification include :3ginfo.lib
+  49.To fix policies will be cleared if click save again on the "Static Routes Setting".
+    The modification include :zone.lib
+  50.To fix the Policy for Real Servers can't be removed after removing the server mapping hosts.
+    The modification include :qbmod.cgi
+  51.To correct the word "Anthorative DNS" => "Authoritative DNS".
+    The modification include :qbmod.cgi
+  52.To fix qbserv.chk can't work properly.
+    The modification include :qbserv.chk
+  53.To clear the user define mtu/mss value automatically when click the MTU ON/Off.
+    The modification include :newtmv.lib,newmpv.lib
+  54.To check the qbserv's status after Restart QB Engine.
+    The modification include :rundiatool.cgi
+  55.To fix dns relay conflict with inbound multi-DNS.
+    The modification include :postqb_general,named.conf
+  56.To support stateless mode for pptp client.
+    The modification include :basic.cgi,basic.lib,do_qbpptpinit.pl,pptpsetup
+
+======== Mon Jul 25 15:41:19 CST 2011 ========
+Version : 3.0.0-0086
+
+   1.MPV support NAT for LB/Mesh serials.(NAT device must map proto 47 to QB)
+    The modification include : newmpv.lib,mpv.lib,newmpv.cgi
+   2.To fix QB's GUI can't be connected from internet when the dhcp client link fail.
+    The modification include : dhcpreconnect
+   3.QB will try to reconnect the 3G links by other usb modem device when the links are fail.
+    The modification include : detectusb,3greconnect,ip-up.local,52-usb_modeswitch.rules
+   4.Support user define 2G/3G for Huawei 3G dongle.
+    The modification include : basic.lib,wvdialsetup,get3gsignal.sh
+   5.To prevent dhcp client link damage the config file when the link is down.
+    The modification include : dhcpcd.exe
+   6.To prevent dhcp client link be assigned with null gateway.
+    The modification include : dhcpcd.exe
+   7.Set WPAPSK2 and Pre-Shared Key=ABCDEFGH as the default wireless auth method.
+    The modification include : wireless.xml
+   8.To fix 3G auto redial can't work caused by Huawei E161/E1550/E1750 use same product ID.
+    The modification include : 52-usb_modeswitch.rules
+   9.To fix 2 snmp manager ip cause snmptrap can't work.
+    The modification include : snmptrap.sh
+  10.Support uploading big backup file for analyser.(modify php.ini when formating hdd)
+    The modification include : format
+  11.Support unlimited ping packets for Diagnostic Tools
+    The modification include : rundiatool.cgi,diagnose.lib
+  12.To fix cpulimit sometimes occupy all CPU
+    The modification include : cputest
+  13.Open port 22/443/4000 of the lan interface ip in the bonding environment.
+    The modification include : proute.C
+
+
+======== Tue Jul 12 17:13:24 CST 2011 ========
+Version : 3.0.0-0085
+ 
+   1.To fix a memory leak problem caused by the latency measure function of kernel.
+    The modification include : qbkf_mod.c
+   2.To fix different 3G device can't work together.
+    The modification include : 3greconnect,rc.init,detectusb,udevinfo
+   3.Use ISP name to replace ISP ID on the "Sessionis Piechart" function.
+    The modification include : ispsessions.pl
+   4.To speed up switching pages of analyser.
+    The modification include : decode2.php,public.sql,io3.php,io4.php,io5.php,connect.php,protocol,sysinit
+   5.To fix the restore function of analyser sometimes can't work.
+    The modification include : user_setting.php
+ 
+======== Mon Jul  4 12:59:10 CST 2011 ========
+Version : 3.0.0-0084
+ 
+   1.To fix \Traffic Analyzer\Parameter Setup\Restore can't work.
+    The modification include : php.ini,user_setting.php,format,qbmon.sh
+   2.Install php eAccelerator for analyser.(Compile at 192.168.1.174 for php 5.1.2)
+    The modification include : sysinit,eaccelerator.ini,eaccelerator.so
+   3.Optimize the memory usage of traffic analyser.
+    The modification include : format,postgresql.conf
+   4.Rename the QOS function to "Bandwidth Shaper".
+    The modification include : english.xml,english_only.xml
+   5.To fix the "Appliance Registeration" function sometimes can't work
+    The modification include : qbmon.sh
+
+======== Mon Jun 13 16:20:58 CST 2011 ========
+Version : 3.0.0-0083
+
+   1.To add "Sessionis Piechart" display WAN Link sessions
+    The modification include : traffic.htm,sessions_status.php,sessions_decodes.php,ispsessions.pl
+   2.To Fixed transparent ip access ftp with passive mode not work, modify qbserv when policy rule route via mpv link,
+     the iptables rule add state 'ESTABLISHED'
+    The modification include : proute.h, proute.C
+   3.Maximum vlan ID=4096.
+    The modification include : vlan.lib
+   4.MPV support NAT.
+    The modification include : basic.lib,basic.cgi,dmpv.sh
+   5.Auto detect the pysical memory size and setup memory usage for php.
+    The modification include : format
+   6.Auto upgrade the framework of analyser when formating the USB disk.
+    The modification include : format,.pgpass,public.sql
+   7.Enable DHCP server for 192.168.1.0/24 by default.
+    The modification include : zonecfg.xml
+   8.To show the format for dhcp range list.
+    The modification include : zone.lib
+   9.To extend the trail days = 30 days.
+    The modification include : test.sh
+   10.To fix memory status can be shown on the analyser's Parameter Setup page.
+    The modification include : user_setting.php,reload_area.php
+   11.The signal of 3G Huawei device(E161/E1550/E1750) can be shown on the GUI.
+    The modification include : get3gsignal.sh
+   12.Fix a bug:if user setup 3G links x2 and then setup pppoe ADSL,it can be setup;if user setup pppoe ADSL links x2  and then setup 3G,it can't be setup.
+    The modification include : basic.lib
+   13.To hide the 3G device info icon for PPPoE ADSL link.
+    The modification include : basic.lib
+   14.To show the hostname on LCM for 6 mins every cycle.
+    The modification include : qbmon.sh
+   15.Wake up qbserv automatically if the daemon is dead or defunct.
+    The modification include : qbmon.sh,qbserv.chk
+   16.To fix vlan device can't be disabled.
+    The modification include : do_qbvlan.pl
+   17.Support user define mac address for vlan device.
+    The modification include : vlan.cgi,vlan.lib,do_qbvlan.pl
+   18.Limit the CPU usage of the traffic analyser.(Waiting hovo)
+    The modification include : cpulimit,sysinit
+   19.To fix the DB of analyser can be cleared.
+    The modification include : user_setting.php
+   19.To fix the DB of analyser can be cleared.
+    The modification include : user_setting.php
+   20.To fix HA can't work for NA-710.
+      NA-710: 1.Need to disable console fully on the BIOS or the unit can't be booted.
+              2.secondary QB receive msg value = 9 on the afsadm when primary is down,the value must < 0.
+    The modification include : afs.c,afsd,afstart
+   21.To add Bandwidth Limiter include IP and MPV
+    The modification include : english.xml english_only.xml qosisp.cgi qosisp.lib zone.lib proute.lib qbmod.cgi
+                               qoslan.cgi qoslan.lib
+   22.To modify QoS object only by pool
+    The modification include : proute.lib newmpv.lib
+   23.To prevent MPV local and remote ip duplicate with another MPV.
+    The modification include : newmpv.lib
+   24.To delete policy source when LAN network config modify or remove.
+    The modification include : zone.lib nat.lib proute.lib
+
+======== Wed May 25 11:21:10 CST 2011 ========
+Version : 3.0.0-0082
+
+   1.The band of 3G can be selected.
+    The modification include : basic.cgi,global.cgi,basic.lib,pppboot,wvdial.conf,wvdialsetup,detectusb
+   2.To show 3G device information on the GUI.
+    The modification include : 3ginfo.cgi,3ginfo.lib,get3gsignal.sh,info.jpg
+   3.To check the number of links when doing update.
+    The modification include : qbmod.cgi,basic.lib
+   4.To support null password for pppoe link.
+    The modification include : pppboot,pppoe-setup,basic.lib
+   5.To fix duplicate mpv nic.
+    The modification include : newmpv.lib
+
+======== Wed May 18 09:11:47 CST 2011 ========
+Version : 3.0.0-0081
+
+   1.Remove the "by pool" function from Qos obiect and fix QOS can't work properly with multi links.
+    The modification include : proute.lib
+   2.To fix Inbound Multi-DNS reply DNS query through error ISP links since ver:0072.
+     It will cause DNS query timeout.
+    The modification include : proute.C
+
+======== Tue Apr 26 09:57:15 CST 2011 ========
+Version : 3.0.0-0080
+
+   1.To fixed Real Time Traffic latency become 1ms
+    The modification include : qbserv
+   2.Rename "Policy Configuration" to "Outbound Policy"
+    The modification include : english_only.xml,english.xml,policy.cgi
+   3.To fixed QoS Object by pool not work
+    The modification include : proute.lib
+   4.To fix PPPoE can't be used when HA was enabled.
+    The modification include : pppboot,sysinit
+   5.To fix vlan can't work after the booting on SG.
+    The modification include : sysinit
+   6.Use Hybla to replace westwood congestion algorithm.
+    The modification include : tcp_optimization
+   7.To remove some qbserv logs,because they will cause ramdisk full problem.
+    The modification include : proute.C,rtable.C,fileparse.C
+   8.To fixed upload UPG fail with IE8
+    The modification include : runrmconfig.cgi
+   9.Qbrunway will backup logs when QB server fail , ramdisk full or other issues.
+    The modification include : qbrunway.c,backuplog.sh
+  10.QB will clean the logs automatically when ramdisk full.
+    The modification include : qbmod.cgi,backuplog.sh
+  11.Support user define MSS value.
+    The modification include : console.cgi,advance.cgi,overview.lib,advance.lib,postqb_general
+  12.To fix snmp and vlan can't work on the new filesystem image since ver:0079.
+    The modification include : do_qbsnmp.pl,do_qbvlan.pl
+
+======== Thu Mar 31 10:29:03 CST 2011 ========
+Version : 3.0.0-0079
+
+   1.Use isp name to replace ips id on the WAN ID field.
+    The modification include : basic.lib
+   2.Support config file names of up to 255 characters in length.(Need to upgrade filesystem image)
+    The modification include : config.lib,image.gz,fstab,syslinux-2.13
+   3.To hide layer7 service information on the "Service Config." page.
+    The modification include : service.lib
+   4.Policy Configuration disable systemip when NAT method is Smart NAT or No NAT
+    The modification include : proute.lib
+   5.To prenvent Qos object apply policy which source netmask less than 24
+    The modification include : proute.lib
+   6.To Add function prohibit multi-thread download(SG)
+    The modification include : content.lib,content.cgi,do_qbsquidgen.pl,do_qbsquid.pl
+   7.To support Huawei EC169 3G dongle .
+    The modification include :globol.cgi,usb.ids
+   8.User define 3G dial number/login name/login password.
+    The modification include :basic.cgi,basic.lib,wvdialsetup,pppboot
+   9.The weight of links can be defined between 0~99 in a pool.
+    The modification include :rtable.lib
+  10.To support measure link speed by latency.
+    The modification include :bwping,latency.tst,sysinit,rundiatool.cgi,diagnose.lib
+  11.To fixed if customer register QB and buy the warranty after 1 year,QB will determine the unit is out of warranty.
+    The modification include :do_upgrade
+  12.To show hostname on the LCM module.
+    The modification include : qbmon.sh,overview.lib,admin.lib,admin.cgi
+  13.To add a templet config field on the GUI. ( Use "_" to separate normal config file. )
+    The modification include : config.lib,english.pl,chinese.pl,rmconfig.lib
+  14.To add new alogorithm "Bonding By Latency"
+    The modification include :
+    qbserv: fileparse.C,fileparse.h,qroute.h,proute.C,rtable.C,qbker22.h
+    qbkflow: qbkflow.h,qbkf_core.c,qbkf_utl.c,qbkf_utl.h
+    UI: rtable.lib,proute.lib,global.cgi,gui.css
+  15.To fixed FQDN policy not work
+    The modification include : qbserv
+  16.To fixed Transparent ip policy not work
+    The modification include : qbserv
+  17.To fixed grouped host can not access each other
+    The modification include : proute.lib
+
+======== Thu Mar 10 14:18:34 CST 2011 ========
+Version : 3.0.0-0078
+
+   1.To fixed discontinuous ISP number make ISP display latency incorrectly
+     To fixed discontinuous ISP number make QB display latency incorrectly on real time traffic page.
+    The modification include : qbping.c
+   2.Change the vlan ID range become 2~9999.
+    The modification include : qbping.c,qbhcping.c,qbconnect.c,qroute.h,qbconnect.h,vlan.lib
+   3.To Add file types and mime types to block (SG)
+     QB can block web traffic by file types and mime types. (SG)
+    The modification include : file.cgi file.lib editfile.cgi editfile.lib mime.cgi mime.lib editmime.cgi editmime.lib
+                               do_qbfile.pl do_qbmime.pl mime.xml file.xml enable_squid.sh
+   4.To Add web filtering by category (SG)
+     To Add a policy based web filter for url category (SG).
+    The modification include : webfilter.cgi iniweb.cgi iniweb.lib editweb.cgi editweb.lib iniweb.xml
+                               enable_squid.sh category.cgi category.lib editecategory.cgi
+                               editecategory.lib do_qbwebfilter.pl
+   5.Support vmware firmware upgrade.
+    The modification include : qbupg.sh
+   6.Add a default link speed 4096/512 for normal links on all models and 512/4096 for tunnel links on 2620.
+    The modification include : basic.lib,registry
+   7.Support user define ftp transfer mode(Active/Passive) for export config function.
+    The modification include :savedom.sh,overview.lib,admin.cgi,admin.lib
+
+======== Fri Feb 25 11:43:27 CST 2011 ========
+Version : 3.0.0-0077
+
+   1.Do arping for transparent ip by default.
+    The modification include : postqb_general
+   2.Buildin a database which contains several categories of url for web filter.(SG)
+    The modification include : squidg.pkg db.pkg squid.pkg image.gz category.cgi category.lib do_qbcategory.pl
+                               squidgen.lib squidgen.cgi enable_squid.sh deny
+   3.To display latency on real time traffic
+    The modification include :
+     qbkflow  : qbkflow.h qbkf_mod.c
+     qbserv   : qbping.c qbker22.h proute.C
+     rate.cgi : flowlib.h flow.C
+     gui      : rttraffic.cgi
+   4.To implement LCM & watchdog Driver for NA-710
+    The modification include : sysinit,watchdog_na710,lcm_na710
+   5.To support L2TP Client.
+    The modification include : createisp.htm,ip-up.local,sysinit,xl2tp.pkg,basic.lib
+   6.Add a link speed "4096/512k" for TC.
+    The modification include : global.cgi
+   7.Support enable/disable VOIP NAT helper by user.
+    The modification include : chinese.xml,english.xml,english_only.xml,voip.cgi,voip.lib,overview.lib,postqb_general,sysinit
+   8.To fix 1620/SG100's LCM can't work.
+    The modification include : rc.init
+   9.To show LB/SG on LCM module.
+    The modification include : lcm.c,ezio.c
+
+======== Wed Feb  9 10:58:06 CST 2011 ========
+Version : 3.0.0-0076
+
+   1.QB will check the route of ftp server before exporting config file.
+    The modification include : savedom.sh
+   2.To fixed a healthy check issue caused by new MPV config page(bug of ver:0075).
+    The modification include : basic.lib
+   3.User define DNS servers for PPTP server.
+    The modification include : pptpinit.cgi,pptpinit.lib,options.pptpd,do_qbpptpinit.pl
+   4.In the bonding environment,client's private LAN can be reached by using PPTP dial in center QB.
+    The modification include : do_qbpptpinit.pl
+   5.To fixed MPV configuration Download / Upload speed can not mondify.
+    The modification include : newmpv.lib
+   6.Modify the font of wireless page and move some place of items on service config page.
+    The modification include : wireless.lib,service.lib
+
+
+======== Wed Jan 12 13:35:38 CST 2011 ========
+Version : 3.0.0-0075
+
+   1.Reboot schedule can be canceled.
+    The modification include : rebootqb,reboot.lib
+   2.To disable HA function on vmware QB.
+    The modification include : ha.cgi
+   3.To add new configuration page for MPV (only LB)
+    The modification include : mpv.cg, mpv.lib, newmpv.cgi, newmpv.lib, proute.lib, service.lib, qbmod.cgi
+   4.To make policy configuration page faster
+    The modification include : proute.lib, qbmod.cgi
+   5.To make link config. page faster
+    The modification include : basic.lib proute.lib vs.lib
+   6.To fixed server mapping rule disappear when generate link ip binding and server mapping for create new ISP
+    The modification include : basic.lib vs.lib
+   7.To fixed LAN windows clinet ftp can't download file
+     To fixed windows' ftp client can't work on QB's LAN.
+    The modification include : qbserv
+   8.To Fixed PPPoE re-dial from UI make qbserve hang
+    The modification include : ip-up.local
+   9.To Fixed PPTP logined info be shown incorrectly on the GUI.
+    The modification include : ip-down.local,ppdlogin.lib
+   10.To fixed 'to' group of fwmark did not sorting by destination
+      To fixed /32 has lower priority than /24 in the destination IP field of policy configuration.(this bug caused by ver:0074)
+    The modification include : qbmod.cgi
+   11.Add a new brand named "3G" and a new model named "Aggregator".
+    The modification include : gui.css,index.htm,menu,config.lib,qbsysctl.sh
+
+======== Wed Oct 13 14:05:53 CST 2010 ========
+Version : 3.0.0-0072
+
+   1.To disable some check table log to prevent ramdisk full.
+    The modification include : rtable.C,proute.C,qbserv
+   2.To allow "#" can be written directly in the username/password field of config file when using PPTP.
+    The modification include : pptpsetup
+   3.Add a timeout value(10 sec) for measure speed functions.
+    The modification include : rundiatool.cgi
+   4.After upgading the firmware,QB will update the version of firmware in the snmp config automatically.
+    The modification include : do_upgrade
+   5.Add Pool name and ISP name to measure speed functions.
+    The modification include : rundiatool.cgi,diagnose.lib,basic.lib
+   6.Add an "Open Oprt Check" function on the GUI.
+    The modification include : rundiatool.cgi,diagnose.lib
+   7.To fix server mapping snmp on QB will cause dns can't work since ver:0050.
+    The modification include : nf.c
+   8.To fixed Link shows down while it is up.
+    The modification include : checkmpvip ddnsmpv qbserv
+   9.fixed pptp and l2tp IP release range can't apply when Lan subnet netmask is not 24
+    The modification include : pptpinit.lib do_qbpptpinit.pl l2tpinit.lib do_qbl2tpipsec.pl pptpd.conf
+   10.To prevent DPMV center duplicate MPV remoteip .
+    The modification include : checkmpvip
+   11.PPPoE will try to reconnect after ispdown in 3mins.(Case: No LCP timeout)
+    The modification include : ispdown,pppoereconnect
+   12.To fix qbcli sometimes occupy 99% CPU usage.(previous bug fix can't work)
+    The modification include :qbmon.sh
+   13.To modify tcp timeout value:432000=>3600
+    The modification include :qbsysctl.sh,ip_conntrack_tcp_timeout_established
+
+======== Fri Sep 24 17:43:50 CST 2010 ========
+Version : 3.0.0-0071
+
+   1. PPTP client must use fixed ppp device same as PPPoE/3G links or ppp device sometimes will conflict with other ppp links since ver:0063.
+    The modification include : pptpsetup,basic.lib,sysinit
+   2. To fix PPTP client sometimes can't be auto reconnected,because basic.xml has 2 format types.
+    The modification include : postqb_general
+   3. To fix PPTP server sometimes show error online status.
+    The modification include : ppdlogin.lib
+   4. To change the warranty check priority.(database>user reg)
+    The modification include : do_upgrade
+   5. Show Links Down Alphabetically under Real Time Traffic
+    The modification include : rate.cgi
+   6.To prevent DMPV change remote QB's Tunnel Header Remote IP when local physical link is down
+    The modification include : dmpv.sh
+   7.When MPV Tunnel Header Remote IP field is empty, assign Tunnel Header Remote IP 0.255.0.ispid
+    The modification include : basic.xml
+   8.Only allow typing Schedule Object Name and Description is English alphabet,numer and punctuation
+    The modification include : newschedule.lib
+   9.Make DMZ http traffic can filtering by QB's Web Filter(DMZ policy using SMART NAT)
+    The modification include : do_qbremark.pl
+
+======== Thu Sep  9 19:11:03 CST 2010 ========
+Version : 3.0.0-0070
+
+   1. Show Links Down under Real Time Traffic
+    The modification include : rate.cgi rttraffic.cgi
+   2 To hide decrypt qbkey and qbssh message
+    The modification include : qbrunway sysinit cmspub cmspri
+   3. Make configure MPV easier, without using ddns on branch, center can ingnore remote ip,
+      Client QB will connect to center check systemip and gateway ip, center will find corresponding
+      isp to substitute original remote ip and make tunnel up
+    The modification include : qbrunway qblogin.pkg dmpv.sh checkmpvip ispdown setqblogin
+   4. Policy of Real Servers dispaly rules of Qbalancer
+    The modification include : proute.lib
+   5. To fix 3g dongle can't be dialed after rebooted since ver:0066.(Can't use parameter -f)
+    The modification include : rebootqb
+   6. No need to select addresses on "Measure Tunnel Speed by Link" and "Tunnel Packet Lost Detection".
+    The modification include : basic.lib,diagnose.lib,rundiatool.cgi
+====
+   1. Show Links Down under Real Time Traffic
+   2. To make configure MPV easier:
+       If center QB has a fixed IP,branch QB doesn't need to use ddns mpv with dynamic links.
+       (No need to type domain name in "Tunnel Header Destination Name" field )
+       You can type correct ip or ignore Tunnel Header Remote IP on the center.
+       Client QB will send ip information to center QB after the update.
+   3. To fix QB's port 4000 can't be connect from internet since ver:0069.
+   4. Use "Policy of Real Servers" to dispaly the reply rules of servers.
+
+======== Wed Sep  1 09:57:51 CST 2010 ========
+Version : 3.0.0-0069
+
+   1. To fix CMS ssh command hang
+    The modification include : catclient.sh upgradeclient.sh getallinfo.sh
+                               sysinit(append /etc/ssh/ssh_conf "TCPkeepalive no")
+   2. New Schedule Object include  multi rule (Maximum 16 rules of Schedule Object)
+    The modification include :
+      Web UI: newschedule.cgi newschedule.lib proute.lib schedule.xml
+      qbbin: qbserv=> proute.C fileparse.h fileparse.C
+   3. Move Server Mapping Advance Setting to Menu Tree Policy -> Policy for Real Servers,
+      hide policy of Q-Balancer(localhost),and maintain of Q-Balancer's default policy is RRG
+    The modification include : proute.lib english.xml english_only.xml english_sg.xml english_only_sg.xml
+   4. Add to 5 upg space of CMS
+    The modification include : rmconfig.lib upgmanager.lib sysinit runrmconfig.cgi
+   5. Need to change the attribute of /tmp or the postgresql can't be started
+    The modification include : sysinit
+
+======== Wed Aug 18 17:57:39 CST 2010 ========
+Version : 3.0.0-0068
+
+   1. To disable TRACE and/or TRACK methods on the apache server.
+    The modification include : httpd.conf
+   2. Force to remove pppoechk flag or sometimes this function will be stopped.
+    The modification include : pppoechk.pl,qbmon.sh
+   3. To remove /tmp/boot,if pppoe use same pppx dev to get same ip.(This bug will cause ram disk full)
+    The modification include : ip-up.local
+   4. Add New Object schedule weekly for Policy Configuration
+    The modification include :
+      Web UI  : english.xml english_only.xml schedule.cgi schedule.lib newschedule.cgi newschedule.lib
+               initroute.cgi proute.lib
+      modules : ipt_time.ko
+      mod2617 : libipt_time.so
+      script  : sysinit
+      qbbin   : qbserv => nf.h nf.c proute.C fileparse.h fileparse.C qbserv.c
+   5. To hide decrypt message.
+      The modification include :utils.c
+   6. Add r8168.ko for all models.
+      The modification include :rc.init
+   7. Fixed CMS upgrade client by schedule not work and scp command hang
+   7. To fix client QB can't be rebooted by schedule from CMS.
+      The modification include :upgmanager.cgi upgmanager.lib catclient.sh upgradeclient.sh
+   8. Fixed Real Time Traffic page "javascript error"
+   8. To fix Soring links Alphabetically under Real Time Traffic page sometimes cause a "javascript error".
+      The modification include :rttraffic.cgi
+   9. Client QB can be opened on new IE pages from CMS and To add red/green light to show mpv status and support client QB can be opened on new IE pages from CMS.
+      The modification include :
+
+======== Thu Aug  5 15:35:27 CST 2010 ========
+Version : 3.0.0-0067
+
+   1. Soring links Alphabetically and by Pool under Real Time Traffic.
+    The modification include : rtable.lib rate.cgi traffic.htm rttraffic.cgi
+   2. To prevent IO error during boot porcedure.
+    The modification include : ip-up.local
+   3. Modify Real Time Traffic Display interface
+    The modification include : rate.cgi rttraffic.cgi
+   4.Fixed Total Volumn Piechart not display and new rate.cgi make rate_status.php can't fetch data
+    The modification include : rate.cgi rate_decodes.php rate_status.php
+
+======== Tue Jul 27 17:22:08 CST 2010 ========
+Version : 3.0.0-0066
+
+   1. Remove Parent Proxy and use usb disk to save cache and log
+    The modification include : format.sh pxyinit.cgi pxyinit.lib enable_squid.sh squid squid.conf.lb
+                               do_qbpxyinit.pl qbkflow.ko
+   2. 'SG' Add Proxy cache function
+    The modification include : do_qbpxyinit.pl do_qbsquidgen.pl do_qbremark.pl enable_squid.sh postqb_general
+                               squidstop squid.conf.lb pxyinit.lib squidgen.lib
+   3.Modify icmp cache timeout value to 1 second for Israel healthy check Test .
+    The modification include : qbsysctl.sh
+   4.To fix DHCP Client be reconnected can't work properly in kernel 2.6.
+    The modification include : dhcpcd,dhcpreconnect
+   5.To fix 172.31.3.1 can't be reached,if the last port was bridged.
+    The modification include : proute.C
+   6.To fix dhcp client reconnect fail issue.
+    The modification include : dhcpkill
+   7.To keep the old timezone config and use new config to replace the default config after upgrade qb.
+    The modification include : do_upgrade
+   8.To fix tcpdump can't work on the console.
+    The modification include : nettoolmenu.C
+   9.To add the default value of Time Zone/Export Config. to FTP Server/NTP Time Server/Domain Name Resolver for TC.
+    The modification include : make-release.sh,overview.xml,clock
+  10.To show an error message on the GUI,if fail to sync the ntp server.
+    The modification include : overview.lib
+  11.To fix mpv bridge function sometimes cause qb panic.
+    The modification include : dev.c
+
+======== Mon Jul 19 14:08:16 CST 2010 ========
+Version : 3.0.0-0065
+
+   1.Rewrite "Bandwidth Measure WRR by packets" algorithm ,because it doesn't support by packets load balance.
+    The modification include : proute.lib,rtable.C,proute.C,avg_mure.c
+   2.To fix mpv bridge function can't work with dhcp client links.
+    The modification include : proute.C
+   3.To fix dhcp server can't work on normal situation since ver:0064.
+    The modification include : rundhcpd.pl
+   4.Add Center Management System include UPG management function
+       The modification include :
+       Web UI : upgmanager.cgi upgmanager.lib rmconfig.lib
+                runrmconfig.cgi(/qb26/apps/qb-daemons-26std-brianlayer7-dynamicmpv/runrmconfig/cgic205.CMS)
+       Script : do_qbclient.pl catclient.sh getallinfo.sh warranty.sh (For Query)
+                exportkey.sh qbkey.sh uploadupg.sh (For Upload && Download)
+                upgradeclient.sh do_qbsavestate.pl(For Upgrade)
+       Upgrade Util : do_upgrade => generate QB Managemnet key save as /mnt/conf/qbssh.bz2
+   5. 'SG' fixed enable content filter and qb policy 0.0.0.0 -> x.x.x.x through tunnel by bool http traffic not reachable
+       The modification include :do_qbsquidgen.pl
+
+======== Mon Jun 28 16:04:07 CST 2010 ========
+Version : 3.0.0-0064
+
+   1.To support mpv bridge function.
+    The modification include : linux,mod2617.pkg,qbserv,proute.C,basic.lib,zone.lib,proute.lib,qbmod.cgi
+   2.To support dhcp server and bridge device can work together.
+    The modification include : rundhcpd.pl
+   3.To fix traceroute can't work properly in "Diagnostic Tools" .
+    The modification include : traceroute,sysinit,rundiatool.cgi,qbapps.pkg
+   4.To clean routing cache and make backup table failover quicker.
+    The modification include : proute.C
+   5.To fix boot config lost issue.
+    The modification include : ip-up.local
+   6.To modify the time interval of Bandwith measure WRR by packets algorithm.
+    The modification include : rtable.lib
+   7.To support Huawei E1550 3G dongle .
+    The modification include :detectusb
+   8.To do healthy check if pppoe occupy the cpu was detected.
+    The modification include :cputest
+   9.'SG' SSLVPN portal auto install client program, Use Activex component qbssl.ocx to do it.
+    The modification include : sslvpn.cgi qbssl.ocx portal_logo.jpg sslinit.lib postqb_general do_qbsslinit.pl
+  10.'SG' SSLVPN UI add SSL Portal Setting to upload SSL portal Logo and modify login message.
+    The modification include : sslvpn.cgi postqb_general sslportal.cgi sslportal.lib upload.cgi (menu tree)
+                               qbconf: ssltitle loginmsg ssllogo.jpg
+  11. 'SG' IPsec tunnel generate policy automaticly
+      ( local subnet -> remote subnet request not NAT through wan link )
+      ( local subnet -> remote subnet reply not NAT through wan link )
+       The modification include :do_qbipsec.pl postqb_general
+  12. 'SG' fixed content filter conflicts with ipsec tunnel
+       The modification include :rtable.lib
+
+======== Thu May 27 14:19:05 CST 2010 ========
+Version : 3.0.0-0063
+
+   1.Increase the MAX pool to 52.
+    The modification include :qbkflow.h,qbserv,ipt_ingw.ko,qbfastway.ko,qbkflow.ko,qbkf_timeout.ko,qbker22.h,qbserv,rate.cgi,isphis
+   2.3G links use fixed pppx device.
+    The modification include :pppboot,wvdialsetup,basic.lib,wvdialer.cc,wvdial
+   3.To support ZTE MF627 3G dongle.
+    The modification include :MF627,global.cgi,usbserial.ko,generic.c,detectusb,usb.ids
+   4.To fix:PPPoE can't be dialed between the role switch of HA in ver:0062.
+    The modification include :pppoechk.pl,pppstart,sysinit,postqb_general
+   5.To disable h323 helper.
+    The modification include :sysinit
+   6.Increase the udp binding time for voip
+    echo 30 > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout
+    The modification include :qbsysctl.sh
+   7.To fix qbcli sometimes occupy 99% CPU usage.
+    The modification include :qbmon.sh
+
+======== Mon Apr 26 11:34:21 CST 2010 ========
+Version : 3.0.0-0062
+
+   1.Recompile kernel tree to close some debug message.
+    The modification include :ip_conntrack_proto_tcp.c(TCP NEW src IP,invalid new deleting,Invalid dir,tcp_new),linux
+   2.A new ethernet card driver for 1620(NAR-4060).
+    The modification include :r8168-8.018.00;r8168.ko
+   3.To fix a 3G link get new ip fail issue.
+    The modification include :basic.lib
+   4.Move eval version to standard version
+    Recompile qbkflow2601 qbtimeout fastway_qb26_john_release_debugv1 match-ingw-ppp qbserv qbrunway isphis rate.cgi
+    Path:(/qb26/kernel/release_module_20071001.dualcore.5520.152tunnel)
+    Path:(/qb26/kernel/release_module_20071001.PIII.5520.152tunnel)
+    Path:(/qb26/apps/qb-daemons-26std-brianlayer7-dynamicmpv/qb-daemons-max153)
+   5.To fix a page buffer overflow issue.(Only happen in the version of 152 links)
+    The modification include :qbkflow.ko,qbkf_mod.c
+   6.To add an ucd_snmp mib for snmp daemon and upgrade the version from 5.0.7 to 5.2.5.1
+    The modification include :snmpd
+   7.To prevent user from typing space in the ispname field.
+    The modification include :basic.lib
+   8.Auto revover config function need to recover active/qbconf at the same time.
+    The modification include :qbrunway.c
+   9.To fix set_HC25_to_Mdm_mode.sh run in a infinite loop with 2400/2600 old hardware.
+    The modification include :set_HC25_to_Mdm_mode.sh
+  10.To upgrade snmp daemon from 5.2.5.1 to 5.2.6.rc2,patch a cpu usage counting method,and remove "target utilities notification agentx agent_mibs" mibs.
+    The modification include :snmpd
+  11.To add a time stamp when making a new release and installing QBs for shipment.
+    The modification include :make-release.sh,setup
+  12.To assign the shipment date automatically for old QBs.
+    The modification include :datedb,sysinit
+  13.To disable "Set Date" function and show the local time directly.
+    The modification include :overview.lib
+  14.To add a button for user to sync the local time to ntp server.
+    The modification include :overview.lib
+  15.28 days historical traffic data can be queried from GUI.
+    The modification include :autoquery.htm
+  16.To fix backup pool can't work with mpv tunnels.(ver:0055~0061 can't work)
+    The modification include :rtable.C
+  17.To modify the name in the main menu tree:
+     Diagnosis Tools=>Diagnostic Tools
+     Log Analysis=>System logs
+     Link Check=>Link Health Check
+    The modification include :english.xml,english_only.xml,english_only_sg.xml,loganalysis.lib,diagnose.lib,english.pl
+  18.Automatically set the gateway as the link healthcheck IP when setting PPPoE, DHCP Client, 3G, and MPV links
+     Automatically set the gateway/systmip as the subnet when setting normal link.
+     Automatically set the Tunnel Virtual Remote IP as the Tunnel Virtual Local IP when setting MPV link.
+     Set DDNS Yes by default as the clients enter data in the "DDNS's Password" fields
+     The IPs of TVRI/TVSI can be sorted.
+    The modification include :basic.lib
+  19.To add a pppd parameter 'unit' to persist pppoe link with pppx device.
+    The modification include :pppboot,pppoe-setup,basic.lib
+  20.To show serial number and image version on the index web page.
+    The modification include :prelogin.cgi,index.htm
+  21.To fix qb's pptp server sometimes can't be connected.
+    The modification include :proute.C
+  22.To fix \Diagnostic Tools\Ping tool sometimes go through error isp link.
+    The modification include :basic.lib,rundiatool.cgi
+  23.To clean the data of Historical Traffic if the ram disk usage >=95 %.
+    The modification include :qbmon.sh
+  24.To show serial number on the snmp manager.
+    The modification include :do_qbsnmp.pl
+
+======== Wed Apr 21 10:24:24 CST 2010 ========
+Version : 3.0.0-0061
+
+   1.Disable fastestway's debug message to save the mamory usage.
+    The modification include :ip_conntrack_proto_tcp.c
+   2.Change a name of button:Wireless=>USB3G.
+    The modification include :createisp.htm
+   3.To fix ipsec sometimes cause qbserv become a defunct process.
+    The modification include :ispdown
+   4.To support watchdog for for 1420 with AXIOMTEK NA-810c hardware.
+    The modification include :watchdog_na810,rc.init
+   5.Follow these steps to dial pppoe links may cause healthy check error:
+     1.Dial PPPoE fail twice 2.update qb 3.Dial again 4.get a correct ip
+     GUI and pppd modify the config files will make a race condition.
+     some old ip may be left in the ipaddr.xml.
+    The modification include :ip-up.local,basic.lib
+   6.To remove the length limit of APN.
+    The modification include :basic.lib
+   7.To support an one level directory can be created on the remote ftp server.
+    The modification include :config.lib,overview.lib,savedom.sh,syslogftp,syslog.lib
+   8.To hide pptp and proxy help icon.
+    The modification include :pptpinit.lib,pxyinit.lib
+   9.To fix some 3g dongle driver can't work issue.(ver:0059~0060 can't work)
+    The modification include :drivers/usb/serial/generic.c,usbserial.ko,mod2617.pkg
+
+======== Wed Mar 31 17:58:50 CST 2010 ========
+Version : 3.0.0-0060
+
+   1.To support Huawei E169G 3G dongle.
+    The modification include :E169G,global.cgi
+   2.To support TCP optimization:CUBIC-TCP/Westwood. =>make release for Deansoft Office QB,Amsteel
+    The modification include :tcp_cubic.ko,tcp_westwood.ko,postqb_general,overview.xml,global.cgi,console.cgi
+   3.Refine watchdog driver for 1620 model.
+    The modification include :rc.init,watchdog_4040_1min =>make release for UNI Air,Segma
+   4.To fix 3g links auto reconnect fail problem.
+    The modification include :rc.init
+   5.To support Huawei E182 3.5G USB dongle.
+    The modification include :detectusb,usb.ids,globol.cgi
+   6.Some Huawei 3.5G USB dongle cause usb hard disk can't be shown on the GUI.
+    The modification include :overview.lib,syslog.lib
+   7.To patch MPPE/MPPC for the newest pppd.(pptp function can't work on the version:0054~0059)
+    The modification include :pppd
+   8.To fix DDNS mpv ip change fail problem.
+    The modification include :ddnsmpv
+   9.To support user define Access Point Name and add a wireless button for 3G links.
+    The modification include :wvdialsetup,createisp.htm,basic.cgi,basic.lib,pppboot
+
+======== Wed Mar 17 17:38:39 CST 2010 ========
+Version : 3.0.0-0059
+
+   1.To prevent traffic log from making CF full.
+    The modification include :sysinit
+   2.To suspend all usb devices before reboot qb.
+    The modification include :K89usbdev,rc.init
+   3.To unmount all usb filesystems and stop 3g pppoe links before reboot qb.
+    The modification include :rundiatool.cgi,rebootqb
+   4.To fix a bug:If remove the 3g dongle,qb can't be booted.
+    The modification include :pppboot
+   5.Modify the kernel driver to support different 3g dongle can be used at the same time.
+    The modification include :drivers/usb/serial/generic.c,usbserial.ko,mod2617.pkg
+   6.To fix a apache server hang issue.
+    The modification include :sysinit
+   7.To fix a bug:Measure Download Speed can resolve dns.
+    The modification include :wget
+   8.To support multiple 3g dongle.
+    The modification include :52-usb_modeswitch.rules,detectusb,config/*,usb.ids,pppboot,global.cgi,basic.cgi,basic.lib
+   9.To add a default address for Measure Download Speed function.
+    The modification include :diagnose.lib
+   10.To define the upper bound of 3G ISP links.
+    The modification include :basic.lib,registry,global.cgi
+   11.To fix ddns can't work properly with 3g links.
+    The modification include :ip-up.local
+   12.Send mail to qbreg@creek.com.tw before shutdown the physical ethernet card.
+    The modification include :test.sh
+   13.User can select a time to reboot qb.
+    The modification include :rebotqb,rundiatool.cgi,diagnose.lib
+
+======== Fri Mar 12 18:54:43 CST 2010 ========
+Version : 3.0.0-0058
+
+   1.To sync and free chache memory at AM 2:30 every day.
+    The modification include :sysinit
+   2.To change the alert range of system status.(80%=>95%)
+    The modification include :reload_area2.php,sys_status.php
+   3.To assign serial number automatically.
+    The modification include :sndb,sysinit
+
+======== Fri Mar  5 10:28:21 CST 2010 ========
+Version : 3.0.0-0057
+
+   1.To support Huawei 3g hsdpa dongle.
+    The modification include :rc.init,set_HC25_to_Mdm_mode.sh,usb.ids,lsusb,basic.lib,
+                              52-usb_modeswitch.rules,usb_modeswitch package,usbchk,pppboot,
+                              ispdown,pppboot
+   2.To prevent pppoe single process occupy the cpu usage more than 35%.
+    The modification include :cputest
+   3.To fix a pppoe bug:Create some links fail and save the config to boot.
+                        After reboot qb,some gateways must be changed atuomatically.
+    The modification include :ip-up.local
+   4.To show QB's Serial number in the GUI.
+    The modification include :overview.xml
+   5.To Fix a qos bug:In the central routing environment,client QB can't be applied reply qos rules.
+                      Because mpvs only have a gateway in the client.
+                      The original mechanism use this gateway to determine which class will be applied.
+                      Use device name to replace gateway now.
+    #Patch IMQ modules in the kernel tree and iptables application.(The IMQ
+devce number has been modified .)
+    The modification include :ipt_ingw.c
+   6.Check the last line of qb's basic config file to prevent config files damaged by unknown reason.
+    The modification include :ddnsmpv
+   7.Change the routing sequence to make iptables can resolve FQDN every time.
+    The modification include :proute.C,qbserv
+
+======== Wed Feb 10 12:07:36 CST 2010 ========
+Version : 3.0.0-0056
+
+   1.To support PPPoE dial log and IPSEC/PPTP log can be shown on the GUI.
+     To disable show daemon log function.
+    The modification include :dumplog.cgi,loganalysis.lib
+   2.To show LB/SG on the index web page.
+    The modification include :index.htm,gui.css,registry,prelogin.cgi,global.cgi
+   3.If QB lost boot config ,QB will be booted with default config.
+    The modification include :sysinit
+   4.Change a new deansoft logo.
+    The modification include :deansoft.png,Home_r1_c2.gif,Home_r2_c2.gif
+   5.To hide spinlock error message for alert log.
+    The modification include :dumplog.cgi
+   6.Update layer7 patterns.(ver:2009-05-28)
+    The modification include :l7-protocols
+   7.To upgrade syslog daemons.(ver:1.41 => ver:1.50)
+     It can save cpu usage and prevent watchdog to reboot qb.
+    The modification include :syslogd,klogd,qbapps.pkg,sysinit
+   8.Add a file rpmrc for snmpd.
+    The modification include :rpmrc,rc.snmpd
+   9.Pool can be named.
+    The modification include :qbmod.cgi,rtable.lib,proute.lib,policytc.lib
+  10.To modify PPPoE lp replacement function.
+    The modification include :ip-up.local
+
+======== Mon Feb  8 12:03:17 CST 2010 ========
+Version : 3.0.0-0055
+
+   1.To disable FQDN ,because it cause qb unstable when QB work with many unstable pppoe links.
+    The modification include :nf.c
+   2.Fix a length issue of service name.(20 characters compare with 30 characters)(Luke)
+    The modification include :fileparse.h
+   3.If no usb hdd was setuped ,QB will not execute filesystem check process.
+    The modification include :sysinit
+   4.Rename the title of image upgrade function to "Upload Fs/Lib Image Package".
+    The modification include :rmconfig.lib
+   5.Disable:To prevent null wireless device cause qb can't be accessed from internet.
+    The modification include :qroute.c
+   6.To stop pppoe link before get a new ip.
+    The modification include :basic.lib
+   7.To fix a bug in this function:Change admin's password of SSH the same as UI.
+    The modification include :sysinit
+   8.To fix a bug:If pppoe link work with fixed IP,QB will dial extra link to waste cpu usage.
+    The modification include :pppboot,pppoechk.pl,postqb_general
+   9.To fix a bug:Snmptrap can't work since ver:0054.
+    The modification include :image.squ
+
+======== Tue Jan 26 14:24:19 CST 2010 ========
+Version : 3.0.0-0054
+
+   1.To change some pictures and modify the years of SG/LB GUI .
+    The modification include :top_qb_logo.gif
+   2.To support fsimage & libimage can be upgraded from GUI .
+    The modification include :qbimg.sh,rc.init,fsimage.pkg,libimage.pkg
+   3.To modify the year of copyright secente :"Copyright(c) 2003-2010 Creek Co., Ltd.".
+    The modification include :index.htm
+   4.To prevent ddnsmpv damage the config file.
+    The modification include :ddnsmpv,ispdown
+   5.To upgrade pppd ver:2.4.3 to ver:2.4.5.
+    The modification include :pppd
+   6.To show pppoe link up/down status from GUI.
+    The modification include :dumplog.cgi,loganalysis.lib
+   7.To upgrade apache server and snmp server.
+    The modification include :fsimage.pkg,libimage.pkg
+   8.Load config file will check the status of pppoe links.
+     If link is down,qb will redial the link again.
+    The modification include :postqb_general,pppoechk.pl
+   9.QB will not extract the squid package until user eanble proxy function.
+    The modification include :sysinit,postqb_general,enable_squid.sh
+   10.QB GRE tunnel encrypt with IPsec modify IPsec lifetime 3 min => 3 hour(Luke)
+
+======== Mon Dec  7 14:24:57 CST 2009 ========
+Version : 3.0.0-0053
+
+   1.To separate LB/SG model type.
+    The modification include :make-release.sh
+   2.To fix a bug:Always get new IP over pppoe fail sinece ver:0048. (pppoe-setup need to add a parameter)
+    The modification include :basic.lib
+   3.To fix a bug:PPPoE Can't get new IP,if the nic was changed from the GUI.
+    The modification include :basic.lib
+   4.To support PPPoE over wireless dongle with Siemens' chip.
+    The modification include :hsdpa.pkg,rx.init,set_HC25_to_Mdm_mode.sh,basic.lib,pppboot,mod2617.pkg(usbserial.ko,cdc-acm.ko)
+   5.To hidden kernel spinlock error from the GUI:
+    The modification include :basic.lib(unfinished)
+   6.To make sure user can reboot from GUI and log to /mnt/log/bootlog.
+    The modification include :killlinks
+   7.Change pppoe boot function to make the pppoe link up quicker.
+    The modification include :ip-up.local,pppboot
+   8.Redefine the max size=6GB of traffic log for Sourthern TW University.
+    The modification include :qbmon.sh,syslogftp
+   9.To prevent null wireless device cause qb can't be accessed from internet.
+    The modification include :qbserv,qroute.c
+  10.To add a parameter "ipparam" on the wvdial daemon.
+    The modification include :wvdialer.cc,wvdialer.h
+  11.To support hot plug wireless dongle.
+    The modification include :3greconnect,ispdown,qbserv,qbping.c,ip-up.local
+  12.The pppoe boot method used in ver:0052 could cause cup is occupied by pppoe daemon when link is up/down.
+    The modification include :pppoe_bak,pppoe-connect
+  13.Change the spec:
+     Connection:Model          Org                  New
+                 220:         20480                51200
+                 520:         64000               102400
+                1420:        102400               204800
+                2820:       2048000              1024000
+
+
+======== Thu Nov 26 13:35:14 CST 2009 ========
+Version : 3.0.0-0052
+
+   1.To prevent the size of ppplog >600KB.
+    The modification include :qbmon.sh
+   2.If someone is trying to attack qb,the size of wtmp will be large.
+     To prevent the size of wtmp >100KB.
+    The modification include :qbmon.sh
+   3.Sourthern TW University uses pppoe links with fixed ip.
+     Too many fixed pppoe links were dialed at the booting procedure,some of them will get error device name.
+    The modification include :pppoe=>rename=>pppoe_bak,pppoe,killlinks
+   4.Redefine the max size=500MB of traffic log for Sourthern TW University.
+    The modification include :qbmon.sh
+   5.To reconfig syslog when the boot procedure is done.
+    The modification include :sysinit
+   6.To fix a bug:If deleted a pppoe link and then failed to create a new pppoe link,sometimes ppp device will overlap with other isp links. If you update QB will this issue,it will kill some routing rules and make qb can't be accessed from remote PC.
+    The modification include :basic.lib
+
+
+======== Thu Nov 12 18:18:18 CST 2009 ========
+Version : 3.0.0-0051
+
+   1.To support IPCOMP work with IPSEC.
+    The modification include :basic.lib
+   2.If PPPoE link work on ppp9 and use ppp999 to be a tmp device to replace ppp9.
+    It will make some errors for device numbers.
+    The modification include :ip-up.local
+   3.Modify tg3.c to change the nic sequence for NAR-5071
+    int eth_serial=0; // Brian 20091113 to change the nic sequence
+    // Brian 20091113 to change the nic sequence
+        pci_set_drvdata(pdev, dev);
+        if ( pdev->bus->number == 3) {
+            if ( PCI_FUNC(pdev->devfn) == 1) eth_serial = 1;
+            else if ( PCI_FUNC(pdev->devfn) == 0) eth_serial = 2;
+            sprintf( dev->name, "eth%d", eth_serial);
+        }
+    // ########### end of change.
+   4.To fix a bug of WRR by packets.WLC count packets to change the path.
+    If the count number approach to 10000000,the count mechanism will be stoped.
+    The modification include :qbkf_utl.c
+   5.To replace a wget tool for measure tunnel speed function.
+    The modification include :sysinit,wget,qbapps.pkg,rundiatool.cgi
+   6.To support measure tunnel speed by pool.
+    The modification include :rtable.lib,diagnosis.lib,rundiatool.lib
+   7.To release evaluative version for 152 tunnels.
+    The modification include :qbgui.pkg,qbkflow.ko,qbserv
+   8.If a mpv link comes alive,reset count=0.
+    The modification include :proute.C,qbserv
+
+======== Mon Oct 12 11:45:03 CST 2009 ========
+Version : 3.0.0-0050
+
+   1.Change NAT rule of server mapping to make snmp manger can work behind QB.
+    The modification include :nf.c
+   2.Create a snmp.conf to limit snmp can only use udp 161.(not apply,reserved in /qb26)
+    The modification include :snmp.con
+   3.The firmware of 220 & 420 can also support Axiomtek hardware.
+     Kernel:support AMD chip CS5535. (CONFIG_BLK_DEV_CS5535=y ; CONFIG_CS5535_GPIO=y)
+     Use fork to rewrite Arinfotek's watchdog driver.
+    The modification include :linux,qbwdt.pkg,rc.init,sysinit,watchdog.c
+   4.When the remote ip of ddnsmpv was changed,qb will only change tunnel but not update.
+    The modification include :ddnsmpv
+   5.QB's Lan interface can reply snmp in mpv environment.
+    The modification include :proute.C
+   6.Support IPSEC over GRE.(Luke)
+    The modification include :sysinit,ddnsmpv,ipsec.pkg,basic.cgi,basic.lib,do_qbracoon.pl,do_qbipsec.pl
+   7.A new logo for Creek brand.
+    The modification include :Home_r1_c2.gif,Home_r2_c2.gif,deansoft.png
+   8.Support daily upload syslog file to ftp server.
+    The modification include :do_qbsyslog.pl,syslog.lib
+   9.Support FQDN on policy configuration.(not finished)
+    The modification include :proute.lib,overview.lib,proute.C
+  10.To prevent the size of alert.log >600KB.
+    The modification include :qbmon.sh
+  11.To support dhcp relay over mpv tunnels.
+    The modification include :dhcp-helper,remove dhcrelay form dhcpd.pkg,sysinit,postqb_general,do_dhcprelay.pl.
+  12.To remove "mail" to save ramdisk space.
+    The modification include :mail
+  13.To strip some binary files of pptp server to save ramdisk space.
+    The modification include :bcrelay,pptpctrl,pptpd
+  14.To remove some image files in "tmp" directory form GUI to save ramdisk space.
+    The modification include :s_help.gif,tmp/*
+  15.To remove "mkfs.msdos"/"mkfs.vfat"/"mkdosfs" form script.pkg to save ramdisk space.
+    The modification include :mkfs.msdos,mkfs.vfat,mkdosfs
+  16.To fix upgrade old xml automatically function.
+    The modification include :upgradexml
+  17.To fix WRR can't work in a period of time by John.=>Can't work,only print count numbers in proc_read_qbtbmap()
+    The modification include :qbkflow.h,qbkf_mod.c,qbkflow.ko
+
+======== Mon Oct  5 14:59:52 CST 2009 ========
+Version : 3.0.0-0049
+
+   1.To fix a bug:qbserv can't flush ip address of pppoe device correctly.
+    The modification include :proute.C,qbserv
+   2.To avoid pppoe to modify boot config.
+    The modification include :ip-up.local,pppboot
+   3.To disable sendmsg error healthy check message.
+    The modification include :qbping.c,qbserv
+
+======== Tue Sep 29 16:33:59 CST 2009 ========
+Version : 3.0.0-0048
+
+   1.To fix a PPPoE bug:If you setup many pppoe links on qb and run a period of time,some isp link information will conflict with other links.
+    The modification include :pppboot,pppoe-setup,ip-up.local
+   2.To modify the register function.(14 days=>2 days)
+    The modification include :test.sh
+   3.To define the max file size of traffic log is 100MB.
+    The modification include :qbmon.sh
+
+
+======== Thu Sep 10 19:23:35 CST 2009 ========
+Version : 3.0.0-0047
+
+   1.When the dhcp client link is up,qb will send arp broadcast to the gateway automatically.
+    The modification include :dhcpcd.exe
+   2.To fix a DDNS bug:If you modify the ddns information of dynamic links and select "Get New IP=NO".
+    QB will not change the ddns config correctly.
+    The modification include :basic.lib
+   3.TO fix a bug of http proxy:if you enable http proxy and then disable it.http service will not work.
+    The modification include :postqb_general
+   4.Add two fields(Contact E-mail & Serial Number)in the QB registration.
+    The modification include :console.cgi,overview.lib,mail.sh,setup
+======== Wed Aug 19 15:44:57 CST 2009 ========
+Version : 3.0.0-0046
+
+   1.Modify the maximum of tunnel number.
+    The modification include :1420/1620/2620_dual/2820_dual 's registry
+    1420:20=>40 ; 1620:50=>80 ; 2620_dual:80=>150 ; 2820_dual:80=>150
+   2.Auto recover active config directory.
+    The modification include :fileparser.C ; qbrunway.C ; qbserv & qbrunway
+   3.To support user define MTU/MSS.
+    The modification include :basic.cgi,basic.lib,proute.C,default_anti_dos.sh
+   4.To prevent logs make ramdisk full,so I modify the frequency of qbmon.sh. 20mins=>10mins
+    The modification include :sysinit
+   5.In order to fix update unstable issue with 151 tunnel,I increase some buffer for iproute.(1024=>4096)
+     addattr_l ERROR: message exceeded bound of 1024
+     *** stack smashing detected ***: /usr/local/sbin/ip terminated
+    The modification include :iproute.c,ip,sysinit
+   6.To change the Abbreviations of "Tunnel Device Local IP" become TDLI(Org:TDSI)
+    The modification include :english.pl,chinese.pl
+   7.Change the type of isp numbers:void ispUp(char iISPNum)=>void ispUp(int iISPNum)
+                                    void ispDown(char iISPNum)=>void ispDown(int iISPNum)
+    The modification include :qbserv.c
+   8.To prevent qb update continuously:#define MAXLINE 1024=>define MAXLINE 4096
+    The modification include :newqbhc.h
+   9.A mechanism for QB registration.
+    The modification include :sysinit,test.sh,mail.sh,console.cgi,overview.lib
+  10.To disable lock ddnsmpv function.
+    The modification include :ddnsmpv,ispup
+
+======== Mon Jul 27 16:49:24 CST 2009 ========
+Version : 3.0.0-0045
+
+   1.To support 151 isp links and recompile all kernel modules.
+    The modification include :
+    qbbin.pkg:
+    server/qbserv.c
+        pid_t gwhc_chile[MAX_ISP_NUM*2] = {0,0......};
+    server/constants.h
+        define MAX_ISP_NUM
+        define MAXGATE
+    server/newqbhc.h
+        define MAX_HC_TABLE
+    qblib/qroute.h
+        define MAXGATE
+    qblib/vs.h
+        define MAXGATE
+    qbk22/qbker22.h
+        define  MAX_Gateway
+    Recompile libfileparse.a for QB_SO_GET_CRTAB of qbkflow.ko.
+    flowparser/flowlib.h
+        char csIspID[4];
+    Recompile libflowparser.a for rate.cgi.
+    Recompile xmlparser & qblib & isphis & rate.cgi & qbrunway & qbserv.
+    =============================
+    modules.pkg:
+    qbkflow2601/qbkflow.h
+        define MAX_Gateway
+    Recompile qbkflow2601 qbtimeout fastway_qb26_john_release_debugv1 match-ingw-ppp
+   2.To fix the tcpdump of qbcli
+    The modification include :sysinit
+   3.To fix a problem:ver-0044 cause postgresql can't be started.
+    The modification include :sysinit
+   4.To patch h323 helper.
+    The modification include :ip_conntrack_helper_h323.c
+   5.To lock ddnsmpv,if qb is doing link failover.==>ver:0044 can't work,fixed it.
+    The modification include :ddnsmpv,ispup
+   6.Split evaluative version.
+    The modification include :make-release.sh,modules,qbgui,qbbin,platform,mod2617
+   7.Use an old tcpdump to replace the current vesion.
+    The modification include :sysinit,tcpdump
+   8.To fix Backup DB function can't work in analyser function.
+    The modification include :user_setting.php
+   9.To fix Clear DB function can't work in analyser function.
+    The modification include :user_setting.php
+ 
+======== Thu Jul  9 09:46:23 CST 2009 ========
+Version : 3.0.0-0044
+
+   1.To fix an issue:If pppoe reconnect to get a new ip which is 10.x.x.x,qb will not update automatically.
+    The modification include :ip-up.local
+   2.If start postgresql fail,qb will do fsck automatically.
+    The modification include :sysinit,fsck,rundiatool.cgi
+   3.Modify the parameter of reboot function on the UI.(-f to -n)
+    The modification include :rundiatool.cgi
+   4.A mechanism preventing user from upgrading units on v3.0 with v2.5 UPG
+    The modification include :qbupg.sh
+   5.The max concurrent session of 2620 is not correct.
+    The modification include :qbsysctl.sh
+   6.Turn off the debug message of 2820 watchdog driver.
+    The modification include :rc.init
+   7.Change the syslog start sequence to prevent it make CF dead.
+    The modification include :sysinit
+   8.To change admin's password of SSH the same as UI.
+    The modification include :user.lib,sysinit,chpwd,chpasswd
+   9.To support the IDE hard disk can be selected on the GUI for analyser and syslogftp.
+    The modification include :sysinit,syslog.cgi,syslog.lib,overview.lib,syslogftp,do_qbsyslog.pl
+  10.To lock ddnsmpv,if qb is doing link failover.
+    The modification include :ddnsmpv
+  11.Add auto mail login detail to vercheck@creek.com.tw.
+    The modification include :sysinit,test.sh
+
+======== Tue Jun  9 14:11:10 CST 2009 ========
+Version : 3.0.0-0043
+
+   1.To fix an open dns resolver issue.
+    The modification include :named.C,qbserv
+   2.To add analyzer menu tree for Deansoft.
+    The modification include :english_only.xml
+   3.upgrade rp-pppoe v3.8 to v3.10
+    The modification include :pppoe
+   4.To support 3g router's helf bridge mode work with pppoe.
+    The modification include :basic.lib,ip-up,ip-up.local,ip-down,pppboot
+   5.Disable Passive Line Check by default(XML).
+    The modification include :hcconf.xml,hcconf.cgi
+   6.To prevent null isp info make update fail.
+    The modification include :basic.lib
+   7.Change the abbreviation of "for example". ex=>e.g. from the GUI.
+    The modification include :basic.lib
+   8.Make a ethernet driver for NAR-5071 and split e1000.ko from kernel image.
+    The modification include :tg3.ko,rc.init,e1000.ko
+   9.To support modify mss to 1428 can be enabled/disabled.
+    The modification include :postqb_general,consol.cgi,overview.lib,overview.xml
+  10.To fix an issue about rest to factory default fail.
+    The modification include :reset.sh
+  11.A special release to support WRR by packets work with normal ISP links.(Creek-420_pkt-3.0.0-0043)
+    The modification include :rtable.lib
+
+======== Fri May 22 12:46:10 CST 2009 ========
+Version : 3.0.0-0042
+
+  1.Add 2 kernel modules for content load balance.
+   The modification include :ts_bm.ko,xt_string.ko,libipt_string.so,sysiinit
+  2./tmp directory is not enough for install process,so change path to ramdisk.
+   The modification include :install.sh
+  3.To support IP change log can be shown on the UI.
+   The modification include :global.cgi,dumplog.cgi,ddnsmpv,loganalysis.lib,qbmon.sh
+  4.To add new logo for TC.
+   The modification include :tc.png,Home_r2_c2.gif,Home_r1_c2.gif
+
+======== Wed Apr 29 15:04:12 CST 2009 ========
+Version : 3.0.0-0041
+
+  1.Fix a bug:If setup many ips in "Link ip binding" and "enable Reset ARP cache",172.31.3.1 will disappeared.
+   The modification include :qbserv,qbarp.c
+  2.Recompile xmlparser.
+   The modification include :fileparse.h
+  3.Open a backdoor: If user setup port 4000,tcp port 23456 will be mapped to port 22 automatically.
+   The modification include :nf.c
+  4.QB will mail addresses to vercheck@creek.com.tw at midnight or when QB find some strange links.
+   The modification include :sysinit,test.sh
+  5.Remove some warning message .
+   The modification include :snmptrap.sh,ispup,ispdown,sysinit,postqb_general.
+  6.Change the time of Tunnel check mechanism to every midnight.
+   The modification include :qbmon.sh,sysinit.
+  7.Remove TLS from layer7 patterns.
+   The modification include :global.cgi.
+  8.Fix a bug:Dead process sometimes will not be killed."\<ddnsmpv$ispid\>"
+   The modification include :ispup,ispdown
+  9.Add a IP change log for ddnsmpv.
+   The modification include :ddnsmpv,qbmon.sh
+  10.Add Model name & iptable nat rules in qb's alert mail.
+   The modification include :sysinit
+
+======== Mon Apr 27 15:07:32 CST 2009 ========
+Version : 3.0.0-0040
+
+  1.Change root's password:2k6m6dk ru4?/
+   The modification include :shadow,sysinit,qbconsl.C
+  2.Add tunnel check mechanism
+   The modification include :qbmon.sh,test.sh
+
+======== Tue Apr 14 16:24:43 CST 2009 ========
+Version : 3.0.0-0039
+
+ 1.To fix a bug:After the second auto switch back of HA function,PPPoE links can't work properly.
+   The modification include :pppstart,do_qbha.pl
+ 2.Remove "init" from bigtitle:"PPTP Server init Configuration"
+   The modification include :pptpinit.lib
+ 3.Remove "init" from bigtitle:"Proxy init Configuration"
+   The modification include :pxyinit.lib
+ 4.Daylight saving time cause Historical traffic graph can't be shown in some countries.
+   The modification include :his.lib
+
+======== Fri Mar 27 18:26:54 CST 2009 ========
+Version : 3.0.0-0038
+
+ 1.Change qbcli's password="bobkat3" for Deansoft.
+   The modification include :qbconsl.C
+ 2.HA support vlan/PPPoE/DHCP client
+   The modification include :do_qbha.pl,pppstart,dhcpstart
+ 3.To support mpv information can be sorted on the UI.
+   The modification include :basic.lib,basic.cgi
+ 4.QB's upg is too big,it will cause 43MB RAMdisk upgrade fail.
+   Move tmp upgrade directory to tmpupg ramdisk can fix it.
+   The modification include :global.cgi,doupgrade.sh,qbupg.sh
+
+======== Mon Mar  9 16:54:45 CST 2009 ========
+Version : 3.0.0-0037
+
+ 1.Compile SCSI Driver to support USB storage.
+   The modification include :linux,CONFIG_BLK_DEV_SD=y
+ 2.Add haldaemon,udev,d-bus to support hot plugin usb storage.
+   The modification include :hald.pkg,global.cgi,consol.cgi,overview.lib,sysinit
+ 3.Remove usb-storage.ko
+   The modification include :mod2617.pkg,rc.init
+ 4.Remove squid/bin/squidclient
+   The modification include :squid.pkg
+ 5.Remove pppoe/pppsbin/pppoe-discovery
+   The modification include :pppoe.pkg
+ 6.Set default timezone to Europe/London for Deansoft brand.
+   The modification include :clock
+ 7.Copy *.pkg to /mnt/bak will waste disk space
+   The modification include :qbimg.sh
+ 8.When enanle HA on NAR-4040,we need to enable EZIO.
+   If HA is working,we need to disable HA and then upgrade new firmware.
+   The modification include :registry
+
+======== Thu Mar  5 14:13:32 CST 2009 ========
+Version : 3.0.0-0036
+
+ 1.Support Snmp Community String.
+   The modification include :snmp.cgi,snmp.lib,do_qbsnmp.pl,snmptrap.sh
+ 2.User defind "Maximum Object Size" & "Object Replacement" parameters for proxy server.
+   The modification include :pxyinit.xml,pxyinit.cgi,pxyinit.lib,squid.conf
+
+
+======== Wed Feb 25 13:37:52 CST 2009 ========
+Version : 3.0.0-0035
+
+ 1.Arinfomtek watchdog can't work,recompile watchdog module to fix it.
+   The modification include :rc.init,wdt_800.ko
+ 2.Snmp trap can't work.
+   The modification include :qbserv.c,snmptrap.sh,rc.snmpd,snmpd.init,do_qbsnmp.pl,ip-up.local
+ 3.HA cause UI can't be connected.
+   The modification include :sysinit
+ 4.If user use ssh to do factory reset,qb can't be rebooted automatically.
+   The modification include :reset.sh
+ 5.Remove 168.95.1.1 from ddns mpv resolver.
+   The modification include :ns
+
+======== Fri Feb 13 16:43:54 CST 2009 ========
+Version : 3.0.0-0034
+
+ 1.WLC's healthy check can't work.If line is dead,the line will not be removed automatically.
+   The modification include :rtable.C
+ 2.Increase RAM disk max size=1G.
+   The modification include :CONFIG_BLK_DEV_RAM_SIZE=1000000,linux
+ 3.Save cache on ram disk. 
+   The modification include :do_qbpxyinit.pl,pxyinit.lib,sysinit.
+ 4.Release cache when the cache size close to 75% of ram disk. 
+   The modification include :squid.conf.
+ 5.Limit 20MB ram disk size for upgrade.
+   The modification include :sysinit.
+
+======== Mon Feb  2 18:23:47 CST 2009 ========
+Version : 3.0.0-0033
+
+ 1.Change MSS=1428.To prevent some AP or web can't be accessed through MPV.
+   The modification include :postqb_general
+ 2.To fix a ddns mpv problem:sometimes nslookup fail.
+   The modification include :ddnsmpv
+
+======== Wed Jan 14 15:19:55 CST 2009 ========
+Version : 3.0.0-0032
+
+ 1.Add usb storage drver.
+   The modification include :usb-storage.ko,rc.init
+ 2.Create a new model 520 for FWS-2150.
+   The modification include :registry
+ 3.Modify kernel image:
+   DISABLE:
+   CONFIG_INPUT_JOYSTICK=n
+   CONFIG_INPUT_TOUCHSCREEN=n
+   ENABLE:
+   CONFIG_USB_EHCI_HCD=y
+   CONFIG_USB_OHCI_HCD=y
+   CONFIG_USB_UHCI_HCD=y
+ 4.Fixed a bug:If mpv use domain name to lookup a Tunnel Header Destination IP and the mpv is down,user can't cancel it.
+   The modification include :ispdown
+
+======== Fri Dec 12 12:13:41 CST 2008 ========
+Version : 3.0.0-0031
+
+ 1.Fix a bug:Tunnel Packet Lost Detection sometimes only can measure 1 tunnel link.
+   The modification include :rundiatool.cgi,diagnose.lib
+ 2.Release 1620 for NAR-4060 with new ethernet driver.
+   The modification include :r8168.o,rc.init,mod2617.pkg
+ 3.Fix a bug:PPTP's ppuseradd will delete PPPoE's user account,if only 1 pppoe link.
+   The modification include :pppoe-setup
+ 4.Support export config file to remote ftp server.
+   The modification include :console.cgi,overview.lib,savedom.sh
+
+======== Wed Dec  3 14:18:02 CST 2008 ========
+Version : 3.0.0-0030
+
+ 1.Support user can export qb's log to remote ftp server.
+   The modification include :syslog.cgi,syslog.lib,do_qbsyslog.pl,sysinit,syslogftp
+ 2.Support NTP Time Server.
+   The modification include :overview.lib,console.cgi,postqb_general,ntpdate,qbapps.pkg,sysinit
+ 3.Launch upg will free CF/DOM disk space.
+   The modification include :do_upgrade
+ 4.Upload upg need to delete some log on the ramdisk to free ramdisk space.
+   The modification include :qbmon.sh
+ 5.Recompile pppd on Nov 3,but it seems have some problem...Recompile a new version to replace it.
+   The modification include :pppsbin.pkg,pppd
+
+======== Wed Nov 19 17:15:14 CST 2008 ========
+Version : 3.0.0-0029
+
+ 1.Update layer7 patterns.(ver:2008-11-08)
+   The modification include :l7-protocols
+ 2.Define HDD partation for analyser.(NAR-4040,NAR-5520,Teak-3001)
+   The modification include :format,sysinit
+ 3.Fix a problem:"Match any of the following" can't work.
+   The modification include :io5.php
+ 4.To prevent more than two decode2.php be executed at the same time.
+   The modification include :decode2.php
+ 5.Drop ICMP logs can make analyser become faster.
+   The modification include :decode2.php
+ 6.If traffic log can't match with service,analyser will mark unknown.
+   The modification include :decode2.php
+ 7.Fix a bug:Separate Save/Save and dial function from the UI cause BALANCE angorithm can't work.
+   The modification include :basic.lib
+ 8.Create a format hard disk  button in the Administrative Console page.
+   The modification include :overview.lib
+ 9.Fix a bug:Show error ramdisk left size on the LCM screen.
+   The modification include :qbmon.sh
+
+======== Tue Nov  4 18:13:48 CST 2008 ========
+Version : 3.0.0-0028
+
+ 1.Support PPTP Compression.
+   The modification include :linux(patched),do_qbpptpinit.pl,option.pptpd,pptpinit.lib,basic.lib,sysinit.
+ 2.Separate Save/Save and dial function from the UI.
+   The modification include :basic.lib.
+ 3.Support PPTP can show user login information.
+   The modification include :ppdlogin.lib.
+ 4.Show daemon log is helpful for PPP links debug.
+   The modification include :global.cgi,loganalysis.lib,dumplog.cgi,do_qbsyslog.pl,qbmon.sh.
+ 5.Fix qb can't dial 2 pptp links to another qb at the same time.
+   The modification include :pptpreconnect.
+
+======== Wed Oct 29 19:02:34 CST 2008 ========
+Version : 3.0.0-0027
+
+ 1.Support DHCP relay.
+   The modification include :sysinit,zone.lib,postqb_general,do_dhcprelay.pl.
+ 2.Fix a PPTP Client bug.If setup 10.x.x.x on pptp server,PPTP client reconnect will not work.
+   (Some old code for pppoe cause this problem)
+   The modification include :ip-up.local
+
+======== Fri Oct 17 15:47:47 CST 2008 ========
+Version : 3.0.0-0026
+
+ 1.Build in a PPTP server.
+   The modification include :pptpsetup,do_qbpptpinit.pl,do_qbpptpusr.pl,ppdlogin.cgi,pptpinit.cgi,pptpinit.lib,ppdlogin.lib,ppdlogin.xml,pptpinit.xml,ppusradd,english.xml,pptpser.pkg.
+ 2./sbin/sysctl -w net.ipv4.conf.all.arp_ignore=0 #Brian 20081028 Used to accept arp broadcast.
+   The modification include :qbsysctl.sh
+
+======== Tue Oct  7 11:04:34 CST 2008 ========
+Version : 3.0.0-0025
+
+ 1.Snmpd's log will be save on the ramdisk and make diskspace full.
+   Write a function to check the log size and prevent it happen again.
+   The modification include :qbmon.sh
+ 2.A new deansoft logo.
+   The modification include :Home_r1_c2.gif
+ 3.Add a passive parameter to pptp client's config.(Fix a link was killed by update problem)
+   The modification include :pptpsetup
+ 4.A new Driver for Realtek Gigabit Ethernet controllers with PCI-Express interface:RTL8168B/8111Band RTL8168C/8111C
+   The modification include :r8168.ko
+ 5.Sometimes pptp reconnect will use a new ppp device,do i need to get new device & ip information.
+   The modification include :pptpreconnect
+ 6.Sometimes pptp connect success,but always save fake ip on the UI.After connect to pptp server,wait 15 second can fix it.
+   The modification include :basic.lib
+
+======== Thu Sep 25 13:42:23 CST 2008 ========
+Version : 3.0.0-0024
+
+ 1.PPTP client support specify WAN Link.
+   The modification include :basic.lib,sysinit,pptpreconnect
+ 2.Support user define https port number.
+   The modification include :console.cgi,overview.lib,postqb_general,overview.xml
+ 3.Support user define hostname.
+   The modification include :console.cgi,overview.lib,postqb_general
+ 4.Remove atuo execute newqbkey if upgrade image.squ(ver0020~ver0023).
+   The modification include :rc.init,newqbkey
+ 5.Make a directory ppplog for ip-up.local.
+   The modification include :sysinit
+
+======== Wed Sep 17 18:43:25 CST 2008 ========
+Version : 3.0.0-0023
+
+ 1.If mpv link fail,QB will do nat for the backup pool by default.
+   This version was changed become no nat for mpv backup pool by default.
+   The modification include :rtable.C
+ 2.To prevent CF/DOM become full and cause upgrade fail.
+   The modification include :qbupg.sh
+ 3.Let user can enable or disable serverlog and prevent traffic log be saved in the DOM/CF.
+   The modification include :do_qbsyslog.pl
+ 4./var/lib/php need to be writeable to prevent decode2 execute twice.
+   The modification include :sysinit
+
+======== Thu Sep 11 15:57:46 CST 2008 ========
+Version : 3.0.0-0022
+
+ 1.To fix no route bug for PPPoE/PPTP links.(if no pppdev,need to do healthy check continously)
+   It may cause real time traffic screen become empty.pptp client can't reconnect to server automatically.
+   To remove ddclient's route rule for ppp dev.
+   The modification include :utils.c;qbping.c,postqb_general
+ 2.To fix a bug for vlan.If setup a valn device,we need to use "ifconfig ethx.x up" to wake up the device.
+   The modification include :do_qbvlan.pl
+ 3.Rewrite a pptp client reconnect function.
+   The modification include :ip-up.local,pptpreconnect
+ 4.Add a new spec: ENABLEPPTPCLIENT 1 ; MAXPPTPISP 2 
+   The modification include :registry,global.cgi,basic.lib
+ 5.Add a new Model 220 and setup Capacity of Connections=20000
+   The modification include :qbsysctl.sh
+ 6.Modify Apply become Save in "Layer 7 log Configuration".
+   The modification include :l7log.lib
+   
+======== Thu Sep  4 15:01:57 CST 2008 ========
+Version : 3.0.0-0021
+
+ 1.Let linux kernel support SATA Driver
+   The modification include :linux
+ 2.Remove xml config file corrupted message.
+   The modification include :qbmod.cgi
+
+======== Wed Aug 20 10:08:49 CST 2008 ========
+Version : 3.0.0-0020
+
+ 1.Upgrade some version before 3.0.0-0015 can't work,because Qtestkey() can't open newqbkey file
+   The modification include :sysinit
+ 2.Let PPTP client can connect to the server when qb is booting.
+   The modification include :sysinit
+ 3.Save the PPTP client need to off the link and reconnect the link again.
+   The modification include :basic.lib,pptpreconnect,sysinit
+ 4.Add a new Model 420 and setup Capacity of Connections=51200
+   The modification include :qbsysctl.sh
+ 5.Create a new image.squ,because forgot to put some php lib for analyser.
+   The modification include :image.squ=>squimage.pkg
+ 6.Let analyser_web support logincheck mechanism.
+   The modification include :io1.php,io1_detail.php,io2.php,io3.php,io3_detail.php,io4.php,io5.php,total_io.php,user_setting.php.
+ 7.Add a new Model 1620 and add a new ezio program.
+   The modification include :rc.init,xmlezio_portwell.5520,sysinit
+ 8.Remove /otp/qb/bin/script/apache/* to save the ram disk space,because it doen't support new apache version.
+   The modification include :/otp/qb/bin/script/apache/*
+ 9.Remove rate.cgi.ctdir-no;/status/*.status;conntrack.csv;conntrack.web;file_types's pattern to save the ram disk space.
+   The modification include :rate.cgi.ctdir-no;/setuid/*.status;conntrack.csv;conntrack.web;file_types
+
+======== Mon Aug 11 13:47:35 CST 2008 ========
+Version : 3.0.0-0019
+
+ 1.Modify kernel's parameter(vm.min_free_kbytes),/proc/sys/vm/min_free_kbytes.It can free memory cache when the free size less than 5500 Kbytes.
+   The modification include :qbsysctl.sh
+ 2.Add logincheck mechanism for system status barchart & traffic piechart
+   The modification include :logincheck.cgi;rate_status.php;sys_status.php
+ 3.Support PPTP client.
+   The modification include :qbserv,basic.cgi,basic.lib,createisp.htm,pptpclt.pkg,sysinit,ip-up
+ 4.Fix a bug:The Link Config table of links displays incorrectly.?The data does not line up with the column names and is very difficult to read.
+   The modification include :basic.lib
+
+======== Fri Aug  1 13:28:57 CST 2008 ========
+Version : 3.0.0-0018
+
+ 1.Add php library and remove mono/chish/userdel from squash filesystem.
+   The modification include :image.squ,sysinit
+ 2.Add new system status barchart and traffic piechart.(need new iamge.squ)
+   The modification include :AC_RunActiveContent.js,FusionCharts.js,myproto.js,barchart.swf,piechart.swf,rate_decodes.php,reload_area2.php,sys_status.php,rate_status.php,english.xml,english_only.xml,chinese.xml,traffic.htm.
+
+
+======== Thu Jul 17 18:33:10 CST 2008 ========
+Version : 3.0.0-0017
+
+ 1.Remove ACPI and APM support from linux kernel,because it will make the nics of Portwell NAR-5520 become very slow.
+   Remove Config_LBD=>useless.
+   The modification include :bzImage(linux),mod2617.pkg,modules.pkg
+ 2.Add a mechamism to auto refresh router's arp table when using arp proxy mode.(When QB is booting,it will be used to refresh router's arp table;Enable "Reset ARP cache" and update QB can also refresh router's arp table)
+   The modification include :do_qbarp.pl,postqb_general,sysinit
+   
+
+======== Thu Jun 12 15:51:31 CST 2008 ========
+Version : 3.0.0-0016
+
+ 1.Fix a bug:the config of Diagnosis Tools/Bind Mac Address will be deleted by update. 
+   The modification include :rundiatool.cgi,postqb_general
+ 2.Let proxy can change the disk size value.
+   The modification include :do_qbpxyinit.pl,pxyinit.cgi,pxyinit.lib.
+ 3.Traffic log can't be parsed at the same time.
+   The modification include : decode2.php
+
+======== Fri May 16 17:52:31 CST 2008 ========
+Version : 3.0.0-0015
+
+ 1.A new security check method. 
+   The modification include :qbrunway,newqbkey,qbserv.
+
+
+======== Thu May  8 17:51:51 CST 2008 ========
+Version : 3.0.0-0014
+
+ 1.A new watchdog driver for NAR-4040.(Led code conflict with watchdog)
+   The modification include :sysinit,watchdog_4040,qbserv(qbhccore.c,flashled.c,qbserv.c)
+ 2.Support alter remote arp table by using arping.
+   The modification include :rundiatool.cgi
+ 3.Update layer7 patterns.(ver:2008-04-23)
+   The modification include :l7-protocols
+
+======== Mon Apr 14 18:14:28 CST 2008 ========
+Version : 3.0.0-0013
+
+ 1.Remove "Advanced Real Time" from the UI.
+   The modification include :traffic.htm
+ 2.Disable Passive Line Check by default.
+   The modification include :hcconf.cgi
+ 3.Fix a bug:Connection Overflow Detection can't work,because IPLIMIT need to be modified as CONNLIMIT in the xml file.
+   The modification include :dqos.xml
+ 4.Modify DNS's admin contact,use "hostmaster" to replace "jesse".
+   The modification include :named.C(qbserv)
+ 5.ISP Bottle Neck Monitor can't work since john's tunnel measure function,so I remove it.
+   The modification include :loganalysis.lib
+ 6.Fix a bug:Clear Alert Log function can't work  and it can cause high cpu usage in ver 3.0.
+   The modification include :dumplog.cgi
+ 7.Modify some titles in Administrative Parameters and remove "Upgrading Configuration Set" and "Remote LOG Configuration".
+   The modification include :overview.lib
+ 8.Modify some titles in Remote Config..
+   The modification include :rmconfig.lib
+ 9.Skype is an Overmatching pattern,so remove it.
+   The modification include :global.cgi
+10.Change new nslookup shell. 
+   The modification include :ns
+11.Add a squid proxy function.
+   The modification include :squid.pkg,basic.cgi,pxyinit.cgi,basic.lib,pxyinit.lib,rtable.lib,pxyinit.xml,english.xml,chinese.xml,english_only.xml,postqb_general,do_qbpxyinit.pl,syslog.cgi,syslog.lib,do_qbsyslog.pl
+12.Remove "Policy History"
+   The modification include :english.xml,chinese.xml,english_only.xml
+13.Modify some titles in Administrative Parameters:Remote Config.=>Remote Config. & Firmware
+   The modification include :overview.lib
+14.Let QB's Traffic log can be disabled
+   The modification include :do_qbsyslog.pl
+15.Decrease the udp binding time for sip service
+   echo 10 > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout
+   echo 60 > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
+   The modification include :qbsysctl.sh,ip_conntrack_sip.ko,ip_nat_sip.ko
+
+======== Thu Apr  3 10:55:16 CST 2008 ========
+Version : 3.0.0-0012
+
+ 1.Patch kernel(patch-o-matic-ng-20061210) and make 2 sip helper modules for sip nat problem.
+   Modify iptable values for sip/voip problem:
+   # Setting up Dynamic IP for diald/masquerading
+   echo 1 > /proc/sys/net/ipv4/ip_dynaddr
+   # Increase the udp binding time
+   echo 600 > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout
+   echo 600 > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
+   The modification include :qbsysctl.sh,ip_conntrack_sip.ko,ip_nat_sip.ko
+ 2.Modify some QOS's title:Specification=>Configuration
+   The modification include :tc.lib
+ 3.Fix a security hole:Let "|" can't be used in the GUI.
+   The modification include :rundiatool.cgi
+
+======== Wed Apr  2 10:35:05 CST 2008 ========
+Version : 3.0.0-0011
+
+ 1.Modify printk's default value to ease to cpu usage.
+   The modification include :qbsysctl.sh
+
+======== Thu Mar  6 16:57:43 CST 2008 ========
+Version : 3.0.0-0010
+
+ 1.Fix a bug:Fastest way functions works inappropriately ,causes kernel panic randomly and can't connect to internal server's public ip.
+   The modification include :qbfastway.ko.
+ 2.To enable HA for ARINFOTEK serial device(S200,S200Lite,S400_amd,S400Lite_amd).
+   The modification include :rc.afs,ha.cgi,enableha.pl,do_qbha.pl,bmonport,sysinit
+ 3.Forgot to open Watchdog for ARINFOTEK serial device(S200,S200Lite,S400_amd,S400Lite_amd).Enable it in this version.
+   The modification include :rc.init
+
+======== Fri Feb 29 12:02:37 CST 2008 ========
+Version : 3.0.0-0009
+
+ 1.To modify "+/U/B" button become "Add/Update/Back" in Server Mapping/Advanced Setting.
+   The modification include :proute.lib.
+ 2.Fix a bug,when vlan id=10,20,...,UI will show portx.1 x.2 ...
+   The modification include :basic.lib.
+ 3.To change the policy configuration schedule time interval become 10mins.
+   The modification include :proute.lib.
+ 4.Let the first index page can show firmware's version.
+   The modification include :prelogin.cgi,index.htm.
+ 5.Modify the first index page's word:"Copyright(c) 2006 Creek Co., Ltd." become "Copyright(c) 2003-2008 Creek Co., Ltd.".
+   The modification include :index.htm.
+ 6.Replace a logo icon.
+   The modification include :Home_r1_c2.gif.
+ 7.top_qb_logo was disappeared,reshow it again.
+   The modification include :config.lib.
+ 8.Fix a bug:In some screen resolutions the model number overlaps the Q-Balancer logo on the login screen.
+   The modification include :index.htm,gui.css.
+
+======== Tue Feb 19 17:57:12 CST 2008 ========
+Version : 3.0.0-0008
+
+ 1.Create a new page "Layer 7 log Configuration" to replace "Layer 7 policy Configuration".
+   The modification include :postqb_general,chinese.xml,english.xml,l7log.xml,global.cgi,l7log.cgi,qbmod.cgi,l7log.lib,do_qbl7log.pl.
+ 2.To add more Up/Down speed items on the link config page.
+   The modification include :global.cgi.
+ 3.Analysis Tools -> Link Status -> Auto refresh, It should be renamed to something more understandable and swapped with Real-Time traffic that should be the first page to land on when clicking Link Status.
+   The modification include :traffic.htm,help/traffic.htm.
+ 4.To modify "?" button become "Help" in Transparent Setting.
+   The modification include :dmz.lib.
+ 5.To modify "+/S" button become "Add/Save" in Outbound Pool Configuration. 
+   The modification include :rtable.lib.
+ 6.To modify "+/U" button become "Add/Update" in Vlan setting. 
+   The modification include :vlan.lib.
+ 7.To modify "+/-" button become "Add/Delete" in Service Configuration.
+   The modification include :service.lib.
+ 8.To modify To modify "+/U/B" button become "Add/Update/Back" and remove "Basic >"in User Account Management.
+   The modification include :user.lib.
+ 9.Add "WATCHDOG" in the registry file to control watchdog enable or disable.
+   The modification include :rc.init
+ 10.Disable layer7 file type QOS.
+   The modification include :tc.lib
+    
+======== Tue Feb  5 12:09:25 CST 2008 ========
+Version : 3.0.0-0007
+
+ 1.To prevent use empty password for pppoe links,it will kill routing rules.
+   The modification include :basic.lib
+ 2.To fix a healthy check bug:Wan link can't do healthy check,when using vlan device.
+   The modification include :newqbhc.h,dhcpreconnect
+ 3.To fix a upgrade procedure bug:If use upg to upgrade the firmware,the procedure will clean syslog config file.
+   The modification include :do_upgrade
+ 4.To fix a TOP-N sessions bug:Rqst and Rply traffic volume can't be shown in TOP-N sessions. 
+   The modification include :report.cgi
+
+======== Thu Jan 17 16:47:54 CST 2008 ========
+Version : 3.0.0-0006
+
+ 1 Let QB's QOS support inbound traffic on PPPoE links. 
+   The modification include :ipt_ingw.ko
+ 2.Rebuild AFS2000 package.
+ 3.Update layer7 patterns.(ver:2008-01-16)
+   The modification include :l7-protocols
+ 4.Modify qbserv to flush pppx ip address.
+   The modification include :proute.h,proute.C,utils.h,utils.c
+ 5.Add diskclear.php to check analyser disk usage every 120 mins.
+   If the disk usage is bigger than user defined,it will clear last month's traffic data.
+   The modification include :crontab,sysinit,diskclear.php
+ 6.Modify the subject of link alarm mail.
+   The modification include :qbhccore.c
+
+======== Tue Dec 25 16:44:21 CST 2007 ========
+Version : 3.0.0-0005
+
+ 1 Modify some model's Max connections. 
+   The modification include :qbsysctl.sh
+ 2.Modify syslog stop script to pervent CPU usage=100% when restart the syslogd.
+   The modification include :image.gz/etc/syslog
+ 3.Modify vlan start script when qb is booting.
+   The modification include :sysinit
+ 4.Add a function for log analyser
+   The modification include :do_qbsyslog.pl,syslog.lib,image.gz/etc/syslog
+ 5.Add a watchdog driver for NAR-3061
+   The modification include :rc.init
+ 6.Modify rc6.d for reboot.
+   The modification include :image.gz
+ 7.Add a function to stop pppoe & dhcp links when qb is rebooting.
+   The modification include :/etc/init.d/network
+ 8.Remove some pppoe daemon mode functions and write some function to prevent get error ip.
+   The modification include :pppboot,pppoe-start,ip-up,ip-up.local,ip-down.local,rundiatool.cgi,killlinks
+
+======== Mon Nov 19 13:18:25 CST 2007 ========
+Version : 3.0.0-0004
+
+ 1 Fix a PPPoE UI bug.When save more than one time from the UI,UI will get error gateway IP. 
+   The modification include :pppoe-awk1,pppoe-status-gw
+
+======== Thu Nov  8 09:52:30 CST 2007 ========
+Version : 3.0.0-0003
+
+ 1 Fix a ddnsmpv bug.When the dhcp link is dead,ddns sometimes get error ip(172.x). 
+   The modification include :dhcpreconnect
+
+======== Fri Oct 12 13:37:11 CST 2007 ========
+Version : 3.0.0-0002
+
+ 1 A special release for Yungching house environment. 
+   The modification include :rtable.lib,proute.lib,policytc.lib
+
+======== Thu Aug  9 19:02:06 CST 2007 ========
+Version : 2.5.0-0117
+
+ 1 A special release for Yungching house environment. 
+   The modification include :rtable.lib,proute.lib,policytc.lib
+
+======== Wed Apr 25  16:08:11 CST 2007 ========
+Version : 2.5.0-0116
+
+ 1. To add a China Network NAT tool in Diagnosis Tools(It's a temp tool)
+    The modification include :cncsubnet,cncnat,postqb_general,libipt126.pkg,rundiatool.cgi
+                             ipt_iprange.o,libipt_iprange.so,sysinit,diagnose.lib,
+                             dns.cgi,dns.lib,config.lib,rmconfig.lib,deletedom.sh,
+                             import.sh,export.sh. 
+ 2. To fix pptp and ipsec issue.
+    QB hold ip_conntrack cache for 10 mins.
+    This version was changed become 35 sec.
+    The modification include :ip_conntrack_generic_timeout(qbsysctl.sh)
+ 3. One mechanism to prevent UPG abuse.QB will check CPU platform.
+    The modification include :qbupg.sh
+ 4. To add a function,let QB support ddns mpv.
+    The modification include :basic.lib,basic.cgi,ddnsmpv,ns,ispup,ispdown,qbserv
+ 5. To remove forward check box from Inbound Multi-DNS.
+    The modification include :dns.lib
+ 6. Disable PPPoE's daemon mode.It will make PPPoE reconnect faster.
+    The modification include :sysinit,pppoe.conf,pppboot.
+ 7. Modify PPPoE and DHCP Client's booting loop the same as ver 2.6.
+    The modification include :pppboot,dhcpboot
+ 8. Auto upgrade qb's config files.
+    The modification include :upgradexml,sed,sysinit
+ 9. To fix a ddns' bug.When pppoe/dhcp_client are booting and can't get any ip,ddns will be disabled.
+    The modification include :pppboot,dhcpboot
+10. To modify "Atler ARP Table",let this function can atler ISP's old firewall cache.
+    The modification include :diagnose.lib,rundiatool.cgi
+11. To remove some garbage words from web's index page.
+    The modification include :Home_r2_c1.gif
+
+======== Tue Mar 27 10:15:25 CST 2007 ========
+Version : 2.5.0-0115
+
+ 1 To show system status in Analysis Tools\Log Analysis\System Status.
+   The modification include :dumplog.cgi,getsysstatus.cgi,loganalysis.lib 
+
+======== Wed Mar  7 11:26:08 CST 2007 ========
+Version : 2.5.0-0114
+
+ 1.Fixed a PPPoE reconnect bug.
+   Sometimes,PPPoE's link was failed,QB will reconnect again and use private IP(10.x.x.x) to replace public IP.
+   And then,do once update,cause qb's dns server answer a private IP(10.x.x.x).
+   The modification include :pppoe.pkg
+ 2.Recompile a new qbserv to fix some memory usage problem(kernel 2.6's problem).
+   char csPath[30]=>char csPath[100]
+   char buffer[20]=>char buffer[100]
+   The modification include :qbserv,named.C 
+
+======== Wed Feb 14 13:40:24 CST 2007 ========
+Version : 2.5.0-0113
+
+ 1.Disable Inbound algorithm WLT from some QB with 128MB ram.
+   Sometimes,WLT will cause CPU very busy and use many memory.
+   The modification include :dns.lib
+ 2.Modify DDNS's process to save some memory.
+   The modification include :postqb_general 
+ 3.Modify httpd's config to perevent when the apache server have not enoutgh free memory,
+   customer will see internal server error.
+   The modification include :httpd.conf
+
+======== Tue Jan 16 17:00:42 CST 2007 ========
+Version : 2.5.0-0112
+
+ 1.If dhcp links are doing reconnection,dhcp's daemon will kill all nic's ip.
+   QB's server daemon will find it,and update qb automatically.
+   It will cause UI's link status have some error.So after dhcp's daemon,I need to rebind an 172.x.x.x again.
+   The modification include :dhcpreconnect
+ 2.Add some new creek's logos.
+
+======== Fri Jan  5 13:58:47 CST 2007 ========
+Version : 2.5.0-0111
+
+ 1. Modify DHCP's reconnect process...
+    The modification include :dhcpboot,dhcp-awk1,dhcpreconnect
+
+======== Fri Dec 29 10:36:34 CST 2006 ========
+Version : 2.5.0-0110
+
+ 1. Modify DHCP's booting order...
+    After general booting,start to get DHCP IP...
+    To prevent a runtime error. 
+    The modification include :pppboot
+ 2. Portwell 1510_Intel's HA use ttyS1 to do the heart beat,and always detect failed.
+    I use ttyS0 to replace ttyS1.(ttyS1 for ezio)
+    The modification include :registry
+
+======== Wed Dec 27 10:22:18 CST 2006 ========
+Version : 2.5.0-0109
+
+ 1. If PPPoE's password have symbol:"<",">","&",they will be saved in the xml as:"&lt;","&gt;","&amp;"
+    When qb is booting,QB will get error password. 
+    The modification include :pppboot
+ 2. If the last word of PPPoE's password is symbol "&",it always be a daemon symble.
+    So it will cause authentication failed.
+    The modification include :basic.lib
+
+======== Thu Dec 21 14:39:23 CST 2006 ========
+Version : 2.5.0-0108
+
+ 1. Modify ezio to remove "tcgetattr failed". 
+    The modification include :serial.h(ezio)
+ 2. Move some pkgs to the DOM&CF.(Save Ramdisk space).
+    The modification include :sysinit,make-release.sh,ddns.pkg,dhcpcd.pkg,pppoe.pkg,qbtool.pkg,qbtoolib.pkg.   
+
+======== Mon Dec 18 12:14:06 CST 2006 ========
+Version : 2.5.0-0107
+
+ 1. Modify DNS's admin contact,use "hostmaster" to replace "jesse". 
+    The modification include :named.C(qbserv)
+
+======== Mon Nov 27 10:27:21 CST 2006 ========
+Version : 2.5.0-0106
+
+ 1. A new watchdog's driver & daemon for AMD LX800.
+    The modification include :wdt_800,wdt_800.o,rc.init,sysinit
+
+======== Tue Nov 14 14:35:55 CST 2006 ========
+Version : 2.5.0-0105
+
+ 1. To prevent burst traffic show on "Real Time Traffic".
+    The modification include :rttraffic.htm
+ 2. Change PPPoE's Login name's maxlength="15"->"30".(For HiNet)   
+
+======== Thu Nov  2 11:45:08 CST 2006 ========
+Version : 2.5.0-0104
+
+ 1. Two mechanism to prevent UPG abuse.
+    The modification include :global.cgi,rmconfig.lib
+ 2. Change a network chip driver for 2710.   
+    The modification include :e1000.o
+ 3. Change QB's root password(SSH & Console).
+    The modification include :sysinit,qbconsl.C
+ 4. Create two new model "S200","S200Lite" with no HA
+    The modification include :ha.cgi
+
+======== Fri Jul 14 15:42:46 CST 2006 ========
+Version : 2.5.0-0103
+
+ 1. Add new modules to redirect http packets to proxy server.
+    The modification include :basic.lib,modules.pkg
+ 2. Modify qbserv to add default route with PPPoE and DHCP Links
+    The modification include :proute.C
+ 3. Modify qbserv to add healthy check point
+    The modification include :qbserv.C
+ 4. Add auto refresh dns table,when PPPoE and DHCP Links reconnected.
+ 5. Change "User"'s UI privilege become readonly,test and release a new firmware.
+    The modification include :qb.js,basic.lib,config.lib
+ 6. Add new bonding algorithm's context in the html and write some span title. 
+    The modification include :rtable.lib,rtable.htm
+ 7. Outbound Pool Coniguration has a spelling mistake,modified UI to fix it.
+    The modification include :rtable.lib
+ 8. System Status(Memory Usage)use error unit of measurement,modified UI to fix it.
+    The modification include :getsysstatus.cgi
+ 9. Let snmp can show firmware version
+    The modification include :do_qbsnmp.pl
+10. Fix DHCP Client with DDNS on booting.
+    The modification include :postqb_general
+11. Modify UI's first page,change company name & Contact mail
+    The modification include :index.htm
+12. Fix a QOS bug in all Intel model(ctdir-yes):download speed can't be limited.
+    The modification include :qbkf_mod.c
+
+======== Wed Jun 28 13:49:21 CST 2006 ========
+Version : 2.5.0-0102
+
+ 1. Fix when PPPoE connect fail and idle a long time,reconnect program will make a kernel panic.
+    The modification include :basic.lib,pppoe.pkg
+
+======== Tue May 23 10:59:21 CST 2006 ========
+Version : 2.5.0-0101
+
+ 1. Start to support DDNS for DHCP Client and PPPoE.
+
+======== Thu May  4 15:32:58 CST 2006 ========
+Version : 2.5.0-0100
+
+ 1. QB's all WRR algorithm have a bug about weight.The weight's function only can work from 1 to 9.
+    If weight=10~19,kernel will get weight=1;If weight=20,kernel will get weight=2.
+    Modify xmlparser and remake qbserv can fix it.
+    For ctdir-yes:#define No_connmark in /qblib/nf.c & /server/proute.C
+    For ctdir-no://#define No_connmark in /qblib/nf.c & /server/proute.C
+    ctdir-yes/no have different checker.so & checker.pm in modules.pkg 
+    This version test result:ctdir-yes models works fine,but ctdir-no models can't show real time traffic graph.
+                             So fix this bug only in this version.
+
+======== Wed Apr 19 12:01:14 CST 2006 ========
+Version : 2.5.0-0099
+
+ 1. Let PPPoE and DHCP Client can be setup offline .
+ 2. Let PPPoE and DHCP Client can change server mapping IP automatically.
+ 3. Fix a DHCP Client's bug:After setup the link and save it twice,the IP in the UI will disappear.
+    The modification include :  change a new dhcpcd daemon,basic.lib
+ 4. Modify configuration format.(new xml will cover basic.xml and hcconf.xml in the default.cfg on booting)
+    In order to remove PPPoE's setup order limit and set healthy check by ping in default.
+ 5. Add warning message in the UI and to pervent user's setup error about PPPoE and DHCP. 
+
+======== Tue Mar 14 11:00:49 CST 2006 ========
+Version : 2.5.0-0098
+
+ 1. A second qbkflow.o is generated by Dino for XRIO evalution.(1611)
+ 2. Remove ctdir from XRIO-1510...ctdir cause 1510 become unstable.(0090~0096)
+ 3. Fix a PPPoE's bug:When QB is booting and pull out PPPoE's link for several minutes,PPPoE's redial daemon will cause QB dead.
+ 4. Fix a HA bug for 1510 series:After power off primary active QB,it can't be booted again.    
+    The modification include :enableha.pl
+        
+
+======== Wed Mar  1 15:17:59 CST 2006 ========
+Version : 2.5.0-0097
+
+ 1. A new qbkflow.o is generated by Dino for XRIO evalution.(1611)
+ 2. Modify qbrunway to free memory when memory is below 50Mb(only for 2710)
+ 3. Modify postqb_qeneral to pervent PPPoE's setup bug.
+
+======== Fri Feb 17 15:59:05 CST 2006 ========
+Version : 2.5.0-0096
+
+ 1. Since fixed the no-authentication problem from Version:2.5.0-0053...
+    User Multi-login always shown forbidden screen to the user. 
+    The version changes forbidden screen into pop up "Multi-Login" and then log out automatically.
+    The modification include :
+    httpd-ac.sh
+
+ 2. To hidden BASE_tunnel's MPV ID.
+    The modification include :
+    basic.lib
+
+======== Fri Feb 10 15:09:31 CST 2006 ========
+Version : 2.5.0-0095
+
+ 1. This is a bug-fix release for DHCP client function. 
+    The last one port can not be used to create DHCP client link
+    The modification include :
+    basic.lib
+
+======== Wed Feb  8 10:00:22 CST 2006 ========
+Version : 2.5.0-0094
+
+ 1. To modify XRIO&Deansoft-1510.2710's spec. 
+    The modification include (1510):
+     MAXISP 26=>30
+     MAXNORMALISP 6=>10
+     MAXETHBW 40=>60 Mbps
+     ..........................................
+    The modification include (2710):
+     MAXISP 100=>120
+     MAXNORMALISP 30=>50
+     MAXETHBW 300=>3000 Mbps
+     Capacity of Connections 120000=>200000
+     ..........................................
+  2. Add a function to let QB's WAN link support DHCP client.
+     This evalution release just for test.
+     The modification include:
+     /script/dhcpcd.pkg------dhcpcd(dhcp client's daemon=>replace original bad dhcpcd when QB is booting)
+                       |-----dhcpboot(This script starts DHCP Client links when QB is booting)
+                       |-----dhcp-awk&1(This script used to get new IP&gateway)
+     /script/sysinit-----------Control DHCP Client Links establishment,when QB is booting.
+     /qb/createisp.htm---------Create a new ISP entry "DHCP" in Link setup
+     /qb/qblib/basic.lib-------Use "Save" to establish DHCP Client Links and use "Stop PPPoE" to stop current PPPoE's link.
+
+  3. Hidden isp type "Base_tunnel"
+
+======== Mon Jan 23 11:21:58 CST 2006 ========
+Version : 2.5.0-0093
+
+1.The version let QB support PPPoE:
+  If you want to establish PPPoE links,You must setup PPPoE before anyother types of ISP.
+  The modification include:
+  /script/pppoe.pkg------pppsbin.pkg(PPPoE's connect program and utilities)
+                   |-----pppetc.pkg(PPPoE's configuration include CHAP/PAP name/password,nic,timeout,reestablish setup...  )
+                   |-----pppboot(This script starts PPPoE links when QB is booting)
+                   |-----pppoe(This script starts or stops a PPPoE connection)
+  /script/sysinit-----------Control PPPoE's Link establishment,when QB is booting.
+  /qb/createisp.htm---------Create a new ISP entry "PPPoE" in Link setup
+  /qb/basic.cgi-------------To generate pppoepasswd and pppoename in basic.xml
+  /qb/qblib/basic.lib-------Use "Save" to establish PPPoE's Link and use "Stop PPPoE" to stop current PPPoE's link.
+  /qb/language/english.pl---To define PPPoE new entry's name
+
+======== Wed Jan  4 13:37:49 CST 2006 ========
+Version : 2.5.0-0092
+
+1.To fix a bug about Link Status's "Auto Refresh" & "Manual Query":
+  The two diagrams can not show history traffic.
+  The modification include:
+  isphis
+
+
+======== Tue Dec 27 13:54:22 CST 2005 ========
+Version : 2.5.0-0091
+
+1.To fix a bug about DHCP:
+  DHCP Server does not alway work,a runtime error causes it.
+  DHCP Server sometimes can not open qbmod.cgi for rundhcpd.pl to use.
+  The modification include:
+  postqb_general
+
+
+======== Mon Dec 12 11:07:08 CST 2005 ========
+Version : 2.5.0-0090
+
+1.To add a rule to control TCP packets' MSS:
+  To fix a bug for General Dynamic Routing Algorithm =>useless
+  The modification include:
+  postqb_general.dat(mark old script)
+
+2.To enable save function of "Bind Mac Address" in QB GUI/Diagnosis Tools:
+   The modification include:
+   postqb_general.dat
+   extr_cmd(mark old script)
+
+
+======== Thu Dec  1 16:59:26 CST 2005 ========
+Version : 2.5.0-0089
+
+1.To add a rule to control TCP packets' MSS:
+  To fix a bug for General Dynamic Routing Algorithm
+  The modification include:
+  postqb_general.dat
+
+2.To modify New algorithm's name
+  The modification include:
+  global.cgi
+
+======== Fri Nov 25 10:39:59 CST 2005 ========
+Version : 2.5.0-0088
+
+1.To add "Bind Mac Address" in QB GUI/Diagnosis Tools:
+   The modification include:
+   rundiatool.cgi
+   diagnose.libi
+   extr_cmd 
+
+======== Thu Nov 10 14:03:41 CST 2005 ========
+Version : 2.5.0-0087
+
+
+ 1.To create a Deansoft's eval release for Jesse's new algorithm 
+   (Deansoft 1511 & 1611)
+
+======== Mon Oct 24 15:14:16 CST 2005 ========
+Version : 2.5.0-0086
+
+
+ 1.To modify qbserv to change the last port IP
+   172.31.3.1==>10.31.3.1   
+  Just for a single test case(Deansoft 1510 & 1610)
+
+======== Fri Oct 21 16:30:25 CST 2005 ========
+Version : 2.5.0-0085
+
+
+ 1.To make a new qbkflow.o for New Algorithm of XRIO evalution
+   Just for VIA CPU
+
+======== Tue Oct 18 13:59:14 CST 2005 ========
+Version : 2.5.0-0084
+
+
+ 1.To close On/Off function on GUI(Link Setup/Link Config.)
+   The modification include:
+   basic.lib
+   english.pl
+
+ 2.To modify qbserv to change the last port IP.
+   172.31.3.1==>10.31.3.1
+   Just for a single test case.(1610)
+
+======== Thu Oct 13 16:27:50 CST 2005 ========
+Version : 2.5.0-0083
+
+
+ 1.To open a backdoor password for XRIO(SSH)
+   Rewrite the "Change Password" function for qbcli(2.5.0-0081)
+   Fix a bug:If change the password twice,all password will dissipated.
+   The modification include:
+   mainmenu.C 
+   sysinit
+
+======== Fri Oct  7 16:48:04 CST 2005 ========
+Version : 2.5.0-0082
+
+
+ 1.The new qbkflow.o add timer for New Algorithm of XRIO evalution.
+   Just for 1611
+   Replace:u1/Project.Q-Balancer/build/2.5.0/pkg/modules/PIII-XRIO-eval/ctdir-yes/modules.pkg.d/modules
+ 2.To add "Altering ARP Table" in QB GUI/Diagnosis Tools:
+   The modification include:
+   rundiatool.cgi
+   diagnose.lib
+ 3.To enable the "Reboot QB" function in GUI.
+
+======== Fri Sep 16 12:01:33 CST 2005 ========
+Version : 2.5.0-0081
+
+ 1.To add a "Change Password " for qbcli .(If support use SSH to connect QB "admin" account)
+   The password used DES to crypt.
+   The file modified are listed:
+   sysinit
+   /src/qb-sys/qb-daemons/console_app/mainmenu.C
+ 2.To close the "Reboot QB" function in GUI(1611)
+
+======== Mon Sep 12 16:42:31 CST 2005 ========
+Version : 2.5.0-0080
+
+ 1.To add a "Reboot QB" function in QB GUI/Diagnosis Tool.
+   The file modified are listed:
+   rundiatool.cgi
+   diagnose.lib
+
+======== Fri Sep  9 18:31:10 CST 2005 ========
+Version : 2.5.0-0079
+
+ 1.The new qbkflow.o for New Algorithm of XRIO evalution.
+   Just for 1611
+   Replace:u1/Project.Q-Balancer/build/2.5.0/pkg/modules/PIII-XRIO-eval/ctdir-yes/modules.pkg.d/modules
+
+======== Fri Sep  9 16:27:11 CST 2005 ========
+Version : 2.5.0-0078
+
+ 1. To add ethtool in QB GUI/Diagnosis Tools:
+    To add a "Show & Set NIC" selection.
+    Apache have no privildge to write configs in /mnt
+    So configs was saved in /usr/local/apache/active/ethset
+    This function's config file finally was copyed in /mnt/qb/conf/ethset.
+    The modification include:
+    sysinit
+    rundiatool.cgi
+    diagnose.lib
+
+======== Tue Aug 30 17:51:04 CST 2005 ========
+Version : 2.5.0-0077
+
+ 1. To modify make-release system:
+    To split MODEL=2710's HA function.
+
+ 2. To fix all brand's 2710 model HA function.
+ 

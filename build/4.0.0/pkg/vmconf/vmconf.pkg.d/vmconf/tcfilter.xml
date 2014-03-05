@@ -1,0 +1,3 @@
+<opt file="tc">
+  <filter area="system" dstnet="system" classid="system" srcnet="system" srcprt="system" dstprt="system" />
+</opt>

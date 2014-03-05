@@ -1,0 +1,362 @@
+###############################################################################################
+#                                           Arp Management Console
+###############################################################################################
+#======================================================================================================================
+sub maintainARP 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $arp=XMLread($gPATH.'arp.xml');
+    my @arparray;
+
+    if ( $action{action}=~m/^APPLY$/ ) 
+    {
+        my @arplist=split(/;/,$action{arpinfo});
+		foreach my $entry ( @arplist ) 
+		{ 
+            my %arprec;
+            ($arprec{ip}, $arprec{mac}, $arprec{arpdhcpadd})=split(/,/,$entry);
+            push (@arparray,\%arprec);
+            LogUserAction( action=>'UPDATEARP', ip=>$arprec{ip}, mac=>$arprec{mac}, arpdhcpadd=>$arprec{arpdhcpadd} );
+        }
+        $arp->{arp}=\@arparray;
+    }
+        my @arparray;
+        my %arprec;
+        $arprec{enabled}=$action{enabled};
+        push (@arparray,\%arprec);
+        $arp->{arp_1}=\@arparray;
+    close(FILE);    
+    #-------updating arp.xml------------------------ 
+    XMLwrite($arp, $gPATH."arp.xml");
+	
+	make_arp_shell();
+	
+    #@dep.......update arp command list. (arp table will be killed while re-run qbserv)
+    #writeArpShellScript();
+    #runCommand(command=>'do_qbstaticarp.pl', params=>'');
+    if ($action{enabled})
+    {
+        `/usr/local/apache/qb/setuid/run /bin/cp /tmp/ip-mac.sh /mnt/log/ip-mac.sh`;
+    }else
+    {
+        `/usr/local/apache/qb/setuid/run /bin/rm -f /mnt/log/ip-mac.sh`;
+    }
+    system("sync");
+    system("sync");
+    system("sync");
+    system("sync");
+    return 1;
+
+}
+#maintainARP
+
+#======================================================================================================================
+######## about ARP.
+sub showARP
+{
+	my $arpref=XMLread($gPATH.'arp.xml');
+	my $arparray=$arpref->{arp};
+
+        @$arparray=sort sort_arp_ip @$arparray;
+
+        print qq (<br><table border=0>);
+        print qq (<tr><td class="bigtitle" colspan="3">$qblang[114]</td></tr>); 
+        print qq (<tr><td class="bigtitle" colspan="3"><hr size="1"></td></tr>); 
+		print qq (<tr><td align="center" colspan="3">);
+        print qq (<input type="button" class="qb" value="$qblang[115]" onclick="addArpRecs()" title="Add several new arp records" >);
+        print qq (<input type="button" class="qb" value="$qblang[57]" onclick="addArpRec(1)" title="Add new arp record" >);
+        print qq (<input type="button" class="qb" value="$qblang[58]" onclick="updateArp()" title="Update as viewing" >);
+	print qq (<input type="button" class="qb" value="$qblang[116]" onClick="goSubmit()" title="Restore original arp list" >);
+	my $arparray_1=$arpref->{arp_1};
+	foreach my $aa (@$arparray_1)
+	{
+	    $cc = ($aa->{enabled})?('checked'):();
+	}
+	print qq (<input type="checkbox" id="rule" onclick="updateArp()" class="qb" title="Enabled/Disabled Rule" $cc><span class="body">Drop Packet if not on the list</span>);
+        print qq (<tr><td colspan="3">);
+
+	print qq (<div class="divframe">);
+	print qq (<table width=100% id="ListTab" bgcolor="#224488" class="body" cellspacing="0" border="0">);
+	print qq (<thead>);
+	print qq (<tr><td align="right" colspan="3">);
+        #print qq (<td width=40><a href="javascript:delArpRec()"><image src="image/del.gif" title="Delete checked arp list" border="0"></a>);
+        #print qq (<tr bgcolor="#332211" align="center" width=100%><td width=130>IP</td><td width=130>Mac</td>);
+        #print qq (<tr bgcolor="#332211" align="center" width=100%><td width=40><a href="javascript:delArpRec()"><image src="image/del.gif" title="Delete checked arp list" border="0"><td width=130>IP</td><td width=130>Mac</td>);
+        print qq (<tr bgcolor="#332211" align="center" width=100%>);
+        print qq (<td width=60>DHCP<title="Checked IP/MAC for DHCP Server" border="0">);
+        print qq (<input type="checkbox" name="addalldhcparp" title="select or deselect all items for DHCP Server" onClick="setAllCheckBoxValue('arpdhcpadd', this.checked)">);
+        print qq (<td width=130>IP</td><td width=130>Mac</td>);
+        #print qq (<tr bgcolor="#332211" align="center" width=100%><td width=30>DHCP</td><td width=130>IP</td><td width=130>Mac</td>);
+        print qq (<td width=40><a href="javascript:delArpRec()"><image src="image/del.gif" title="Delete checked arp list" border="0"></a>);
+        print qq (<input type="checkbox" name="delallarp" title="select or deselect all items" onClick="setAllCheckBoxValue('arpstodel', this.checked)">);
+        print qq (</td></tr>);
+        print qq (</thead><tbody>);
+
+        foreach my $macrec ( @$arparray ) { 
+        if ( $macrec->{mac} ) { 
+       
+            my $status = $macrec->{arpdhcpadd} ? " checked='true'" : "";
+	    print qq (<tr><td width="60" align="center"><input type="checkbox" name="arpdhcpadd" $status ></td><td width="250"><input class="qbtext" type=text name="ip" size="44" value=$macrec->{ip}></td><td width="130"><input class="qbtext" type=text name="mac" value=$macrec->{mac}></td><td width="40" align="center"><input type="checkbox" name="arpstodel"></td></tr>);
+        }
+        }	
+
+        print qq (</tbody><tfoot>);
+        print qq (<input type="hidden" value="" name="arpinfo">);
+        print qq (<input type="hidden" value="" name="enabled">);
+        print qq (</tfoot>);
+	print qq (</table>);
+	print qq (</div>);
+
+        print qq (</td></tr>);
+        print qq (</table>);
+}
+
+sub showARPScript
+{
+	print  << "SHOWARPSCRIPT";
+	
+	<script language="javascript">
+	
+	var myform=window.document.forms[0];
+
+        function cgi_dep_onload() {}
+
+	// Maintain ARP Record.
+	function addArpRecs()
+        {
+            var max_num=100;
+            var num=qbPrompt("Enter record number:");
+            
+            if (isDecimal(num)) {
+                if (num>max_num)  num=max_num;
+                addArpRec(num);
+            } else if (!num) { return; }
+        }
+	function ruleI1()
+	{
+		arpform.enabled.value=(document.getElementById("rule").checked)?(1):(0);
+	}
+	function addArpRec(num)
+        { 
+	var i,oTD,oDiv, j, colnum=2, oInput, oBox, oBox1;
+	var oTR; 
+
+        for (j=0;j<num;j++) {	
+
+            oTR = ListTab.childNodes[1].insertRow();
+            oTR.align="center";
+
+            oTD = oTR.insertCell();
+            oBox1 = document.createElement("INPUT");
+            oBox1.type = "checkbox";
+            oBox1.name = "arpdhcpadd"; // for DHCP ARP add.
+            oTD.appendChild(oBox1);
+
+            for(i=0;i<colnum;i++)
+            { // ip, mac, interface.
+                oTD = oTR.insertCell();
+                oInput = document.createElement("INPUT");
+                oTD.appendChild(oInput);
+            
+                oInput.className="qbtext";
+            }
+
+            oTD = oTR.insertCell();
+            oBox = document.createElement("INPUT");
+            oBox.type = "checkbox";
+            oBox.name = "arpstodel"; // for delete / undelete all.
+            oTD.appendChild(oBox);
+
+        }
+	}
+	function delArpRec()
+    {
+		var colnum=3;
+		for(var i=0;i<ListTab.childNodes[1].rows.length;)
+		{
+	        if(ListTab.childNodes[1].rows[i].cells[colnum].firstChild.checked)
+	            //ListTab.childNodes[1].rows[i].removeNode(1);
+				document.getElementById('ListTab').childNodes[1].deleteRow(i);
+	        else
+	            i++;
+		}
+		
+        arpform.delallarp.checked=false;
+	}
+	
+	function updateArp()
+    { // A:Ip, B:Mac
+    ruleI1();
+		var pass=true;
+		var data = "";
+		var i,j,stA,stB,ver;
+		var oInputA,oInputB;
+		var oTBody = ListTab.childNodes[1];
+		for(i=0;i<oTBody.rows.length;i++)
+		{
+			oInputA = oTBody.rows[i].cells[1].firstChild;
+			oInputB = oTBody.rows[i].cells[2].firstChild;
+			var check = /\d{1,3},/;
+			if (check.test(oInputA)){ver = 4;}/*{ver = 6;}*/
+			if(ver = "4")
+			{	
+				stA = checkValue(oInputA.value);
+				stB = checkMac(oInputB.value);
+			}/*
+			if (ver = "6")
+			{
+				stA = checkValue_v6(oInputA.value);
+					   alert(stA);
+			
+				stB = checkMac(oInputB.value);
+					   alert(stB)
+			}*/
+			if(stA=="empty" && stB=="empty")
+			{
+				pass = false;
+			}
+							
+			if(stA!="ok" || stB!="ok")
+			{
+				pass = false;
+			}
+			
+			if(stA=="empty" || stA!="ok")
+			{oInputA.style.backgroundColor='pink';}
+			else{oInputA.style.backgroundColor='white';}
+			if(stB=="empty" || stB!="ok")
+			{oInputB.style.backgroundColor='pink';}
+			else{oInputB.style.backgroundColor='white';}
+			//oInputA = (stA=="ok"?"":"pink");
+			//oInputB = (stB=="ok"?"":"pink");
+			
+			if(pass==true)
+			{
+				if(oTBody.rows[i].cells[0].firstChild.checked){
+					data += oInputA.value +","+oInputB.value +","+ "1" +";" //For DHCP
+				}
+				else{
+					data += oInputA.value +","+oInputB.value +","+ "0" +";" //No DHCP
+				}
+			}
+		}
+		if(pass)
+		{
+			if( qbConfirm(2,"Data Check OK, Apply them ?")==1 )
+			{
+				arpform.arpinfo.value= data;
+					goSubmit("APPLY");
+			}
+			
+		}
+		else 
+		{
+			alert("Data Check Failed !!");
+		}
+	}
+	
+	function checkMac(text){
+	if(text.match(/,|;/gi)) return "error";
+	
+	if(text=="")    return "empty";
+	else if(isValidMac(text)) return "ok";
+	else        return "error";
+	}
+	
+	
+	function checkValue(text){
+	if(text.match(/,|;/gi)) return "error";
+	
+	if(text=="")        return "empty";
+	else if(isValidIP(text))return "ok";
+	else            return "error";
+	}
+	
+	function checkValue_v6(text){
+	if(text.match(/,|;/gi)) return "error";
+	
+	if(text=="")        return "empty";
+	else if(isValidIP_v6(text))return "ok";
+	else            return "error";
+	}
+
+	</script>
+	
+SHOWARPSCRIPT
+}
+
+
+#=========================================================================
+sub writeArpShellScript
+{
+    my $gDEFAULTPRIORITY="2";
+    my $gARPSCRIPT="/tmp/arp.sh";
+    
+    if (!open(FOUT, ">$gARPSCRIPT"))
+    {
+        $gMSGPROMPT.=qq (ARP Table Write Permission Error\\n);
+        return;
+    }
+    
+    my $arpref=XMLread($gPATH."arp.xml");
+    my $arplist=$arpref->{arp};
+    #========================================================
+    # write arp-table 
+
+    print FOUT qq(#!/bin/bash \n);
+    print FOUT qq(# User defined arp-table list from arp.xml \n);
+
+    foreach my $arp ( @$arplist ) 
+    { 
+        print FOUT qq(/sbin/arp -s $arp->{ip} $arp->{mac} \n);
+    }
+
+    close(FOUT);
+}
+#writeArpShellScript
+
+#=========================================================================
+sub sort_arp_ip
+{
+#    $a->{ip} cmp $b->{ip};
+my @afields=split(/\./,$a->{ip});
+my @bfields=split(/\./,$b->{ip});
+my ($avalue, $bvalue);
+
+foreach my $index ( 0..3 )
+{
+$avalue=$afields[$index];
+$bvalue=$bfields[$index];
+if ( $avalue ne $bvalue ) { last; }
+}
+
+int($avalue) <=> int($bvalue);
+
+}
+#sort_arp_ip
+
+sub make_arp_shell
+{
+	my $arp_w=XMLread('/usr/local/apache/qbconf/arp_white.xml');
+	my $arp=XMLread('/usr/local/apache/qbconf/arp.xml');
+	my $arparray_w=$arp_w->{arp};
+	my $arparray=$arp->{arp};
+	
+	open(FILE,">/tmp/ip-mac.sh");
+	print FILE "#!/bin/sh\n";
+	foreach my $entry ( @$arparray_w ) 
+	{
+        print FILE "/sbin/iptables -t mangle -A PREROUTING -m mac --mac-source $entry->{mac} -j ACCEPT\n";
+	}
+	foreach my $entry ( @$arparray ) 
+	{
+        print FILE "/sbin/iptables -t mangle -A PREROUTING -s $entry->{ip} -m mac --mac-source $entry->{mac} -j ACCEPT\n";
+	}
+	print FILE "/sbin/iptables -t mangle -A PREROUTING -j DROP\n";
+}
+#make_arp_shell
+
+
+#
+1

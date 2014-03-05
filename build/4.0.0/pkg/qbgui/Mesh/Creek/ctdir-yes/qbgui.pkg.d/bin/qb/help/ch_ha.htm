@@ -1,0 +1,47 @@
+<html>
+<head><link rel="stylesheet" href="ch_help.css" type="text/css"></head>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>High Availability</title>
+<body>
+
+<h2>High Availability</h2>
+<ol>
+<li>HA Topology</li><!-- 1 -->
+<p>
+在Q-balancer HA的功能，一台機器作為主要(primary)機器，它平常處於 Active的狀態，一台機器作為次要( secondary)機器，它平常處於Standby狀態；當主要機器有意常發生的時候，次要機器將會轉成為 Active狀態	，主要機器會轉成 Standby的狀態。Q-balancer必須要用互接的 Console線及網路線來判定機器運作及切換的狀態。
+</p>
+<li>Setup High Availability</li><!-- 2 -->
+<p>
+在HA的設定中，在主要機器及次要機器都要設定它當為 Active狀態時使用的Config，及它當Standby狀態時使用的Config.(也就是說一共要設定四組config)。通常在主要機器和次要機器的這兩組config內容會類似，只會在相互作網路互通確認的port使用不同的Ip address 來作為區別。</p>
+<p>
+而"Floating IP"是主要機器及次要機器在變成了Active狀態時使用的IP，通常是一個active運作必要的IP，而"Standby IP of primary"及"Standby IP of Secondary"就是變成Standby狀態時的區別IP。<br>
+   在Active狀態下的機器會使用Floating IP來和另一台在Standby狀態下的區別IP作為網路確認的溝通。</p>
+<p>
+整個設定的步驟如下：<br>
+<ol>
+<li>在主要機器設定一組作為擔當 active狀態下的設定檔，存檔例名為 "pract"
+<li>在主要機器設定一組作為擔當 standby狀態下的設定檔，存檔例名為"prstd"
+<li>在High Availability中設定主要機器的內容，包含在active狀態下使用的config檔案 "pract"及在standby狀態下使用的設定檔"prstd" ，以及它在standby狀態時的區別IP，在次要機器在standby狀態下的區別IP
+<li>在次要機器設定一組作為擔當 active狀態下的設定檔，存檔名為 "secact"
+<li>在次要機器設定一組作為擔當 standby狀態下的設定檔，存檔名為"secstd"
+<li>在High Availability中設定次要機器的內容，包含在active狀態下使用的config檔案 "secact"及在standby狀態下使用的設定檔"secstd" ，以及它在standby狀態時的區別IP，在主要機器在standby狀態下的區別IP
+</ol>
+</p>
+<p>
+<table>
+<tr><td>Launch HA on Boot：	</td><td>設定是否使用HA模式</td></tr>
+<tr><td class="light">Play the Role of：	</td><td class="light">這台Device所扮演的腳色，一台為主要的，一台為次要的</td></tr>
+<tr><td>Auto Fail Over：	</td><td>使用RS-232偵測對方</td></tr>
+<tr><td class="light">Auto Switch Back：	</td><td class="light">當原本Fail的Device Reboot後，是否還原成原本的Avtive運作</td></tr>
+<tr><td>Fail on LAN Interface：	</td><td>使用Network偵測對方</td></tr>
+<tr><td class="light">Host FAILOVER Timeout：	</td><td class="light">RS-232偵測失敗的時間</td></tr>
+<tr><td>Network FAILOVER Timeout：	</td><td>網路偵測失敗的時間</td></tr>
+<tr><td class="light">Enable Virtual MAC：	</td><td class="light">承接Internal Port是否使用虛擬的MAC，以排除Firewall  or Switch Lock住Q-Balancer MAC</td></tr>
+<tr><td>Config Set：	</td><td>指定Avtive、Standby所使用的設定檔</td></tr>
+<tr><td class="light">Floating IP：	</td><td class="light">當active狀態時所使用的IP</td></tr>
+<tr><td>Standby IP of Primary：	</td><td>主要機器當Standby 狀態時所使用的區別 IP</td></tr>
+<tr><td class="light">Standby IP of Secondary：	</td><td class="light">次要機器當Standby 狀態時所使用的區別 IP</td></tr>
+<tr><td>HA LAN Check Targets：	</td><td>設定網路上非區別IP以外的偵測點，以防止因為網路線斷掉而機器仍自動切換的情況</td></tr>
+</table></p>
+</ol>
+</body></html>

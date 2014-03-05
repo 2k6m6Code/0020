@@ -1,0 +1,506 @@
+<?xml version="1.0"?>
+<!doctype html public "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir=" ltr
+">
+<head>
+  <title> Dokumentation Download Center Lite
+</title>
+    <meta http-equiv="Content-Type" content="text/html; charset= iso-8859-1
+" />
+    <meta name="robots" content="noindex">
+
+
+
+<style type="text/css">
+<!--
+  h4 {
+      font-family:Tahoma,Helvetica,Geneva,Sans-serif,sans-serif;
+      margin-top:15px;
+      text-align:center;
+  }
+
+  
+  h5 {
+      font-family:Tahoma,Helvetica,Geneva,Sans-serif,sans-serif;
+      margin-top:50px;
+      margin-bottom:5px;
+      text-align:center;
+      font-size:11pt;
+  }
+
+  
+  p, td, br, form, ol, a, ul, li {
+      font-family:Verdana,Helvetica,Geneva,Sans-serif,sans-serif;
+      font-size:10.5pt;
+  }
+
+   
+  body {
+      background-color:#FFFFFF;
+  }   
+   
+
+  .chapter {
+      width:650px;
+      border-width:1px;
+      border-style:solid;
+      border-color:#006699;
+      margin-left:50px;
+      padding:10px;
+      margin-bottom:20px;
+      background-color:#EFEFEF;
+      line-height:14pt;
+  }
+
+  
+  .code {
+      font-family:Courier New;
+  }
+
+  
+  .links {
+      width:650px;
+      margin-left:50px;
+      padding:5px;
+      margin-bottom:10px;
+      text-align:center;
+  }
+  
+      
+  .strong {
+      font-weight:bold;
+  }
+
+-->
+</style>
+
+<body>
+  
+  <a name="top"></a>
+    
+
+  <div class="chapter"><a name="ad"></a>
+<h4>Download Center Lite präsentiert: Online Terminreservierung</h4>
+<p> Unser Programm <a href="http://www.schedule-organizer.de/">Schedule Organizer</a> ermöglicht den Kunden, Patienten oder Mandanten die Terminreservierung über die Homepage der Firma, ihres Arztes oder ihres Beraters. Das PHP-Script erleichtert und automatisiert die Terminverwaltung - die zuständigen Mitarbeiter werden entlastet, denn es müssen weniger Telefonanrufe entgegen genommen oder weniger Faxe und Briefe beantwortet werden.
+</p>
+<p> <a href="http://www.schedule-organizer.de/">Schedule Organizer Website</a>
+ 
+ 
+ 
+</p>
+<p align="right"><a href="#top"> Nach oben
+</a></p></div>
+<div class="chapter"><a name="thanks"></a>
+<h4>Dokumentation Download Center Lite</h4>
+<p> Vielen Dank für Ihr Interesse an unserem Script. Wir empfehlen Ihnen, sich Zeit für 
+ 			die Lektüre dieser Anleitung zu nehmen. 
+ 
+ 
+</p>
+<p align="right"><a href="#top"> Nach oben
+</a></p></div>
+<div class="links"><a href="#function">Funktionsweise</a>&nbsp;&nbsp;
+<a href="#configuration">Konfiguration</a>&nbsp;&nbsp;
+<a href="#html">HTML Template</a>&nbsp;&nbsp;
+<a href="#upload">Datei-Upload</a>&nbsp;&nbsp;
+<a href="#support">Hilfe und Support</a>&nbsp;&nbsp;
+<a href="#license">Lizenz-Information</a>&nbsp;&nbsp;
+</div>
+<div class="chapter"><a name="introduction"></a>
+<h4>Einleitung</h4>
+<p> Das Script ist für den sofortigen Einsatz konfiguriert und eingerichtet. Nachdem Sie 
+ 			das Script auf den Server kopiert haben, können Sie es sofort verwenden. Wenn 
+ 			Sie Änderungen vornehmen möchten, sollten Sie diese schrittweise durchführen 
+ 			und nach jeder Änderung die Auswirkung auf das Script testen. Sie behalten 
+ 			dadurch den Überblick, welche Änderung einen eventuell auftretenden Fehler 
+ 			verursacht hat.
+ 
+</p>
+<p> Die HTML-Templates wurden nach den Spezifikationen für XHTML 1.0 erstellt. Deshalb 
+ 			enthalten alle einfachen Tags (&lt;br&gt; oder &lt;input&gt;) einen abschließenden Slash 
+ 			(&lt;br /&gt; oder &lt;input type=“text“ name=“feld“ /&gt;).
+ 
+ 
+</p>
+<p align="right"><a href="#top"> Nach oben
+</a></p></div>
+<div class="chapter"><a name="function"></a>
+<h4>Funktionsweise</h4>
+<p> Das Script kann eingesetzt werden, um Dateien, die Sie zum Download anbieten möchten, 
+ 			an die Besucher auszuliefern. Sofern Sie das Script auf Ihrem Server installiert 
+ 			haben, erstellen Sie einfach einen Link zum Script auf einer beliebigen Seite 
+ 			Ihrer Website. Der Link enthält den Pfad zur index.php des Scripts sowie den 
+ 			Dateinamen der Download-Datei als Parameter. Beispiel:
+ 
+</p>
+<p class="code"> &lt;a href=&quot;/download_center/index.php?datei_name.txt&quot;&gt;Download&lt;/a&gt;
+ 
+</p>
+<p> Das Download Center Lite bietet Ihnen zwei Hauptanwendungsmöglichkeiten. Zum Einen 
+ 			können Sie es dazu nutzen, den Pfad zu Ihrem Download-Verzeichnis zu 
+ 			verschleiern. Und zum Anderen können Sie sicher stellen, dass der 
+ 			Benutzer den "Speichern unter" Dialog angezeigt bekommt und dadurch 
+ 			verhindert wird, dass zum Beispiel PDF-, HTML-, Text- oder Microsoft 
+ 			Office Dokumente sofort geöffnet werden.
+ 
+</p>
+<p> Sie können mit dem Script alle denkbaren Dateien zum Download anbieten. Die 
+ 			im Verzeichnis "downloads" enthaltenen Dateien sind als Beispiele für 
+ 			die gängigsten Dateiformate zu betrachten. Mangels Beispieldateien sind 
+ 			keine Musik- und Videodateien (Mp3, Midi, Mpeg etc.) verfügbar. Das 
+ 			Script kann aber trotzdem solche Dateien handhaben.
+ 
+</p>
+<p> Sie haben außerdem die Möglichkeit, alle Downloads mitzuloggen und mitzuzählen. 
+ 			Beim Einschalten der Logging-Funktion werden alle Downloads nacheinander 
+ 			in eine Datei geschrieben. Sie erhalten dabei Informationen über die IP-Adresse, 
+ 			den Hostname, Dateiname, Datum, Uhrzeit, Verweisseite und User-Agent. 
+ 
+</p>
+<p> Sie können auch die Downloads zählen. Dazu wird der Dateiname, die Zahl der 
+ 			Downloads für diese Datei, Datum und Uhrzeit des ersten und letzten 
+ 			Downloads geschrieben.
+ 
+ 
+</p>
+<p align="right"><a href="#top"> Nach oben
+</a></p></div>
+<div class="chapter"><a name="configuration"></a>
+<h4>Konfiguration des Scripts</h4>
+<p> Die Datei "index.php" stellt die Konfigurationsdatei für das Download Center 
+ 			Lite dar. Sie haben dadurch die Möglichkeit, die Datei zu duplizieren 
+ 			und mit anderen Konfigurationen aufzurufen und zu betreiben, trotzdem 
+ 			aber den selben Script-Kern zu nutzen.
+ 
+</p>
+<p> Folgende Variablen können editiert werden:
+ 
+</p>
+<table border="0" cellpadding="0" cellspacing="0">
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $referring_server	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Diese Variable enthält alle Server, von denen 
+ 						aus zu den Dateien gelinkt werden darf. Wenn 
+ 						sie den Namen Ihres Servers eintragen verhindern 
+ 						Sie alle Downloads, die von einem nicht 
+ 						autorisierten Server ausgehen. Tragen Sie in diese 
+ 						Liste die Domains und IP-Adressen ein, die zum 
+ 						Verlinken Ihrer Dateien autorisiert sind. 
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap">			</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Wenn Sie die Variable leer lassen, findet 
+ 						keine Überprüfung der Verweisseite durchgeführt 
+ 						und jeder kann auf Ihre Dateien linken. 
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $allow_empty_referer	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Einige Programme auf Seiten des Benutzers können 
+ 						die Anzeige des Referers (Verweisseite) verhindern, 
+ 						wie zum Beispiel Firewall-Software oder Web-Browser. 
+ 						Sie können den Zugang mit leerem Referer erlauben, 
+ 						wenn Sie die Variable auf "yes" setzen oder verhindern, 
+ 						wenn Sie die Variable auf "no" setzen.
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $ip_banlist		</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	In dieser Variable können Sie IP-Adressen von Benutzern 
+ 						eintragen, die Sie von der Nutzung des Scripts 
+ 						ausschließen möchten. Wenn Sie diese Funktion nicht 
+ 						nutzen möchten, lassen Sie die Variable einfach frei.
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $language		</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Hier können Sie die Sprache festlegen. Eingetragen werden 
+ 						muss hier das Kürzel, dass auch im Namen der Sprachdatei 
+ 						im Verzeichnis "languages" verwendet wurde ("de" bei 
+ 						languages.de.inc.php und "en" bei languages.en.inc.php). 
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $show_error_messages	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Bei Auslieferung des Scripts ist diese Variable standardmäßig 
+ 						auf "yes" gesetzt. Das hat zur Folge, dass Sie bei der 
+ 						Konfiguration des Scripts Fehlermeldungen und Hinweise 
+ 						zur Einrichtung des Download Centers erhalten. Sobald 
+ 						aber das System funktioniert, können Sie die Ausgabe 
+ 						der Meldungen abschalten. So verwehren Sie allzu 
+ 						neugierigen Besuchern den Einblick in das System.
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $log_downloads	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Wie bereits in der Einleitung beschrieben, können Sie die 
+ 						Downloads mit-loggen. Tragen Sie dazu als Inhalt dieser 
+ 						Variable "yes" ein. Stellen Sie auch sicher, dass das 
+ 						Verzeichnis "log" und die Datei "log.txt" Schreibrechte 
+ 						besitzen (chmod 777).
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $count_downloads	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Wenn Sie die Downloads zählen lassen möchten, stellen 
+ 						Sie den Inhalt dieser Variable auf "yes". Stellen Sie 
+ 						auch sicher, dass das Verzeichnis "log" und die Datei 
+ 						"count.txt" Schreibrechte besitzen (chmod 777).
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $path['downloads']	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	In dieser Variable tragen Sie den Pfad zu Ihrem 
+ 						Download-Verzeichnis ein. Wenn Sie den Pfad nicht 
+ 						ändern und den Wert bei "./downloads/" belassen, 
+ 						wird das mitgelieferte Verzeichnis "downloads" 
+ 						verwendet. Durch die darin enthaltene Datei .htaccess 
+ 						Datei ist der Zugriff auf das Verzeichnis von außen 
+ 						gesperrt. Eine noch sicherere Lösung ist die 
+ 						Platzierung des Download-Ordners außerhalb des WWW-Roots.
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $path['templates']	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Diese Variable enthält den Pfad zum Verzeichnis mit 
+ 						den HTML-Templates.
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $path['logfiles']	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Diese Variable enthält den Pfad zum Verzeichnis, in dem 
+ 						sich die Log-Dateien befinden.
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $file['template']	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Wenn ein Fehler aufgetreten ist, wird der Inhalt dieser 
+ 						Datei angezeigt. Sie können den Inhalt der Datei nach 
+ 						Ihren Wünschen ändern und auf diese Weise den Besuchern 
+ 						eine angepasste Fehlermeldung anzeigen.
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $file['log']		</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	In dieser Variable ist der Name der Log-Datei gespeichert.
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $file['count']	</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Diese Variable enthält den Namen der Datei, in der die 
+ 						Downloads gezählt werden.
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap"> $add_text		</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Sie können weitere Werte, Text, Variablen oder andere 
+ 						Inhalte an dieser Stelle festlegen. Diese Inhalte können 
+ 						Sie dann mit Hilfe von entsprechenden Markierungen in 
+ 						geschweiften Klammern in die Templates übertragen. 
+ 
+<br /><br /></td>
+                                     </tr>
+<tr valign="top">
+                                       <td class="code" nowrap="nowrap">			</td>
+                                       <td>&nbsp;&nbsp;&nbsp;</td>
+                                       <td>	Wenn Sie eigene Werte in der Variable $add_text hinzufügen 
+ 						folgen Sie bitte dem Muster, dass durch die beiden 
+ 						Beispieleinträge deutlich gemacht wurde. 
+ 
+<br /><br /></td>
+                                     </tr>
+</table>
+<pre>
+ $add_text = array(
+ 
+                       'txt_additional' =&gt; 'Additional',
+                       'txt_more'       =&gt; 'More'
+ 
+                     ); 
+ 
+</pre>
+<p> Der erste Teil eines Eintrags (z.B.: txt_additional) stellt den Namen der Platzhalter 
+ 			im Template dar. Wenn Sie also den Wert von txt_additional im Template anzeigen 
+ 			möchten, tragen Sie dort den Namen umschlossen von geschweiften Klammern ein - 
+ 			{txt_additional}. Der Name darf keine Leer- oder Sonderzeichen enthalten. Erlaubt 
+ 			ist nur der Unterstrich ( _ ).
+ 
+ 
+ 
+</p>
+<p align="right"><a href="#top"> Nach oben
+</a></p></div>
+<div class="chapter"><a name="html"></a>
+<h4>Anpassung des HTML-Templates</h4>
+<p> Veränderungen am HTML-Template müssen Sie nur vornehmen, wenn Sie bei einem Fehler 
+ 			(zum Beispiel falscher Dateiname, Aufruf des Scripts ohne Parameter) den 
+ 			Benutzer Informationen anzeigen möchten. Das könnte zum Beispiel ein Link
+ 			zu Ihrer Homepage sein.
+ 
+</p>
+<p> Mit Hilfe von HTML und CSS können Sie die Templates, die sich im Verzeichnis 
+ 			"templates" befinden, komplett Ihren Wünschen anpassen.
+ 
+</p>
+<p> Sollten Sie für die Anpassung WYSIWYG-Editoren wie Macromedia Dreamweaver, MS 
+ 			Frontpage oder NetObjects Fusion verwenden, achten Sie bitte darauf, 
+ 			dass die Software keine eigenmächtigen Veränderungen vornimmt. Die 
+ 			Funktionsweise des Scripts könnte dadurch beeinträchtigt werden.
+ 
+</p>
+<p> In den Templates befinden sich Markierungen/Platzhalter in geschweiften Klammern, 
+ 			wie zum Beispiel {txt_next_page}. Die werden beim Aufruf des Scripts durch 
+ 			die entsprechenden Wörter ersetzt. Diese Wörter finden Sie in der Datei 
+ 			"languages/language.de.inc.php". Natürlich können Sie diese Wörter auch 
+ 			ändern oder an eine andere Position innerhalb des Templates verschieben. 
+ 			Es spricht auch nichts dagegen, wenn Sie die Markierungen durch richtige 
+ 			Wörter ersetzen. Ebenso können Sie die Sprachdatei nach dem vorgegebenen 
+ 			Muster erweitern.
+ 
+</p>
+<p> Neben den Platzhaltern für die Wörter existieren die so genannten Loops. Ähnlich 
+ 			wie HTML-Tags gehört immer ein Paar zusammen und darf auch nicht getrennt 
+ 			werden (<LOOP ...>...</LOOP>). Sie haben aber die Möglichkeit, die Position 
+ 			des gesamten Blocks zu verändern.
+ 
+ 
+ 
+</p>
+<p align="right"><a href="#top"> Nach oben
+</a></p></div>
+<div class="chapter"><a name="upload"></a>
+<h4>Dateien auf den Webserver kopieren - Upload</h4>
+<p> Erstellen Sie auf dem Server folgende Verzeichnisse (bei den meisten FTP-Programmen 
+ 			ist es auch möglich, alle Dateien und Verzeichnisse zu markieren und zusammen 
+ 			auf den Server hoch zu laden):
+ 
+</p>
+<pre>
+ /download_center_lite/
+ /download_center_lite/downloads/
+ /download_center_lite/inc/
+ /download_center_lite/languages/
+ /download_center_lite/log/
+ /download_center_lite/templates/
+ 
+</pre>
+<p> Kopieren Sie alle Dateien in ihre entsprechenden Verzeichnisse auf den 
+ 			Server. Alle Bilddateien (.gif, .jpg, .png) müssen im Binär-Modus 
+ 			(Binary) auf den Server übertragen werden. Alle restlichen Dateien
+ 			müssen im ASCII-Modus (Text-Modus) hochgeladen werden. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+</p>
+<p align="right"><a href="#top"> Nach oben
+</a></p></div>
+<div class="chapter"><a name="support"></a>
+<h4>Support und Hilfe</h4>
+<p> Antworten auf Ihre Fragen und Lösungen für Probleme mit dem Script finden Sie in 
+ 			unserem <a href="http://www.stadtaus.com/forum/" target="_blank">Support-Forum</a>.
+ 
+ 
+ 
+</p>
+<p align="right"><a href="#top"> Nach oben
+</a></p></div>
+<div class="chapter"><a name="license"></a>
+<h4>Informationen zur Script-Lizenz</h4>
+<p> Das Script können Sie kostenlos nutzen. Wenn Sie das Script ohne Hinweis und Link 
+ 			auf STADTAUS.com betreiben möchten, können Sie die Vollversion online erwerben.
+ 
+</p>
+<ul>
+  <li> Sie können die Script-Lizenz an Dritte verkaufen, auch als professioneller Reseller.
+</li>
+  <li> Den Preis können Sie dabei selbst bestimmen.
+</li>
+  <li> Die Script-Lizenz gilt für eine Domain.
+ 
+</li>
+</ul>
+<p> Kontakt: <a href="http://www.stadtaus.com/" target="_blank">http://www.stadtaus.com/</a>
+</p>
+<p> Weitere Scripts auf STADTAUS.com:
+ 
+</p>
+<ul>
+  <li> Bildergalerie-Script
+</li>
+  <li> Apotheken-Notdienstkalender
+</li>
+  <li> Form-Mail-Script
+</li>
+  <li> Tell-A-Friend-Script (Website-Empfehlung)
+</li>
+  <li> Online-Terminplaner
+</li>
+  <li> Google-Tool
+</li>
+  <li> Download-Script (Download erzwingen)
+</li>
+  <li> Gästebuch-Script
+</li>
+  <li> Voting-Script (Abstimmungen)
+</li>
+  <li> Counter und Referer Script (Seitenzähler)
+ 
+</li>
+</ul>
+<p> Besuchen Sie unser Projekt MetaCollection. Die Seite ist ein Verzeichnis 
+ 			deutscher und internationaler Script-Archive.
+</p>
+<p> <a href="http://www.metacollection.com/" target="_blank">http://www.metacollection.com/</a>
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+</p>
+<p align="right"><a href="#top"> Nach oben
+</a></p></div>
+
+ 
+
+  </body>
+  
+</html>

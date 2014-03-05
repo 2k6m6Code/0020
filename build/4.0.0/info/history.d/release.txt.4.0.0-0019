@@ -1,0 +1,8 @@
+   1.New algorithm named BBLP which support latency and packet loss detection.
+    The modification include : qbserv();qbkflow.ko(qbkflow.h,qbkf_core.c,qbkf_util.c);global.cgi,rtable.cgi,rtable.lib,proute.lib,isphis,rate.cgi
+   2.Split BALANCE(BSWLT) algorithm into ISWLT/OSWLT and refine BSWLT.
+     Add latency and packet loss detection function for the three algorithms.
+    The modification include : qbserv();qbkflow.ko(qbkflow.h,qbkf_core.c,qbkf_util.c);global.cgi,rtable.cgi,rtable.lib,proute.lib
+   3.Fix NA-110's panic issue.
+    The modification include : linux(af_inet.c)
+

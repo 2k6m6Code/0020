@@ -1,0 +1,126 @@
+#!/bin/bash
+#set -x
+ispid=$1
+device=$2
+
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+QBCONFACTIVE="/usr/local/apache/qbconf/basic.xml"
+apn_name=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*apn_name=\"//"|sed -e "s/\".*//"`
+dial_num=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*dial_num=\"//"|sed -e "s/\".*//"`
+if [ "$dial_num" = "" ];then
+   dial_num="*99#"
+fi
+username=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pppoename=\"//"|sed -e "s/\".*//"`
+if [ "$username" = "" ];then
+   username="username"
+fi                                     
+password=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pppoepasswd=\"//"|sed -e "s/\".*//"`
+if [ "$password" = "" ];then
+   password="password"
+fi
+mode_2G3G=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*mode_2G3G=\"//"|sed -e "s/\".*//"`
+if [ "$mode_2G3G" = "" ];then
+   mode_2G3G="Auto"
+fi
+band_2G3G=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*band_2G3G=\"//"|sed -e "s/\".*//"`
+if [ "$band_2G3G" = "" ];then
+   band_2G3G="Auto"
+fi
+pppdev=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`
+targetIP=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*target=\"//"|sed -e "s/\".*//"`
+ispname=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+usbmodemtype=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*usbmodemtype=\"//"|sed -e "s/\".*//"`
+imei=`grep iid=\"$ispid\" $ACTIVEBASICXML|grep imei|sed -e "s/  <isp.*imei=\"//"|sed -e "s/\".*//"`
+
+count=0
+
+while : ; do
+sleep 50
+
+enabled=`grep iid=\"$ispid\" $QBCONFACTIVE|sed -e "s/  <isp.*enabled=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+if [ "$enabled" == "0" ];then
+exit 0
+fi
+
+ping -I $pppdev $targetIP -c 1 >/dev/null 2>&1
+pingresult1=$?
+sleep 6
+sys_oriip=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*systemip=\"//"|sed -e "s/\".*//"`
+ping -I $sys_oriip $targetIP -c 1 >/dev/null 2>&1
+pingresult2=$?
+sleep 6
+ping -I $pppdev $targetIP -c 1 >/dev/null 2>&1
+pingresult3=$?
+if [ $pingresult1 != '0' ]
+then
+    if [ $pingresult2 != '0' ]
+    then
+        if [ $pingresult3 != '0' ]
+        then
+             wvdial_pid=`ps -ef |grep $device |grep wvdial |head -n 1 |awk '{print $3}'`
+             if [ $wvdial_pid ];then
+             /usr/bin/kill -15 $wvdial_pid
+             fi
+             pppd_pid=`ps -ef|grep -v grep|grep $ispname|awk '{print $3}'|sed 's/\n//g'|head -n 1`
+             if [ $pppd_pid ];then
+             /usr/bin/kill -15 $pppd_pid
+             fi
+             sleep 1
+             if [ "$usbmodemtype" != "H20" ] && [ "$usbmodemtype" != "T77Z" ] && [ "$usbmodemtype" != "MC8090" ];then
+                 /opt/qb/hsdpa/detectusb $usbmodemtype 1
+             fi
+             if [ "$usbmodemtype" == "MC8090" ];then
+                 /opt/qb/hsdpa/MC8090_3G_info.sh $device
+             fi
+             if [ "$count" = "1" ];then
+              if [ "$imei" = "" ];then
+              Allotherdevice=`ls -al /dev|grep $usbmodemtype|awk '{print $11}'|sed 's/\n//g'`
+              for usbPort in $Allotherdevice
+              do
+                  if [ "$usbPort" != "$device" ] && [ ! -f /etc/wvdial.$usbPort.new ];then
+                   ps -ef|grep -v grep|grep $usbPort
+                   chk_result=$?
+                   if [ "$chk_result" != "0" ];then
+                   cp -af /etc/wvdial.$device /etc/wvdial.$usbPort.new
+                   sed -i -e '{s/'$device'/'$usbPort'/g}' /etc/wvdial.$usbPort.new
+                   /usr/bin/wvdial -C /etc/wvdial.$usbPort.new Init &
+                   sleep 10
+                   /usr/bin/wvdial -C /etc/wvdial.$usbPort.new &
+                   sleep 20
+                   break 1 
+                   fi
+                  fi 
+              done
+              else
+                 device_3g=`cat /tmp/usbdev.tab |grep $imei|awk '{print $3}'` 
+                 /usr/bin/wvdialsetup $ispname $device_3g $apn_name $ispid $dial_num $username $password $mode_2G3G $band_2G3G             
+                 /usr/bin/wvdial -C /etc/wvdial.$device Init &
+                 sleep 10
+                 /usr/bin/wvdial -C /etc/wvdial.$device &
+                 sleep 20
+              fi
+             fi
+             if [ ! -f /etc/wvdial.$device ];then
+              /usr/bin/wvdialsetup $ispname $device $apn_name $ispid $dial_num $username $password $mode_2G3G $band_2G3G             
+             fi 
+             /usr/bin/wvdial -C /etc/wvdial.$device Init &
+              sleep 10
+             /usr/bin/wvdial -C /etc/wvdial.$device &
+             sleep 20
+             let count=$count+1
+             #if [ "$usbmodemtype" != "H20" ] && [ "$count" = "3" ];then
+             if [ "$count" = "3" ];then
+               /opt/qb/hsdpa/3gctrl Reset $device
+               echo $(date) "Reset 3G dongle !!!" >>/mnt/log/link.log               
+               count=0       
+             fi
+        else
+             exit 0
+        fi
+    else
+         exit 0
+    fi
+else
+     exit 0
+fi
+done

@@ -1,0 +1,677 @@
+#=============================================================================================
+sub showNewHost
+{
+    my (%action)=@_;
+    $action{hostname}=~s/^host-//g;
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    
+    if ( $action{hosttype} eq 'weburl' ) { print qq (<tr><td class="bigtitle">Keyword); }
+    else { print qq (<tr><td class="bigtitle">Host); }
+    
+    print qq (<hr size=1>);
+    print qq (<table>);
+    #-------------------------------------------------------------------------------------------
+    #  Host: Name and Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input class="qbtext" name="hostname_show" id="hostname_show" id="hostname_show" style="WIDTH: 120px" value="$action{hostname}" >);
+    print qq (<input type="hidden" name="hostname" id="hostname" value="$action{hostname}" >);
+    #print qq (<input type="hidden" class="qbtext" name="hostname" value="$action{hostname}" >);
+    
+    if ($action{hostaddress}=~m/\d{1,3}\./ || $action{hostaddress} eq ''){$status=checked;}
+    elsif ($action{hostaddress}=~m/:/){$status2=checked;}
+    else{$status1=checked;}
+    if ( $action{hosttype} eq 'weburl' )
+    {
+        print qq (<input type="hidden" name="version6" id="version" value="6" onclick = "document.getElementById('hosttype').click();" $status1 >);
+        print qq (<input type="hidden" name="version" id="version" value="4" onclick = "document.getElementById('hosttype').click();" $status >);
+    }
+    else
+    {}
+    print qq (</td></tr>);
+    #-------------------------------------------------------------------------------------------
+    #  Host: Type 
+    #-------------------------------------------------------------------------------------------
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    #print qq (<input type="radio" name="hosttype" value="ip" onclick="changetype('ip');" checked >IP);
+    #print qq (<input type="radio" name="hosttype" value="network" onclick="changetype('network');" >Network);
+    #print qq (<input type="radio" name="hosttype" value="iprange" onclick="changetype('iprange');" >IP Range);
+    #print qq (<input type="radio" name="hosttype" value="iplist"  onclick="changetype('iplist');" >IP List);
+#  $gMSGPROMPT.=qq (hosttype :  $action{hosttype} \\n\\n);
+    
+    if ( $action{hosttype} ne "weburl")
+    {
+	#print qq (Type: );
+    #print qq (<td class="body"  id="type1" valign="center" align="left" style="height: 30px; width: 450px">);
+    # my $status = ( $action{hosttype} eq "ip" || $action{hosttype} eq "" ) ? ( 'checked' ): ''; 
+    # print qq (<input type="radio" name="hosttype" id="hosttype" value="ip" onclick="changetype(this);" $status>IP);
+    # my $status = ( $action{hosttype} eq "network" ) ? ( 'checked' ): ''; 
+    # print qq (<input type="radio" name="hosttype" id="hosttype" value="network" onclick="changetype(this);" $status>Network);
+    # my $status = ( $action{hosttype} eq "iprange" ) ? ( 'checked' ): ''; 
+    # print qq (<input type="radio" name="hosttype" id="hosttype" value="iprange" onclick="changetype(this);" $status>IP Range);
+    #my $status = ( $action{hosttype} eq "iplist" ) ? ( 'checked' ): ''; 
+    #print qq (<input type="radio" name="hosttype" id="hosttype" value="iplist"  onclick="changetype(this);" $status>IP List);
+    # my $status = ( $action{hosttype} eq "networklist" ) ? ( 'checked' ): ''; 
+    # print qq (<input type="radio" name="hosttype" id="hosttype" value="networklist"  onclick="changetype(this);" $status>Network List);
+    #my $status = ( $action{hosttype} eq "fqdnlist" ) ? ( 'checked' ): ''; 
+    #print qq (<input type="radio" name="hosttype" id="hosttype" value="fqdnlist"  onclick="changetype(this);" $status>FQDN List);
+    }
+    else
+    {
+    #Gary 20130607 weburl
+    #print qq (Type: );
+    print qq (<td class="body"  id="type1" valign="center" align="left" style="height: 30px; width: 450px">);
+    my $status = ( $action{hosttype} eq "weburl" ) ? ( 'checked' ): ''; 
+    #print qq (<input type="radio" name="hosttype" id="hosttype" value="weburl"  onclick="changetype(this);" $status>Drop Url);
+    print qq (<input type="hidden" name="hosttype" id="hosttype" value="weburl"  onclick="changetype(this);" $status>);
+    }
+    print qq (<input type="hidden" class="qbtext" name="showaddress" id="showaddress" value="$action{hostaddress}" >);
+    print qq (<input type="hidden" class="qbtext" name="showtype" id="showtype" value="$action{hosttype}" >);
+    print qq (</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body" id="ipaddress1" valign="center" align="left" style="height: 30px; width: 90px">);
+    print qq (IP Address:);
+    print qq (<td id="ipaddress" class="body"  valign="center" align="left" style="height: 30px; width: 500px">);
+    #print qq (<input class="qbtext" name="address"  id="address" style="WIDTH: 120px" value="$action{hostaddress}" >); 
+	#print qq (<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >$action{hostaddress}</textarea><br>);
+    
+    print qq (</td></tr>);
+    
+    print qq (<table>);
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 600px">);
+    print qq (<input class="qb" type="button" width="100" value="Save" onclick="SaveHost();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+}
+#showSchedule
+
+
+#=============================================================================================
+
+sub scriptNewHost
+{
+    print << "scriptNewHost";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() 
+    { 
+        var showtype = document.getElementById('showtype');
+    	myform=window.document.forms[0]; 
+    	checkState();
+    	changetype(showtype);
+    }
+    
+    function changetype(obj)
+    {
+    	var type = obj.value;
+		if(type=='ip'||type=='network'||type=='iprange'||type=='networklist'){type='iplist';}
+        var ipaddress = document.getElementById('ipaddress');
+        //document.getElementById("hosttype").value="ip";
+        //var showaddress = document.getElementById('showaddress').value;
+        var showtype = document.getElementById('showtype').value;
+        var showaddress = ( showtype == type ) ? document.getElementById('showaddress').value : '';
+        document.getElementById('showtype').value = type;
+	if ( showtype == 'weburl' )
+        	document.getElementById("ipaddress1").innerHTML = 'Keyword:';
+        else
+        	 document.getElementById("ipaddress1").innerHTML = 'IP Address :';
+         //document.getElementById("type1").style.display="block";
+        switch(type)
+        {
+            // case 'ip':
+            	// ipaddress.innerHTML = '<input class="qbtext" name="address" id="address" style="WIDTH: 120px" value="' + showaddress + '" >';
+            	// break;
+            // case 'network':
+            	// var suboption = '';
+            	// var address = showaddress.split("/");
+            	// if (address == '')
+            	     // address[1] = '';
+            	// if (document.getElementById('version').checked == true)
+            	// {
+            	    // for (var i = 0; i < 32; i++)
+            	    // {
+            	        // suboption += '<option id="mask' + String(i+1) + '" value="' + String(i+1) + '">' + String(i+1) + '</option>';    
+            	    // }
+            	// }
+            	// if (document.getElementById('version6').checked == true)
+            	// {
+            	    // for (var i = 0; i < 128; i++)
+            	    // {
+            	        // suboption += '<option id="mask' + String(i+1) + '" value="' + String(i+1) + '">' + String(i+1) + '</option>';
+            	    // }
+            	// }
+                // ipaddress.innerHTML = '<input class="qbtext" name="address" id="address" style="WIDTH: 120px" value="' + address[0] +'" > / ' + 
+                			// '<select class="qbtext" name="subnet" id="subnet"" style="width:50">' + suboption;
+                // var selectmask = 'mask' + address[1];
+                // if ( address[1] )
+                    // document.getElementById(selectmask).selected = true;
+                // break;
+            // case 'iprange':
+            	// var address = showaddress.split("-");
+            	// if (address == '')
+            	     // address[1] = '';
+            	// ipaddress.innerHTML = '<input class="qbtext" name="iprange1" id="iprange1" style="WIDTH: 120px" value="' + address[0] + '" > - ' +
+            				// '<input class="qbtext" name="iprange2" id="iprange2" style="WIDTH: 120px" value="' + address[1] + '" >';
+            	// break;
+            case 'iplist':
+            	if (document.getElementById('type').value== 4)
+            	{
+            	    ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' + 
+            				    '<br>e.g. 192.168.1.10,10.0.0.0/24,192.168.2.100-192.168.2.110<br>' +
+								'IP Range must be on the same subnet!!';
+                }
+                else
+                {
+                document.getElementById("ipaddress1").innerHTML = 'Mac Address :';
+				ipaddress.innerHTML = '<textarea class="qbtext" name="mac" id="mac" style="width: 200px; height: 80px;" value="" >' + showaddress + '</textarea><br>' +
+				'e.g. 00:00:00:00:00:00,11:11:11:11:11:11,...';
+                
+                }
+                if (document.getElementById('type').value== 6)
+                {
+                document.getElementById("ipaddress1").innerHTML = 'IP Address :';
+                    ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' +
+                                            '<br>e.g. 2000:2000::100,2000:2000:2000:0/24,2000:2000::300-2000:2000::400<br>'+
+											'IP Range must be on the same subnet!!';
+                }
+            	break;
+            // case 'networklist':
+            	// if (document.getElementById('version').checked== true)
+            	// {
+            	    // ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' + 
+            				    // 'e.g. 192.168.1.0/24 ,10.0.0.0/24';
+                // }
+                // if (document.getElementById('version6').checked== true)
+                // {
+                    // ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' +
+                                             // 'e.g. fe80::c0a8:100/120,fe80::c0a8:200/120,fe80::c0a8:300/120';
+                // }
+            	// break;
+            case 'fqdnlist':
+				document.getElementById("hosttype").value="fqdnlist";
+				document.getElementById("ipaddress1").innerHTML = 'FQDN :';
+            	ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' + 
+            				'e.g. www.cnn.com, www.plurk.com  <Br>   This will only block the ip address from first dns query to a domain.';
+				//document.getElementById("type1").style.display="none";
+            	break;
+            case 'weburl':
+            	ipaddress.innerHTML = '<textarea class="qbtext" name="address" id="address" style="width:200;height:80" >' + showaddress + '</textarea>' + 
+            				'e.g. yahoo, pchome, google  <Br>   This will only block the url from first dns query to a domain.';
+                //document.getElementById("type1").style.display="none";
+                document.getElementById("ipaddress1").innerHTML = 'Keyword list:';
+            	break;
+            case 'mac':
+                document.getElementById("hosttype").value="mac";
+                //document.getElementById("type1").style.display="none";
+                document.getElementById("ipaddress1").innerHTML = 'Mac Address :';
+				ipaddress.innerHTML = '<textarea class="qbtext" name="mac" id="mac" style="width: 200px; height: 80px;" value="" >' + showaddress + '</textarea><br>' +
+				'e.g. 00:00:00:00:00:00,11:11:11:11:11:11,...';
+                break;
+            default:
+                //document.getElementById("type1").style.display="block";
+        	//document.getElementById('hosttype').click();
+        }
+    }
+    
+    function SaveHost()
+    {
+        var showtype = document.getElementById('showtype').value;
+        var hostname_show = document.getElementById('hostname_show').value;
+        //document.getElementById('type').value =document.getElementById('hosttype').value;
+	if (document.getElementById('hosttype').value == 'mac')
+	    document.getElementById('hosttype').value = 'iplist';
+
+	if ( hostname_show == '' )
+        {
+            alert('Host Name must be English or nember');
+            return;
+        }
+        for (i = 0; i < hostname_show.length; i++)
+        {
+            var ch = hostname_show.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+                alert('Host Name must be English or nember');
+                return;
+            }
+        }
+        switch(showtype)
+        {
+            case 'ip': 
+            	var address = document.getElementById('address').value;
+            	if (document.getElementById('version').checked == false)
+            	{
+            	    if (!isValidIP(address))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	}
+            	if (document.getElementById('version').checked == true)
+            	{
+            	    if (!isValidIP_v6(address))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	}
+            	
+            	myform.hostaddress.value = address;
+            	break;
+            case 'network':
+            	var network = document.getElementById('address').value + '/' + document.getElementById('subnet').value;
+            	if (document.getElementById('version').checked == false )
+            	{
+            	    if (!isValidSubnet(network))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	    
+            	}
+            	if (document.getElementById('version').checked == true)
+            	{
+            	    if (!isValidSubnet_v6(network))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	}
+            	myform.hostaddress.value = network;
+            	break;
+            case 'iprange':
+                var iprange1 = document.getElementById('iprange1').value;
+                var iprange2 = document.getElementById('iprange2').value;
+                if (document.getElementById('version').checked == false )
+                {
+                    var subiprange1 = iprange1.split('.');
+                    var subiprange2 = iprange2.split('.');
+                    if (!isValidIP(iprange1) || !isValidIP(iprange2))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	    if (subiprange1[0] + subiprange1[1] + subiprange1[2] != subiprange2[0] + subiprange2[1] + subiprange2[2])
+            	    {
+            	        alert('IP range MUST the same subnet!!\\n e.g : 192.168.1.10-192.168.1.20');
+            	        return;
+            	    }
+               	    if (parseInt(subiprange1[3]) >=  parseInt(subiprange2[3]))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+                }
+                if (document.getElementById('version').checked == true)
+                {
+                    var subiprange1 = iprange1.split(':');
+                    var subiprange2 = iprange2.split(':');
+                    if (!isValidIP_v6(iprange1) || !isValidIP_v6(iprange2))
+                    {
+                        alert('Invalid Address!!');
+                        return;
+                    }
+                    if (parseInt(subiprange1[7],16) >=  parseInt(subiprange2[7],16))
+                    {
+                        alert('IP range MUST the same subnet!!\\n e.g : fe80::c0a8:10f-fe80::c0a8:16f');
+                        alert('Invalid Address!!');
+                        return;
+                    }
+                }
+            	myform.hostaddress.value = iprange1 + '-' + iprange2;
+            	break;
+            case 'iplist':
+            	var address = document.getElementById('address').value;
+            	var iparray = address.split(',');
+				var num;
+				var error='Invalid Address!!\\n';
+				var msg='';
+				var re = /[-]/;
+				var ree = /[\/]/;
+				var isOK=1;
+            	for (var i = 0; i < iparray.length; i++)
+            	{
+            	    if (document.getElementById('type').value == '4')
+            	    {
+            	        if(re.test(iparray[i]))
+						{
+							var range=iparray[i].split('-');
+							var subiprange1 = range[0].split('.');
+							var subiprange2 = range[1].split('.');
+							if (!isValidIP(range[0])||!isValidIP(range[1]))
+							{
+								msg+=iparray[i]+'\\n';
+								isOK=0;
+								//return;
+							}
+							if (isOK==1 && subiprange1[0] + subiprange1[1] + subiprange1[2] != subiprange2[0] + subiprange2[1] + subiprange2[2])
+							{
+								msg+=iparray[i]+'\\n';
+								isOK=0;
+								//alert('IP range MUST the same subnet!!\\n e.g : 192.168.1.10-192.168.1.20');
+								//return;
+							}
+							if (isOK==1 && parseInt(subiprange1[3]) >=  parseInt(subiprange2[3]))
+							{
+								msg+=iparray[i]+'\\n';
+								isOK=0;
+								//alert('Invalid Address!!');
+								//return;
+							}
+							if (isOK==1)
+							{
+								num = subiprange2[3] - subiprange1[3] +1;
+								var n=0;
+								var range_total = new Array(num);
+								for (var t = parseInt(subiprange1[3]); t <= parseInt(subiprange2[3]); t++)
+								{
+									range_total[n]= subiprange1[0] +'.'+ subiprange1[1] +'.'+ subiprange1[2] +'.'+ (parseInt(t));
+									n++;
+								}
+								iparray[i] = range_total.join();
+								//alert(iparray[i]);
+							}
+						}
+						else
+						{
+							if(ree.test(iparray[i]))
+							{
+								if (!isValidSubnet(iparray[i]))
+								{
+									msg+=iparray[i]+'\\n';
+									//alert('Invalid Address!!');
+									//return;
+								}
+							}
+							else
+							{
+								if (!isValidIP(iparray[i]))
+								{
+									msg+=iparray[i]+'\\n';
+									//alert('Invalid Address!!');
+									//return;
+								}
+							}
+						}
+            	    }
+            	    if (document.getElementById('type').value == '6')
+            	    {
+						if(re.test(iparray[i]))
+						{
+							var range=iparray[i].split('-');
+							var subiprange1 = range[0].split(':');
+							var subiprange2 = range[1].split(':');
+							var Anum;
+							var v6ip = new Array(3);
+							if (!isValidIP_v6(range[0]) || !isValidIP_v6(range[1]))
+							{
+								msg+=iparray[i]+'\\n';
+								isOK=0;
+								//alert('Invalid Address!!');
+								//return;
+							}
+							
+							//alert(subiprange1.length);
+							//alert(parseInt(subiprange1[3],16));
+							if (isOK==1 /* && parseInt(subiprange1[7],16) >=  parseInt(subiprange2[7],16) */)
+							{
+								Anum = subiprange2.length - 1;
+								var m=0;
+								for(var a = 0; a<= Anum-1; a++)
+								{
+									if(subiprange1[a] !=  subiprange2[a]){alert('['+subiprange1[a]+'] ['+subiprange2[a]+']'); isOK=0;}
+									v6ip[m]=subiprange1[a];
+									m++;
+								}
+								if (isOK==1)
+								{
+									if(parseInt(subiprange1[Anum],16) >=  parseInt(subiprange2[Anum],16)){isOK=0;}
+								}
+								if(isOK==0)
+								msg+=iparray[i]+'\\n';
+								//alert('IP range MUST the same subnet!!\\n e.g : fe80::c0a8:10f-fe80::c0a8:16f');
+								//alert('Invalid Address!!');
+								//return;
+							}
+							 
+							if(isOK==1)
+							{
+								num = (parseInt(subiprange2[Anum],16) -  parseInt(subiprange1[Anum],16)) + 1;
+								var n=0;
+								var range_total = new Array(num);
+								for (var t = parseInt(subiprange1[Anum],16); t <= parseInt(subiprange2[Anum],16); t++)
+								{
+									range_total[n]= v6ip.join(':') +':'+ parseInt(t).toString(16);
+									n++;
+								}
+								//alert(range_total.join());
+								//alert(v6ip.join(':'));
+								iparray[i] = range_total.join();
+							}
+						}
+						else
+						{
+							if(ree.test(iparray[i]))
+							{
+								if (!isValidSubnet_v6(iparray[i]))
+								{
+									msg+=iparray[i]+'\\n';
+									//alert('Invalid Address!!');
+									//return;
+								}
+							}
+							else
+							{
+								if (!isValidIP_v6(iparray[i]))
+								{
+									msg+=iparray[i]+'\\n';
+									//alert('Invalid Address!!');
+									//return;
+								}
+							}
+						}
+            	    }
+            	}
+				if(msg!=''){alert(error+msg); return;}
+				//alert(iparray);
+            	myform.hostaddress.value = iparray;
+            	break;
+            case 'networklist':
+            	var address = document.getElementById('address').value;
+            	var iparray = address.split(',');
+            	for (var i = 0; i < iparray.length; i++)
+            	{
+            	    if (document.getElementById('version').checked == false)
+            	    {
+            	        if (!isValidSubnet(iparray[i]))
+            	        {
+            	            alert('Invalid Address!!');
+            	            return;
+            	        }
+            	    }
+            	    if (document.getElementById('version').checked == true)
+            	    {
+            	        if (!isValidSubnet_v6(iparray[i]))
+            	        {
+            	            alert('Invalid Address!!');
+            	            return;
+            	        }
+            	    }
+            	}
+            	myform.hostaddress.value = address;
+            	break;
+            case 'fqdnlist':
+            	var address = document.getElementById('address').value;
+            	var iparray = address.split(',');
+            	/*for (var i = 0; i < iparray.length; i++)
+            	{
+            	    if (!isValidSubnet(iparray[i]))
+            	    {
+            	        alert('Invalid Address!!');
+            	        return;
+            	    }
+            	}*/
+            	myform.hostaddress.value = address;
+            	break;
+            case 'weburl':
+            	var address = document.getElementById('address').value;
+            	var urlarray = address.split(',');
+            	myform.hostaddress.value = address;
+            	break;
+            case 'mac':
+                var address = document.getElementById('mac').value;
+                var mac = new Array();
+                var check = /^([a-fA-f0-9]){2}:([a-fA-f0-9]){2}:([a-fA-f0-9]){2}:([a-fA-f0-9]){2}:([a-fA-f0-9]){2}:([a-fA-f0-9]){2}\$/;
+                mac = address.split(/,/);
+                for (var x = 0; x< mac.length;x++)
+                {
+                    if (!check.test(mac[x]))
+                    {
+                        alert("Error!!");
+                        return;
+                    }
+                }
+                myform.hostaddress.value = address;
+                break;
+        }
+        myform.action.value = 'SAVE';
+        if (showtype != 'weburl' && document.getElementById('type').value == 6)
+		{
+			myform.hostname.value = hostname_show + "-IPv6-";
+		}
+        else{myform.hostname.value = hostname_show;}
+        myform.submit();
+   	 
+    }
+    
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var hostname=document.getElementById('hostname');
+        var hosttype=document.getElementById('hosttype').value;
+        var hostname_show=document.getElementById('hostname_show');
+		var type=document.getElementById('type').value;
+        
+        if ( hostname.value != '' )
+            hostname_show.disabled = true;
+        
+        
+        if ( action != '' && hosttype != 'weburl')
+		{
+            //window.top.mainFrame.location.href="host.cgi";
+			window.opener.location.replace('host.cgi?type='+type);
+			window.close();
+		}
+        if ( action != '' && hosttype == 'weburl')
+            window.top.mainFrame.location.href="keyword.cgi";
+    }
+    
+    </script>
+    
+scriptNewHost
+}
+#scriptNewHost
+
+sub byName
+{
+    $a->{hostname} cmp $b->{hostname};
+}
+#byName
+
+sub maintainHost
+{
+    %action=@_;
+    my $hostref=XMLread($gPATH.'host.xml');
+    my $hostlist=$hostref->{host};
+    my $exist=0;
+    my @sservices;
+    my @dservices;
+    
+    if ( !$action{action} ) { return; } 
+    
+    $action{hostname}=~s/^\s*|\s*$//g;
+    $action{hostname}='host-'.$action{hostname};
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        #runCommand(command=>'echo ', params=>$action{hosttype}.' >>/tmp/test');
+        if ($action{version} eq "4"){if ( $action{hosttype} eq 'network' ) { $action{hostaddress}=get_subnet($action{hostaddress}); }}
+        if ($action{version} eq "6"){if ( $action{hosttype} eq 'network' ) { $action{hostaddress}=get_subnet_v6($action{hostaddress}); }} 
+		foreach my $host ( @$hostlist )
+        {
+            if ( $host->{hostname} eq $action{hostname} )
+            {
+                $exist=1;
+                delete($action{action});
+                $host=\%action;
+            }
+        }
+        if ( $exist eq '0' )
+        {
+            push(@sservices, "system");
+            push(@dservices, "system");
+            delete($action{action});
+            push( @$hostlist, \%action);
+            #maintainNAT(action=>'APPENDSUBNET', nat_bind_sub=>$action{hostname}, sservices=>\@sservices, dservices=>\@dservices, hostobj=>'1');
+        }
+        @$hostlist=sort byName @$hostlist;
+        XMLwrite($hostref, $gPATH."host.xml");
+        maintainNAT(action=>'APPENDSUBNET', nat_bind_sub=>$action{hostname}, sservices=>\@sservices, dservices=>\@dservices, hostobj=>'1');
+ 
+        LogUserAction( action=>'SAVEHOST', hostname=>$action{hostname}, hosttype=>$action{hosttype}, hostaddress=>$action{hostaddress} );
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{host};
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some Host first\\n\\n);
+            return;
+        } 
+        my @temparray;
+        foreach my $item ( @$hostlist )
+        {
+            if ( grep(/^$item->{hostname}$/, @$delet) ) { LogUserAction( action=>'DELHOST', hostname=>$item->{hostname} ); next; }
+            push(@temparray, $item);
+            
+        }
+        my @temp= map{$_}@$delet;
+        #maintainIniroute(action=>'DELHOSTOBJRULE', hostobj=>\@temp);
+        $hostref->{host}=\@temparray;
+        XMLwrite($hostref, $gPATH."host.xml");
+        maintainNAT(action=>'DELETESUBNET', natnets=>\@temp);
+        #$hostref->{host}=\@temparray;
+        #XMLwrite($hostref, $gPATH."host.xml");
+    }
+    elsif ( $action{action}=~m/^GETADDRESSLIST$/ )
+    {
+        foreach my $host ( @$hostlist )
+        {
+           if( $host->{hostname} eq $action{hostname} ) 
+           {
+        	return $host->{hostaddress};
+           }
+        }
+        return '';
+    }
+    #XMLwrite($hostref, $gPATH."host.xml");
+    
+}
+#
+1

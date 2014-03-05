@@ -1,0 +1,51 @@
+#set -x
+# 2008/01/14 Brian stop all dhcp links
+reboot_time=$1
+if [ $reboot_time ] && [ "$reboot_time" != "Clear" ]
+then
+ chk=`grep rebootqb /etc/crontab`
+ checkresult=$?
+ if [ "$checkresult" != "0" ]
+ then
+cat >> /etc/crontab <<!
+0   $reboot_time * * *  root       /opt/qb/bin/script/rebootqb
+!
+ echo $reboot_time >/tmp/reboot_time
+ else
+ `sed -i -e "s/0.*root/0   $reboot_time  * * *  root/" /etc/crontab`
+ echo $reboot_time >/tmp/reboot_time
+ fi
+ echo $(date) "User setuped reboot qb at $reboot_time:00...">>/mnt/log/bootlog
+ /sbin/service crond restart
+ exit 0
+elif [ "$reboot_time" = "Clear" ];then
+ `sed -i -e "s/0.*rebootqb//" /etc/crontab`
+ rm -f /tmp/reboot_time
+ echo $(date) "User cancel reboot qb ...">>/mnt/log/bootlog
+ /sbin/service crond restart
+ exit 0
+fi
+
+for i in /etc/dhcpc/*.pid; do
+[ ! -f $i ] && continue
+# Get dhcp device name.
+dhcpdev=${i#/etc/dhcpc/dhcpcd-}
+dhcpdev=${dhcpdev%.pid}
+/sbin/dhcpcd -k $dhcpdev
+done
+# 2008/01/14 Brian stop all pppoe links
+/sbin/ip route flush cache
+for i in /var/run/*-pppoe.pid; do
+[ ! -f $i ] && continue
+# Get PPPoE config name.
+pppcfg=${i#/var/run/}
+pppcfg=${pppcfg%-pppoe.pid}
+/usr/sbin/pppoe-stop /etc/ppp/$pppcfg
+sleep 3
+done
+/sbin/ip route flush cache
+echo $(date) "User reboot QB from UI...">>/mnt/log/bootlog
+rm -f /mnt/fsck.tmp #20090710 Brian Don't do usb HDD check.
+sync
+/sbin/reboot -n
+exit 0

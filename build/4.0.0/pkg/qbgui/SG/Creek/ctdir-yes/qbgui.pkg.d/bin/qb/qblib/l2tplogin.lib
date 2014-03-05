@@ -1,0 +1,528 @@
+#===================================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub listUsers
+{
+    my (%action)=@_;
+    my $login=XMLread($gPATH."l2login.xml");
+    my $l2tpinit=XMLread($gPATH.'l2tpinit.xml');
+    my $userList=$login->{user};
+    my %titleWidth=('Username'=>'80',  'Assigned IP'=>'80', 'Status'=>'80', 'Login IP'=>'120', 'Use device'=>'120', 'Kick Out'=>'50');
+    my @titleList=($qblang[196], $qblang[197], $qblang[24], $qblang[198], $qblang[199], $qblang[200]);
+    
+    print qq (<font class="bigtitle">$qblang[195]</font><hr size="1">);
+    print qq (<table cellspacing="0" cellpadding="0" class="body" >);
+    print qq (<tr bgcolor="#664422">);
+    
+    foreach my $title ( @titleList ) { print qq (<td class="body" width="$titleWidth{$title}" align="center">$title</td>); }
+    print qq (<td align="center" width="50"><image src="image/del.gif" border="0"></td>);
+    print qq (</tr>);
+    
+    my $lineCount=1;
+    foreach my $user ( @$userList ) 
+    {
+        my $bgColor=($lineCount%2) ? ("#556677") : ("#334455");
+        my $userkey=$user->{username};
+        
+        if ( $user->{username} eq 'system' ) { next; }
+        
+        print qq (<tr bgcolor="$bgColor" originalColor="$bgColor" cellspacing="0" cellpadding="0" onclick="selectedColor(this);focusUserInfo('$userkey', '$user->{password}', '$user->{assignip}')" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+        #===================================================================      
+        my $display=( $user->{username} eq 'system' ) ? ('*') : ($user->{username});
+        print qq (<td class="body"  align="center"  width="$titleWidth{Username}">$display</td>);
+
+        #===================================================================      
+        #my $display=( $user->{assignip}==1 ) ? ( 'Admin') : ( 'User' );
+        my $display=( $user->{assignip} eq 'system' ) ? ('*') : ($user->{assignip});
+        print qq (<td class="body" align="center" width="$titleWidth{'Assigned IP'}">$display</td>);
+
+        #===================================================================      
+        my $addressList=runCommand(command=>'ip', params=>qq(addr));
+        my @address=split(/\n/,$addressList);
+        my $onlinestatus=( grep(/$user->{assignip}/, @address) ) ? 1 : 0;
+        my $display=( $onlinestatus ) ? ('Online') : ( 'Offline' );
+        print qq (<td class="body" align="center" width="$titleWidth{Status}">$display</td>);
+        
+        #===================================================================      
+        my $display;
+        foreach my $ppplink ( @address ) 
+        {
+            if ( grep(/$user->{assignip}/, $ppplink) )
+            { 
+              my @pppinfo=split(/\s+/,$ppplink);
+              $user->{lastlogin}=$pppinfo[2];
+              $user->{sessionid}=$pppinfo[7];
+            }
+        }
+        ( $user->{lastlogin} ) ? ( $display=$user->{lastlogin} ) : ( $display="None") ;
+        print qq (<td class="body" align="center" width="$titleWidth{'Login IP'}">$display</td>);
+        my $displaydev;
+        ( $user->{sessionid} ) ? ( $displaydev=$user->{sessionid} ) : ( $displaydev="None" );
+        print qq (<td class="body" align="center" width="$titleWidth{'Use device'}">$displaydev</td>);
+        
+        #===================================================================      
+        print qq (<td class="body" align="center" width="$titleWidth{'Kick Out'}">);
+        print qq (<input type="button" class="qb" onclick="kickoutUser('$userkey')" value="*" style="width:20;height:20" title="Kick Out this User">);
+        print qq (</td>);
+
+        #===================================================================      
+        print qq (<td class="body" align="center" width="50">);
+        print qq (<input type="button" class="qb" onclick="delUser('$userkey')" value="-" style="width:20;height:20" title="Delete this User">);
+        print qq (</td>);
+        print qq (</tr>);
+        
+        $lineCount++;
+    }
+    my @iprange=split('\.', $l2tpinit->{iprange1});
+    my $init=$iprange[0].'\.'.$iprange[1].'\.'.$iprange[2];
+
+    print qq (<tr><td colspan="8"><hr size="1"></td></tr>);
+    print qq (<tr><td colspan="8" align="right" class="body">);
+    print qq ($qblang[196]: <input class="qbtext" name="newusername" type="text" style="width:80" onChange="enableNewUser()"><font color="#336699">||</font>);
+    print qq ($qblang[201]: <input class="qbtext" name="newpassword" type="password" style="width:80"><font color="#336699">||</font>);
+    print qq ($qblang[202]: <input class="qbtext" name="confirmpassword" type="password" style="width:80"><font color="#336699">||</font>);
+    print qq ($qblang[203]: <input class="qbtext" name="newassignip" type="text" span title="$l2tpinit->{iprange1}-$l2tpinit->{iprange2}" style="width:80"><font color="#336699">||</font>);
+    #print qq (Assign IP: <select name="assignip" class="qbopt" style="width:60"><option value="1">Admin</optin><option value="0">User</option></select><font color="#336699">||</font>);
+    print qq (<input type="button" name="NEWUSER" class="qb" onclick="goSubmit('NEWUSER')" value="$qblang[57]" title="Add New User" style="width:40;height:20">);
+    print qq (<input type="button" class="qb" onclick="updateUserInfo()" value="$qblang[58]" title="Update User Info" style="width:45;height:20">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#listUsers
+
+#===================================================================================================
+sub editUsers
+{
+    my (%action)=@_;
+    my $login=XMLread($gPATH."l2login.xml");
+    my $l2tpinit=XMLread($gPATH.'l2tpinit.xml');
+    my $userList=$login->{user};
+    my $IS_EVERYTHING_OK=1;
+    
+    if ( !$action{action} ) { return; }
+
+    if ( $action{action}=~m/^KICKOUTUSER$/ )
+    {
+
+        my $addressList=runCommand(command=>'ip', params=>qq(addr));
+        my @address=split(/\n/,$addressList);
+        foreach my $user ( @$userList )
+        {
+          if ( $user->{username} eq $action{user} )
+          {                                                  
+
+             open(MONPORT, ">$AFS_MONPORT_FILE");
+             print MONPORT $monport."\n";
+             close(MONPORT);
+             my $pppdev;
+             foreach my $ppplink ( @address ) 
+             {
+                  if ( grep(/$user->{assignip}/, $ppplink) )
+               { 
+                  my @pppinfo=split(/\s+/,$ppplink);
+                  $pppdev=$pppinfo[7];
+               }
+             }
+             open(PPTPPID, "/var/run/$pppdev.pid");
+             my $killpid=<PPTPPID>;
+             close(PPTPPID);
+             runCommand(command=>'/usr/bin/kill', params=>'-9 '.$killpid);
+          }
+         }
+    }
+    elsif ( $action{action}=~m/^UPDATEUSERINFO$/ )
+    {
+        my $targetUser;
+        
+        foreach my $user ( @$userList )
+        {
+            if ( $user->{username} ne $action{newusername} ) { next; }
+            $targetUser=$user;
+            last;
+        }
+
+        if ( !$targetUser ) { $gMSGPROMPT.=qq($action{newusername} NOT exists\\n); }
+        else
+        {
+            $targetUser->{password}=$action{newpassword};
+            $targetUser->{assignip}=$action{newassignip};
+            $gMSGPROMPT.=qq(Updated OK\\n);
+        }
+
+        LogUserAction( action=>'UPDATEL2TPUSER', username=>$action{newusername}, assignip=>$action{newassignip} );
+    }
+    elsif ( $action{action}=~m/^NEWUSER$/ )
+    {
+        my %template;
+
+        foreach my $user ( @$userList ) 
+        {
+            if ( $user->{username} ne $action{newusername} ) { next;}
+            $gMSGPROMPT.=qq ( User: $action{newusername} exists already\\n);
+            return;
+        }
+        
+        foreach my $user ( @$userList ) 
+        {
+            if ( $user->{username} ne 'system' ) { next;}
+            %template=%$user;
+            last;
+        }
+
+        $template{username}=$action{newusername};
+        $template{password}=$action{newpassword};
+        $template{assignip}=$action{newassignip};
+        $template{sessionid}='';
+        
+        my @iprange1=split('\.', $l2tpinit->{iprange1});
+        my @iprange2=split('\.', $l2tpinit->{iprange2});
+        my $ip=$iprange1[0].'\.'.$iprange1[1].'\.'.$iprange1[2];
+        my @assign=split('\.', $template{assignip});
+        my $newip=$assign[0].'\.'.$assign[1].'\.'.$assign[2];
+ 	
+ 	if ( $ip ne $newip || $assign[3] < $iprange1[3] || $assign[3] > $iprange2[3] )
+ 	{
+ 	    $gMSGPROMPT.=qq ( ERROR:IPrange must in $l2tpinit->{iprange1}-$l2tpinit->{iprange2}\\n);
+ 	    $IS_EVERYTHING_OK=0;
+ 	}
+        
+        push(@$userList, \%template);
+        LogUserAction( action=>'ADDL2TPUSER', username=>$action{newusername}, assignip=>$action{newassignip} );
+    }
+    elsif ( $action{action}=~m/^DELUSER$/ )
+    {
+        my  @newUserArray;
+        
+        foreach my $user ( @$userList ) 
+        {
+            if ( $user->{username} eq $action{user} ) { next;}
+            push(@newUserArray, $user);
+        }
+
+        $login->{user}=\@newUserArray;
+        LogUserAction( action=>'DELL2TPUSER', username=>$action{newusername} );
+    }
+    
+    #--------updating login.xml------------------------ 
+    if ( $IS_EVERYTHING_OK  eq '1' )
+    {
+        XMLwrite($login, $gPATH."l2login.xml");
+    }
+
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    qbSync();
+}
+#editUsers
+
+sub userScript
+{
+    
+print << "USERSCRIPT";
+
+    <script type="text/javascript" src="grid.js"></script>
+    
+    <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=document.forms[0]; }
+    
+    function goBackToConsole() { window.top.mainFrame.location.href="console.cgi"; }
+        
+    function enableNewUser() { myform.NEWUSER.disabled=false; }
+    
+    function focusUserInfo(username, password, assignip)    
+    {   
+        myform.newpassword.value=myform.confirmpassword.value=password; 
+        myform.newusername.value=username; 
+        myform.newassignip.value=assignip; 
+        
+        //for(var i=0;i<myform.assignip.options.length;i++) 
+        //{ if (myform.assignip.options[i].value==assignip) { myform.assignip.options[i].selected=true; } }
+        
+        myform.NEWUSER.disabled=true;
+    }
+    
+    function kickoutUser(username)
+    {
+        //if (username=='root')
+        //{
+        //    alert('Can not kick out root');
+        //    return;
+        //}
+
+        myform.user.value=username;
+        goSubmit('KICKOUTUSER');
+    }
+
+    function updateUserInfo()
+    {
+        if ( myform.newusername.value=='root' && myform.assignip.value==0 )
+        {
+            alert('root must have Administrator assignip');
+            return;
+        }
+
+        if ( myform.newpassword.value != myform.confirmpassword.value )
+        {
+            alert('Passwords do not match');
+            return;
+        }
+        if ( !isValidIP(myform.newassignip.value) )
+        { 
+            alert('IP Format Error');
+            return;
+        }
+        goSubmit('UPDATEUSERINFO');
+    }
+    
+    function delUser(username)
+    {
+        if (username=='root') { alert('Can not delete root'); return; }
+        myform.user.value=username;
+        goSubmit('DELUSER');
+    }
+
+    function importXML()
+    {
+        if ( window.ActiveXObject )
+        {
+            xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
+            xmlDoc.onreadystatechange=checkXMLReadyState;
+        }
+        xmlDoc.load("data.xml");
+    }
+    
+    function  checkXMLReadyState()
+    {
+        if ( xmlDoc.readyState==4 )  initXML();
+    }
+
+    function   initXML()
+    {
+        var user=xmlDoc.getElementsByTagName('employee');
+        for ( var i=0; i< user.length; i++)
+        {
+            alert(user[i].childNodes[0].firstChild.nodeValue);
+        }
+    }  
+    function ipinit(str)
+    {
+        myform.newassignip.value = str;
+    }
+    
+    </script>
+
+USERSCRIPT
+}
+#userScript
+
+
+#================================================================================================
+sub authenticate 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    
+    my $logininfo=XMLread($gPATH.'l2login.xml');
+    my $userlist=$logininfo->{user};
+    
+    #( action=>'GETMAXUSER' )
+    if ( $action{action}=~m/^GETMAXUSER$/ ) 
+    {
+        return $logininfo->{maximumuser};
+    }
+    #( action=>'SETMAXUSER', numofuser=>'' )
+    elsif ( $action{action}=~m/^SETMAXUSER$/ ) 
+    {
+        $logininfo->{maximumuser}=$action{numofuser};
+    }
+    #( action=>'LOGIN', username=>'', password=>'' )
+    elsif ( $action{action}=~m/^LOGIN$/ ) 
+    {
+        my $whoami;
+        my $pass=0;
+        my $alivecount=0;
+
+        # help to force user who leave without logout
+        foreach my $user ( @$userlist )
+        {
+            if ( $user->{username} eq 'system' ) { next; } 
+
+            my $duration=time()-($user->{lastupdate});
+            
+            if ( $duration > $gTIMEOUT ) 
+            {
+                $user->{online}=0;;
+                $user->{lastupdate}='';
+                $user->{sessionid}='';
+            }
+        }
+    
+        #計算人數
+        foreach my $user ( @$userlist ) 
+        {
+            if ( $user->{username} eq 'system' ) { next; } 
+            if ( $user->{online} ) { $alivecount++; }
+            if ( $user->{online} && $action{username}.$action{password} eq $user->{username}.$user->{password} ) { $alivecount--;}
+        }
+    
+        
+        #人數超過上限
+        if ( ( $alivecount >= $logininfo->{maximumuser} )  && $action{username} ne 'root' ) 
+        {
+            $gLOGINRESULT=0;
+            $pass=0; 
+            $gMSGPROMPT.=qq (Too Many Users\\n);
+            return;
+        }
+    
+        #驗證密碼
+        foreach my $user ( @$userlist ) 
+        {
+            if ( $user->{username} eq "system" ) { next; }
+            if ( $action{username}.$action{password} ne $user->{username}.$user->{password} ) { next;}
+            $whoami=$user;
+            $pass=1; 
+            last;
+        }
+    
+        #登入不成功
+        if ( !$pass ) 
+        {
+            $gLOGINRESULT=0; 
+            $gMSGPROMPT.=qq (User Login Failed\\n);
+            return;
+        }
+        
+        #登入成功
+        if ( $pass ) 
+        {
+            #set Cookie, this is very important
+            srand();
+            my $sessionid=int(rand(100000));  
+              
+            #重新發 cookie
+            &SetCookies('username', $action{username});             
+            &SetCookies($action{username}, $sessionid);
+            &SetCookies('assignip', $whoami->{assignip});
+            &SetCookies('clearcookie', 'true');
+
+            if ( $gENABLECHINESE )
+            {
+                &SetCookies('english_only', 'false');
+            }
+            else
+            {
+                &SetCookies('english_only', 'true');
+            }
+        
+            $whoami->{online}=1;
+            $whoami->{lastlogin}=time();
+            $whoami->{lastupdate}=time();
+            $whoami->{sessionid}=$sessionid;
+            $gLOGINRESULT=1;
+        }    
+    }
+    #( action=>'LOGOUT' )
+    elsif ( $action{action}=~m/^LOGOUT$/ ) 
+    {    
+        &GetCookies('username');  my $username=$Cookies{username};
+        my $whoami;
+        
+        foreach my $user ( @$userlist ) 
+        {
+            if ( $user->{username} ne $username ) { next;}
+            $whoami=$user;
+            last;
+        }
+        
+        $whoami->{online}=0;;
+        $whoami->{lastupdate}='';
+        $whoami->{lastlogout}=time();
+        $whoami->{sessionid}='';
+        
+        #清除 cookie
+        &SetCookies('username', '');
+    }
+    elsif ( $action{action}=~m/^RANDOMCHECK$/ ) 
+    {
+        &GetCookies('username');    my $username=$Cookies{username};
+        &GetCookies($username);     my $sessionid=$Cookies{$username};
+        &GetCookies(clearcookie);     my $clearcookie=$Cookies{clearcookie};
+        
+        my $whoami;
+        #$gMSGPROMPT.=qq (Cookie: $username --> $sessionid --> $clearcookie \\n);
+        
+        #如果沒有經過正常登入的動作
+        if ( !$username ) 
+        { 
+            $gLOGINRESULT=0;
+            $gMSGPROMPT.=qq (1. Please login through Standard Procedure\\n);
+            $gMSGPROMPT.=qq (2. Your session has been time Out);
+            return;
+        }
+    
+        foreach my $user ( @$userlist ) 
+        {
+            if ( $user->{username} ne $username ) { next;}
+            $whoami=$user;
+            last;
+        }
+
+        if ( !defined($whoami) ) 
+        {
+            $gLOGINRESULT=0;
+            $gMSGPROMPT.=qq ($username is kicked out by Administrator\\n);
+            return;
+        }
+
+        if ( $whoami->{sessionid} == -1 ) 
+        { 
+            $gLOGINRESULT=0;
+            $gMSGPROMPT.=qq ($username is forced to log out now\\n);
+            return;
+        }
+
+        if ( $whoami->{sessionid} ne $sessionid ) 
+        { 
+            $gLOGINRESULT=2;
+            &SetCookies('clearcookie', 'false');
+            $gMSGPROMPT.=qq (User: $username $whoami->{sessionid}  $sessionid Multi-login at a time);
+            return;
+        }
+    
+        #若太久時間沒有操作
+        my $duration=time()-($whoami->{lastupdate});
+        
+        if ( $duration > $gTIMEOUT ) 
+        {
+            $gLOGINRESULT=0;
+            $gMSGPROMPT.=qq (User: $username Time Out [ $duration Sec(s) ]);
+            return;
+        }
+    
+        #若都沒有問題的話，reset timeout
+        if ( $duration <= $gTIMEOUT ) 
+        {
+            $gLOGINRESULT=1;
+            $whoami->{lastupdate}=time();
+        }
+    }
+
+    #--------updating login.xml------------------------ 
+    XMLwrite($logininfo, $gPATH."l2login.xml"); 
+
+    #--------overwrite  login.xml from $gINIPATH  to  /mnt/qb/conf/login.xml
+    #if ( $action{action}=~m/^LOGOUT$|^LOGIN$/ ) { runCommand(command=>'cp', params=>'-f '.$gINITPATH.'login.xml /mnt/qb/conf/login.xml'); }
+    
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    qbSync();
+}
+#authenticate
+
+# must do this
+1

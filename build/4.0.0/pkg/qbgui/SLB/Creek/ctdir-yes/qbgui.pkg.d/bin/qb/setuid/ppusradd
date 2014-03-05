@@ -1,0 +1,146 @@
+#!/usr/bin/perl
+
+use strict;
+use Getopt::Long;
+
+# Command-line parameters:
+# actions
+my ( $_create, $_delete, $_help );
+
+# values
+#my ( $ASSIGNIP, $USERNAME, $PASSWORD );
+my ( $USERNAME, $PASSWORD, $ASSIGNIP );
+
+my $result = GetOptions(
+    "create|c"   => \$_create,    # --create foo -> &create("foo")
+    "delete=s"     => \$_delete,    # --delete foo -> &delete("foo")
+    "help|h"       => \$_help,      # --help       -> &help()
+    "username|u=s" => \$USERNAME,
+    "password|p=s" => \$PASSWORD,
+    "assignip|a=s" => \$ASSIGNIP,
+);
+
+if ($_create) {
+    &create($_create);
+} elsif ($_delete) {
+    &delete($_delete);
+} elsif ($_help) {
+    &help();
+} else {
+    die "$0: too few arguments.\nTry '$0 --help' for more information.\n";
+}
+
+exit;
+
+####
+
+sub create {
+    ($ASSIGNIP) = $ASSIGNIP =~ m{^(.+)$}
+      or die "$0: invalid assignip.\nTry '$0 --help' for more information.\n";
+    ($USERNAME) = $USERNAME =~ m{^(.+)$}
+      or die "$0: invalid username.\nTry '$0 --help' for more information.\n";
+
+    # ask password
+    if ( !$PASSWORD ) {
+        print "Password: ";
+        $PASSWORD = <STDIN>;
+        chomp $PASSWORD;
+    }
+
+    # create or add lines to the /etc/ppp/chap-secrets file,
+    # which holds usernames and passwords
+    my $chap_secrets_file = '/etc/ppp/chap-secrets';
+    open( FILE, ">>$chap_secrets_file" )
+      or die "$0: can't write to '$chap_secrets_file': $!\n";
+
+    print FILE "\n# added by ppusradd for user account\n$USERNAME    *    $PASSWORD    $ASSIGNIP\n";
+
+    close FILE;
+
+    my $pap_secrets_file = '/etc/ppp/pap-secrets';
+    open( PAPFILE, ">>$pap_secrets_file" )
+      or die "$0: can't write to '$pap_secrets_file': $!\n";
+
+    print PAPFILE "\n# added by ppusradd for user account\n$USERNAME    *    $PASSWORD    $ASSIGNIP\n";
+
+    close PAPFILE;
+}
+####
+
+sub help {
+    print <<'EOF';
+
+ppusradd --create --username <USERNAME> [--password <PASSWORD>] [--assignip <ASSIGNIP>]
+
+ppusradd --delete <USERNAME> 
+
+Options:
+
+* the IP address you want to assign,
+* the username you want to use,
+* the password you want to use,
+
+ppusradd - Point-to-Point Tunneling User Account setup
+
+EOF
+
+    exit;
+}
+
+####
+
+sub delete {
+    my $tunnel = shift;
+
+    # input validation
+    ($tunnel) = $tunnel =~ m{^(\w+)$}
+      or die "$0: invalid tunnel name.\nTry '$0 --help' for more information.\n";
+
+    # delete entry from chap-secrets
+    my $chap_file = '/etc/ppp/chap-secrets';
+    my $pap_file = '/etc/ppp/pap-secrets';
+
+    open( FILE, $chap_file )
+        or die "$0: can't read '$chap_file': $!\n";
+    my @chap = <FILE>;
+    close FILE;
+
+    my $new_chap = '';
+    foreach (@chap) {
+        $new_chap .= $_ unless /\b$tunnel\b/;
+    }
+
+    # backup
+    rename( $chap_file, "$chap_file.bkp" );
+
+    # write new chap-secrets
+    open( FILE, ">$chap_file" )
+        or die "$0: can't write '$chap_file': $!\n";
+    print FILE $new_chap;
+    close FILE;
+
+    #Modify PAP
+    open( FILE, $pap_file )
+        or die "$0: can't read '$pap_file': $!\n";
+    my @pap = <FILE>;
+    close FILE;
+
+    my $new_pap = '';
+    foreach (@pap) {
+        $new_pap .= $_ unless /\b$tunnel\b/;
+    }
+
+    # backup
+    rename( $pap_file, "$pap_file.bkp" );
+
+    # write new pap-secrets
+    open( FILE, ">$pap_file" )
+        or die "$0: can't write '$pap_file': $!\n";
+    print FILE $new_pap;
+    close FILE;
+
+    exit;
+}
+
+__END__
+

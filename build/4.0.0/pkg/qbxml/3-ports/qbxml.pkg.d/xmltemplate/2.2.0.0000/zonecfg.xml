@@ -1,0 +1,5 @@
+<opt file="zone">
+  <dmz nic="" isp="system" enabled="1" />
+  <nat network="" gateway="" nic="" ip="" natid="system" enabled="1" type="nat" gwnatid="" note="" />
+  <nat dirty="0" network="192.168.1.0/24" gateway="" nic="eth2" ip="192.168.1.6" natid="1" enabled="1" type="nat" gwnatid="" note="" />
+</opt>

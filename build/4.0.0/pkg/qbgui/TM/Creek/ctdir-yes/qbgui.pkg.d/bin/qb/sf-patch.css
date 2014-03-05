@@ -1,0 +1,1020 @@
+/*
+ * mask
+*/
+html,body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,p,blockquote,th,td{margin:0;padding:0;}img,body,html{border:0;}address,caption,cite,code,dfn,em,strong,th,var{font-style:normal;font-weight:normal;}ol,ul {list-style:none;}caption,th {text-align:left;}h1,h2,h3,h4,h5,h6{font-size:100%;}q:before,q:after{content:'';}.ext-el-mask {
+    z-index: 100;
+    position: absolute;
+    top:0;
+    left:0;
+    -moz-opacity: 0.2;
+    opacity: .20;
+    filter: alpha(opacity=20);
+    width: 100%;
+    height: 100%;
+    zoom: 1;
+}
+.ext-el-mask {
+background-color:#000;
+}
+
+.x-item-disabled {
+    cursor: default;
+    opacity: 1;
+    -moz-opacity: 1;
+	filter: none;
+	
+}
+.x-item-disabled input,
+.x-item-disabled textarea,
+.x-item-disabled select,
+.x-item-disabled label,
+.x-item-disabled img,
+/*
+.x-item-disabled button,//解决叠加透明度后，按钮颜色太浅5-10
+*/
+.x-item-disabled .x-field-tipico,
+.x-item-disabled .x-form-trigger {
+ opacity: .6!important;
+ -moz-opacity: .6!important;
+ filter: alpha(opacity=60);
+}
+
+.x-form-item{
+	margin-bottom:2px;
+}
+/*解决invalid cls添加后大小变动的问题*/
+.x-form-item, .x-form-check-group, .x-form-radio-group{
+	border: 1px solid transparent;
+}
+/*IE6不支持透明边框，使用filter hack
+ --- > 恶心的问题，先不管IE6了
+.ext-ie6 .x-form-item{
+	border-color: pink;
+	filter: chroma(color=pink);
+}*/
+/* IE6下的变通实现透明边框有bug(TD 28067)，这里要避免chroma滤镜产生嵌套，所以禁用掉边框 */
+.ext-ie6 .x-form-item, .ext-ie6 .x-form-check-group, .ext-ie6 .x-form-radio-group{
+	border-width: 0;
+	zoom: 1; /* 如果不加此配置，会因3px bug导致xxxGroup被挤到下一行 */
+}
+/* IE7下，页面标签栏因为x-clear会多出1像素，导致和左边的帮助文档工具栏没有对齐 */
+.ext-ie7 .x-tab-strip .x-clear{
+clear: none;
+}
+
+/* ---------- Checkbox/Radio相关 --- start --- */
+/* Checkbox的label改用inline，相应调整checkbox */
+.x-form-check-wrap{
+	height: auto;
+	line-height: normal;
+	padding-top: 3px;
+	zoom:1;
+}
+.x-form-check-wrap input {
+	vertical-align: text-bottom;
+	*vertical-align: auto;
+	height: auto;
+}
+.ext-opera .x-form-check-wrap input {
+	vertical-align: bottom;
+}
+/* 同FieldSet，label为inline布局，不需要middle对齐 */
+.x-form-check-wrap .x-field-tip{
+	vertical-align: baseline;
+}
+/* ie(6, 7, 8)下tip为hasLayout，baseline无法对齐 */
+.ext-ie .x-form-check-wrap .x-field-tip{
+	vertical-align: middle;
+}
+.ext-strict .ext-ie .x-form-check-wrap .x-field-tip{
+	vertical-align: baseline;
+}
+/* Ext3.X中使用position:relative定位Checkbox input，现在用不着 */
+label.x-form-cb-label{
+	position: static;
+	top: 0;
+	margin: 3px;
+	display: inline;
+}
+
+/* ---------- Checkbox/Radio相关 ---- end ---- */
+
+/* ---------- TextField相关 --- start --- */
+/* Ext原有的样式很多都是以relative + n px进行调整，现在不再适用 */
+/*.ext-ie6 .x-form-text, .ext-ie7 .x-form-text, .ext-ie .x-toolbar-cell .x-form-text, .ext-ie6 .x-small-editor .x-form-text, .ext-ie7 .x-small-editor .x-form-text{
+    margin-top: 0 !important;
+	margin-right: 0 !important;
+	position: static;
+	top: auto;
+}*/
+
+/* ---------- TextField相关 ---- end ---- */
+
+
+/* ---------- Trigger相关 --- start --- */
+/* 使用inline-block进行对齐，避免恶心的各种错位 */
+.x-form-field-trigger-wrap .x-form-text, 
+.x-form-field-trigger-wrap .x-form-trigger,
+.x-form-field-wrap .x-form-twin-triggers{
+	position: static!important;
+	top: auto!important;
+	right: auto!important;
+	bottom: auto!important;
+	left: auto!important;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
+	vertical-align: middle;
+}
+/* 与后面的Tip对齐时，按middle来。 (Chrome下内部的top影响到了外部，所以需要着重定义) */
+.x-form-field-trigger-wrap{
+	display:inline-block;
+	zoom: 1;
+	*display: inline;
+	vertical-align: middle;
+}
+/* IE6 IE7 Trigger内部元素都向下偏移了1像素 */
+.ext-ie6 .x-form-field-trigger-wrap .x-form-text, 
+.ext-ie6 .x-form-field-trigger-wrap .x-form-trigger,
+.ext-ie6 .x-form-field-wrap .x-form-twin-triggers,
+.ext-ie7 .x-form-field-trigger-wrap .x-form-text, 
+.ext-ie7 .x-form-field-trigger-wrap .x-form-trigger,
+.ext-ie7 .x-form-field-wrap .x-form-twin-triggers{
+	margin-top: -1px;
+}
+/* TwinTrigger构造不同，需覆盖 */
+.ext-ie6 .x-form-field-trigger-wrap .x-form-twin-triggers .x-form-trigger,
+.ext-ie7 .x-form-field-trigger-wrap .x-form-twin-triggers .x-form-trigger{
+	margin-top: 0;
+}
+/* ---------- Trigger相关 ---- end ---- */
+
+/* ---------- FieldSet相关 --- start --- */
+/* --- FieldSet通用 --- start --- */
+.x-fieldset {
+	border:1px solid #B8C7DA;
+	display:block; /* preserve margins in IE */
+}
+/*.x-fieldset legend {
+	font: 12px tahoma,arial,helvetica,sans-serif;
+}*/
+.x-fieldset-header{
+	padding: 3px 0;
+}
+
+/* IE6下字偏下了点 */
+.ext-ie6 .x-fieldset-header {
+	padding-bottom: 1px;
+}
+.x-fieldset-bwrap {
+	overflow:hidden;
+}
+/* FieldSet自己管理fieldTip，不再需要它的上下margins，title为inline，不需要middle对齐 */
+.x-fieldset-header .x-field-tip{
+	margin: 0 3px;
+	vertical-align: baseline;
+}
+/* FieldSet也使用inline对齐 */
+.x-fieldset .x-fieldset-header .x-fieldset-checkbox/*, .x-fieldset .x-fieldset-title */{
+	height: auto;
+	*height: 16px;
+	*width: 15px;
+	margin-right: 3px;
+	float: none!important;
+	vertical-align: text-bottom; /* chrome: text-bottom, opera: bottom*/
+	*vertical-align: auto;
+}
+.ext-opera .x-fieldset .x-fieldset-header .x-fieldset-checkbox{
+	vertical-align: bottom;
+}
+
+.x-fieldset .x-fieldset-title{
+	display: inline;
+	margin-top: 3px;
+	margin-bottom: 3px;
+}
+/*解决表格在fieldset内mask后颜色过深*/
+.x-fieldset .ext-el-mask{
+	background-color: #fff!important;
+    -moz-opacity: 0.5;
+    opacity: .50;
+    filter: alpha(opacity=50);
+}
+/* --- FieldSet通用 ---- end ---- */
+
+/* --- FieldSet border模式 --- start --- */
+/* 当为border模式的FieldSet时，Chrome和Firefox都无左右边距 */
+legend.x-fieldset-header{
+	padding-left: 2px;
+	padding-right: 2px;
+}
+/* IE有legend有左右边距 */
+.ext-ie legend.x-fieldset-header{
+	padding-left: 0;
+	padding-right: 0;
+}
+/* --- FieldSet border模式 ---- end ---- */
+
+/* --- FieldSet offset模式 --- start --- */
+.x-fieldset-offset {
+	border : none;
+	padding : 0px!important;
+	margin-bottom : 0px;
+}
+.x-fieldset-offset-header {
+	padding:3px 0 5px 0 ;
+}
+/*
+.ext-ie .x-fieldset-offset-header {
+ height:25px; kc,5-20
+ height:100%;
+ overflow: auto; 
+}*/
+.x-fieldset-offset-bwrap {
+	padding-left:20px;
+}
+/* --- FieldSet offset模式 ---- end ---- */
+
+/* --- FieldSet page模式 --- start --- */
+.x-fieldset-page {
+ border: none;
+ padding:0px!important;
+}
+
+.x-fieldset-page .x-fieldset-page-header {
+ background: url(../../../images/toolbar_bg.jpg) repeat-x top;
+ padding: 6px;
+ border-bottom: 1px solid #8DA2BB;
+ overflow: hidden;
+}
+/* IE6下诡异的问题，当内容为inline时(?)，边框和背景都不显示 */
+.ext-ie6 .x-fieldset-page .x-fieldset-page-header{
+	zoom: 1;
+}
+..x-fieldset-page-header .x-fieldset-title {
+ color:#333;
+ font-weight:bold;
+}
+.ext-ie .x-fieldset-page-header .x-fieldset-title {
+ margin-top:1px;
+}
+
+.x-fieldset-page-body {
+ padding:10px 10px 10px 20px;
+}
+/* --- FieldSet page模式 ---- end ---- */
+
+/* --- FieldSet group模式 --- start --- */
+.x-fieldset-group {
+	border : none;
+	padding:0px!important;
+}
+.x-fieldset-group .x-toolbar,.x-fieldset-group .x-panel-body{
+	border-color:#708EB3;
+}
+.x-fieldset-group-bwrap{
+	padding-left:16px;
+}
+/* 有横细线 */
+.x-fieldset-group-header {
+	margin-bottom:5px;
+	color:#0D255E;
+	background:transparent url(../../../images/group-x.gif) repeat-x center;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+/* 前面的内容要把横线挡住，只显示在后面的剩余空间 */
+.x-fieldset-group-header .x-field-tip, .x-fieldset-group-header .x-fieldset-title, .x-fieldset-group-header .x-field-tip{
+	background-color:#F7FAFD;
+	margin: 0 !important;
+}
+/* IE6下，checlbox设置背景样式就会变 */
+.x-fieldset-group-header input{
+	margin: 0 !important;
+}
+/* 标题与前input后tip间还是要有间隔的，不能用margin（会把横线漏出来）换成padding*/
+.x-fieldset-group-header .x-fieldset-title, .x-fieldset-group-header .x-field-tip{
+	padding-left: 3px;
+	padding-right: 3px;
+}
+/* IE下input有padding或margin，并且如果设置了bgcolor就样式变了，所以只能减少宽度，避免横线漏出来 */
+.ext-ie .x-fieldset-group-header input{
+	width: 13px;
+}
+/* --- FieldSet group模式 ---- end ---- */
+
+/* ----------- FieldSet相关 ---- end ---- */
+
+
+/*
+ * 
+ * 标题背景
+ * 默认panel
+*/
+.window_tab_two .x-fieldset-group-header .x-fieldset-title,.window_tab_two .x-fieldset-group-header .x-field-tip{
+	background-color:#F1F6FB!important;
+}
+
+/* 标题背景
+ * formpage
+*/
+.x-formpage .x-fieldset-group-header .x-fieldset-title,.x-formpage .x-fieldset-group-header .x-field-tip{
+	background-color:#E7F2FC;
+}
+/*
+ * 标题背景
+ * WINDOW
+*/
+.x-window .x-formpage .x-fieldset-group-header .x-fieldset-title,.x-window .x-fieldset-group-header .x-field-tipico{
+	background-color:#DFE8F6;
+}
+/*
+ * 标题背景
+ * sf-forms-panel
+*/
+.sf-forms-panel .x-fieldset-header .x-fieldset-title,.sf-forms-panel .x-fieldset-group-header .x-field-tipico{
+	background-color:#E9F2FC;
+}
+/*
+ * 标题背景
+ * menu-right
+*/
+.menu-right .x-fieldset-group-header .x-fieldset-title,.menu-right .x-fieldset-group-header .x-field-tipico{
+	background-color:#FCFDFE!important;
+}
+
+/* 标题背景
+ * formpage和WINDOW下面的panel
+*/
+.x-formpage .x-panel .x-fieldset-group-header .x-fieldset-title,.x-formpage .x-panel .x-fieldset-group-header .x-field-tipico{
+	background-color:#F7FAFD;
+}
+.x-window .x-panel .x-formpage .x-fieldset-group-header .x-fieldset-title,.x-window .x-panel .x-fieldset-group-header .x-field-tipico{
+	background-color:#F7FAFD;
+}
+
+/*
+ *
+ * 扩展
+ *
+ */
+.opacity {
+ filter:alpha(opacity=35);
+ -moz-opacity: 0.35;
+ opacity: 0.35;
+}
+/* ----- Reference Field 样式定义 --- start --- */
+/* ButtonRefField */
+.x-field-btnref {
+	overflow:auto;
+	zoom: 1; /* IE 3px bug, 为了通过单元测试，先加上*/
+}
+/* LinkRefField */
+.x-field-linkref {
+	text-decoration:underline;
+	cursor:pointer;
+	color:blue;
+	width:auto;
+}
+/* DisplayBtnRefField */
+.x-dspbtn .x-dspbtn-dsp, .x-dspbtn .x-dspbtn-btnwrap{
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
+}
+.x-dspbtn .x-dspbtn-btnwrap{
+	vertical-align: middle;
+}
+/*.ext-ie .x-dspbtn .x-dspbtn-dsp,.ext-ie  .x-dspbtn .x-dspbtn-btnwrap{
+	display: inline;
+	zoom: 1;
+}*/
+/* IE6下莫名其秒地按钮下边框显示不出来 */
+.ext-ie6 .x-dspbtn-btnwrap{
+	height: 24px;
+}
+/* ----- Reference Field 样式定义 ---- end ---- */
+
+
+/* ----- FormLayout改造 --- start --- */
+.x-form-element{
+	position: static;
+}
+/* IE6 3px bug */
+.x-form-item-label-right {
+ text-align:right;
+}
+.x-form-item-label-top {
+ width:auto !important;
+ clear:none !important;
+ margin-bottom:4px !important;
+ position:static !important;
+}
+.x-form-element-top {
+ clear:left;
+ padding-left:0 !important;
+}
+.x-form-item-top {
+ padding-bottom:4px !important;
+}
+/* ----- FormLayout改造 ---- end ---- */
+
+
+/* ----- FieldTip对齐相关  --- start --- */
+/* 普通情况下，tip位于field前，display:block，会自动换行 */
+/* right/left&normal/loose, top& */
+.x-field-tip, .x-item-disabled .x-field-tip{
+	color:#666!important;
+}
+.x-field-tip{
+	margin: 3px 0;
+	font-size: 12px;
+	line-height: 14px;
+	display: block;
+	zoom: 1; /* IE 3px bug, 为了通过单元测试，先加上*/
+}
+.x-field-tipico {
+	background: transparent url( ../../../images/ico/info.gif) no-repeat scroll center;
+	cursor:pointer;
+	width: 16px;
+	height: 14px;
+}
+/* 诡异的IE，当labelAlign=left/right，x-form-element中元素超出field-label下方时，会左偏3象素？！这里减1象素 */
+.ext-ie .x-field-tip-left, .ext-ie .x-field-tip-right{
+	margin-bottom: 2px;
+}
+.x-field-tip-right{
+
+}
+
+.x-field-tip-top{
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
+}
+.x-field-tip-loose{
+	margin: 0 2px!important; /* 历史原因，调成3px会造成anchor -20空间不够而换行 */
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
+	vertical-align: middle;
+}
+
+.ext-ie .x-field-tip-loose{
+	/*vertical-align: text-bottom;*/
+}
+/*.ext-ie .x-field-tip-loose{
+	display: inline;
+	zoom: 1;
+}*/
+
+/* DisplayField, LinkRefField tip位置调整 */
+/* DisplayField的文本默认是block，无法将tip放置在后面。而inline无法撑开x-form-element，导致未垂直对齐 */
+.x-field-linkref, .x-form-display-field{
+	/*padding-top: 0px;
+	margin: 3px 0;*/
+	line-height: 20px;
+	vertical-align: middle;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
+}
+/* Anti Original */
+.ext-ie .x-form-display-field{
+	padding: 0px;
+}
+/*.ext-ie .x-field-linkref, .ext-ie .x-form-display-field{
+	display: inline;
+	zoom: 1;
+}*/
+/* ----- FieldTip相关  ---- end ---- */
+
+
+/*.ext-ie .x-form-field-trigger-wrap{
+	display:inline;
+}*/
+.x-bold-label {
+ font-weight:bold;
+ color:#666;
+}
+.ext-el-block {
+ -moz-opacity: 0!important;
+ opacity: 0!important;
+ filter: alpha(opacity=0)!important;
+}
+/*
+ * 组件扩展 
+ * RowEditor
+*/
+.ext-ie .x-row-editor .x-form-text {
+	MARGIN: 0px
+}
+.x-row-editor-header {
+	BACKGROUND: url(../../../images/default/grid/row-editor-bg.gif) repeat-x 0px 0px; OVERFLOW: hidden; HEIGHT: 2px;
+
+}
+.x-row-editor {
+	border-right:solid 1px #C4C4C4;
+}
+
+.x-row-editor-footer {
+	BACKGROUND: url(../../../images/default/grid/row-editor-bg.gif) repeat-x 0px -2px; OVERFLOW: hidden; HEIGHT: 2px
+}
+.ext-ie .x-row-editor-footer {
+	MARGIN-TOP: -1px
+}
+.x-row-editor-body {
+	BACKGROUND: #ebf2fb; OVERFLOW: hidden; PADDING-TOP: 2px; ZOOM: 1;
+}
+.x-row-editor .x-btns {
+	PADDING-LEFT: 5px; BACKGROUND: url(../../../images/default/grid/row-editor-btns.gif) no-repeat 0px 0px; LEFT: 20px; POSITION: absolute; TOP: 28px
+}
+.x-row-editor .x-btns .x-plain-bwrap {
+	PADDING-RIGHT: 5px; BACKGROUND: url(../../../images/default/grid/row-editor-btns.gif) no-repeat right -31px
+}
+.x-row-editor .x-btns .x-plain-body {
+	BACKGROUND: url(../../../images/default/grid/row-editor-btns.gif) repeat-x 0px -62px; HEIGHT: 31px
+}
+.x-row-editor .x-btns .x-table-layout-cell {
+	PADDING-RIGHT: 3px; PADDING-LEFT: 3px; PADDING-BOTTOM: 3px; PADDING-TOP: 3px
+}
+/*
+ 更换原Ext Trigger布局方式，换用inline-block对齐
+ 恶心的硬编码定位有木有！！！
+.ext-ie6 .x-row-editor .x-form-field-wrap .x-form-trigger {
+	TOP: 1px
+}
+.ext-ie7 .x-row-editor .x-form-field-wrap .x-form-trigger {
+	TOP: 1px
+}
+.ext-ie6 .x-row-editor .x-form-field-trigger-wrap {
+	MARGIN-TOP: -1px
+}
+.ext-ie7 .x-row-editor .x-form-field-trigger-wrap {
+	MARGIN-TOP: -1px
+}*/
+.errorTip .x-tip-body UL {
+	MARGIN-LEFT: 15px; LIST-STYLE-TYPE: disc
+}
+/*
+ * 组件扩展 
+ * TreeGrid
+*/
+.x-treegrid-root-table {
+    border-right: 1px solid;
+}
+
+.x-treegrid-root-node {
+    overflow: auto;
+}
+
+.x-treegrid-hd-hidden {
+    visibility: hidden;
+    border: 0;
+    width: 0;
+}
+
+.x-treegrid-col {
+    border-bottom: 1px solid;
+    height: 23px;
+    overflow: hidden;
+    vertical-align: middle;
+    -o-text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.x-treegrid-text {
+    padding-left: 4px;
+    -moz-user-select: none;
+}
+
+.x-treegrid-text .up {
+    float: left;
+}
+
+.x-treegrid-text .up, .x-treegrid-text .down {
+    display: block;
+    overflow: hidden;
+    width: 62px;
+    text-align: left;
+}
+
+.sf-flow .x-treegrid-text .up, .sf-flow .x-treegrid-text .down {
+    display: block;
+    overflow: hidden;
+    width:auto;
+    text-align: left;
+	padding-right:10px;
+}
+
+.x-treegrid-resizer {
+    border-left: 1px solid;
+    border-right: 1px solid;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.x-treegrid-header-inner {
+    overflow: hidden;
+}
+
+.x-treegrid-root-table, .x-treegrid-col {
+    border-color: #ededed;
+}
+
+.x-treegrid-resizer {
+    border-left-color: #555;
+    border-right-color: #555;
+}
+
+/*
+ * CRY
+ */
+.x-tree-root-ct colgroup col {
+    overflow: hidden;
+}
+
+.x-treegrid-hd-inner {
+    overflow: hidden;
+}
+
+.x-treegrid-text img, .x-treegrid-col img {
+    margin: 0;
+    padding: 0;
+    border: 0 none;
+    height: 16px;
+    width: 16px;
+    vertical-align: top;
+}
+
+.x-treenode-check-icon{
+	height: 16px;
+    width: 16px;
+}
+
+/*
+LightTree
+*/
+.tree-node-indent {
+	cursor: pointer;
+	padding: 5px;
+	margin: 5px;
+}
+.tree-node-disable {
+	cursor: text;
+}
+.x-tree-checknode-icon {
+	background-position: center center;
+	background-repeat: no-repeat;
+	vertical-align: top;
+	border: 0 none;
+	height: 18px;
+	width: 16px;
+	margin: 0;
+	padding: 0;
+}
+.x-tree-icon-select-none {
+	background: url("../../../images/default/grid/row-check-sprite.gif") no-repeat 0px 1px;
+}
+.x-tree-icon-select-all {
+	background: url("../../../images/default/grid/row-check-sprite.gif") no-repeat -25px 1px;
+}
+.x-tree-icon-select-part {
+	background: url("../../../images/default/grid/row-check-sprite.gif") no-repeat -50px 1px;
+}
+
+/*
+/* showMsg样式
+*/
+.msg .x-box-mc {
+ font-size:14px;
+}
+#msg-div {
+ position:absolute;
+ max-width:300px;
+ min-width:200px;
+ z-index:20000;
+ word-wrap:break-word;
+}
+.ext-ie #msg-div {
+ width:250px;
+}
+.x-box-tl {
+	background-image: url(../../../images/box/corners.gif);
+}
+.x-box-tc {
+	background-image: url(../../../images/box/tb.gif);
+}
+.x-box-tr {
+	background-image: url(../../../images/box/corners.gif);
+}
+.x-box-ml {
+	background-image: url(../../../images/box/l.gif);
+}
+.x-box-mc {
+	background-color: #eee;
+    background-image: url(../../../images/box/tb.gif);
+	font-family: "Myriad Pro","Myriad Web","Tahoma","Helvetica","Arial",sans-serif;
+	color: #393939;
+	font-size: 12px;
+}
+.x-box-mr {
+	background-image: url(../../../images/box/r.gif);
+}
+.x-box-bl {
+	background-image: url(../../../images/box/corners.gif);
+}
+.x-box-bc {
+	background-image: url(../../../images/box/tb.gif);
+}
+.x-box-br {
+	background-image: url(../../../images/box/corners.gif);
+}
+.x-box-blue .x-box-bl, .x-box-blue .x-box-br, .x-box-blue .x-box-tl, .x-box-blue .x-box-tr {
+	background-image: url(../../../images/box/corners-blue.gif);
+}
+.x-box-blue .x-box-bc, .x-box-blue .x-box-mc, .x-box-blue .x-box-tc {
+	background-image: url(../../../images/box/tb-blue.gif);
+}
+.x-box-blue .x-box-ml {
+	background-image: url(../../../images/box/l-blue.gif);
+}
+.x-box-blue .x-box-mr {
+	background-image: url(../../../images/box/r-blue.gif);
+}
+
+/*
+ * >>>>>>-------------------------------------------------->
+ */
+/*
+ * 页面微调
+ * 一些EXT默认的间距边距等等...做一些微调
+
+ */
+
+/*radio间距
+.x-form-check-wrap {
+	height:20px;
+	line-height:16px;
+}*/
+/* fix ie toolbar form items */
+
+/*.ext-ie7 .x-form-text {
+	margin:0px;
+	height:22px;
+	line-height:18px;
+}*/
+.ext-ie6 .top-0px .x-form-text, .ext-ie7 .top-0px .x-form-text {
+    margin:0px; /* ie bogus margin bug */
+    height:22px; /* ie quirks */
+    line-height:18px;
+}
+/*清空缓存按钮*/
+.Cache {
+	background:#D0E4F9 url(../../../images/CacheUsingStatus.gif);
+	border:none;
+	width:85px;
+	height:22px;
+	cursor:pointer;
+}
+.Cache:hover {
+	background:#D0E4F9 url(../../../images/CacheUsingStatus-2.gif);
+}
+/*
+测试服务器,对齐
+*/
+.Testing-Server {
+	margin-left:260px;
+}
+/*
+ * Window_TAB_textarea
+ * cls:'border-none'
+ */
+.border-none textarea {
+	background-image:none!important;
+}
+.border-none .x-tab-panel-body{
+	padding:5px;
+}
+
+/*input */
+.x-form-invalid, textarea .x-form-invalid {
+	background-color:#FAEFF0!important;
+	background-image:url(../../../images/form/invalid_line.gif)!important;
+	border-color:#c30!important;
+}
+/*选择器选择内容后效果*/
+.sf-value-change{
+	background-color:#FFFFEA;
+    background-image:url(../../../images/form/text-bg.gif);
+    border-color:#9EACB6;
+}
+.x-small-editor .sf-value-change {
+font:12px arial,tahoma,helvetica,sans-serif;
+font-weight:bold;
+color:#333;
+}
+
+/*命令控制台*/
+.page-webconsole {
+	background:#000;
+}
+.page-webconsole .x-form-text, .page-webconsole textarea.x-form-field {
+	background-image:none;
+	margin:0px;
+	padding:10px;
+	border:none;
+	background:#000!important;
+	color:#BBBBBB;
+	font-size:10pt;
+	font-weight:normal;
+	line-height:18px!important;
+	font-family:courier new, fixedsys, courier, verdana, helvetica, arial, sans-serif;
+}
+
+.page-webconsole .x-form-text {
+	_background:url(../../../images/cmd.gif) repeat-y!important;
+	background:url(../../../images/cmd.gif) no-repeat!important;
+	padding-left:30px;
+}
+/*
+ * page-wrap可能会被mask方法改为position:relative，导致前面计算的窗口位置都出问题。
+ * 所以，这里还是要保留position配置…… 经测试chrome下还是正常的 by zhangzhang, at 2011/01/12.
+ */
+.sf-page-wrap {
+	position : relative;
+	overflow : hidden;
+}
+
+/*
+ * 表格TD样式
+ */
+.td td {
+	padding:1px
+}
+.menu-view-disabled {
+	color:#747474!important;
+	background:transparent url(../../../images/JT_HUI.gif) no-repeat scroll left center;
+}
+.grey {
+	color:#666;
+}
+/*
+ * 解决google浏览器下日期控件无宽度
+
+*/
+.x-date-menu {
+	width:200px;
+}
+/*输入框只读样式*/
+.sf-form-readonly{
+	background-color:#E8EEF9!important;
+	background-image:none!important;
+	border-color:#B5B8C8!important;
+}
+.x-column-inner {
+	overflow:visible;
+
+}
+.sf-p{
+	border-bottom:#CCCCCC solid 1px;
+	height:1px;
+	margin:10px 0;
+}
+/**/
+.sf-add-ico{
+	background:url(../../../images/ico/add.gif) no-repeat scroll left center;
+	border-top:1px solid #A3BAE9;
+	line-height:20px;
+	padding-left:18px;/*bug21008 pwy*/
+	background-color:#F7F9FD;
+}
+.sf-add-ico span{
+	color:#000;
+}
+/*选择预览截断字符*/
+.sf-customappobj, .sf-customappobj-title .x-panel-header-text{
+	display:block;
+	overflow:hidden; 
+	white-space:nowrap; 
+	text-overflow:ellipsis;
+}
+/*隐藏滚动条*/
+.overflow_hidden{
+	overflow:hidden!important;
+}
+/*隐藏X滚动条*/
+.overflow-x_hidden{
+	overflow-x:hidden!important;
+}
+/*修复通道配置-带宽分配弹出窗IE下对齐问题
+.ext-ie .padding-left-3{
+	padding-left:3px;
+}*/
+/*toolbar下连接*/
+.x-toolbar-cell a{
+line-height:20px;
+}
+/*所有textarea不自动换行*/
+.x-form-textarea{
+	overflow:auto;
+	word-wrap : normal;
+}
+
+/*应用选择器图标*/
+.x-form-choose {
+	background-image: url(../../../images/choose.gif) !important
+}
+/*
+ * float
+ */
+.sf-float-left{
+float:left;
+}
+.sf-float-right{
+float:right;
+}
+/**/
+.x-window-dlg .ext-mb-text{
+	word-wrap:break-all;
+}
+/*
+ * 进度条
+*/
+.x-mask-loading div {
+	padding:5px 30px 10px 5px;
+    background:no-repeat 3px 22px;
+}
+.x-mask-loading div {
+    background-color:#fbfbfb;
+    background-image:url(../../../images/loading.gif);
+}
+/*
+.ext-el-mask {
+    background-color: #ccc;
+}
+*/
+.ext-el-mask-msg {
+    border-color:#999999;
+    background-color:#E9E9E9;
+    background-image:url(../../../images/tb-blue.gif);
+}
+.ext-el-mask-msg div {
+    background-color: #F4F4F4;
+    border-color:#CCCCCC;
+    color:#222;
+    font:normal 12px tahoma, arial, helvetica, sans-serif;
+}
+
+/*解决IE8在弹出窗口的工具栏内上下对齐问题*/
+.ext-ie8 .x-window .x-toolbar-cell .x-form-text {
+    position:relative;
+    top:0px;
+}
+/*解决IE6\IE7在editor组件内上下对齐问题*/
+.ext-ie6 .x-row-editor-bwrap .x-form-field,.ext-ie7 .x-row-editor-bwrap .x-form-field{
+	margin:0px 0 0 0!important;
+}
+/*通道-以模板新增*/
+.sf-new-templates {
+    background-color:#f0f0f0;
+	background-image:none;
+}
+.sf-new-templates .x-menu-list{
+    padding: 5px;
+}
+.sf-new-templates .x-form-element{
+	border:1px solid #98C0F4;
+	background-color:#fff;
+}
+/*树，悬停色*/
+.x-tree-node .x-tree-node-over {
+	background-color: #D9E8FB;
+}
+.x-tree-node .x-tree-selected {
+	background-color: #C6DDF9;
+}
+/*mask白色背景*/
+.sf-el-info {
+	background-color: #fff!important;
+    -moz-opacity: 0.6!important;
+    opacity: .60!important;
+    filter: alpha(opacity=60)!important;
+}
+/**/
+.sf-el-info-msg{
+    background-image:none;
+	border:none;
+	background:none;
+	z-index:9000;
+}
+.sf-el-info-msg div{
+	border-color:#ccc;
+	padding:6px 10px;
+}
+
+/* 临时性Ip/Mac绑定链接错位修复 */
+div.sim-link{
+	display: inline;
+}

@@ -1,0 +1,221 @@
+###############################################################################################
+#                                           Pptpinit Management Console
+###############################################################################################
+sub showContent 
+{
+    my (%action)=@_;
+    my $content=XMLread($gPATH.'content.xml');
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    my $keyword=$content->{keyword}->[0]->{name};
+    
+    print qq (<tr><td colspan="8" class="bigtitle">HTTP Content Filtering</td></tr>);
+    
+    #********************************** Block Web Content ********************************************
+    #ADD keyword
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Block Web Content ]</td></tr>);
+    
+    print qq (<td class="body" valign="center" align="center" style="height: 50px; width: 200px">BLOCK</td>);
+    
+    print qq (<td  class="body" valign="center" align="center" style="height: 50px; width: 100px">);
+    my $status=( $squid->{activex} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="activex"  $status >ActiveX);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="center" style="height: 50px; width: 100px">);
+    my $status=( $squid->{cookies} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="cookies"  $status >Cookies);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="center" style="height: 50px; width: 100px">);
+    my $status=( $squid->{javascript} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="javascript"  $status >JavaScript);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="center" style="height: 50px; width: 100px">);
+    my $status=( $squid->{javaapplet} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="javaapplet"  $status >JavaApplet);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="center" style="height: 50px; width: 100px">);
+    my $status=( $squid->{proxy} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="proxy"  $status >Proxy);
+    print qq (</td>);
+    #**********************************Prohibit Multi-thread Download ********************************************
+    #
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" >[ Prohibit Multi-thread Download ]</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body" valign="center" align="left" style="height: 50px; width: 200px">Prohibit Multi-thread Download</td>);
+    print qq (<td class="body" valign="center" align="center" style="height: 50px; width: 100px">); 
+    my $status=( $squid->{prohibitmulti} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="prohibitmulti"  $status >);
+    print qq (</td>);
+    print qq (<tr>);
+    
+    #********************************** Block Web Content ********************************************
+    #ADD keyword
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Block Content Keyword ]</td></tr>);
+    print qq (</table>);
+    print qq (<table>);
+    
+    print qq (<tr>);
+    print qq (<td class="body" align="center" style="height: 100px; width: 200px">Add Keyword);
+    print qq (<br>);
+    print qq (<br>);
+    print qq (<input class="qbtext" name="keywordname" style="WIDTH: 150px" >\n);
+    print qq (<br>);
+    print qq (<br>);
+    print qq (<input class="qb" type="button" value="Add" title="Add Keyword!" onClick="goSubmit('ADDKEYWORD')" style="width:30");
+    print qq (</td>);
+    print qq (<td class="body" align="center" style="height: 100px; width: 150px">);
+    print qq (</td>);
+    
+    #Keywordlist
+    print qq (<td class="body" align="center" style="height: 100px; width: 200px"><br>Keyword);
+    print qq (<br>);
+    print qq (<br>);
+    print qq (<select class="qbopt" name="keywordlist" size="5" multiple style="width:150">);
+    foreach my $word ( @$keyword )
+    {
+        if ( $word->{keywordname} eq 'system' ) { next; }
+        print qq (<option>$word->{keywordname}</optin>);
+    }
+    print qq (</select>);
+    print qq (<br>);
+    print qq (<br>);
+    print qq (<input class="qb" type="button" value="Delete" title="Delete Keyword!" onClick="goSubmit('DELKEYWORD')" style="width:50");
+    print qq (</td></tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body" align="center" style="width: 200px">);
+    print qq (</td>);
+    print qq (<td class="body" align="center" style="width: 150px">);
+    print qq (<input class="qb" type="button" align="center" value="Apply" title="Apply All Parameters now !" onClick="goSubmit('SAVE');" style="width:80">);
+    print qq (</td>);
+}
+#showConsole
+
+
+#======================================================================================================================
+sub contentScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+                                                            
+    function checkAndSetidletime()
+    {
+        if ( !isValidPort(myform.idletime.value) ) 
+        { 
+            myform.idletime.value=""; 
+            alert("Time format Error");
+        }
+    }
+    </script>
+SCRIPT
+}
+#contentScript
+
+
+#======================================================================================================================
+#maintainsquidgen( %action )
+sub maintainContent 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    my $content=XMLread($gPATH.'content.xml');
+    my $keyword=$content->{keyword}->[0]->{name};
+    my @temparray;
+    my $IS_EVERYTHING_OK = 1;
+    
+    if ( $action{action}=~m/^ADDKEYWORD$/ )
+    {
+    	if ($action{keywordname}=~m/$gBIG5/ )
+    	{
+    	    $gMSGPROMPT.=qq (ERROR:KEYWORD Format Error\\n);
+    	    $IS_EVERYTHING_OK=0;
+    	}
+    	
+    	if ($IS_EVERYTHING_OK eq '1')                                        
+    	{
+            my @namelist=split(/;/,$action{keywordname});
+            foreach my $domain ( @$keyword )
+            {
+                push( @temparray, $domain );
+            }
+            foreach my $name ( @namelist )
+            {
+                my $isfind="0";
+                foreach my $domain ( @temparray )
+                {
+                     if ( $domain->{keywordname} eq $name ) { $isfind="1"; }
+                }
+                if ( $isfind eq "0" )
+                {
+                     my %newlist=( keywordname=>$name );
+                     push( @temparray, \%newlist);
+                 }
+                 $content->{keyword}->[0]->{name}=\@temparray;
+            }
+       }
+       LogUserAction( action=>'ADDCONTENTKEYWORD', keywordname=>$action{keywordname} );
+    }
+    elsif ( $action{action}=~m/^DELKEYWORD$/ )
+    {
+        foreach my $domain ( @$keyword )
+        {
+            if ( $domain->{keywordname} eq $action{keywordlist} ) { next; }
+            push( @temparray, $domain );
+        }
+        $content->{keyword}->[0]->{name}=\@temparray;
+        LogUserAction( action=>'DELCONTENTKEYWORD', keywordname=>$action{keywordlist} );
+    }
+    elsif ( $action{action}=~m/^SAVE$/ )
+    {
+       $squid->{activex}=$action{activex};
+       $squid->{javascript}=$action{javascript};
+       $squid->{javaapplet}=$action{javaapplet};
+       $squid->{cookies}=$action{cookies};
+       $squid->{proxy}=$action{proxy};
+       $squid->{prohibitmulti}=$action{prohibitmulti};
+       
+       XMLwrite($squid, $gPATH."squidgen.xml");
+       runCommand(command=>'/usr/local/apache/qb/setuid/do_qbsquid.pl', params=>'');
+       if ( $squid->{isenable} eq "1" )
+       {
+           runCommand(command=>'killall', params=>'-9'.' '.'squid');
+           #runCommand(command=>'sleep', params=>'5');
+           #runCommand(command=>'/usr/local/squid/sbin/squid', params=>'');
+	   #runCommand(command=>'/usr/local/squid/sbin/squid', params=>'-k'.' '.'reconfigure');
+       }
+       
+       LogUserAction( action=>'APPLYCONTENTFILTERING', activex=>$action{activex}, javascript=>$action{javascript}, javaapplet=>$action{javaapplet}, cookies=>$action{cookies}, proxy=>$action{proxy}, prohibitmulti=>$action{prohibitmulti} );
+    }
+    
+    
+    XMLwrite($content, $gPATH."content.xml");
+    runCommand(command=>"/usr/local/squid/etc/delcontent.sh", params=>'');
+    runCommand(command=>"/usr/local/apache/qb/setuid/do_qbcontent.pl", params=>'');
+    
+    if ( $squid->{isenable} eq '1' )
+    {
+        runCommand(command=>"sleep", params=>'3');
+        runCommand(command=>"/usr/local/squid/etc/content.sh", params=>'');
+    }
+    
+    
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    qbSync();
+}
+#maintainContent
+#
+1

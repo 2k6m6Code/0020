@@ -1,0 +1,14 @@
+<opt file="hcconf">
+  <hcmethod rfddefault="7" port="80" traceroutetimeout="3" failnode="3" interhctime="3" dodfdtime="0" deadnode="3" timeout="8" target="www.hinet.net" speed="0" connecttimeout="3">
+    <type status="" text="By Ping" value="1" checked="0" />
+    <type status="checked" text="Trace Route" value="5" checked="1" />
+    <type status="" text="By Ping And Trace Route" value="3" checked="0" />
+    <type status="" text="By Connection to Specified Port" value="2" checked="0" />
+    <type status="" text="By Connection And Trace Route" value="4" checked="0" />
+  </hcmethod>
+  <hcmode>
+    <mode status="" text="None" value="DONOTHING" checked="0" />
+    <mode status="" text="Connection Check Only" value="HEALTHYONLY" checked="0" />
+    <mode status="checked" text="Connection Check and Automatic Update" value="HEALTHYACTION" checked="1" />
+  </hcmode>
+</opt>

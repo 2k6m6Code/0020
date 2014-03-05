@@ -1,0 +1,232 @@
+sub scriptNewApplication
+{
+    print << "scriptNewApplication";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() 
+    {
+    	myform=window.document.forms[0]; 
+    	checkState();
+    }
+	
+    function SaveApplication()
+    {
+        var AN = document.getElementById('AN').value;
+		var saveAN = document.getElementById('saveAN');
+		var newpattern = document.getElementById('newpattern');
+		var exist = document.getElementById('exist').value;
+		
+		var msg='';
+        var OK=true;
+		
+		if ( AN == '' )
+        {
+            alert('Host Name must be English or nember');
+            return;
+        }
+        for (i = 0; i < AN.length; i++)
+        {
+            var ch = AN.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+                alert('Host Name must be English or nember');
+                return;
+            }
+        }
+		
+		if ( newpattern.value == '' ) 
+        {
+			alert('Pattern can\\'t be Empty!!');
+        }
+        if ( !OK ) { alert(msg); return;}		
+		saveAN.value = AN;
+		if(!exist){saveAN.value+='_UD';myform.action.value = 'SAVE';}
+		if(exist=='1'){myform.action.value = 'SAVEEXIST';}
+		
+        myform.submit();
+    }
+    
+	function appcancel() 
+    {
+    	var fromgroup = document.getElementById('fromgroup').value;
+		if(fromgroup == 1)
+		{
+			window.location.href="newappgroup.cgi";
+		}
+		else
+		{
+			window.close();
+		}
+    }
+	
+    function checkState()
+    {
+        var action=document.getElementById('action').value;
+        var AN=document.getElementById('AN');
+		var fromgroup = document.getElementById('fromgroup').value;
+		
+        if ( AN.value != '' ){AN.disabled = true;}
+        
+        if ( action != '')
+		{
+			if(fromgroup == 1)
+			{
+				window.location.href="newappgroup.cgi";
+			}
+			else
+			{
+				window.opener.location.replace('appgroup.cgi');
+				window.close();
+			}
+		}
+    }
+    
+    </script>
+    
+scriptNewApplication
+}
+#scriptNewApplication
+
+sub byName
+{
+    $a->{hostname} cmp $b->{hostname};
+}
+#byName
+
+sub maintainApplication
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+	my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};
+	
+	my $path='/usr/local/apache/qbconf/l7-object/';
+	
+    if ( $action{action}=~m/^SAVE$/ ) 
+	{	
+		my %newservice;
+		my @service_list_after_new;
+		$name = $action{saveAN};
+		$name =~ s/_UD//g;
+        foreach my $service ( @$servicelist ) 
+        {
+            if ( $service->{title} eq $name ) 
+            { 
+               if ( $service->{type} eq 'layer7' || $service->{type} eq 'user' )
+               { 
+                  $gMSGPROMPT.=qq(The name $name has been used.);
+               }
+                return;
+            }
+            if ( $service->{title} ne $name ) { push(@service_list_after_new, $service);}
+            if ( $service->{title} eq 'system' ) { %newservice=%$service; }
+        }
+        my %port=(protocol=>'system', value=>'system');
+        $newservice{title}=$name;
+        $newservice{type}='layer7';
+        #$newservice{type}=( $action{group} )? $action{group} : 'user';
+        $newservice{port}=\%port;
+        
+        push( @service_list_after_new, \%newservice );
+        
+        $service->{service}=\@service_list_after_new;
+		
+		XMLwrite($service, $gPATH."service.xml");
+		
+		my $service2=XMLread($gPATH.'service.xml');
+		my $servicelist2=$service2->{service};
+		my $targetservice2;
+		
+        foreach $service2 ( @$servicelist2 ) 
+        { 
+            if ( $service2->{title} ne $name ) { next; }
+            $targetservice2=$service2; 
+            last;
+        }
+		
+		my $portlist2=$targetservice2->{port};
+		my %port=( protocol=>$action{saveAN}, value=>$action{newdescription});
+		push( @$portlist2, \%port );
+		XMLwrite($service2, $gPATH."service.xml");
+        LogUserAction( action=>'ADDAPP', title=>$action{AN} );
+		
+		open(FILE1,">$path$action{saveAN}\.pat");
+		print FILE1 "$action{saveAN}\n";
+		print FILE1 "$action{newpattern}\n";
+		close(FILE1);
+    }
+	if ( $action{action}=~m/^SAVEEXIST$/ ) 
+	{	
+		my %newservice;
+		my @service_list_after_new;
+		$name = $action{saveAN};
+		$name =~ s/_UD//g;
+		
+		my $targetservice;
+        foreach my $service ( @$servicelist ) 
+        {
+			if ( $service->{title} ne $name ) { push(@service_list_after_new, $service); next;}
+            $targetservice=$service; 
+            last;
+        }
+		if ( !$targetservice ) #{$gMSGPROMPT.=qq(not fund!); return; }
+		{			
+			my %port=(protocol=>'system', value=>'system');
+			$newservice{title}=$name;
+			$newservice{type}='layer7';
+			#$newservice{type}=( $action{group} )? $action{group} : 'user';
+			$newservice{port}=\%port;
+			
+			push( @service_list_after_new, \%newservice );
+			
+			$service->{service}=\@service_list_after_new;
+			
+			XMLwrite($service, $gPATH."service.xml");
+			
+			my $service2=XMLread($gPATH.'service.xml');
+			my $servicelist2=$service2->{service};
+			my $targetservice2;
+			
+			foreach $service2 ( @$servicelist2 ) 
+			{ 
+				if ( $service2->{title} ne $name ) { next; }
+				$targetservice2=$service2; 
+				last;
+			}
+			
+			my $portlist2=$targetservice2->{port};
+			my %port=( protocol=>$action{saveAN}, value=>$action{newdescription});
+			push( @$portlist2, \%port );
+			XMLwrite($service2, $gPATH."service.xml");
+		}
+		else
+		{
+			my $portlist=$targetservice->{port};
+			
+			my @newPortList;
+			foreach my $port ( @$portlist )
+			{
+				if ( $port->{protocol} eq 'system' ) { push ( @newPortList, $port ); next;}
+			}
+			$targetservice->{port}=\@newPortList;
+			if($action{newpattern} ne '')
+			{
+				my %port=( protocol=>$action{saveAN}, value=>$action{newdescription});
+				push( @newPortList, \%port );
+			}
+			$targetservice->{port}=\@newPortList;
+			XMLwrite($service, $gPATH."service.xml");
+		}
+		open(FILE1,">$path$action{saveAN}\.pat");
+		print FILE1 "$action{saveAN}\n";
+		print FILE1 "$action{newpattern}\n";
+		close(FILE1);
+		LogUserAction( action=>'SAVEAPP', title=>$action{AN} );
+    }
+}
+#
+1

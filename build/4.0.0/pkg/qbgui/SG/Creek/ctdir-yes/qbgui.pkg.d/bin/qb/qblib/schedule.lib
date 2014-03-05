@@ -1,0 +1,93 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showSchedule
+{
+    my (%action)=@_;
+    my $schref=XMLread($gPATH.'schedule.xml');
+    my $schlist=$schref->{schedule};
+    
+    my @titleHeadList=($qblang[29], $qblang[169], $qblang[25]);
+    my %titleWidth=('Name'=>300, 'Description'=>300, 'Edit'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">$qblang[170]);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    #==============================================================
+    # Print Title first
+    # show 
+    #===============================================================
+    # print qq (<div class="divframe" style="width:800">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0"><tr>); 
+    # foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    # print qq (<td align="center" width="100">);
+    # print qq (<a href="javascript:delSchedule()"><image src="image/del.gif" title="Delete Checked Schdule(s)" border="0"></a>);
+    # print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('schedule', this.checked)">);
+    # print qq (</tr></table>);
+    # print qq (</div>);
+    print qq (<div class="divframe" style="height:200; width:800">);
+    print qq (<table id="scheduleList" width="100%"  class="body" border="0"><thead><tr bgcolor="#332211"><th width="300" align="center">$qblang[29]</th><th width="300" align="center">$qblang[169]</th><th width="100" align="center">$qblang[25]</th><th width="100" align="center"><a href="javascript:delSchedule()"><img border="0" title="Delete Checked Schdule(s)" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('schedule', this.checked)" title="select or deselect all items"></th></tr></thead>);
+    my $lineCount=0;
+    foreach my $item ( @$schlist )
+    {
+        if ( $item->{schname} eq "system" ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+        print qq (<td align="center" width="$titleWidth{Name}" height="25" >$item->{schname}</td>);
+        print qq (<td align="center" width="$titleWidth{Description}" height="25">$item->{description}</td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<a href="newschedule.cgi?schname=$item->{schname}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit Schedule properties" border="0"></a></td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<input type="checkbox" name="schedule" value="$item->{schname}">);
+        print qq (</tr>);
+        $lineCount++;
+    }
+                                            
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="$qblang[162]" onclick="NewSchedule();">);
+}
+#showSchedule
+    
+
+
+#=============================================================================================
+
+sub scriptSchedule
+{
+    print << "scriptSchedule";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function NewSchedule() { window.top.mainFrame.location.href="newschedule.cgi"; }    
+    
+    function delSchedule()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+    </script>
+    
+scriptSchedule
+}
+#scheduleScript
+#
+1

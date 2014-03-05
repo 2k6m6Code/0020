@@ -1,0 +1,653 @@
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showRmupgrd
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+	$gENABLECMS=0;
+   
+    print qq (<table>);
+    my $title;
+    if ( $action{viewpoint} eq 'firmware' )
+    {
+        $title = $qblang[308];
+    }
+    elsif ( $action{viewpoint} eq 'config' )
+    {
+        $title = $qblang[309];
+    } 
+    elsif ( $action{viewpoint} eq 'cms' )
+    {
+        $title = $qblang[310];
+    } 
+    elsif ( $action{viewpoint} eq 'managerconfig' )
+    {
+        $title = $qblang[311];
+    } 
+    elsif ( $action{viewpoint} eq 'managerUPG' )
+    {
+        $title = $qblang[312];
+    } 
+    
+    print qq (<tr><td class="bigtitle" colspan="2">$title</td></tr>); 
+    print qq (<tr><td class="bigtitle" colspan="2"><hr size="1"></td></tr>); 
+    print qq (<tr><td rowspan="2">);
+    if ( $action{viewpoint} ne 'managerconfig' )
+    {
+    print qq (<iframe name="result" style="background-color:#C2D1E1; width:450; height:350; filter:alpha(opacity=70);"></iframe>);
+    }
+    print qq (<iframe id="kill" style="display:none"></iframe>);
+    print qq (</td>);
+    print qq (<td valign="top" align="center">);
+    
+    if ( $action{viewpoint} eq 'firmware' )
+    {
+    
+        #my $pkginfo=runCommand(command=>'cat', params=>'/mnt/conf/pkginfo');
+        my $pkginfo=`cat /mnt/conf/pkginfo |grep \"VERSION DETAIL\"`;
+        $pkginfo =~ s/VERSION DETAIL ://g;
+        print qq (<fieldset>);
+        print qq (<legend class="subtitle">$qblang[5]</legend>);
+        print qq (<table>);
+        print qq (<tr><td class="body" align="center">$pkginfo</td></tr>);
+        print qq (</table>);
+        print qq (</fieldset>);
+        print qq (<br>);
+    }
+    
+    my $showtitle;
+    if ( $action{viewpoint} eq 'firmware' )
+    {
+        $showtitle = $qblang[313];
+    }
+    elsif ( $action{viewpoint} eq 'config' )
+    {
+        $showtitle = $qblang[314];
+    } 
+    elsif ( $action{viewpoint} eq 'cms' )
+    {
+        $showtitle = $qblang[315];
+    } 
+    elsif ( $action{viewpoint} eq 'managerconfig' )
+    {
+        $showtitle = $qblang[316];
+    } 
+    elsif ( $action{viewpoint} eq 'managerUPG' )
+    {
+        $showtitle = $qblang[317];
+    } 
+    
+    
+    print qq (<fieldset class="fieldset">);
+    print qq (<legend class="subtitle">$showtitle</legend>);
+    print qq (<table class="body">);
+    
+    if ( $action{viewpoint} eq 'firmware' )
+    {
+        print qq (<tr><td align="left"><input name="tool" type="radio" value="getupgrade" checked onClick="switchOption('getupgrade')">$qblang[318]</td></tr>);
+        print qq (<tr><td align="left"><input name="tool" type="radio" value="getupgradeimage" onClick="switchOption('getupgradeimage')">$qblang[319]</td></tr>);
+        print qq (<tr><td align="left"><input name="tool" type="radio" value="doupgrade" onClick="switchOption('doupgrade')">$qblang[320]</td></tr>);
+    }
+    elsif ( $action{viewpoint} eq 'config' )
+    {
+        print qq (<tr><td align="left"><input name="tool" type="radio" value="export"  checked onClick="switchOption('export');hidehide('adv2');showhide('adv1');">$qblang[321]</td></tr>); 
+        print qq (<tr><td align="left"><input name="tool" type="radio" value="import" onClick="switchOption('import');hidehide('adv2');showhide('adv1');">$qblang[311]</td></tr>); 
+        print qq (<tr><td align="left"><input name="tool" type="radio" value="ftpserver" onClick="switchOption('ftpserver');hidehide('adv1');showhide('adv2');">$qblang[322]</td></tr>); 
+        print qq (<tr><td align="left"><input name="tool" type="radio" value="autosave" onClick="switchOption('autosave');hidehide('adv1');showhide('adv2');">Auto Save</td></tr>); 
+        #print qq (<tr><td align="left"><input name="tool" type="radio" value="emailalert" onClick="switchOption('emailalert');;hidehide('adv1');showhide('adv2');">Email Alert</td></tr>); 
+    }
+    elsif ( $action{viewpoint} eq 'cms' )
+    {
+        print qq (<tr><td><input name="tool" type="radio" value="uploadkey" checked onClick="switchOption('uploadkey')">$qblang[324]</td></tr>);
+        if ( $gENABLECMS )
+        {
+            print qq (<tr><td><input name="tool" type="radio" value="exportkey" onClick="switchOption('exportkey')">$qblang[325]</td></tr>);
+            #print qq (<tr><td><input name="tool" type="radio" value="uploadupg" onClick="switchOption('uploadupg')">Upload UPG</td></tr>);
+            #print qq (<tr><td align="left"><input name="tool" type="radio" value="import" onClick="switchOption('import','5')">Upload Config.</td></tr>);
+            
+        }
+    }
+    elsif ( $action{viewpoint} eq 'managerconfig' )
+    {
+        if ( $gENABLECMS )
+        {
+            #print qq (<tr><td align="left"><input name="tool" type="radio" value="import" onClick="switchOption('import','5')">Upload Config.</td></tr>);
+            print qq (<tr><td align="left"><input name="tool" type="radio" checked value="import">$qblang[311]</td></tr>);
+            
+        }
+    }
+    elsif ( $action{viewpoint} eq 'managerUPG' )
+    {
+        if ( $gENABLECMS )
+        {
+            print qq (<tr><td><input name="tool" type="radio" checked value="uploadupg" onClick="switchOption('uploadupg')">$qblang[326]</td></tr>);
+            
+        }
+    }
+=cut
+    print qq (<tr><td><input name="tool" type="radio" value="export"  checked onClick="switchOption('export')">Backup Config.</td></tr>); 
+    print qq (<tr><td><input name="tool" type="radio" value="import" onClick="switchOption('import')">Upload Config.</td></tr>); 
+    print qq (<tr><td><input name="tool" type="radio" value="getupgrade" onClick="switchOption('getupgrade')">Upload Upgrade Package</td></tr>);
+    print qq (<tr><td><input name="tool" type="radio" value="getupgradeimage" onClick="switchOption('getupgradeimage')">Upload Fs/Lib Image Package</td></tr>);
+    print qq (<tr><td><input name="tool" type="radio" value="uploadkey" onClick="switchOption('uploadkey')">Upload Management Key</td></tr>);
+    if ( $gENABLECMS )
+    {
+        print qq (<tr><td><input name="tool" type="radio" value="exportkey" onClick="switchOption('exportkey')">Download Management Key</td></tr>);
+        print qq (<tr><td><input name="tool" type="radio" value="uploadupg" onClick="switchOption('uploadupg')">Upload UPG</td></tr>);
+    }
+    print qq (<tr><td><input name="tool" type="radio" value="doupgrade" onClick="switchOption('doupgrade')">Launch Upgrade Process</td></tr>);
+=cut
+    
+    print qq (</table>); 
+    print qq (</fieldset>);
+    #print qq (</td></tr>);
+    
+    # print config options of selected diagnosetic tool
+    #print qq (<tr><td align="center">);
+    print qq (<br>);
+    print qq (<br>);
+ 
+    print qq (<fieldset id="export" class="fieldset" style="display:block">);
+    print qq (<legend class="subtitle">$qblang[327]</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>$qblang[328]:</td><td>);
+    my @configname=maintainConfig(action=>'LISTCONFIGNAME', type=>'EXPORT');
+    print qq (<select class="qbopt" name="configuration" size="1" style="width:150" onChange="setDefaultSaveas();">);
+    foreach my $confid ( @configname ) {   print qq (<option span title="$confid" value="$confid">$confid</option>); }
+    print qq (</select></td></tr>);
+    print qq (<tr><td>$qblang[329]:</td><td><input type="text" class="qbtext" name="saveas" style="width:150"></td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+    
+    print qq (<fieldset id="import" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[327]</legend>);
+    print qq (<table class="body">);
+    print qq (<tr><td>$qblang[330]:</td><td><input type="file" class="qbtext" name="configname" style="width:120"></td></tr>);
+    if ( $gENABLECMS )
+    {
+    	print qq (<tr><td>$qblang[331]:</td><td><select id="select" class="qbopt" style="width:150px;display:block" onChange="this.form.cms.value=this.value"> );
+    	$file = join(",",glob('/mnt/qb/conf/cms/*'));
+    	@name = split(",",$file);
+    	print qq(<option value="none">$qblang[332]</option>);
+    	foreach $y (@name)
+    	{
+        	$y =~ s/\/mnt\/qb\/conf\/cms\///;
+        	print qq(<option value="$y">$y</option>);
+    	}
+    	print qq (</select><td>);
+        print qq (<input type="hidden" id="enablecms" value="1">);
+    }
+    else
+    {
+        print qq (<input type="hidden" id="enablecms" value="0">);
+    }
+    print qq (<tr><td>$qblang[329]:</td><td><input type="text" class="qbtext" name="tmpimportname" style="width:120" oncChange="this.form.importname.value"></td></tr>);
+    print qq (<input type="hidden" id="cms" value="">);
+    print qq (<input type="hidden" id="importname" name="importname">);
+    print qq (</table>);
+    print qq (</fieldset>);
+    
+    print qq (<fieldset id="getupgrade" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[333]</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>$qblang[334]:</td><td><input type="file" class="qbtext" name="upgradefile" style="width:120"></td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+
+    print qq (<fieldset id="getupgradeimage" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[335]</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>$qblang[334]:</td><td><input type="file" class="qbtext" name="upgradeimagefile" style="width:120"></td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+
+    print qq (<fieldset id="doupgrade" class="fieldset" style="display:none">);
+    #print qq (<legend class="subtitle">Help</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>$qblang[336]</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+    
+    print qq (<fieldset id="exportkey" class="fieldset" style="display:none">);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>$qblang[325]</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+    
+    print qq (<fieldset id="uploadkey" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[337]</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>$qblang[334]:</td><td><input type="file" class="qbtext" name="qbkey" style="width:120"></td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+
+
+    #-----FTP Server-------------------------------------------------------------------------------
+    print qq (<span id="ftpserver" class="fieldset" style="display:none; height: 160px;">);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr class="body"  valign="top" align="left">);
+    print qq ($qblang[338]);
+    print qq (<hr size="1">);
+    print qq (</tr>);
+    print qq (<tr><td class="body"  valign="top" align="left" style="width: 100px">);
+    my $status=( $overview->{enablecfgftpserver} ) ? ('checked') : ('');
+    print qq ($qblang[26]:</td>);
+    print qq (<td><input type="checkbox" name="enablecfgftpserver"  $status title="When you save a config file,the file will be exported to remote ftp server automatically." onClick="switchCfgFTPServerIP()"></td></tr>);
+   
+    print qq (<tr><td class="body" valign="top" align="left" style="width: 100px">); 
+    print qq ($qblang[339]:</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<select class="qbopt" name="ftpmode" style="width:100px">);
+    foreach my $mode ( 0,1 )
+    {
+    	my $status=( $mode eq $overview->{ftpmode} ) ? ( 'selected' ) : ( '' );
+    	my $ShowMode=( $mode eq "1" ) ? ( 'Active' ) : ( 'Passive' );
+    	print qq (<option value='$mode' $status>$ShowMode</option>);
+    }
+    print qq (</select>);
+    print qq (</td></tr>);
+    
+    print qq (<tr><td class="body"  valign="top" align="left" style="width: 100px">);
+    print qq ($qblang[340]:</td>);
+    print qq (<td><input name="cfgftpserverip" class="qbtext" type="text" title="FTP server address" value="$overview->{cfgftpserverip}" style="width:100px">);
+    print qq (</td></tr>);
+   
+    print qq (<tr><td class="body"  valign="top" align="left" style="width: 100px">);
+    print qq ($qblang[341]:</td>);
+    print qq (<td><input name="cfgftpusername" class="qbtext" type="text" title="FTP login username" onChange="" style="width:100px" value="$overview->{cfgftpusername}">);
+    print qq (</td></tr>);
+
+    print qq (<tr><td class="body"  valign="top" align="left" style="width: 100px">);
+    print qq ($qblang[342]:</td>);
+    print qq (<td><input name="cfgftppassword" class="qbtext" type="password" title="FTP login password" onChange="" style="width:100px" value="$overview->{cfgftppassword}">);
+    print qq (</td></tr>);
+
+    print qq (<tr><td class="body"  valign="top" align="left" style="width: 100px">);
+    print qq ($qblang[343]:</td>);
+    print qq (<td><input name="cfgftpdirectory" class="qbtext" type="text" title="Support one layer directory can be created automatically!!! For example:If you type /aaa/bbb/ccc ,qb will create a directory ccc in /aaa/bbb,then upload config file to /aaa/bbb/ccc/" onChange="" style="width:100px" value="$overview->{cfgftpdirectory}">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</span>);
+    #-------------------------------------------------------------------------------------------
+    
+    my $maillist=$overview->{mail};
+    print qq (<span id="emailalert" class="fieldset" style="display:none">);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td class="body"  valign="top" align="left">);
+    print qq ($qblang[300]:);
+    print qq (</td></tr>);
+    print qq (<tr><td class="body"  valign="top" align="left">);
+    my $count=1;
+    foreach my $mail ( @$maillist )
+    {
+    	my $mailValue=$mail->{value};
+    	if ( $mailValue eq 'system' ) { $mailValue=''; }
+    	print qq ($count.<input class="qbtext" name="mail$count" type="text" value="$mailValue" onChange="checkMail(this.value)" style="width:180"><br>);
+    	$count++;
+    }
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</span>);
+
+    print qq (<fieldset id="autosave" class="fieldset" style="display:none">);
+#    print qq (<span id="autosave" class="fieldset" style="display:none">);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td class="body"  valign="top" align="left">);
+    print qq ($qblang[344]);
+    print qq (</td></tr>);
+    print qq (<tr><td class="body"  valign="top" align="left">);
+    print qq ($qblang[345]:);
+    #print qq ( </td>);
+    #print qq (<td class="body"  valign="top" align="left">);
+    my $statu =( $overview->{autofile} ) ? ('checked') : ('');
+    print qq (<input name="autofile" type="checkbox" $statu >);
+    print qq (</td></tr>);
+    print qq (<tr><tr><tr></tr></tr></tr>);
+    print qq (<tr><td class="body"  valign="top" align="left">);
+    print qq ( ( $qblang[346] ));
+    print qq (</td></tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+#    print qq (</span>);
+
+    #print qq (<fieldset id="uploadupg" class="fieldset" style="display:none">);
+    #print qq (<legend class="subtitle">Select Upload UPG</legend>);
+    #print qq (<table class="body" cellpadding="0" >);
+    #print qq (<tr><td>Upgrade File:</td><td><input type="file" class="qbtext" name="qbupg" style="width:120"></td></tr>);
+    #print qq (<tr><td>Select Number:</td>);
+    #print qq (<td>);
+    #print qq (<select class="qbopt" name="number" style="width:80">\n); 
+    #foreach my $num ( 1..3 )
+    #{
+    #     print qq (<option value="upg$num">upg$num</option>);
+    #}
+    #print qq (</select>);
+    #print qq (</td>);
+    #print qq (</tr>);
+    #print qq (</table>);
+    #print qq (</fieldset>);
+
+    print qq (<fieldset id="uploadupg" class="fieldset" style="display:none">);
+    print qq (<legend class="subtitle">$qblang[347]</legend>);
+    print qq (<table class="body" cellpadding="0" >);
+    print qq (<tr><td>$qblang[334]:</td><td><input type="file" class="qbtext" name="qbupg" style="width:120"></td></tr>);
+    print qq (<tr><td>$qblang[348]:</td>);
+    print qq (<td>);
+    print qq (<select class="qbopt" name="number" style="width:80">\n); 
+    #@space = ("upg1", "upg2", "upg3");
+    @space = ("upg1", "upg2", "upg3", "upg4", "upg5");
+    foreach my $num ( @space )
+    {
+         print qq (<option value="$num">$num</option>);
+    }
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</fieldset>);
+#=cut
+
+        
+    print qq (<table class="body">);
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<span ul id="adv1" style="display:'';">);
+    #=============2006/11/02 Brian to prevent firmware abuse.
+    #print qq (<input type="button" class="qb" value="Start" style="width:50px;width:50px" onClick="go();">);
+    print qq (<input type="button" class="qb" value="$qblang[349]" name="Start" style="width:50px;width:50px" onClick="go('$gMODEL','$gUPGVERSION')" >);
+    print qq (<input type="button" class="qb" value="$qblang[350]"  style="width:50px;width:50px" onClick="stopResult()">);
+    #print qq (<input type="button" class="qb" value="$qblang[351]"  title="Go Back to Admin Console" style="width:50px;width:50px" onClick="goBackToConsole()">);
+    print qq (</ul>);
+    print qq (</td></tr>);
+    print qq (<tr><td colspan="2" valign="bottom" align="center">);
+    print qq (<span ul id="adv2" style="display:none;">);
+    print qq (<input class="qb" type="button" value="$qblang[54]" title="Save All Parameters" onClick="saveFTP()" style="width:50px;width:50px">);
+    print qq (</ul>);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+    print qq (</td></tr>);
+
+    print qq (</table>);
+
+    print qq (<input type="hidden" name="stop" id="stop" value="">);
+}
+#showRmupgrd
+
+sub rmupgrdScript
+{
+	open FILE, "/usr/local/apache/qb/qbjs/jquery.js" or die $!;
+	print '<script language="javascript">';
+	while (<FILE>) { print $_; };
+	close(FILE);
+    print << "RMUPGRDSCRIPT";
+
+    
+
+        var preMethod="export";
+        var myform;
+        var exportfilename;
+    
+        function cgi_dep_onload() 
+        { 
+            myform=window.document.forms[0]; 
+            myform.saveas.value=myform.configuration.options[0].value;
+            var viewpoint = document.getElementById('viewpoint').value;
+            switch (viewpoint) 
+            {
+                case 'firmware' :
+                	switchOption('getupgrade');
+                	break;
+                case 'config' :
+                	switchOption('export');
+                	break;
+                case 'cms' :
+                	switchOption('uploadkey');
+                	break;
+                case 'managerconfig' :
+                	switchOption('import','5');
+                	break;
+                case 'managerUPG' :
+                	switchOption('uploadupg');
+                	break;
+            }
+        } 
+
+        //function window.onunload() { qbCleanUpModule('../clean/cleanrmconfig.htm'); }
+        
+        function stopResult() 
+        { 
+            clearInterval(Timer); 
+            kill.location='../setuid/runrmconfig.cgi?'+'action=stop&'+'tool='+preMethod;
+            window.document.execCommand('Stop');
+            myform.Start.disabled=false;
+        }
+        
+        function saveFTP()
+        {
+            var enablecfgftpserver=document.getElementById('enablecfgftpserver').checked;
+            var ftpmode=document.getElementById('ftpmode').value;
+            var cfgftpserverip=document.getElementById('cfgftpserverip').value;
+            var cfgftpusername=document.getElementById('cfgftpusername').value;
+            var cfgftppassword=document.getElementById('cfgftppassword').value;
+            var cfgftpdirectory=document.getElementById('cfgftpdirectory').value;
+            var autofile=document.getElementById('autofile').checked;
+            
+            if (window.XMLHttpRequest){
+            	queryReqHandler=new XMLHttpRequest();
+            }
+            else if (window.ActiveXObject){
+            	queryReqHandler=new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            
+            queryReqHandler.onreadystatechange = fno;
+            queryReqHandler.open("GET","saveftp.cgi?enablecfgftpserver="+enablecfgftpserver+"&ftpmode="+ftpmode
+            				+"&cfgftpserverip="+cfgftpserverip+"&cfgftpusername="+cfgftpusername
+            				+"&cfgftppassword="+cfgftppassword+"&cfgftpdirectory="+cfgftpdirectory
+            				+"&autofile="+autofile,true);
+            queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+            var str='';
+            queryReqHandler.send(str);
+            
+        }
+        function fno()
+        {
+            if( (queryReqHandler.readyState == 4) && (queryReqHandler.status == 200) )
+            {
+                var msg=queryReqHandler.responseText;
+            }
+        }
+        function switchCfgFTPServerIP() { myform.cfgftpserverip.disabled=( myform.enablecfgftpserver.checked ) ? (false) : (true); }
+        function goBackToConsole() { window.top.mainFrame.location.href="console.cgi"; }
+        function goBackToRmconfig() { window.top.mainFrame.location.href="rmconfig.cgi?viewpoint=firmware"; }
+
+	function showhide(field)
+	{
+	    //var stop=document.getElementById("stophide").value;
+	    //for (var i = 1; i <= stop; i++)
+	    //for (var i = 1; i <= 1; i++)
+	    //{
+	    	var advs_name = field;
+	    	var advs = document.getElementById(advs_name).style;
+	    	//if (advs.display =='') advs.display='none';
+	    	if (advs.display =='none') advs.display='';
+	    	//else advs.display='none';
+	    //}
+        }
+        
+	function hidehide(field)
+	{
+	    //for (var i = 1; i <= 1; i++)
+	    //{
+	    	var advs_name = field;
+	    	var advs = document.getElementById(advs_name).style;
+	    	if (advs.display =='') advs.display='none';
+	    //}
+	}
+        function switchOption(method,check) 
+        {
+            \$('input:file[name="upgradefile"]').replaceWith(\$('input:file[name="upgradefile"]').val('').clone( true ));
+			\$('input:file[name="upgradeimagefile"]').replaceWith(\$('input:file[name="upgradeimagefile"]').val('').clone( true ));
+            stopResult();
+            document.all[preMethod].style.display="none";
+            document.all[method].style.display="block";
+            preMethod=method;
+            if(check == 5){document.getElementById("select").style.display="";}
+        }
+
+        function setDefaultSaveas()
+        {
+            myform.saveas.value=myform.configuration.value;
+        }
+        
+        //=============2006/11/02 Brian to prevent firmware abuse.
+        //function go()
+        function go(model, upg)
+        { 
+            var oktogo=true;
+            var errmsg='';
+            myform.Start.disabled=true;
+            switch (preMethod)
+            {
+               case "export" :
+                    if ( !myform.saveas.value ) { errmsg+="Give Name to backup the Config. set as. \\n"; oktogo=false; }
+                    
+                    var pattern=/-|\\.|\\,|\\+|\\*|\\:|\\s|\\/|\\\\/g; 
+                    var result=myform.saveas.value.search(pattern); 
+                    if ( result != -1 ) 
+                    {
+                        setDefaultSaveas();
+                        errmsg+="Invalid Name\\n"; 
+                        oktogo=false; 
+                    }
+                    else
+                    {
+                        myform.saveas.value=myform.saveas.value + ".cfg";
+                        exportfilename='/export/'+myform.saveas.value;
+                    }
+
+                   break;
+
+               case "import" :
+                    if ( !myform.configname.value ) { errmsg+="Prepare Config. Set to upload.\\n"; oktogo=false; }
+
+                    if ( !myform.tmpimportname.value ) { errmsg+="Give Name of the Config. Set to Import As.\\n"; oktogo=false; }
+
+                    if ( myform.tmpimportname.value=="boot" || myform.tmpimportname.value=="default" ) 
+                    { 
+                        errmsg+="active and default are reserved for system\\n"; oktogo=false; 
+                    }
+                    
+		    if (myform.enablecms.value == 1){myform.importname.value =  myform.tmpimportname.value + "," + myform.select.value;}
+		    else {myform.importname.value =  myform.tmpimportname.value;}
+		    setTimeout("myform.Start.disabled=false;",1000);
+                    break;
+
+               case "getupgrade" :
+
+                    //=============2006/11/02 Brian to prevent firmware abuse.
+                    var reg = myform.upgradefile.value;
+                    if (reg.search(model)=="-1")
+                    {
+                        errmsg+="Error:Not a correct firmware for QB"+model+"\\n"; oktogo=false;
+                    }
+
+                    if ( !myform.upgradefile.value ) { errmsg="Prepare upgrade file to upload. \\n"; oktogo=false; }
+                    else { myform.Start.disabled=true; }
+                    break;
+
+               case "getupgradeimage" :
+
+                    //=============2006/11/02 Brian to prevent firmware abuse.
+                    //var reg = myform.upgradeimagefile.value;
+                    //if (reg.search(model)=="-1")
+                    //{
+                    //    errmsg+="Error:Not a correct firmware for QB"+model+"\\n"; oktogo=false;
+                    //}
+
+                    if ( !myform.upgradeimagefile.value ) { errmsg="Prepare upgrade file to upload. \\n"; oktogo=false; }
+                    else { myform.Start.disabled=true; }
+                    break;
+
+                case "doupgrade" :
+                    //=============2006/11/02 Brian to prevent firmware abuse.
+                    var upgrade = upg;
+                    if (upgrade.search(model)=="-1")
+                    {
+                        errmsg+="Warning:This procedure will check correct firmware for QB"+model+" or not\\n"; oktogo=false;
+                        errmsg+="Please Click [Launch Upgrade Process] again\\n"; oktogo=false;
+                        goBackToConsole();
+                        goBackToRmconfig();
+                    }
+                    else { myform.Start.disabled=true; }
+                    break;
+                    
+               case "exportkey" :
+                    //myform.saveas.value="qbkey.zip";
+                    exportfilename='/export/'+"qbkey.crt";
+                    break;
+                    
+               case "uploadkey" :
+		    var qbkey = myform.qbkey.value;
+                    if ( !qbkey ) { errmsg="Prepare qbkey file to upload. \\n"; oktogo=false; }
+		    if ( !qbkey.match("qbkey.crt") ) { errmsg="Prepare qbkey file to upload. \\n"; oktogo=false; }
+                    else { myform.Start.disabled=true; }
+                    break;
+               
+               
+               case "uploadupg" :
+                    var selectnum = myform.number.value;
+                    var qbupg = myform.qbupg.value;
+                    if ( !qbupg ) { errmsg+="Prepare UPG. Set to upload.\\n"; oktogo=false; }
+                    if ( selectnum.match("upg") && !qbupg.match("\.upg") ) { errmsg+="This is not a upg file.\\n"; oktogo=false; } 
+                    if ( selectnum.match("Library") && !qbupg.match("libimage.pkg") ) { errmsg+="This is not a Library file.\\n"; oktogo=false; } 
+                    if ( selectnum.match("Filesystem") && !qbupg.match("fsimage.pkg") ) { errmsg+="This is not a Filesystem file.\\n"; oktogo=false; } 
+                    break;
+            }
+
+            if ( oktogo )
+            {  
+                myform.action.value='start';
+                myform.submit();
+				
+                moveResultScrollBarToBottom('start');
+				//window.open(exportfilename);
+            }
+            else
+            {
+                alert(errmsg);
+                return;
+            }
+        }
+
+        function Return()
+        {
+                myform.Start.disabled=false;
+        }
+        
+        function startDownload()
+        {
+            var returnValue;
+
+          //  if ( qbConfirm(2, 'Start Downloading ... ?')==1 ) 
+          //  {
+                returnValue=window.open(exportfilename);
+          //  }
+        }
+        
+        var Timer;
+        var BigInteger=1<<30;
+        function moveResultScrollBarToBottom(action)
+        {
+            if (action=='start')    { Timer = setInterval("result.scroll(0, BigInteger)",1000);}
+            if (action=='stop')     { clearInterval(Timer); }
+        }
+        
+    </script>
+    
+RMUPGRDSCRIPT
+
+}
+#rmupgrdScript
+
+#
+1

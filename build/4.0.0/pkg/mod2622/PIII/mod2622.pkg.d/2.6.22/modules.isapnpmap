@@ -1,0 +1,3 @@
+# isapnp module      cardvendor carddevice driver_data vendor     function   ...
+parport_pc           0xffff     0xffff     0x00000000  0xd041     0x0004    
+parport_pc           0xffff     0xffff     0x00000000  0xd041     0x0104    

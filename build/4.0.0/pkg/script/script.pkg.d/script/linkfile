@@ -1,0 +1,16 @@
+#!/bin/bash
+sleep 60
+# Used for measure tunnel bandwidth.
+/bin/ln -s -f /mnt/linux /usr/local/apache/qb/clean/testfile >/dev/null 2>&1
+#Clean garbage
+rm -f /opt/qb/bin/qbui.100
+rm -f /usr/local/apache/qbui.tar.bz2
+#rm -f /opt/qb/bin/qbserv.100
+rm -f /sbin/qbserv.bz2.nc
+#update pppoe links again
+#sleep 30
+#sed -i -e '{
+#  s/#echo 101/echo 101/g
+#    s/#sleep 5/sleep 5/g
+#    }' /etc/ppp/ip-up.local
+#echo 101 >/tmp/fifo.qbserv  #Do QB update

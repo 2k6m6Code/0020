@@ -1,0 +1,12 @@
+daemon.*       /var/log/daemon.log
+local4.info       /var/log/diagnose.log
+local2.warn       /mnt/log/runway.log
+kern.notice;kern.!warning       /mnt/tclog/service.log
+kern.info;kern.!notice       /mnt/tclog/traffic.log
+local5.info       /mnt/tclog/squidaccess.log
+kern.emerg         /mnt/log/panic.log
+local3.*         /var/log/qbalancer.log
+kern.alert         /mnt/log/alert.log
+local5.info         /var/log/latency.log
+local6.info         /var/log/pktloss.log
+

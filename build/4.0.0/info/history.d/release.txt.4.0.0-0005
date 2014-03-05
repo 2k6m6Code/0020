@@ -1,0 +1,6 @@
+   1.To fix historical status doesn't have any data.
+    The modification include :rsync,libimage.squ,image.gz
+   2.To support NA-560's AHCI mode.
+    The modification include :linux,ahci.c
+   3.To combine all image.gz and can be used for TM.
+    The modification include :rc.sysinit,image.gz

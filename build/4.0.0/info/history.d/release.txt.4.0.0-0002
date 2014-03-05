@@ -1,0 +1,5 @@
+   1.To fix 3G dongle can't work for a long time.
+     It's a spinlock problem.Disable sinlock debug and modify allocation method from SLUB to SLAB.
+    The modification include :linux
+   2.Patch mppe/mppc for 2.4.5
+    The modification include :pppd,image.gz

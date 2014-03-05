@@ -1,0 +1,24 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Setup Service-Based Filter</title>
+</head>
+<body>
+
+<h2>Setup Service-Based Filter</h2>
+<ol>
+<li>瀏覽 filters</li>
+<p>
+	所有設定 filters 皆列在上方</p>
+<li>新增 filter</li>
+<p>
+不特別指定限制則可留白。Area 是某個 ISP 或者是某個 port。選定之後，class ID 欄位裡會提供可選擇的 classes (即在 Class Definition 裡所設定的 classes) Priority 是當兩個以上的 filter 有相衝的情況時給予的優先權。例如 192.168.1.0/24 包含了 192.168.1.22/32，所以是相衝的，但將192.168.1.22 的 priority 設較高 (數字小)，使他有優先權而不致於被影響。<br> 
+另外，在此也可設一種動態流量限制。配合 burst 值，當瞬間流量超過 burst 值時，可選擇走另一個 class，即 Overrun Class 
+</p>
+<li>編輯 Filter</li> 
+<p>
+點選要編輯之 filter 項目的 Edit 鍵，此時該筆資料會在下方出現以供編輯。更改資料後再按【Update】
+</p>
+</ol>
+</body></html>

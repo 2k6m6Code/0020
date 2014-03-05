@@ -1,0 +1,10 @@
+#!/bin/bash
+
+count=`ls -l *.tgz | wc -l`
+echo $count
+
+if (($count < 10))
+then
+    tar cvf /mnt/bin/$$.tar /mnt/bin/core /var/log/qbalancer.log /usr/local/apache/qbconf/*.xml
+    gzip /mnt/bin/$$.tar
+fi

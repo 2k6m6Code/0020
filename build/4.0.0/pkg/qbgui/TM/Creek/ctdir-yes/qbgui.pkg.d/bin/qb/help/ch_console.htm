@@ -1,0 +1,49 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>Administration Console</title>
+</head>
+<body>
+
+<h2>Administration Console</h2>
+<p>
+<table>                        
+<tr><td valign=top width=200>Reset ARP cache ...	</td><td>重設與 Q-Balancer相接設備，記載Q-Balancer上IP的MAC</td></tr>
+<tr><td valign=top class="light">Set Gateway Permanent ...	</td><td class="light">設定Q-Balancer是否要記住gateway的MAC</td></tr> 
+<tr><td valign=top>Maximum User :	</td><td>同時間Login Q-Balancer管理的人數</td></tr>
+<tr><td valign=top class="light">Edit User Account :	</td><td class="light">編輯Q-Balancer管理帳號的設定，同時間同一帳號只能有一個連線</td></tr> 
+<tr><td valign=top>Domain Name Resolver :	</td><td>Q-Balancer本身的DNS設定，如要讓Q-Balancer能send出Alarm E-mail，要設定DNS</td></tr> 
+<tr><td valign=top class="light">Remote Config. Management :	</td><td class="light">將Q-Balancer的Config檔案進行異地備份或是載入，請參閱 [Configuration Management]</td></tr>
+<tr><td valign=top>History Export FTP Server :	</td><td>將Q-Balancer的policy history檔輸出到其他的Server</td></tr> 
+<tr><td valign=top class="light">Set Date :	</td><td class="light">設定系統時間</td></tr> 
+<tr><td valign=top>Time Zone :	</td><td>設定時區</td></tr>   
+<tr><td valign=top class="light">Alarm E-mail :	</td><td class="light">當線路有斷線情況，所要發出Alarm E-mail對象</td></tr> 
+</table>
+</p>
+<p>
+<b>[Configuration Management]</b>
+<ol>
+<li>Save / Load Config in Local</li>
+<p>
+Config. File的存取在使用者介面的最上方<br>  
+請點選介面最上方的【Load】，會出現一新視窗(New Web)，一般系統會預設三個檔案：avtive、boot、default<br>
+<table> 
+<tr><td width=60>Active	</td><td>未存檔前的設定檔，通常用不到，Read only</td></tr>
+<tr><td class="light">Boot	</td><td class="light">Q-Balancer開機時所讀取的檔案，Read/Write</td></tr>
+<tr><td>Default	</td><td>出廠預設的設定檔，Read Only</td></tr>
+</table>
+這三個檔案都是無法<b>Delete</b>的 
+</p>
+<li>Export / Input Config From Remote</li>
+<p>
+請點選【Remote Config】<br>
+<table>
+<tr><td>Backup Config.	</td><td>透過Http下載設定檔</td></tr>
+<tr><td class="light">Upload Config.	</td><td class="light">透過Http上傳設定檔</td></tr>
+<tr><td width=180>Upload Upgrade Package	</td><td>透過Http上傳韌體更新檔</td></tr>
+<tr><td class="light">Launch Upgrade Process	</td><td class="light">啟動韌體更新</td></tr>
+</table>
+</p>
+</p>
+</body></html>

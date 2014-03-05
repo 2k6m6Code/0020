@@ -1,0 +1,250 @@
+###############################################################################################
+#                                           Arp Management Console
+###############################################################################################
+#======================================================================================================================
+sub maintainARP_W
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $arp=XMLread($gPATH.'arp_white.xml');
+    my @arparray;
+	
+    if ( $action{action}=~m/^APPLY$/ ) 
+    {
+        my @arplist=split(/;/,$action{arpinfo});
+		foreach my $entry ( @arplist ) 
+		{
+            my %arprec;
+            $arprec{mac}=$entry;
+            push (@arparray,\%arprec);
+            LogUserAction(action=>'UPDATEARP', mac=>$arprec{mac});
+        }
+        $arp->{arp}=\@arparray;
+    }
+    #-------updating arp.xml------------------------
+    XMLwrite($arp, $gPATH."arp_white.xml");
+	
+	make_arp_shell();
+	
+	my $arp_list=XMLread($gPATH.'arp.xml');
+	my $arp_enable=$arp_list->{arp_1};
+	my $cc='';
+	foreach my $enable (@$arp_enable)
+	{
+	    $cc = $enable->{enabled};
+	}
+	$gMSGPROMPT.=qq ($cc\\n);
+	if ($cc eq '1')
+    {
+        `/usr/local/apache/qb/setuid/run /bin/cp /tmp/ip-mac.sh /mnt/log/ip-mac.sh`;
+    }else
+    {
+        `/usr/local/apache/qb/setuid/run /bin/rm -f /mnt/log/ip-mac.sh`;
+    }
+    system("sync");
+    system("sync");
+    system("sync");
+    system("sync");
+    return 1;
+}
+#maintainARP_W
+
+#======================================================================================================================
+######## about ARP.
+sub showARP_W
+{
+	my $arpref=XMLread($gPATH.'arp_white.xml');
+	my $arparray=$arpref->{arp};
+
+        @$arparray=sort sort_arp_ip @$arparray;
+
+        print qq (<br><table border=0>);
+        print qq (<tr><td class="bigtitle" colspan="3">Privileged List</td></tr>); 
+        print qq (<tr><td class="bigtitle" colspan="3"><hr size="1"></td></tr>); 
+		print qq (<tr><td align="center" colspan="3">);
+        print qq (<input type="button" class="qb" value="$qblang[115]" onclick="addArpRecs()" title="Add several new arp records" >);
+        print qq (<input type="button" class="qb" value="$qblang[57]" onclick="addArpRec(1)" title="Add new arp record" >);
+        print qq (<input type="button" class="qb" value="$qblang[58]" onclick="updateArp()" title="Update as viewing" >);
+	print qq (<input type="button" class="qb" value="$qblang[116]" onClick="goSubmit()" title="Restore original arp list" >);
+        print qq (<tr><td colspan="3">);
+
+	print qq (<div class="divframe">);
+	print qq (<table width=100% id="ListTab" bgcolor="#224488" class="body" cellspacing="0" border="0">);
+	print qq (<thead>);
+	print qq (<tr><td align="right" colspan="3">);
+        #print qq (<td width=40><a href="javascript:delArpRec()"><image src="image/del.gif" title="Delete checked arp list" border="0"></a>);
+        #print qq (<tr bgcolor="#332211" align="center" width=100%><td width=130>IP</td><td width=130>Mac</td>);
+        #print qq (<tr bgcolor="#332211" align="center" width=100%><td width=40><a href="javascript:delArpRec()"><image src="image/del.gif" title="Delete checked arp list" border="0"><td width=130>IP</td><td width=130>Mac</td>);
+        print qq (<tr bgcolor="#332211" align="center" width=100%>);
+        print qq (<td width=130>Mac</td>);
+        #print qq (<tr bgcolor="#332211" align="center" width=100%><td width=30>DHCP</td><td width=130>IP</td><td width=130>Mac</td>);
+        print qq (<td width=40><a href="javascript:delArpRec()"><image src="image/del.gif" title="Delete checked arp list" border="0"></a>);
+        print qq (<input type="checkbox" name="delallarp" title="select or deselect all items" onClick="setAllCheckBoxValue('arpstodel', this.checked)">);
+        print qq (</td></tr>);
+        print qq (</thead><tbody>);
+
+        foreach my $macrec ( @$arparray ) 
+		{ 
+			if ( $macrec->{mac} ) 
+			{ 
+				print qq (<tr><td width="130"><input class="qbtext" type=text name="mac" value=$macrec->{mac}></td>);
+				print qq (<td width="40" align="center"><input type="checkbox" name="arpstodel"></td></tr>);
+			}
+        }
+
+        print qq (</tbody><tfoot>);
+        print qq (<input type="hidden" value="" name="arpinfo">);
+        print qq (<input type="hidden" value="" name="enabled">);
+        print qq (</tfoot>);
+	print qq (</table>);
+	print qq (</div>);
+
+        print qq (</td></tr>);
+        print qq (</table>);
+}
+
+sub showARP_W_Script
+{
+	print  << "SHOWARP_W_SCRIPT";
+	
+	<script language="javascript">
+	
+	var myform=window.document.forms[0];
+
+        function cgi_dep_onload() {}
+
+	// Maintain ARP Record.
+	function addArpRecs()
+        {
+            var max_num=100;
+            var num=qbPrompt("Enter record number:");
+            
+            if (isDecimal(num)) {
+                if (num>max_num)  num=max_num;
+                addArpRec(num);
+            } else if (!num) { return; }
+        }
+	function addArpRec(num)
+        { 
+	var i,oTD,oDiv, j, colnum=1, oInput, oBox, oBox1;
+	var oTR; 
+
+        for (j=0;j<num;j++) {	
+
+            oTR = ListTab.childNodes[1].insertRow();
+            oTR.align="center";
+
+            for(i=0;i<colnum;i++)
+            { // ip, mac, interface.
+                oTD = oTR.insertCell(i);
+                oInput = document.createElement("INPUT");
+                oTD.appendChild(oInput);
+            
+                oInput.className="qbtext";
+            }
+
+            oTD = oTR.insertCell(colnum);
+            oBox = document.createElement("INPUT");
+            oBox.type = "checkbox";
+            oBox.name = "arpstodel"; // for delete / undelete all.
+            oTD.appendChild(oBox);
+
+        }
+	}
+	function delArpRec()
+    {
+		var colnum=1;
+		for(var i=0;i<ListTab.childNodes[1].rows.length;)
+		{
+	        if(ListTab.childNodes[1].rows[i].cells[colnum].firstChild.checked)
+	            //ListTab.childNodes[1].rows[i].removeNode(1);
+				document.getElementById('ListTab').childNodes[1].deleteRow(i);
+	        else
+	            i++;
+		}
+		
+        arpform.delallarp.checked=false;
+	}
+	
+	function updateArp()
+    { // A:Ip, B:Mac
+		var pass=true;
+		var data = "";
+		var i,j,stB,ver;
+		var oInputA,oInputB;
+		var oTBody = ListTab.childNodes[1];
+		for(i=0;i<oTBody.rows.length;i++)
+		{
+			oInputB = oTBody.rows[i].cells[0].firstChild;
+			stB = checkMac(oInputB.value);
+			
+			if(stB=="empty")
+			{
+				pass = false;
+			}
+							
+			if(stB!="ok")
+			{
+				pass = false;
+			}
+			if(stB=="empty" || stB!="ok")
+			{oInputB.style.backgroundColor='pink';}
+			else{oInputB.style.backgroundColor='white';}
+			//oInputB = (stB=="ok"?"":"pink");
+			
+			if(pass==true)
+			{
+				data += oInputB.value +";"
+			}
+		}
+		if(pass)
+		{
+			if( qbConfirm(2,"Data Check OK, Apply them ?")==1 )
+			{
+				arpform.arpinfo.value= data;
+					goSubmit("APPLY");
+			}
+			
+		}
+		else 
+		{
+			alert("Data Check Failed !!");
+		}
+	}
+	
+	function checkMac(text){
+	if(text.match(/,|;/gi)) return "error";
+	
+	if(text=="")    return "empty";
+	else if(isValidMac(text)) return "ok";
+	else        return "error";
+	}
+	
+	
+	function checkValue(text){
+	if(text.match(/,|;/gi)) return "error";
+	
+	if(text=="")        return "empty";
+	else if(isValidIP(text))return "ok";
+	else            return "error";
+	}
+	
+	function checkValue_v6(text){
+	if(text.match(/,|;/gi)) return "error";
+	
+	if(text=="")        return "empty";
+	else if(isValidIP_v6(text))return "ok";
+	else            return "error";
+	}
+
+	</script>
+	
+SHOWARP_W_SCRIPT
+}
+
+
+#=========================================================================
+
+
+#
+1

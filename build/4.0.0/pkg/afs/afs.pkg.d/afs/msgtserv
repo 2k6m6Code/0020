@@ -1,0 +1,34 @@
+#!/bin/sh
+
+TSCONF=/usr/afs/tserver.conf
+
+eee(){
+	sleep 2
+	echo "root" 
+	sleep 1
+	echo "write all \"\""
+	sleep 1
+	echo write all \"Primary Server Fail! System transfer, please wait.\"
+	sleep 1
+	echo exit
+}
+
+xxx(){
+	while read LL ;do
+:
+	done
+}	
+
+exec 3<$TSCONF
+/usr/afs/startnet S
+/etc/rc2.d/s99gts start
+while true ;do
+	TSERVER=
+	read TSERVER <&3
+	if [ "@$TSERVER" != @ ] ;then
+#	eee|telnet $TSERVER 2>/dev/null|xxx
+		echo $1 >/dev/$TSERVER
+	else
+		break
+	fi
+done

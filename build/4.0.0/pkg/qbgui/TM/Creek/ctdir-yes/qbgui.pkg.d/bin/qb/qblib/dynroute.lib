@@ -1,0 +1,168 @@
+###############################################################################################
+#                                           Dynamic Route Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showDynroute 
+{
+    my (%action)=@_;
+    my $dynroute=XMLread($gPATH.'dynroute.xml');
+    my $ava=XMLread($gPATH.'avanet.xml');
+    my $lea=XMLread($gPATH.'leanet.xml');
+    my $avanet=$ava->{subnet};
+    my $leanet=$lea->{subnet};
+    
+    print qq (<tr><td colspan="8" class="bigtitle">$qblang[355]</td></tr>);
+    
+    #********************************** Dynamic Routing State ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[356] ]</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[357]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $status=( $dynroute->{enabledynroute} ) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="enabledynroute"  $status >); 
+    
+    #********************************** Method ***************************************************
+    print qq (<tr><td class="body" align="left">$qblang[358]: </td>);
+    print qq ( <td colspan="3" align="left"><select class="qbopt" name="protocol" onchange="goSubmit()" style="width:120">);
+    if ( !$action{protocol} ) { $action{protocol}=$dynroute->{protocol}; }
+    foreach my $proto (keys %gRouting_method)
+    {
+        my $showvalue=( $proto eq "-1" ) ? ('None') : ($gRouting_method{$proto});
+        #my $status=( $proto eq $dynroute->{protocol} ) ? ('selected'):('');
+        my $status=( $proto eq $action{protocol} ) ? ('selected'):('');
+        print qq (<option $status value="$proto" title="$gRouting_method{$proto}" >$showvalue</option>/n);
+    }
+    print qq (</select></td>);
+    print qq (</tr>);
+    
+    #********************************** General Setting ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[217] ]</td></tr>);
+    if ( $action{protocol} ne 'OSPF' )
+    {
+    #********************************** Route Metric ***************************************************
+    print qq (<tr><td class="body" align="left">$qblang[359]: </td>);
+    print qq (<td class="body" >);
+    print qq (<input class="qbtext" name="metric" style="WIDTH: 120px" value="$dynroute->{metric}" >\n);
+    print qq ((1-15)</td></tr>); 
+
+    #********************************** Route Change Time ***************************************************
+    print qq (<tr><td class="body" align="left">$qblang[360]: </td>);
+    print qq (<td class="body" >);
+    print qq (<input class="qbtext" name="chgtime" style="WIDTH: 120px" value="$dynroute->{chgtime}" >\n);
+    print qq (($qblang[1])</td></tr>); 
+
+    #********************************** Monitor ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[361] ]</td></tr>);
+    
+    #********************************** Monitor Port ********************************************
+    my @monportarray=split(/:/, $dynroute->{monport});
+    print qq (<tr><td class="body" align="left">$qblang[362]: </td>);
+    print qq (<td class="body" >);
+    my @vlandev=editVlan(action=>'GETVLANDEVLIST');
+    my $ethnum=$showData->{nic}; $ethnum=~s/eth//;
+    print qq (<select class="qbopt" multiple name="monport" style="WIDTH: 120px" size="5">\n);
+    foreach my $eth ( 0..$gNUMOFPORT-1-$gRESERVEDLANPORT,sort @vlandev )
+    {
+       $eth=~s/eth//;
+       my $ethvalue=( $eth eq "-1" ) ? ('-1'):('eth'.$eth);
+       my $tmpeth1=$eth;
+       my $portvalue=( $eth eq "-1" ) ? ('None') : (++$eth);
+       my $tmpeth2=$eth-1;
+       my $status=( grep(/^$ethvalue$/, @monportarray) ) ? ( 'selected' ) : ( '' );
+       #20080222 Brian Fix a bug,when vlan id=10,20,...,UI will show portx.1 x.2 ...
+       $portvalue=( $tmpeth1 eq $tmpeth2 || $portvalue eq 'None') ? ($portvalue) : ($portvalue.'0');
+       print qq (<option $status value="$ethvalue">$portvalue</option>\n);
+    }
+    print qq (</select>);                                                                                                                                
+    print qq (</td></tr>); 
+    }else{
+     print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="body">Please telnet port 2604 to configure the OSPF.</td></tr>);
+    }
+    #********************************** Dynamic Routing State ********************************************
+    print qq (<tr><td></td>);
+    print qq (<td colspan="2" align="left">);
+    print qq (<input class="qb" type="button" value="$qblang[139]" title="Apply All Parameters now !" onClick="goSubmit('SAVE')" style="width:120">);
+    print qq (</td></tr>);
+}
+#showConsole
+
+
+#======================================================================================================================
+sub dynrouteScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+                                                            
+    function checkAndSetidletime()
+    {
+        if ( !isValidPort(myform.idletime.value) ) 
+        { 
+            myform.idletime.value=""; 
+            alert("Time format Error");
+        }
+    }
+                                                                                                                                    
+    </script>
+SCRIPT
+}
+#dynrouteScript
+
+#======================================================================================================================
+#maintainDynroute( %action )
+sub maintainDynroute 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $dynroute=XMLread($gPATH.'dynroute.xml');
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+    	$dynroute->{enabledynroute}=$action{enabledynroute};
+    	$dynroute->{protocol}=$action{protocol};
+    	$dynroute->{metric}=$action{metric};
+    	$dynroute->{chgtime}=$action{chgtime};
+    	$dynroute->{monport}=$action{monport};
+        
+        #-------updating dynroute.xml------------------------ 
+        XMLwrite($dynroute, $gPATH."dynroute.xml");
+            
+        if ( $action{enabledynroute} eq '1' ) 
+        {
+            runCommand(command=>'/usr/local/apache/qb/setuid/do_qbdynroute.pl', params=>'');
+            runCommand(command=>'service', params=>'zebra restart');
+            if ( $action{protocol} ne 'OSPF' )
+            {
+            runCommand(command=>'service', params=>'ospfd stop');
+            runCommand(command=>'service', params=>'ripd restart');
+            }else{
+            runCommand(command=>'service', params=>'ripd stop');
+            runCommand(command=>'service', params=>'ospfd restart');
+            } 
+        }else{
+            runCommand(command=>'service', params=>'zebra stop');
+            runCommand(command=>'service', params=>'ripd stop');
+            runCommand(command=>'service', params=>'ospfd stop');
+        }
+        
+        LogUserAction( action=>'APPLYDROUTEING', enabledynroute=>$action{enabledynroute}, protocol=>$action{protocol}, metric=>$action{metric}, chgtime=>$action{chgtime}, monport=>$action{monport} );
+    }
+  
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    qbSync();
+}
+#maintainDynroute
+#
+1

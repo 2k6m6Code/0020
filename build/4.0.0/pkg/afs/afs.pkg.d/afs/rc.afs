@@ -1,0 +1,50 @@
+#!/bin/sh
+
+EZIO_PRINT="/opt/qb/qbwdt/ezio -c 1 -t "
+EZIO_PRINT_DEFAULT="/opt/qb/qbwdt/ezio"
+QBREG_FILE=/opt/qb/conf/registry
+AFSBOOT_FLAG_FILE=/mnt/qb/conf/ha/AFSBOOT
+AFSMONPORTCFG=/usr/afs/conf/monport
+AFSMONPORT=/dev/ttyS1
+
+AFSBOOT=NO &&  [ -f $AFSBOOT_FLAG_FILE ] && AFSBOOT=YES
+
+QBMODEL=$(awk "/MODEL/ {print \$2}"  $QBREG_FILE)
+MANUFACTURER=$(awk "/MANUFACTURER/ {print \$2}"  $QBREG_FILE) #Brian 20080312
+HARDWARE=$(awk "/HARDWARE/ {print \$2}"  $QBREG_FILE) #Brian 20111102
+
+if [ $MANUFACTURER = 'ARINFOTEK' ] || [ $HARDWARE = 'NA-100' ] || [ $HARDWARE = 'NA320R' ]; then #Brian 20080312
+    AFSMONPORT=/dev/ttyS0
+fi
+
+if [ $QBMODEL = 'BL10800' ]; then #..nancy 050204
+    AFSMONPORT=/dev/ttyS0
+fi
+
+if [ $HARDWARE = 'NA320R' ]; then #Brian 20131113
+HAON=0 && HAON=$(awk "/ENABLEHA/ {print \$2}"  $QBREG_FILE) &&  [ $HAON = '1' ] && AFSMONPORT=/dev/ttyS0 && rm -rf /etc/rc.d/rc4.d/*
+else
+EZIO=0 && EZIO=$(awk "/EZIOTYPE/ {print \$2}"  $QBREG_FILE) 
+HAON=0 && HAON=$(awk "/ENABLEHA/ {print \$2}"  $QBREG_FILE) &&  [ $HAON = '1' ] && [ $EZIO = '1' ] && AFSMONPORT=/dev/ttyS0 && rm -rf /etc/rc.d/rc4.d/*
+fi
+
+echo $AFSMONPORT > $AFSMONPORTCFG
+
+if [ $AFSBOOT = 'YES' ];
+then
+    AFS_ROLE=$(cat /mnt/qb/conf/ha/role)
+    if [ $AFS_ROLE = '1' ];
+    then
+        ($EZIO_PRINT "Q-Balancer $QBMODEL:[ Primary ]"; sleep 10; $EZIO_PRINT_DEFAULT) &
+        rm -f /usr/afs/B /usr/afs/MA
+        touch /usr/afs/A  /usr/afs/PA
+    else
+        ($EZIO_PRINT "Q-Balancer $QBMODEL:[ Secondary ]"; sleep 10; $EZIO_PRINT_DEFAULT) &
+        rm -f /usr/afs/A /usr/afs/PA
+        touch /usr/afs/B /usr/afs/MA
+    fi
+#    sleep 5  # debug...nancy041028
+    /usr/afs/afstart 2>/var/log/afstart.log
+else
+    ($EZIO_PRINT "No HA:<stand alone>"; sleep 10; $EZIO_PRINT_DEFAULT) &
+fi

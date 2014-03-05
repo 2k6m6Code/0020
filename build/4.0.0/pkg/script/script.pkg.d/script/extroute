@@ -1,0 +1,27 @@
+#set -x
+ALLTABLES=`/sbin/ip rule|grep "from all fwmark"|grep -v "lookup 100"|awk '{print $7}'`
+Extra_IP_File=/usr/local/apache/active/extroute.xml
+ACTIVEBASICXML=/usr/local/apache/active/basic.xml
+ACTIVEZONEXML=/usr/local/apache/active/zonecfg.xml
+#device=`grep nic=\".*\" $Extra_IP_File|sed -e "s/  <extroute.*nic=\"//"|sed -e "s/\".*//"`
+ALLIPS=`grep ip=\".*\" $Extra_IP_File|sed -e "s/  <extroute.*ip=\"//"|sed -e "s/\".*//"`
+
+for extra_ip in $ALLIPS
+do
+   ispid=`grep ispid=\".*\" $Extra_IP_File|grep \"$extra_ip\"|sed -e "s/  <extroute.*ispid=\"//"|sed -e "s/\".*//"` 
+   device=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <.*nic=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+   gateway=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <.*gateway=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+   for table_num in $ALLTABLES
+   do
+     ip route add $extra_ip dev $device table $table_num via $gateway 2>/dev/null
+     echo 1 >/proc/sys/net/ipv4/conf/$device/proxy_arp #To allow dmz ip can reach extrenal ip 
+   done
+     ip route add $extra_ip dev $device table 100 via $gateway 2>/dev/null 
+done
+
+#DMZ
+ARP_NIC=`grep ARPPROXY $ACTIVEZONEXML|grep nic|sed -e "s/  <dmz.*nic=\"//"|sed -e "s/\".*//"`
+for arp_nic in $ARP_NIC
+do
+     echo 1 >/proc/sys/net/ipv4/conf/$arp_nic/proxy_arp #To allow dmz ip can reach extrenal ip 
+done

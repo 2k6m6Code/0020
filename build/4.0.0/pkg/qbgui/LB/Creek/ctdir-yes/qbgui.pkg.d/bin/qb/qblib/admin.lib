@@ -1,0 +1,146 @@
+###############################################################################################
+#                                           Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showAdmin 
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[294] ); #</td></tr>);
+    #print qq (<a href="javascript:qbShowHelp('console')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #**********************************  Get Max User   *******************************************
+    my $maxuser=authenticate( action=>'GETMAXUSER' );
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[295]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<select class="qbopt" name="maximumuser" style="width:60px">);     
+    foreach my $numofuser ( 1..$gMAXIMUMUSER ) 
+    { 
+        my $status=( $numofuser eq $maxuser ) ? ( 'selected' ) : ( '' );
+        print qq (<option value='$numofuser' $status>$numofuser</option>);
+    }
+    print qq (</select>);
+    print qq (<input type="button" class="qb" value="$qblang[296]" title="Edit User Name and Password" onClick="editUserAccount()" style="width:120px">);
+    print qq (</td>);
+    print qq (</tr>);
+
+    #************************************ User Define Https Port ********************************************
+    #20080925 Brian for Https port            
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[297]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input class="qbtext" name="httpsport" type="text" value="$overview->{httpsport}" onChange="checkPort(this.value)" style="width:180"><br>);
+    print qq (</td>);
+    print qq (</tr>);
+
+    #************************************ User Define Hostname ********************************************
+    #20080925 Brian for Hostname            
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[298]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input class="qbtext" name="hostname" type="text" value="$overview->{hostname}" style="width:180"><br>);
+    print qq (</td>);
+    print qq (</tr>);
+
+    if ( $gEZIOTYPE eq "1" )
+    {
+    #************************************ User Define Hostname on LCM********************************************
+    #20110425 Brian for Hostname on LCM       
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[299]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<input class="qbtext" name="hostname_lcm" maxlength="16" type="text" value="$overview->{hostname_lcm}" style="width:180"><br>);
+    print qq (</td>);
+    print qq (</tr>);
+    }
+
+=cut
+    #******************************Export Config file to remote ftp server************************
+    #20081226 Brian Export config file to ftp server
+
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    #print qq (Export Config File to FTP Server);
+    print qq (Export Config. to FTP Server);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (<hr size="1">);
+    my $status=( $overview->{enablecfgftpserver} ) ? ('checked') : ('');
+    print qq (<input type="checkbox" name="enablecfgftpserver"  $status title="When you save a config file,the file will be exported to remote ftp server automatically." onClick="switchCfgFTPServerIP()">Enable<br>);
+
+    print qq (<select class="qbopt" name="ftpmode" style="width:100px">);     
+    foreach my $mode ( 0,1 ) 
+    { 
+        my $status=( $mode eq $overview->{ftpmode} ) ? ( 'selected' ) : ( '' );
+        my $ShowMode=( $mode eq "1" ) ? ( 'Active' ) : ( 'Passive' );
+        print qq (<option value='$mode' $status>$ShowMode</option>);
+    }
+    print qq (</select>FTP Mode<br>);
+    print qq (<input name="cfgftpserverip" class="qbtext" type="text" title="FTP server address" value="$overview->{cfgftpserverip}" style="width:100px">Server address<br>);
+    print qq (<input name="cfgftpusername" class="qbtext" type="text" title="FTP login username" onChange="" style="width:100px" value="$overview->{cfgftpusername}">Login username<br>);
+    print qq (<input name="cfgftppassword" class="qbtext" type="password" title="FTP login password" onChange="" style="width:100px" value="$overview->{cfgftppassword}">Login password<br>);
+    print qq (<input name="cfgftpdirectory" class="qbtext" type="text" title="Support one layer directory can be created automatically!!! For example:If you type /aaa/bbb/ccc ,qb will create a directory ccc in /aaa/bbb,then upload config file to /aaa/bbb/ccc/" onChange="" style="width:100px" value="$overview->{cfgftpdirectory}">Upload directory);
+    print qq (<hr size="1">);
+    print qq (</td>);
+    print qq (</tr>);
+    #***********************************Auto Save File **********************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (Enable Auto-Save Configuration Via CMS:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $statu =( $overview->{autofile} ) ? ('checked') : ('');
+    print qq (<input name="autofile" type="checkbox" $statu > ( Note:This Function is only for Bonding Client to Server with CMS!! ));
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+=cut    
+    #************************************ Alarm E-mail ********************************************
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    my $maillist=$overview->{mail};
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq ($qblang[300]:);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    my $count=1;
+    foreach my $mail ( @$maillist )
+    {
+        my $mailValue=$mail->{value}; 
+        if ( $mailValue eq 'system' ) { $mailValue=''; }
+        print qq (<input class="qbtext" name="mail$count" type="text" value="$mailValue" onChange="checkMail(this.value)" style="width:180"><br>);
+        $count++;
+    } 
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (</table>);
+    
+    
+                                                
+    #************************************ Command Button  ********************************************
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[54]" title="Save All Parameters" onClick="goSubmit('SAVE')" style="width:180">);
+    print qq (</td></tr>);
+ 
+    print qq (</table>);
+}
+#showConsole
+#
+1

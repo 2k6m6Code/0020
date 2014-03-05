@@ -1,0 +1,50 @@
+<html>
+<head><link rel="stylesheet" href="help.css" type="text/css"></head>
+<title>Multi-V</title>
+<body>
+
+<h2>Multi-V</h2>
+<ol>
+<li>Multi-V Topology</li> <!--1-->
+<p>
+	Multi-V function is to create multiple GRE tunnels between two Q-Balancers. Because the link check and policy routing usages in a tunnel are equivalent to a link, Q-Balancer treats every tunnel as a link and uses MPV(multi path vpn) link to denote it.
+    Once MPV links are set up, the other manipulations are the same as you would manipulate regular links.
+</p>	
+<li>Setup MPV</li> <!--2-->
+<p>
+Click [Create]  in [Link Config.] and choose MPV. There you will see the MPV setup area.
+</p> 
+<p>
+To create a tunnel, you should take care of three things:<br>
+<ol>
+<li>It is a pair. That is, the site on the other side is set up likewise, except it uses your destination as "source" and your local as "remote".
+<li>Using the IP on the links to build up a new IP header, the IP address must belong to a link that had been setup both on local and remote Q-balancer. 
+<li>There will be a new tunnel device. You will need to give the device a local and a remote IP address as routing information. The IP addresses can be chosen arbitrarily, but they must be a reciprocal pair at the two sides of the Q-Balancer. 
+</ol>
+</p><p>
+<table>
+<tr><th></th><th>	Q-Balancer A</th><th>	Q-Balancer B</th><th></th></tr>	
+<tr><td class="light">Name :</td><th class="light">ISP 3</th><th class="light">	ISP 3	</th><td class="light">MPV ISP Name</td></tr>
+<tr><td>Tunnel Header Source IP</td><th>	210.201.178.9</th><th>	61.220.116.221</th><td>The IP address is used as source IP address to build up the tunnel header</td></tr>
+<tr><td class="light">Tunnel Header Destination IP</td><th class="light">	61.220.116.221</th><th class="light">	210.201.178.9</th><td class="light">The IP uses destination IP to build up the tunnel header</td></tr>
+<tr><td>Tunnel Device Local IP</td><th>	172.16.0.2</th><th>	172.16.0.1</th><td>An IP address for the tunnel Device</td></tr>
+<tr><td class="light">Tunnel Device Remote IP</td><th class="light">	172.16.0.1</th><th class="light">	172.16.0.2</th><td class="light">An IP address used as a gateway for the tunnel device</td></tr>
+<tr><td>Target IP :</td><th>	172.16.0.1</th><th>	172.16.0.2</th><td>You can set it to tunnel device's remote IP address</td></tr>
+<tr><td class="light">Download/Upload :</td><th class="light">	512/512</th><th class="light">	512/512</th><td class="light">The bandwidths</td></tr>
+<tr><td>MPV MTU:</td><th></th><th></th><td>Set this on will avoid problems when a device doesn't support MTU discovery protocol</td></tr>
+<tr><td class="light">MPV MSS:</td><th class="light"></th><th class="light"></th><td class="light">Set this on will avoid the problems when a device doesn't support MTU discovery protocol</td></tr>
+</table>
+</p>
+<li>Use MPV links</li> <!--3-->
+<p>
+In [Outbound Pool Configuration], you can create a pool and choose the MPV links inside. Using the Weighted Least Traffic By Packet algorithm, you can dispatch the packets into the tunnels and aggregate the bandwidth, but the algorithm is not suitable for video and voice traffics.
+</p><p> 
+In [Policy Configuration], add the request and reply rules for the two locations .
+Using the above topology as an example, the two VPN boxes use bridge mode behind each Q-Balancer. We setup the rules for the two VPN boxes. The following figure shows the configuration in the left side of the topology
+</p><p> 
+
+ 
+
+Please note that in Multi-path VPN, we use None NAT for every rule, because they use tunnel to pass through the Internet, not NAT.</p>
+</ol>
+</body></html>

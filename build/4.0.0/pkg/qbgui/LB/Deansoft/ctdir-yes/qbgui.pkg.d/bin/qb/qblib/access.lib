@@ -1,0 +1,1257 @@
+############################################################################################################
+#                    Firewall rules
+############################################################################################################
+
+#########################   About  Policy Routing   ###################################
+sub showAccessControl
+{
+    my (%action)=@_;
+    my $accessxml=XMLread($gPATH."access.xml");
+    my $accesses=$accessxml->{access};
+    my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};
+    my $hostref=XMLread($gPATH.'host.xml');
+    my $hostlist=$hostref->{host};
+    my $status;
+    
+    my %titleWidth=(Enable=>'50', Name=>'130', Source=>'130', Destination=>'130', Service=>'50', Schedule=>'50', Action=>'50', Edit=>'40');
+    my @titleList=('Name', 'Source', 'Destination', 'Service', 'Action', 'Schedule', 'Edit' );
+    
+    print qq (<div class="divframe">);
+    print qq (<table width="100%" bgcolor="#332211" border="0" align="center"> );
+    print qq (<tr>);
+    
+    print qq (<td align="center" width="$titleWidth{'Enable'}" >);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('enabled', this.checked)">Enable);
+    print qq (</td>);
+    
+    my %portlist2;#GET SERVICE DETAIL
+    foreach $service3 ( @$servicelist )
+    {
+    	if ( $service3->{type} eq 'layer7' ) { next; }
+    	my $portlist=$service3->{port};
+    	foreach my $port ( @$portlist )
+    	{
+    	    if ( $port->{protocol} eq 'system' ) { next; }
+    	    if($port->{value} eq "") { $portlist2{$service3->{title}} .=  'protocol:'.$port->{protocol}."\n"; }
+    	    else { $portlist2{$service3->{title}} .=  $port->{protocol}.':'.$port->{value}."\n"; }
+    	}
+    }
+    
+    ################################################################# 
+    ##
+    ## Show title list
+    ##
+    ################################################################# 
+    foreach my $title ( @titleList ) { print qq (<td  align="center" width="$titleWidth{$title} !important"><font color="#ffffff">$title</font></td>); }
+    print qq (<td align="center" width="50" ><a href="javascript:delAccess()"><image src="image/del.gif" title="Delete checked policies" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('rule', this.checked)">);
+    print qq (</td></tr></table></div>);
+ 
+    my @sortedaccesses;
+    my $sortingKEY=$action{sortingkey};
+ 
+    #host obj to sort
+    my @hostobj;
+    my @srcobj;
+    foreach my $item ( @$accesses )
+    {
+        if( grep(/^host-/, $item->{source}) )
+        {
+            push(@hostobj, $item);
+        }
+        else
+        {
+            push(@srcobj, $item); 
+        }
+    }
+    @hostobj=sort ini_class_sort_by_hostobj @hostobj;
+ 
+    push(@sortedaccesses, @hostobj);
+ 
+    my @ispidlist;
+    @ispidlist=maintainBasic( action=>'GETIIDLIST' ); 
+    
+    my %isppubip;
+    my @sourcelist;
+    my %source2isp;
+    foreach my $class ( @sortedaccesses ) { if ($class->{source} ne 'system') { push(@sourcelist, $class->{source});}}    
+    
+    print qq (<div class="divframe" style="height:270">);
+    print qq (<table class="body" id="ruleList" width="100%" border="0">);
+    
+    my $lineCount=0;
+    foreach my $class ( @sortedaccesses ) { if ( $class->{table} eq 'system' ) {  next; } push(@tablelist, $class->{table});}
+    my @showtable = presentTables(@tablelist);
+    
+    foreach my $class ( @$accesses )
+    {
+	if ( $class->{actiontype} eq 'system' ) { next; }
+        my $rulekey=$class->{source}.$class->{destination}.$class->{actiontype}.$class->{name}.$class->{service}.$class->{schedule};
+        my $key_for_shortcut=$class->{source}.'&'.$class->{destination}.'&'.$class->{actiontype}.'&'.$class->{name}.'&'.$class->{service}.'&'.$class->{schedule};
+        my ( $originalColor, $bgcolor ); $originalColor=$bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+       ################################################################# 
+       ##
+       ## Enabled
+       ##
+       ################################################################# 
+	if ( $lineCount == '0' && $class->{name} == 'Default' ) #default rules didn't neet enabled function
+	{
+	    print qq (<td align="center" width="$titleWidth{'Enable'}" >);
+    	    #print qq (<input type="checkbox" id="enabled" name="enabled" title="enabled or disabled this rule" onClick="">);
+    	    print qq (</td>);
+	}
+	else 
+	{
+	    print qq (<td align="center" width="$titleWidth{'Enable'}" >);
+    	    my $status;
+    	    if ( $class->{dirty} eq '1' ) { $status=''; }
+    	    else 			      { $status='CHECKED';}
+    	    print qq (<input type="checkbox" id="enabled" $status name="enabled" title="enabled or disabled this rule" value="$class->{name}" onClick="enable_or_disable(this.value+':'+this.status);">);
+    	    print qq (</td>);
+	}
+       ################################################################# 
+       ##
+       ## Name
+       ##
+       ################################################################# 
+	print qq (<td align="center" style="width:$titleWidth{'Name'} !important" >$class->{name}</td>);
+       ################################################################# 
+       ##
+       ## Source
+       ##
+       ################################################################# 
+        
+        my $source_addr_list;
+        my $dest_addr_list;
+        
+      	foreach my $host ( @$hostlist )
+      	{
+      	   if ( $host->{hostname} eq $class->{source} ) { $source_addr_list=$host->{hostaddress}; }
+      	   if ( $host->{hostname} eq $class->{destination} ) { $dest_addr_list=$host->{hostaddress}; }
+      	}
+       
+        my $display= $class->{source};
+        $display=~s/host-//g;
+        if ($display eq 'all') { $display='0.0.0.0/0'; }
+        print qq (<td align="center" style="width:$titleWidth{Source} !important" onmousedown="showHostInfo('$display','$source_addr_list')" onmouseout="hideHostInfo()">$display</td>);
+       ################################################################# 
+       ##
+       ## Destination
+       ##
+       ################################################################# 
+        my $display=( $class->{destination} eq 'system' ) ? ('Anywhere') : ( $class->{destination} );
+        $display =~ s/host-//g;
+        if ($display eq 'all') { $display='0.0.0.0/0'; }
+        print qq (<td align="center" style="width:$titleWidth{Destination} !important" onmousedown="showHostInfo('$display','$dest_addr_list')" onmouseout="hideHostInfo()">$display</td>);
+       ################################################################# 
+       ##
+       ## Service 
+       ##
+       ################################################################# 
+        my @swap=split(/:/, $class->{service});
+        my $display=$swap[0];
+        my $direction=$swap[1];
+	if ( $direction eq '' ) { $direction='ALL';}
+	else { $direction=( $direction eq 'd' )?('(RQSY)'):('(RPLY)'); }
+        $display= ( $display eq 'others' )?('ANY'):( $display );
+        print qq (<td align="center" style="width:$titleWidth{Service} !important" onmousedown="showServiceInfo('$display')" onmouseout="hideServiceInfo()">$display$direction</td>);
+       ################################################################# 
+       ##
+       ## Action Type   Filter Type
+       ##
+       ################################################################# 
+        print qq (<td align="center" style="width:$titleWidth{Action} !important" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$class->{actiontype}</td>);
+       ################################################################# 
+       ##
+       ## Schedule
+       ##
+       ################################################################# 
+        print qq (<td align="center" style="width:$titleWidth{Schedule} !important" onmousedown="showHostInfo('$display','$addresslist')" onmouseout="hideHostInfo()">$class->{schedule}</td>);
+       ################################################################# 
+       ##
+       ## Edit
+       ##
+       ################################################################# 
+        print qq (<td align="center" style="width:$titleWidth{Edit} !important">);
+        print qq (<a href="javascript:edit_this_rule('$key_for_shortcut','$rulekey');selectedColor(ruleList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit rule properties" border="0"></a></td>);
+       ################################################################# 
+       ##
+       ## Checkbox
+       ##
+       ################################################################# 
+        print qq (<td style="width:50" align="center">);
+        
+        if ( !($class->{source} eq 'all' && $class->{destination} eq 'all') ) # if target rule is "Default" hidden checkbox
+        {
+            print qq (<input type="checkbox" name="rule" value="$rulekey">);
+        }
+        print qq (</td>);
+        print qq (</tr>\n);
+     
+        if ( $rulekey eq $action{keyofrule} ) { print qq (<script>initSelect(ruleList.rows[$lineCount]);</script>); }
+        
+        $lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+}
+#showAccessControl
+
+
+#==============================================================================================================
+sub list_access_script 
+{
+    print << "LIST_ACCESS_SCRIPT";
+    
+    <div id="ServiceDiv" class="infodiv"></div>
+    <div id="TableDiv" class="infodiv"></div>
+    <div id="HostDiv" class="infodiv"></div>
+    <script type="text/javascript" src="grid.js"></script>
+    <script language="javascript">
+    
+    var myform;
+    function change()
+    {
+        var tmp = document.getElementById('source');
+        var name =tmp.value;
+        alert(name);
+    }
+    
+    function cgi_dep_onload() 
+    { 
+        myform=window.document.forms[0];
+        //setTimeout("informAccess()",500);
+    }
+    
+    function sortPolicy(key)
+    {
+        myform.sortingkey.value=key;
+        myform.submit();
+    }    
+    
+    function delAccess()
+    {
+        if (!myform.rule) return;
+        var setDeleteOn=false;
+        if ( !myform.rule.length ) setDeleteOn=myform.rule.checked;
+        for(var i=0;i<myform.rule.length;i++) { if (myform.rule[i].checked) { setDeleteOn=true; break; } }
+        if (!setDeleteOn) { alert("There is No Policy Rule Checked"); }
+        if (setDeleteOn) { if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )  { goSubmit('DELACCESS');} }
+    }
+    
+    function informAccess()
+    {
+        var action=myform.action.value;
+        if ( action=="DELACCESS" )
+        {
+            //window.top.mainFrame.editweburl.document.forms[0].action.value="UPDATEINTERFACE";        
+            window.top.mainFrame.editaccess.document.forms[0].submit();
+        }          
+    }
+    
+    function setDefault()
+    {
+   	var def_status=document.getElementById("default_status").value;
+    	myform.action.value="SETDEFAULT";
+    	myform.submit();
+    }
+    function edit_this_rule(rule_key_to_edit, focusedrule)
+    {
+        document.showaccess.focusedrule.value=focusedrule;
+        var qstring='';
+        var params=rule_key_to_edit.split('&');
+        qstring+='edit_access.cgi?';
+        qstring+='source'+'='+params[0]+'&';
+        qstring+='dest'+'='+params[1]+'&';
+        qstring+='action_type'+'='+params[2]+'&';
+        qstring+='rule_name'+'='+params[3]+'&';
+        qstring+='service'+'='+params[4]+'&';
+        qstring+='schedule'+'='+params[5]+'&';
+        window.top.mainFrame.editaccess.location.href=qstring;
+    }
+    
+    function showHostInfo(name, addresslist)
+    {
+        if ( addresslist == '' )
+            addresslist = (name == 'Anywhere') ? ('0.0.0.0/0') : (name);    
+        
+        HostDiv.innerText="<table class=infodivtable><tr><td>"+"Host Name:" + name + "</td></tr>";
+        HostDiv.innerText += "<tr><td>Address Detail:" + addresslist + "</td></tr>";
+        
+        with(HostDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+
+    function showServiceInfo(service)
+    {
+        var pattern=/\\.|\\*|system|others|\\:d|\\:s|\\:/g; 
+        service=service.replace(pattern,'');
+        if ( service == "ANY" ) { return; }
+        if(!service) { return; }
+        var service=eval(service);
+        
+        ServiceDiv.innerText="<table class=infodivtable><tr><td>"+"Service Name:"+service.info[1]+"</td><td>"+"Type:"+service.info[0]+"</td></tr>";
+        
+        with(service)
+        for(count=0;count<port.length;count++)
+        {
+            //Brian for layer7
+            if(service.info[0]=="layer7")
+            {
+              ServiceDiv.innerText+="<tr><td>Protocol:"+port[count].protocol+"</td><td>Info:"+port[count].port+"</td></tr>";
+            }
+            else
+            { 
+	    ServiceDiv.innerText+="<tr><td>Protocol:"+port[count].protocol+"</td><td>Port:"+port[count].port+"</td></tr>";
+            }
+        }
+        with(ServiceDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+   
+    function showTableInfo(Table)
+    {
+        if(Table=='$gDROP' || Table=='$gALLPATH' || Table=='$gRRG' || !Table ) { return; } 
+        
+        var table=eval('T'+Table); 
+        
+        with(TableDiv)
+        {
+            innerText="<table class=infodivtable><tr><td>"+"Pool ID:"+Table+"</td><td>";
+            //20100223 Brian To show the note of the pool
+            innerText+="<td>Pool Name:"+table.I[4]+"</td><td>";
+            innerText+="<td>By Packet:"+table.I[0]+"</td><td>";
+            innerText+="<td>Mode:"+table.I[1]+"</td><td>";
+            innerText+="<td>Truely Aggregate:"+table.I[2]+"</td><td>";
+            innerText+="<td>Redirect Host:"+table.I[3]+"</td></tr>";
+        }
+            
+        with(eval('T'+Table))
+        for(count=0;count<P.length;count++)
+        {
+	    TableDiv.innerText+="<tr><td>ISP ID:"+P[count].a+"</td><td>Name:"+P[count].b+"</td><td>Weight:"+P[count].c+"</td><td>DSIP:"+P[count].d+"</td></tr>";
+        }
+        
+        with(TableDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+    
+    function enable_or_disable(value)
+    {
+    	var tmp=value.split(":");
+    	var rule_name=tmp[0];
+    	var status=tmp[1];
+//    	alert ( rule_name + " " + status );
+    	
+    	i=(new Date()).getTime();
+        if (window.XMLHttpRequest) {
+        
+            queryReqHandler=new XMLHttpRequest();
+        }
+        if (window.ActiveXObject) {
+        
+            queryReqHandler = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        
+        queryReqHandler.open("GET","enable_disable_firewall.cgi?a="+i+"&name="+rule_name+"&status="+status,true);
+        queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        var str='';
+        queryReqHandler.send(str);
+    }
+
+    function hideTableInfo(){TableDiv.style.display="none";}
+    function hideServiceInfo(){ServiceDiv.style.display="none";}
+    function hideHostInfo(){HostDiv.style.display="none";}
+    
+  </script>
+    
+LIST_ACCESS_SCRIPT
+}
+#list_access_script
+
+#==============================================================================================================
+sub edit_access
+{
+    my (%action)=@_;
+    #$gMSGPROMPT.=qq ( $action{rule_name} ,$action{source} ,$action{destination} ,$action{actiontype}\\n );
+    
+    my $hostref=XMLread($gPATH."host.xml");
+    my $ispref=XMLread($gPATH."basic.xml");
+    my $zoneref=XMLread($gPATH."zonecfg.xml");
+    my $schref=XMLread($gPATH.'schedule.xml');
+    my $service=XMLread($gPATH.'service.xml');
+    my $servicelist=$service->{service};
+    my $schlist=$schref->{schedule};
+    my $hostlist=$hostref->{host};
+    my $isplist=$ispref->{isp};
+    my $zonelist=$zoneref->{nat};
+    my @hosobj;
+    my @destarray;
+    my @weburlobj;
+    my @isparray;
+    my @zonearray;
+    
+    my $iniroute=XMLread( $gPATH.'iniroute.xml');
+    foreach my $host ( @$hostlist )
+    {
+        if ($host->{hostname} eq 'system' ) { next; }
+        if ( $host->{hosttype} eq 'weburl')
+        {
+            push(@weburlobj, $host->{hostname});
+        }
+    	if ($host->{hosttype} eq 'ip' || $host->{hosttype} eq 'network' || $host->{hosttype} eq 'iprange' || $host->{hosttype} eq 'iplist' || $host->{hosttype} eq 'networklist' )
+    	{
+            push(@hostobj, $host->{hostname});
+        }
+    	if ($host->{hosttype} ne 'weburl')
+    	{
+            push(@destarray,  $host->{hostname});
+        }
+    }
+    foreach my $isp (@$isplist)
+    {
+    	if ($isp->{isptype} eq 'normal' || $isp->{isptype} eq 'pppoe' )
+    	{
+    	    push(@isparray, $isp->{subnet});
+    	}
+    }
+    foreach my $zone (@$zonelist)
+    {
+    	if ( $zone->{type} eq 'nat' && $zone->{natid} ne 'system' && $zone->{version} ne '1' )
+    	{
+    	    push(@zonearray, $zone->{network});
+    	}
+    }
+    
+    my %portlist2;#GET SERVICE DETAIL
+    foreach $service3 ( @$servicelist )
+    {
+    	if ( $service3->{type} eq 'layer7' ) { next; }
+    	my $portlist=$service3->{port};
+    	foreach my $port ( @$portlist )
+    	{
+    	    if ( $port->{protocol} eq 'system' ) { next; }
+    	    if($port->{value} eq "") { $portlist2{$service3->{title}} .=  'protocol:'.$port->{protocol}."\n"; }
+    	    else { $portlist2{$service3->{title}} .=  $port->{protocol}.':'.$port->{value}."\n"; }
+    	}
+    }
+    
+    print qq (<table border="0" width="100%" cellspacing="0" cellpadding="0">);
+    #**************************************************************************************
+    #  Name
+    #**************************************************************************************
+        print qq (<td class="body" colspan="8" valign="top" align="center" >);
+        print qq (<input class="qbtext" type="text" id="rule_name" name="rule_name" value="$action{rule_name}" style="width:120">);
+        print qq (<br>Name</td>);
+    #**************************************************************************************
+    #  source
+    #**************************************************************************************
+        my %source;
+        foreach my $mark ( @$temp ) { if ( $mark->{source_type} eq '' ) { $source{ $mark->{source} }=1; } }
+        my @allsources=sort subnet_sort keys %source;
+        #show host object
+        push(@allsources, @hostobj);
+        
+        print qq (<td class="body" colspan="8" valign="top" align="center" >);
+        print qq (<select class="qbopt" size="1" id="source" name="source"  style="WIDTH:130">);
+        my $status=( $action{source} eq 'all' ) ? ( 'selected' ):( '' ); 
+    	print qq (<option $status value="all">0.0.0.0/0</option>);
+        foreach my $sourceitem ( @allsources )
+        {
+            if ( $sourceitem eq "system" ) { next; }
+            my $status=( $action{source} eq $sourceitem ) ? ( 'selected' ):( '' );
+            my $displaysource=( $sourceitem eq "localhost" ) ? ('Q-Balancer') : ($sourceitem) ;
+            $displaysource=~s/host-//g;
+            my $addresslist=maintainHost( action=>'GETADDRESSLIST', hostname=>$displaysource);
+            print qq (<option value="$sourceitem" title="$addresslist" $status>$displaysource</option>);
+        }
+        foreach my $ispip ( @isparray )
+        {
+            my $status=( $action{source} eq $ispip ) ? ( 'selected' ):( '' );
+            print qq (<option value="$ispip" title="ispip" $status>$ispip</option>); 
+        }
+        foreach my $zoneip ( @zonearray ) 
+        {
+            my $status=( $action{source} eq $zoneip ) ? ( 'selected' ):( '' );
+            print qq (<option value="$zoneip" title="zoneip" $status>$zoneip</option>); 
+        }
+        print qq (</select><br>Source</td>); 
+
+    
+    #**************************************************************************************
+    #  Destination
+    #**************************** list nat->source(s) or lvs->source(s) ****************************
+    print qq (<td class="body" valign="top" align="center">);
+    print qq (<select class="qbopt" size="1" id="dest" name="dest"  style="width:120">);
+    my $status=( $action{destination} eq '0.0.0.0/0' ) ? ( 'selected' ):( '' ); 
+    print qq (<option $status value="all">0.0.0.0/0</option>);
+    foreach my $dest ( sort @destarray )
+    {
+        my $status=( $action{destination} eq $dest ) ? ( 'selected' ):( '' );
+        my $displaydest=$dest;
+        $displaydest=~s/host-//g;
+        print qq (<option value="$dest" $status>$displaydest</option>);
+    }
+    foreach my $ispip ( @isparray ) 
+    {
+        my $status=( $action{destination} eq $ispip ) ? ( 'selected' ):( '' );
+        print qq (<option value="$ispip" title="ispip" $status>$ispip</option>); 
+    }
+    foreach my $zoneip ( @zonearray ) 
+    {
+        my $status=( $action{destination} eq $zoneip ) ? ( 'selected' ):( '' );
+        print qq (<option value="$zoneip" title="zoneip" $status>$zoneip</option>); 
+    }
+    print qq (</select><br>);
+    print qq (Destination);
+    print qq (</td>);
+    #20101228 
+    $action{advance} = ( $action{destination} eq 'system' ) ? ( '0' ) : ( '1' );
+    
+    #**************************************************************************************
+    #  Service
+    #**************************** list nat->source(s) or lvs->source(s) ****************************
+    print qq (<td class="body" valign="top" align="center">);
+    print qq (<select class="qbopt" size="1" id="service" name="service"  style="width:120">);
+    
+    my $status=( $action{service} eq "others:d" ) ? ( 'selected' ) : ( '' );
+    print qq (<option $status value="others:d">ANY(RQST)</option>);
+    my $status=( $action{service} eq "others:s") ? ( 'selected' ) : ( '' );
+    print qq (<option $status value="others:s">ANY(RPLY)</option>);
+    
+    foreach my $service ( @$servicelist ) 
+    {
+      if ( $service->{type} eq 'known' || $service->{type} eq 'user' || $service->{type} eq 'qb')
+      {
+        my $status=( $action{service}=~m/^$service->{title}:d$/) ? ( 'selected' ) : ( '' );
+        print qq (<option $status value="$service->{title}:d" title="$portlist2{$service->{title}}">$service->{title}(RQST)</option>);
+        my $status=( $action{service}=~m/^$service->{title}:s$/) ? ( 'selected' ) : ( '' );
+        print qq (<option $status value="$service->{title}:s" title="$portlist2{$service->{title}}">$service->{title}(RPLY)</option>);
+      }
+    }
+    print qq (</select><br>);
+    print qq (Service);
+    print qq (</td>);
+    
+    
+    #**************************************************************************************
+    #  Action
+    #**************************** list nat->source(s) or lvs->source(s) ****************************
+    print qq (<td class="body" valign="top" align="center">);
+    print qq (<select class="qbopt" size="1" id="action_type" name="action_type"  style="width:120">);
+    foreach my $action_type ( 'Allow','Deny' ) 
+    {
+    	my $status=( $action{actiontype} eq $action_type ) ? ( 'selected' ) : ( '' );
+        print qq (<option value="$action_type" title="$action_type" $status >$action_type</option>); 
+    }
+    print qq (</select><br>);
+    print qq (Action);
+    print qq (</td>);
+    
+    #**************************************************************************************
+    #  Schedule
+    #**************************** list nat->source(s) or lvs->source(s) ****************************
+    print qq (<td class="body" valign="top" align="center">);
+    print qq (<select class="qbopt" size="1" id="schedule" name="schedule"  style="width:120">);
+    print qq (<option value="All Week" $status>All Week</option>);
+    foreach my $schedule ( @$schlist ) 
+    {
+    	if ( $schedule->{schname} eq "system" ) { next; }
+    	my $status=( $action{schedule} eq $schedule->{schname} ) ? ( 'selected' ) : ( '' );
+        print qq (<option $status value="$schedule->{schname}" $status>$schedule->{schname}</option>);
+    }
+    print qq (</select><br>);
+    print qq (Schedule);
+    print qq (</td><td class="body" align="right" valign="top">);
+    print qq (<input type="button" class="qb" value="Add"    title="Add access action"    onClick="updateAccess('ADD')" style="height:20 width:25">);
+    print qq (<input type="button" class="qb" value="Update" title="Save Changes"  onClick="updateAccess('UPDATE')" style="height:20 width:35">);
+    print qq (<br>);
+    print qq (</td></tr></table>);
+}
+#edit_access
+
+#===============================================================================================
+sub access_script 
+{
+    print << "ACCESS_SCRIPT";
+
+    <div id="ServiceDiv" class="infodiv"></div>
+    <div id="TableDiv" class="infodiv"></div>
+    <script language="javascript">
+      
+    var myform=window.document.forms[0];  
+  
+    function cgi_dep_onload()
+    {
+    	//20101228 remove
+        //20111117 Brian fix: after updating the lvs policy,the page can not return.
+        //var viewpoint=myform.viewpoint.value;
+        setTimeout("updateShow()",500);
+    }
+
+    function updateShow()
+    {
+        var action=myform.action.value;
+        if ( action=='UPDATE' || action=='ADD' || action=='SETDEFAULT' )
+        {
+            var qstring='';
+            qstring+='show_access.cgi';
+            window.top.mainFrame.showaccess.location.href=qstring;
+        }
+    }
+    function setDefault(def_status)
+    {
+        myform.default_status.value=def_status;
+	myform.action.value="SETDEFAULT";
+ 	myform.submit();
+    }
+    function updateAccess(action)
+    {
+        var report="";
+        var okToGo=true;
+        var name=document.getElementById("rule_name").value;
+        var source=document.getElementById("source").value;
+        var dest=document.getElementById("dest").value;
+        var type=document.getElementById("action_type").value;
+        var notedit=window.top.mainFrame.showaccess.document.forms[0].focusedrule.value;
+        if ( source == 'all' & dest == 'all' )
+        {
+            if ( qbConfirm(2, 'Are you sure you want to modify Default rule ? ') == 1 )
+            {
+                myform.focusedrule.value=window.top.mainFrame.showaccess.document.forms[0].focusedrule.value;
+            	if ( type == 'Allow' ) setDefault('all_allow');
+            	else setDefault('all_deny'); 
+            }
+        }
+	else
+	{
+            if (action=='UPDATE') 
+            { 
+            	if ( notedit == '' ) { alert ("ERROR:  You should select a rule first !" );      return; }
+            	myform.focusedrule.value=window.top.mainFrame.showaccess.document.forms[0].focusedrule.value; 
+            }
+            if ( !okToGo )  alert(report); 
+            if ( okToGo ) 
+            {  
+            	//goSubmit(action);
+            	myform.action.value=action;
+            	myform.submit();
+            }
+        }
+    }
+    
+    function showServiceInfo(service)
+    {
+        var pattern=/\\.|\\*|system|others|\\:d|\\:s|\\:/g; service=service.replace(pattern,'');
+        if(!service) { return; }
+        var service=eval(service);
+        ServiceDiv.innerText="<table class=infodivtable><tr><td>"+"Service Name:"+service.info[1]+"</td><td>"+"Type:"+service.info[0]+"</td></tr>";
+            
+        with(service)
+        for(count=0;count<port.length;count++)
+        {
+	    ServiceDiv.innerText+="<tr><td>Protocol:"+port[count].protocol+"</td><td>Port:"+port[count].port+"</td></tr>";
+        }
+        
+        with(ServiceDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+    
+    function showTableInfo(Table)
+    {
+        if( !Table || Table=='$gDROP' || Table=='$gALLPATH' || Table=='$gRRG' ) 
+        { 
+            alert("no info !!");
+            return; 
+        } 
+
+        var table=eval('T'+Table);
+
+        with(TableDiv)
+        {
+            innerText="<table class=infodivtable><tr><td>"+"Pool ID:"+Table+"</td><td>";
+            //20100223 Brian To show the note of the pool
+            innerText+="<td>Pool Name:"+table.I[4]+"</td><td>";
+            innerText+="<td>By Packet:"+table.I[0]+"</td><td>";
+            innerText+="<td>Mode:"+table.I[1]+"</td><td>";
+            innerText+="<td>Truely Aggregate:"+table.I[2]+"</td><td>";
+            innerText+="<td>Redirect Host:"+table.I[3]+"</td></tr>";
+        }
+            
+        with(eval('T'+Table))
+        for(count=0;count<P.length;count++)
+        {
+	    TableDiv.innerText+="<tr><td>ISP ID:"+P[count].a+"</td><td>Name:"+P[count].b+"</td><td>Weight:"+P[count].c+"</td><td>DSIP:"+P[count].d+"</td></tr>";
+        }
+        
+        with(TableDiv)
+        {
+            innerText+="</table>";
+            innerHTML=innerText;
+            style.pixelLeft = document.body.scrollLeft;
+            style.pixelTop = document.body.scrollTop; 
+			style.left= '30px';
+			style.top= '20px';
+            style.display="block";
+        }
+    }
+
+    function hideTableInfo(){TableDiv.style.display="none";}
+    function hideServiceInfo(){ServiceDiv.style.display="none";}
+    
+  </script>
+  
+  
+ACCESS_SCRIPT
+}
+#access_script
+
+#===================================================================================================
+#maintainIniroute(%action)
+sub maintainAccess
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+ 
+    my $accessref=XMLread($gPATH."access.xml");
+    my $target;
+    &GetCookies('username');    my $username=$Cookies{username};
+    my $local_time=localtime(time());
+ 
+    if ( $action{action}=~m/^DELACCESS$/ ) 
+    {
+        my $delrulelist=$action{rule};
+        my @access_array_after_del;
+        my $accesses=$accessref->{access};
+        foreach my $access ( @$accesses ) 
+        {
+            my $to_be_deleted=0;
+            foreach my $delrule ( @$delrulelist )
+            {
+            
+                if( $access->{source}.$access->{destination}.$access->{actiontype}.$access->{name}.$access->{service}.$access->{schedule}  ne $delrule) { next; }
+		$to_be_deleted=1;
+		last;
+	    }
+	    if ( !$to_be_deleted ) { push( @access_array_after_del, $access ); }
+        }
+        $accessref->{access}=\@access_array_after_del;
+        `/usr/local/apache/qb/setuid/run /bin/echo "$local_time $username Delet $target_name on Firewall page" >> /tmp/user.log`;
+    }
+    elsif ( $action{action}=~m/^SETDEFAULT$/ ) 
+    {
+        my $accesses=$accessref->{access};
+    	$accessref->{status}=$action{default_status};
+        foreach my $item ( @$accesses ) 
+        { 
+            if ( $item->{source} eq 'all' && $item->{destination} eq 'all' )
+            { 
+            	if ( $action{default_status} eq 'all_allow' ) 
+            	{ 
+            	    $item->{actiontype}='Allow';
+        	    `/usr/local/apache/qb/setuid/run /bin/echo "$local_time $username modify default Allow to Deny on Firewall page" >> /tmp/user.log`;
+            	}
+            	else 
+            	{ 
+            	    $item->{actiontype}='Deny'; 
+        	    `/usr/local/apache/qb/setuid/run /bin/echo "$local_time $username modify default Deny to Allow on Firewall page" >> /tmp/user.log`;
+            	};
+            }
+            
+        }
+    }
+    elsif ( $action{action}=~m/^ADD$|^UPDATE$/ ) 
+    {
+        my $direction ; 
+        #my $ruleCount=0 ;
+        my $accesses=$accessref->{access};
+        
+    	if (  $action{rule_name}!~/.{3,12}/ || $action{rule_name}=~m/$gBIG5/ || $action{rule_name}=~m/\@/ || $action{rule_name}=~m/\$/ || $action{rule_name}=~m/\s+/  )
+    	{
+    	    if ( $action{rule_name} ne '' )
+    	    {
+    	    $gMSGPROMPT.=qq (ERROR:NAME is a MUST or Format Error\\n);
+    	    return;
+    	    }
+    	}
+    	
+    	# Create Name 
+        if ( $action{action} eq 'ADD' && $action{rule_name} eq '' )
+        { 
+            my $big_num=0;
+            foreach my $item ( @$accesses )
+            {
+            	if ( $item->{name} eq 'Default' || $item->{actiontype} eq 'system' || $item->{name}!~m/Rule/ ){ next; }
+            	if ( $item->{name}=~m/Rule/ )
+            	{
+            	    my $small_num=$item->{name};
+            	    $small_num=~s/Rule//;
+            	    if ( $big_num le $small_num ){ $big_num=$small_num;$big_num++; }
+            	}
+            	
+            	#$ruleCount++;
+            }
+            #$action{rule_name}='Rule'.$ruleCount; 
+            $action{rule_name}='Rule'.$big_num; 
+        }
+        # Check Name reused or not 
+    	foreach my $item ( @$accesses )
+    	{
+    	    if ( $item->{name} eq $action{rule_name} && $action{action} eq 'ADD' )
+    	    {
+    	        $gMSGPROMPT.=qq (ERROR: The Name was reused $item->{name}:$action{rule_name}!\\n);
+    	        return;
+    	    }
+    	}
+        #=======================================================================================================
+        # Check if new Policy exists already
+        my $target_exist=0;
+        my $target;
+
+        #===== search ( source x service x direction x destination x table ) in weburl =========================
+        my $sourcekey = $action{source};
+        my $destkey = $action{destination};
+        my $actiontypekey = $action{actiontype};
+        
+        my $ruleContentToAddOrUpdate=$sourcekey.$destkey.$action{service};
+
+        foreach my $item ( @$accesses )
+        {
+            my $rulekey;
+            if ( $item->{service} eq 'system' || $item->{name} eq 'Default' ) { next; }
+            
+            my $direction=$item->{direction};
+            $rulekey=$item->{source}.$item->{destination}.$item->{actiontype}.$item->{name}.$item->{service}.$item->{schedule};
+
+            my $sourcekey = $item->{source};
+            my $destkey = $item->{destination};
+            my $actiontypekey = $item->{actiontype};
+            $iprulekey=$sourcekey.$destkey.$item->{service};
+            if ( $rulekey eq $action{focusedrule} ) { $target=$item; }
+
+            if ( $action{action} eq 'ADD' && $iprulekey eq $ruleContentToAddOrUpdate ) { $target_exist=1; last; } 
+            
+        }
+
+        $ruleContentToAddOrUpdate=$action{source}.$action{destination}.$action{actiontype};    
+        if ( $action{action} eq 'ADD' && $target_exist && $action{enables} ne '1') {   $gMSGPROMPT.=qq(Policy Already Exists); return; }
+        if ( $action{action} eq 'UPDATE' && $target_exist &&  $ruleContentToAddOrUpdate ne $action{focusedrule} && $action{enables} ne '1') { $gMSGPROMPT.=qq(Policy Already Exists); return; }
+    
+        my %newclass;
+       
+        %newclass=( 
+        		name		=>  $action{rule_name},
+                    	source      	=>  $action{source}, 
+                    	destination   	=>  $action{destination}, 
+                    	service		=>  $action{service},
+               		actiontype	=>  $action{actiontype},
+               		schedule	=>  $action{schedule},
+               		dirty		=>  '0',
+        ); 
+        if ( $action{action} eq "UPDATE" ) 
+        {
+                %$target=%newclass;
+        	`/usr/local/apache/qb/setuid/run /bin/echo "$local_time $username Update $action{rule_name} on Firewall page" >> /tmp/user.log`;
+        }
+        elsif ( $action{action} eq "ADD" ) 
+        {    
+                push( @$accesses, \%newclass );
+        	`/usr/local/apache/qb/setuid/run /bin/echo "$local_time $username Add $action{rule_name} on Firewall page" >> /tmp/user.log`;
+        }
+    }      
+    #======== Update access.xml =============================
+    XMLwrite($accessref, $gPATH."access.xml");
+}
+#maintainAccess
+
+sub write_iptables_access_script()
+{
+
+    my $accessref   = XMLread($gPATH.'access.xml');	my $access_access = $accessref->{access};
+    my $ispref	    = XMLread($gPATH."basic.xml");	my $isplist	  = $ispref->{isp};
+    my $zoneref	    = XMLread($gPATH."zonecfg.xml");	my $zonelist	  = $zoneref->{nat};
+    my $hostref	    = XMLread($gPATH."host.xml");	my $hostlist	  = $hostref->{host};
+    my $serviceref  = XMLread($gPATH.'service.xml');	my $servicelist	  = $serviceref->{service};
+    my $scheduleref = XMLread($gPATH.'schedule.xml');	my $schedulelist  = $scheduleref->{schedule};
+    
+    my $default;
+    my $scheduletime;
+ 
+    my $iptables_access = "/usr/local/apache/qbconf/iptables_access";
+    if ( !open(IPTABLES_ACCESS, ">$iptables_access") ) { print "open qosinit fail!!\n"; return; }
+    
+    #Gary good for look
+    print IPTABLES_ACCESS qq "\n \n";
+    
+    if ( $accessref->{status} eq 'all_allow' ) { $default=1; print IPTABLES_ACCESS qq "/sbin/iptables -P OUTPUT ACCEPT \n"; }
+    elsif ( $accessref->{status} eq 'all_deny' ) 
+    { 
+    	print IPTABLES_ACCESS qq "/sbin/iptables -P OUTPUT DROP \n"; 
+    	print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -s 172.31.3.1 -j ACCEPT \n";
+    	print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -d 255.255.255.255 -j ACCEPT \n";
+    	print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -d 127.0.0.0/8 -j ACCEPT \n";
+    
+    	print IPTABLES_ACCESS qq "/sbin/iptables -P FORWARD DROP \n"; 
+    	print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -s 172.31.3.1 -j ACCEPT \n";
+    	print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -d 255.255.255.255 -j ACCEPT \n";
+    	print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -d 127.0.0.0/8 -j ACCEPT \n";
+    
+    	foreach my $isp (@$isplist){
+    	    #
+    	    #  Gary 
+    	    #  cause DNS can't work
+    	    #
+    	    #if ($isp->{isptype} eq 'normal' ){
+    	    #	#print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -s $isp->{subnet} -d $isp->{target} -j ACCEPT \n"; 
+    	    #	print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -s $isp->{subnet} -d 0.0.0.0/0 -j ACCEPT \n"; 
+    	    #	print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -s $isp->{subnet} -d 0.0.0.0/0 -j ACCEPT \n"; 
+    	    #	print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -d $isp->{subnet} -s 0.0.0.0/0 -j ACCEPT \n"; 
+    	    #	print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -d $isp->{subnet} -s 0.0.0.0/0 -j ACCEPT \n"; 
+    	    #}
+    	    #elsif ($isp->{isptype} eq 'pppoe' )
+    	    if ($isp->{isptype} eq 'pppoe' || $isp->{isptype} eq 'normal' || $isp->{isptype} eq 'pptp' || $isp->{isptype} eq 'l2tp' || $isp->{isptype} eq 'dhcp' )
+    	    {
+    	    	print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -o $isp->{nic} -j ACCEPT \n"; 
+    	    }
+    	    elsif ($isp->{isptype} eq 'tunnel' || $isp->{isptype} eq 'dtunnel' || $isp->{isptype} eq 'ipsec')
+    	    {
+    	    
+    	    	print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -s $isp->{local} -d $isp->{remote} -j ACCEPT \n";
+    	    	print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -s $isp->{local} -d $isp->{remote} -j ACCEPT \n";
+		if ( $isp->{isptype} ne 'ipsec' )
+		{	
+    	    	    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT  -s $isp->{systemip} -d $isp->{target} -j ACCEPT \n";
+    	    	    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -s $isp->{systemip} -d $isp->{target} -j ACCEPT \n";
+    	    	}
+    	    	else
+		{	
+    	    	    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT  -s $isp->{systemip} -j ACCEPT \n";
+    	    	    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -s $isp->{systemip} -j ACCEPT \n";
+    	    	}
+    	    }
+    	}
+    	foreach my $zone (@$zonelist){
+    	    if ( $zone->{type} eq 'nat' && $zone->{natid} ne 'system' ){
+    	    	#print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -s $zone->{network} -d $zone->{ip} -j ACCEPT \n"; 
+    	    	print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -d $zone->{network} -s $zone->{ip} -j ACCEPT \n"; 
+    	    	print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -d $zone->{network} -s $zone->{ip} -j ACCEPT \n"; 
+    	    }
+    	}
+    
+    }
+    print IPTABLES_ACCESS qq "\n#======================= The above is QB default rule ======================================= \n \n";
+    print IPTABLES_ACCESS qq "\n#======================= The following is user configuration ======================================= \n \n";
+
+    foreach my $item (@$access_access)
+    {
+    	if ( $item->{actiontype} eq 'system' || $item->{name} eq 'Default' || $item->{dirty} eq '1' ) { next; }
+	my $allport;
+	my @service_and_direction=split(/:/,$item->{service});
+	my $type_of_service=$service_and_direction[0];         #service type
+	my $direction=$service_and_direction[1];	       #rule direction "d" or "s"
+	
+	# begin search service port info
+	foreach $service ( @$servicelist )
+	{
+	    if ( $service->{type} eq 'layer7' || $service->{type} eq 'system' ) { next; }
+	    $portlist=$service->{port};
+	    if ( $service->{title} eq $type_of_service )
+	    {
+	    	foreach my $port ( @$portlist )
+	    	{
+	    	    if ( $port->{protocol} eq 'system' ) { next; }
+	    	    if ( $port->{value} eq '' ) { $allport = $port->{protocol};next; } 
+	    	    $allport .= $port->{protocol}.':'.$port->{value}.',';
+	    	}
+	    }
+	}
+	
+    	if ( $item->{source} eq 'all' && $item->{destination} eq 'all' ) {next;}
+    	my $sourceip = ( $item->{source} eq 'all' ) ? ('0.0.0.0/0') : ($item->{source}) ;
+    	my $destinationip = ( $item->{destination} eq 'all' ) ? ('0.0.0.0/0') : ($item->{destination}) ;
+    	my $muti_source=0;
+    	my $muti_dest=0;
+    	my $dir_port;
+    	my $had_schedule='0';
+    	if ( $direction eq 's' ) { $dir_port='--sport'; }
+    	else { $dir_port='--dport';; }
+    	
+    	my $action_allow = ( $item->{actiontype} eq 'Allow' ) ? ('ACCEPT'):('DROP');
+    	
+    	my @portinfo=split(/,/,$allport);
+    	if ( $type_of_service eq 'others' ) { $portinfo[0]='1'; }
+    	
+    	foreach my $schedule ( @$schedulelist ) {   if ( $schedule->{schname} eq $item->{schedule} ) { $had_schedule='1'; }   }
+    	
+    	###############################################################################
+    	#
+    	##     if had use schedule object enter this condition
+    	##
+    	###############################################################################
+    	if ( $had_schedule eq '1' )
+    	{
+		foreach my $schedule ( @$schedulelist )
+    	  	{
+    	    	    if ( $schedule->{schname} eq $item->{schedule} )
+    	    	    {
+    	    		my $scheduledays=$schedule->{subsch};
+    	    		foreach my $scheduleday ( @$scheduledays )
+    	    		{
+    	    	    	    $scheduletime='-m time --timestart '.$scheduleday->{timestart}.' --timestop '.$scheduleday->{timestop}.' --weekdays '.$scheduleday->{days};
+    	
+    		    	    foreach my $protocolandport ( @portinfo )
+    		    	    {
+    	    			if ( $protocolandport eq '1' ) {  $protocol_parameter='';  }
+    	    			else
+    	    			{
+	    		    	    my @protocolandport2=split(/:/,$protocolandport); # protocolandport2 array [0] is protocol , [1] is port number
+	    
+	    		    	    my $iptables_rule;
+	    		    	    if ( $protocolandport2[1] eq '' ) { $protocol_parameter='-p '.$protocolandport2[0]; }
+	    		    	    else { $protocol_parameter='-p '.$protocolandport2[0].' '.$dir_port.' '.$protocolandport2[1]; }
+    	    			}
+    	    			if ( grep(/host-/, $item->{source}) || grep(/host-/, $item->{destination}) ) 
+    	    			{
+    	    		    	    foreach my $host (@$hostlist)
+    	    		    	    {
+    	    	    			if ( $host->{hostname} eq $item->{source} )      { $sourceip=$host->{hostaddress}; 	$muti_source=1; }
+    	    	    			if ( $host->{hostname} eq $item->{destination} ) { $destinationip=$host->{hostaddress}; $muti_dest=1; }
+    	    		    	    }
+    	    		    	    if ( $muti_source && !$muti_dest )
+    	    		    	    {
+    	    	    			my @splitsource=split(/,/, $sourceip);
+    	    	    			foreach my $muti_sourceip ( @splitsource )
+					{
+    	    	    		    	    my $my_src_ip ;
+    	    	        	    	    if( grep(/-/, $muti_sourceip) ){ $my_src_ip='-m iprange --src-range '.$muti_sourceip; }
+    	    	        	    	    else { $my_src_ip='-s '.$muti_sourceip; }
+    	     	        	    	    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT $my_src_ip -d $destinationip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT $my_src_ip -d $destinationip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD $my_src_ip -d $destinationip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	    	
+    	    	        	    	    if( grep(/-/, $muti_sourceip) ){ $my_src_ip='-m iprange --dst-range '.$muti_sourceip; }
+    	    	        	    	    else { $my_src_ip='-d '.$muti_sourceip;}
+    	     	        	    	    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT $my_src_ip -s $destinationip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT $my_src_ip -s $destinationip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD $my_src_ip -s $destinationip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	    			}
+	    		    	    }
+    	    		    	    elsif ( !$muti_source && $muti_dest )
+    	    		    	    {
+    	    	    			my @splitdestination=split(/,/, $destinationip);
+    	    	    			foreach my $muti_destip ( @splitdestination )
+    	    	    			{
+					    my $my_dest_ip;
+					    if( grep(/-/, $muti_destip) ){ $my_dest_ip='-m iprange --dst-range '.$muti_destip; }
+					    else { $my_dest_ip='-d '.$muti_destip; }
+					    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT -s $sourceip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+					    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -s $sourceip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+					    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -s $sourceip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	    	
+					    if( grep(/-/, $muti_destip) ){ $my_dest_ip='-m iprange --src-range '.$muti_destip; }
+    	    	        	    	    else { $my_dest_ip='-s '.$muti_destip; }
+    	    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT -d $sourceip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -d $sourceip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+					    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -d $sourceip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	    			}
+	    		    	    }
+    	    		    	    else
+    	    		    	    { 
+    	    	    			my @splitsource=split(/,/, $sourceip);
+    	    	    			my @splitdestination=split(/,/, $destinationip);
+
+    	    	    			foreach my $muti_sourceip ( @splitsource )
+    	    	    			{
+    	    	    		    	    foreach my $muti_destip ( @splitdestination ) 
+    	    	    		    	    {
+    	    	    	    			my $my_src_ip, $my_dest_ip;
+    	    	            			if( grep(/-/, $muti_sourceip) ) {   $my_src_ip='-m iprange --src-range '.$muti_sourceip;   }
+    	    	            			else 				{   $my_src_ip='-s '.$muti_sourceip;   }
+    	    	            			if( grep(/-/, $muti_destip) )   {   $my_dest_ip='-m iprange --dst-range '.$muti_destip;   }
+    	    	            			else 				{   $my_dest_ip='-d '.$muti_destip;   }
+    	    	            			
+    	    		    			print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT $my_src_ip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    		    			print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT $my_src_ip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    		    			print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD $my_src_ip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    		    
+    	    	            			if( grep(/-/, $muti_sourceip) ) {   $my_src_ip='-m iprange --dst-range '.$muti_sourceip;   }
+    	    	            			else 				{   $my_src_ip='-s '.$muti_sourceip;   }
+    	    	            			if( grep(/-/, $muti_destip) )   {   $my_dest_ip='-m iprange --src-range '.$muti_destip;    }
+    	    	            			else 				{   $my_dest_ip='-d '.$muti_destip;   }
+    	    	            			
+    	    		    			print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT $my_src_ip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    		    			print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT $my_src_ip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    		    			print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD $my_src_ip $my_dest_ip $protocol_parameter $scheduletime -j $action_allow \n";
+    	    	        	    	    }
+    	    	    			}
+	    		    	    }
+    	    			}
+    	    			else
+    	    			{
+    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip $protocol_parameter $scheduletime -j $action_allow \n"; 
+    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -s $sourceip -d $destinationip $protocol_parameter $scheduletime -j $action_allow \n"; 
+    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip $protocol_parameter $scheduletime -j $action_allow \n"; 
+    	    	
+    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT -d $sourceip -s $destinationip $protocol_parameter $scheduletime -j $action_allow \n"; 
+    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -d $sourceip -s $destinationip $protocol_parameter $scheduletime -j $action_allow \n"; 
+    	    		    	    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -d $sourceip -s $destinationip $protocol_parameter $scheduletime -j $action_allow \n"; 
+    	    			}
+    		    	    }			    # foreach my $protocolandport  @portinfo 		End
+			}			    # foreach my $scheduleday  @$scheduledays  		End
+    
+    	   	     }				    # if  $schedule->{schname} eq $item->{schedule}  	End
+    	  	}				    # foreach my $schedule ( @$schedulelist )		End
+    	}
+    	###############################################################################
+    	##
+    	##     if had use schedule = "All Week" enter this condition
+    	##
+    	###############################################################################
+    	else
+    	{
+    		    foreach my $protocolandport ( @portinfo )
+    		    {
+    	    		if ( $protocolandport eq '1' )
+    	    		{
+    	    		    $protocol_parameter='';
+    	    		}
+    	    		else
+    	    		{
+	    		    my @protocolandport2=split(/:/,$protocolandport); # protocolandport2 array [0] is protocol , [1] is port number
+	    
+	    		    my $iptables_rule;
+	    		    if ( $protocolandport2[1] eq '' ) { $protocol_parameter='-p '.$protocolandport2[0]; }
+	    		    else { $protocol_parameter='-p '.$protocolandport2[0].' '.$dir_port.' '.$protocolandport2[1]; }
+    	    		}
+    	    		if ( grep(/host-/, $item->{source}) || grep(/host-/, $item->{destination}) ) 
+    	    		{
+    	    		    foreach my $host (@$hostlist)
+    	    		    {
+    	    	    		if ( $host->{hostname} eq $item->{source} )      { $sourceip=$host->{hostaddress}; 	$muti_source=1; }
+    	    	    		if ( $host->{hostname} eq $item->{destination} ) { $destinationip=$host->{hostaddress}; $muti_dest=1; }
+    	    		    }
+    	    		    if ( $muti_source && !$muti_dest )
+    	    		    {
+    	    	    		my @splitsource=split(/,/, $sourceip);
+    	    	    		foreach my $muti_sourceip ( @splitsource )
+    	    	    	    	{
+    	    	    		    my $my_src_ip ;
+    	    	        	    if( grep(/-/, $muti_sourceip) ){ $my_src_ip='-m iprange --src-range '.$muti_sourceip; }
+    	    	        	    else { $my_src_ip='-s '.$muti_sourceip; }
+    	     	        	    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT $my_src_ip -d $destinationip $protocol_parameter -j $action_allow \n";
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT $my_src_ip -d $destinationip $protocol_parameter -j $action_allow \n";
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD $my_src_ip -d $destinationip $protocol_parameter -j $action_allow \n";
+    	    	    	
+    	    	        	    if( grep(/-/, $muti_sourceip) ){ $my_src_ip='-m iprange --dst-range '.$muti_sourceip; }
+    	    	        	    else { $my_src_ip='-d '.$muti_sourceip;}
+    	     	        	    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT $my_src_ip -s $destinationip $protocol_parameter -j $action_allow \n";
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT $my_src_ip -s $destinationip $protocol_parameter -j $action_allow \n";
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD $my_src_ip -s $destinationip $protocol_parameter -j $action_allow \n";
+    	    	    		}
+	    		    }
+    	    		    elsif ( !$muti_source && $muti_dest )
+    	    		    {
+    	    	    		my @splitdestination=split(/,/, $destinationip);
+    	    	    		foreach my $muti_destip ( @splitdestination )
+    	    	    		{
+    	    	        	    my $my_dest_ip;
+    	    	        	    if( grep(/-/, $muti_destip) ){ $my_dest_ip='-m iprange --dst-range '.$muti_destip; }
+    	    	        	    else { $my_dest_ip='-d '.$muti_destip; }
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT -s $sourceip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -s $sourceip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -s $sourceip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    	    	
+    	    	        	    if( grep(/-/, $muti_destip) ){ $my_dest_ip='-m iprange --src-range '.$muti_destip; }
+    	    	        	    else { $my_dest_ip='-s '.$muti_destip; }
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT -d $sourceip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -d $sourceip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -d $sourceip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    	    		}
+	    		    }
+    	    		    else
+    	    		    { 
+    	    	    		my @splitsource=split(/,/, $sourceip);
+    	    	    		my @splitdestination=split(/,/, $destinationip);
+
+    	    	    		foreach my $muti_sourceip ( @splitsource )
+    	    	    		{
+    	    	    		    foreach my $muti_destip ( @splitdestination ) 
+    	    	    		    {
+    	    	    	    		my $my_src_ip, $my_dest_ip;
+    	    	            		if( grep(/-/, $muti_sourceip) ){ $my_src_ip='-m iprange --src-range '.$muti_sourceip; }
+    	    	            		else { $my_src_ip='-s '.$muti_sourceip; }
+    	    	            		if( grep(/-/, $muti_destip) ){ $my_dest_ip='-m iprange --dst-range '.$muti_destip; }
+    	    	            		else { $my_dest_ip='-d '.$muti_destip; }
+    	    		    		print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT $my_src_ip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    		    		print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT $my_src_ip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    		    		print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD $my_src_ip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    		    
+    	    	            		if( grep(/-/, $muti_sourceip) ){ $my_src_ip='-m iprange --dst-range '.$muti_sourceip; }
+    	    	            		else { $my_src_ip='-s '.$muti_sourceip;}
+    	    	            		if( grep(/-/, $muti_destip) ){ $my_dest_ip='-m iprange --src-range '.$muti_destip; }
+    	    	            		else { $my_dest_ip='-d '.$muti_destip; }
+    	    		    		print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT $my_src_ip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    		    		print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT $my_src_ip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    		    		print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD $my_src_ip $my_dest_ip $protocol_parameter -j $action_allow \n";
+    	    	        	    }
+    	    	    		}
+	    		    }
+    	    		}
+    	    		else
+    	    		{
+    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT -s $sourceip -d $destinationip $protocol_parameter -j $action_allow \n"; 
+    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -s $sourceip -d $destinationip $protocol_parameter -j $action_allow \n"; 
+    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -s $sourceip -d $destinationip $protocol_parameter -j $action_allow \n"; 
+    	    	
+    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A INPUT -d $sourceip -s $destinationip $protocol_parameter -j $action_allow \n"; 
+    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A OUTPUT -d $sourceip -s $destinationip $protocol_parameter -j $action_allow \n"; 
+    	    		    print IPTABLES_ACCESS qq "/sbin/iptables -A FORWARD -d $sourceip -s $destinationip $protocol_parameter -j $action_allow \n"; 
+    	    		}
+    		    }			    # foreach my $protocolandport  @portinfo 		End
+	} 				    # foreach my $schedule  @$schedulelist   		End	schedule.xml
+    }                                       # foreach my $item @$access_access  		End
+    #Gary good for look
+    print IPTABLES_ACCESS qq "\n \n";
+    
+    close(IPTABLES_ACCESS);
+    chmod(0777, $iptables_access);
+}
+#write_iptables_access_script
+
+#==================================================================================================
+1

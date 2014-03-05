@@ -1,0 +1,109 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showDos
+{	
+    my (%action)=@_;
+    my $deref=XMLread($gPATH.'newflood.xml');
+    my $delist=$deref->{newflood};
+    
+    my @titleHeadList=($qblang[29], $qblang[169], $qblang[25]);
+    my %titleWidth=('Name'=>300, 'Description'=>300, 'Edit'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0" style="width:100%">);
+    
+    print qq (<tr><td class="bigtitle"></td></tr>);
+
+    print qq (<tr><td><hr size=1></td></tr>);
+
+    #==============================================================
+    # Print Title first
+    # show
+    #===============================================================
+    print qq (<div class="divframe" style="height:200; width:200;">);
+    print qq (<table id="dosList" width="100%"  class="body" border="0"><thead><tr bgcolor="#332211">);
+	print qq (<th width="100" align="center">Enable</th>);
+	print qq (<th width="300" align="center">$qblang[29]</th>);
+	print qq (<th width="300" align="center">$qblang[169]</th>);
+	print qq (<th width="100" align="center">$qblang[25]</th>);
+	print qq (<th width="100" align="center"><a href="javascript:delFlood()"><img border="0" title="Delete Checked Flood(s)" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('newflood', this.checked)" title="select or deselect all items"></th></tr></thead>);
+	
+    foreach my $list (@$delist)
+    {
+	if ( $list->{dosip} eq "system" || $list->{cls} ne $action{option}) { next; }
+    	my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+    	print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor">); 
+	print qq (<td align="center"><input type="checkbox" name="enable" value="$list->{dosip}" onclick="selenable()");
+	if($list->{enable} eq 'true')
+	{
+		print qq (checked);
+	}
+	print qq (></td>);
+    	print qq (<td align="center" width="$titleWidth{Name}" height="25" >$list->{dosip}</td>);
+	print qq (<td align="center" width="$titleWidth{Description}" height="25">$list->{description}</td>);
+    	print qq (<td align="center" width="$titleWidth{Edit}" height="25"><a href="neweditflood.cgi?dosip=$list->{dosip}&option=$list->{cls}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit Flood properties" border="0"></a></td>);
+    	print qq (<td align="center"><input type="checkbox" name="newflood" value="$list->{dosip}"></td>);
+    	print qq (</tr>);
+	$lineCount++;
+    }
+    print qq (</table>);
+    print qq (</div>);
+	
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" id="option" type="hidden" width="100" value="$action{option}">);
+    print qq (<input class="qb" id="gogo" type="button" width="100" value="$qblang[162]">);
+    
+}
+#showDos
+    
+
+
+#=============================================================================================
+
+sub scriptDos
+{
+    print << "scriptDos";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="jquery-1.10.2.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+
+    \$("td[class='bigtitle']").text(\$("#option").val()+" Flood");
+    \$("#gogo").click(function(){
+        location.href='neweditflood.cgi?option='+\$("#option").val();
+    });
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function AddNew() { window.top.mainFrame.location.href="neweditflood.cgi"; }    
+    
+	function selenable()
+	{
+		myform.action.value='ENABL';
+        myform.submit();
+		for ( var i=0; i < myform.elements.length; i++)
+    	{
+        	var ctrlobj=myform.elements[i];
+		   	ctrlobj.disabled=true;
+		}
+	}
+	
+    function delFlood()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+	
+    </script>
+    
+scriptDos
+}
+#scriptDos
+#
+1

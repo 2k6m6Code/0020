@@ -1,0 +1,131 @@
+#Recommended minimum configuration:
+acl manager proto cache_object
+acl localhost src 127.0.0.1/32
+acl to_localhost dst 127.0.0.0/8 0.0.0.0/32
+
+#accept dmz
+
+#accept lan
+
+#privilege pc
+acl exempt src "/usr/local/squid/etc/exempt.txt"
+
+#whitelist
+acl http proto http
+acl https proto https
+acl port_80 port 80
+acl SSL_ports port 443
+acl Safe_ports port 80		# http
+acl Safe_ports port 21		# ftp
+acl Safe_ports port 443		# https
+acl Safe_ports port 70		# gopher
+acl Safe_ports port 210		# wais
+acl Safe_ports port 1025-65535	# unregistered ports
+acl Safe_ports port 280		# http-mgmt
+acl Safe_ports port 488		# gss-http
+acl Safe_ports port 591		# filemaker
+acl Safe_ports port 777		# multiling http
+acl CONNECT method CONNECT
+
+#Restrict Web Features 
+acl activex url_regex -i \.cab$ \.ocx$
+acl javaapplt url_regex -i \.class$
+acl js url_regex -i \.js$
+#url filter
+acl myDomain dstdomain "/usr/local/squid/etc/trust.txt" 
+acl badDomain dstdomain  "/usr/local/squid/etc/forbid.txt"
+acl keyword url_regex -i "/usr/local/squid/etc/keyword.txt" 
+acl blockfile url_regex -i "/usr/local/squid/etc/blockfile.txt"
+acl blockmime url_regex -i "/usr/local/squid/etc/blockmime.txt"
+
+#prohibit multi-thread download
+acl maxcon maxconn 1
+acl partial rep_header Content-Range .*
+
+#block time
+#acl blocktime time
+
+#---------------------------------------------
+#allow all ! blocktime
+#http_access allow !blocktime
+
+#privilege 
+http_access allow http port_80 myDomain
+http_access allow exempt
+
+#prohibit multi-thread download
+#http_reply_access deny partial maxcon
+
+#block mime reply
+http_reply_access deny blockmime
+
+#Restrict Web Features
+#http_access deny activex
+#http_access deny javaapplt
+#request_header_access Cookie allow mydomain
+#request_header_access Cookie allow exempt
+#request_header_access Cookie deny all
+#http_access deny js
+
+#url filter
+http_access deny keyword
+http_access deny badDomain
+http_access deny blockfile
+
+
+http_access allow manager localhost
+http_access deny manager
+# Deny requests to unknown ports
+http_access deny !Safe_ports
+# Deny CONNECT to other than SSL ports
+http_access deny CONNECT !SSL_ports
+
+http_access allow localnet
+http_access allow myDomain
+
+# And finally deny all other access to this proxy
+http_access deny all
+
+icp_access allow localnet
+icp_access deny all
+
+#Allow HTCP queries from local networks only
+htcp_access allow localnet
+htcp_access deny all
+
+redirector_access  deny myDomain
+redirector_access  deny exempt
+
+#proxy cache deny php cgi  content
+acl QUERY urlpath_regex cgi-bin \? \.php \.asp \.cgi
+no_cache deny QUERY
+
+strip_query_terms off
+#-----------------------------------------
+
+# Squid normally listens to port 3128
+http_port 3128 transparent
+always_direct allow all
+
+cache_mem 24 MB
+cache_dir ufs /mnt/tclog/squid/cache 64 8 64
+cache_swap_low 75
+cache_swap_high 90
+
+maximum_object_size 4096 KB
+minimum_object_size 4 KB
+refresh_pattern ^ftp:           1440    20%     10080
+refresh_pattern ^gopher:        1440    0%      1440
+refresh_pattern (cgi-bin|\?)    0       0%      0
+refresh_pattern .               0       20%     4320
+
+emulate_httpd_log off
+log_ip_on_direct on
+
+error_directory /usr/local/squid/share/errors/English
+
+cache_store_log none
+cache_access_log /usr/local/squid/var/logs/access.log
+cache_effective_user squid
+cache_effective_group squid
+#url_rewrite_program /usr/local/bin/squidGuard -c /usr/local/squidGuard/squidGuard.conf

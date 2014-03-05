@@ -1,0 +1,13 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Public IP Reused as Pass through IP</title>
+</head>
+<body>
+
+<h2>Public IP Reused as Pass through IP</h2>
+<p>
+Register Q-Balancer and a subnet behind it to share the same IP. When an IP address is set up both in Link IP Binding of the Link Setup and Pass Through IP Registration, that IP can be used both in Q-Balancer and can also be used in another host behind it. Q-Balancer would not actually bind the IP to the box. However, if any specifics service of that IP address is set up for Q-Balancer to handle, it will receive packets destined such service. Other packets destined to this IP address but of different services would be routed to the other box. This allows both Q-Balancer and another host to share the same IP address.<br> 
+Select the ISP, then click in the blank filed, the correspondence IP address will appear , use [Register] button to register the IP address .
+</p>
+</body></html>

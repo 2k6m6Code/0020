@@ -1,0 +1,10 @@
+<opt file="schedule">
+  <schedule description="All Time on Weekend" schname="Weekend">
+    <subsch days="Fri" timestart="18:00" timestop="23:59" />
+    <subsch days="Sun,Sat" timestart="0:00" timestop="23:59" />
+  </schedule>
+  <schedule description="5 days working week 9:00 to 18:00" schname="Work Hours">
+    <subsch days="Mon,Tue,Wed,Thu,Fri" timestart="9:00" timestop="18:00" />
+  </schedule>
+  <schedule days="system" description="system" schname="system" timestart="system" timestop="system" />
+</opt>

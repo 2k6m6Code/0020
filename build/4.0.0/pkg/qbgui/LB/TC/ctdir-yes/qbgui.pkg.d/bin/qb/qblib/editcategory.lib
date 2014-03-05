@@ -1,0 +1,533 @@
+###############################################################################################
+#                                           
+###############################################################################################
+sub showEditCategory 
+{
+    my (%action) = @_;
+    my $category = XMLread($gPATH.'category.xml');
+    my $categorylist = $category->{category};
+    #my $block_category =  $category->{block};
+    #my @blockarray = split(/,/, $block_category);
+    foreach my $item ( @$categorylist )
+    {
+        if ( $item->{categoryname} eq $action{categoryname} )
+        {
+            $edit = $item;
+        }
+    }
+    my $block_category =  $edit->{block};
+    my @blockarray = split(/,/, $block_category);
+    
+    print qq (<tr><td colspan="8" class="bigtitle">Category</td></tr>);
+    
+    #*****************************************************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" style="width: 600px">[ Anti-Social and Illegal  ]</td></tr>);
+    #********************************** ***************************************************
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Abortion information excluding when related to religion">);
+    my $status=( grep(/^abortion$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item" value="abortion" $status >abortion);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Drug related sites">);
+    my $status=( grep(/^drugs$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="drugs" $status >drugs);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites with guns">);
+    my $status=( grep(/^guns$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="guns" $status >guns);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Hacking/cracking information">);
+    my $status=( grep(/^hacking$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="hacking" $status >hacking);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites attempting to trick people into giving out private information">);
+    my $status=( grep(/^phishing$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="phishing" $status >phishing);
+    print qq (</td>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites who run or have spyware software to download">);
+    my $status=( grep(/^spyware$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="spyware" $status >spyware);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites containing violence">);
+    my $status=( grep(/^violence$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="violence" $status >violence);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title=" Sites who host virus infected files">);
+    my $status=( grep(/^virusinfected$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="virusinfected" $status >virus infected);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites with illegal pirate software">);
+    my $status=( grep(/^warez$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="warez" $status >warez);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites detailing or selling weapons">);
+    my $status=( grep(/^weapons$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="weapons" $status >weapons);
+    print qq (</td>);
+    #***********************************Adult and Sexual******************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" style="width: 600px">[ Adult and Sexual ]</td></tr>);
+    #********************************** ***************************************************
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites containing adult material such as swearing but not porn">);
+    my $status=( grep(/^adult$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="adult" $status >adult);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Art sites containing artistic nudity">);
+    my $status=( grep(/^artnudes$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item" value="artnudes" $status >artnudes);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Mixed adult content sites">);
+    my $status=( grep(/^mixed_adult$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="mixed_adult" $status >mixed_adult);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Pornography">);
+    my $status=( grep(/^porn$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="porn" $status >porn);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites dedicated to sexuality, possibly including adult material">);
+    my $status=( grep(/^sexuality$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="sexuality" $status >sexuality);
+    print qq (</td>);
+    #***********************************Communication and Technology******************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" style="width: 600px">[ Communication and Technology ]</td></tr>);
+    #********************************** ***************************************************
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Journal/Diary websites">);
+    my $status=( grep(/^blog$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item" value="blog" $status >blog);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites with chat rooms etc">);
+    my $status=( grep(/^chat$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item" value="chat" $status >chat);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites about dating">);
+    my $status=( grep(/^dating$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="dating" $status >dating);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites to do with filehosting">);
+    my $status=( grep(/^filehosting$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="filehosting" $status >file hosting);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites that contain messenger client download and web-based messaging sites">);
+    my $status=( grep(/^instantmessaging$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="instantmessaging" $status >instantmessage);
+    print qq (</td>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Webmail and email sites">);
+    my $status=( grep(/^mail$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="mail" $status >mail);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites with proxies to bypass filters">);
+    my $status=( grep(/^proxy$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="proxy" $status >proxy);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Search engines such as google">);
+    my $status=( grep(/^searchengines$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="searchengines" $status >search engines);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Social networking websites">);
+    my $status=( grep(/^socialnetworking$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="socialnetworking" $status >social network);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Just webmail si">);
+    my $status=( grep(/^webmail$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="webmail" $status >webmail);
+    print qq (</td>);
+    
+    #***********************************Gaming and Gambling******************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" style="width: 600px">[ Gaming and Gambling ]</td></tr>);
+    #********************************** ***************************************************
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Gambling sites including stocks and shares">);
+    my $status=( grep(/^gambling$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="gambling" $status >gambling);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Game related sites">);
+    my $status=( grep(/^games$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="games" $status >games);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Online gaming sites">);
+    my $status=( grep(/^onlinegames$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="onlinegames" $status >online games);
+    print qq (</td>);
+    #***********************************Information and Education******************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" style="width: 600px">[ Information and Education ]</td></tr>);
+    #********************************** ***************************************************
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Astrology websites">);
+    my $status=( grep(/^astrology$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item" value="astrology" $status >astrology);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Information about contraception">);
+    my $status=( grep(/^contraception$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="contraception" $status >contraception);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites about hygiene and other personal grooming related stuff">);
+    my $status=( grep(/^hygiene$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="hygiene" $status >hygiene);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Medical websites">);
+    my $status=( grep(/^medical$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="medical" $status >medical);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites that contain nude pictures and/or promote a nude lifestyle">);
+    my $status=( grep(/^naturism$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="naturism" $status >naturism);
+    print qq (</td>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="News sites">);
+    my $status=( grep(/^news$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="news" $status >news);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="non-news related radio and television">);
+    my $status=( grep(/^radio$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="radio" $status >radio);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites promoting religion">);
+    my $status=( grep(/^religion$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="religion" $status >religion);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites about eligious groups">);
+    my $status=( grep(/^sect$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="sect" $status >sect);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sport news sites">);
+    my $status=( grep(/^sportnews$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="sportnews" $status >sportnews);
+    print qq (</td>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Weather news sites and weather related">);
+    my $status=( grep(/^weather$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="weather" $status >weather);
+    print qq (</td>);
+    #***********************************Leisure******************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" style="width: 600px">[ Leisure ]</td></tr>);
+    #********************************** ***************************************************
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title=" Sites about and selling clothing">);
+    my $status=( grep(/^clothing$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="clothing" $status >clothing);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites that promote movies, books, magazine, humor">);
+    my $status=( grep(/^entertainment$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="entertainment" $status >entertainment);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Gardening sites">);
+    my $status=( grep(/^gardening$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="gardening" $status >gardening);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites about home repair">);
+    my $status=( grep(/^homerepair$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="homerepair" $status >homerepair);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Pet sites">);
+    my $status=( grep(/^pets$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="pets" $status >pets);
+    print qq (</td>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="All sport sites">);
+    my $status=( grep(/^sports$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="sports" $status >sports);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites about going on holiday">);
+    my $status=( grep(/^vacation$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="vacation" $status >vacation);
+    print qq (</td>);
+    #***********************************Society and Commerce******************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle" style="width: 600px">[ Society and Commerce ]</td></tr>);
+    #********************************** ***************************************************
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Advert servers and banned URLs">);
+    my $status=( grep(/^ads$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item" value="ads" $status >ads);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Banking websites">);
+    my $status=( grep(/^banking$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item" value="banking" $status >banking);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites that provide online shopping">);
+    my $status=( grep(/^ecommerce$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="ecommerce" $status >ecommerce);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Military and schools etc">);
+    my $status=( grep(/^government$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="government" $status >government);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Sites for finding jobs">);
+    my $status=( grep(/^jobsearch$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="jobsearch" $status >jobsearch);
+    print qq (</td>);
+    
+    print qq (<tr><td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Online auctions">);
+    my $status=( grep(/^onlineauctions$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="onlineauctions" $status >online auctions);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Online payment sites">);
+    my $status=( grep(/^onlinepayment$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="onlinepayment" $status >online payment);
+    print qq (</td>);
+    
+    print qq (<td  class="body" valign="center" align="left" style="height: 50px; width: 120px" title="Shopping sites">);
+    my $status=( grep(/^shopping$/, @blockarray)) ? ('checked') : ('');
+    print qq (<INPUT type="checkbox" name="item"  value="shopping" $status >shopping);
+    print qq (</td>);
+    print qq (<td  class="body" valign="center" align="right" style="height: 50px; width: 120px" >);
+    print qq (</td>);
+    print qq (<td  class="body" valign="center" align="right" style="height: 50px; width: 120px" >);
+    print qq (<input class="qb" type="button" align="center" value="Select All" title="Select All Categories" onClick="checkcategory(true);" style="width:60">);
+    print qq (<input class="qb" type="button" align="center" value="Clear" title="Clear All Categories" onClick="checkcategory(false);" style="width:60">);
+    print qq (</td>);
+    print qq (</table>);
+    print qq (<hr size=1 width=600 >);
+    print qq (<table><tr><td>);
+    print qq (</td></table>);
+
+    #-------------------------------------------------------------------------------------------
+    #  Category: Name and Description
+    #-------------------------------------------------------------------------------------------
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Name :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    print qq (<input class="qbtext" name="categoryname" style="WIDTH: 120px" value="$edit->{categoryname}" >);
+    print qq (<input type="hidden" class="qbtext" name="oldcategoryname" style="WIDTH: 120px" value="$edit->{categoryname}" >);
+    #print qq (<input class="qbtext" name="schname_show" style="WIDTH: 120px" value="$edit->{schname}" >);
+    #print qq (<input type="hidden" class="qbtext" name="schname" value="$action{schname}" >);
+    print qq (</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 80px">);
+    print qq (Description :);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
+    #print qq (<input class="qbtext" name="description" style="WIDTH: 120px; HEIGHT: 60px" value="$edit->{description}" >);
+    print qq (<textarea class="qbtext" name="description" style="width:200;height:80" >$edit->{description}</textarea>);
+    print qq (</td></tr>);
+
+    print qq (</table>);
+    #-----------------------------------------------------------------------------------------------------
+    print qq (<tr><td>);
+    print qq (<hr size=1>);
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 600px">);
+    print qq (<input class="qb" type="button" style="width:40" value="Save" onclick="SAVE();">);
+    print qq (</td></tr>);
+    print qq (</table>);
+    
+=cut
+    print qq (<table><tr><td>);
+    print qq (<input class="qb" type="button" align="center" value="Apply" title="Apply All Parameters now !" onClick="SAVE();" style="width:60">);
+    print qq (<input class="qb" type="button" align="center" value="Clear" title="Clear All Categories" onClick="clear_category();" style="width:60">);
+    #print qq (<input class="qb" type="button" align="center" value="ALL" title="Clear All Categories" onClick="all_category();" style="width:60">);
+    print qq (</td></tr></table>);
+=cut
+    
+}
+#
+
+
+#======================================================================================================================
+sub scriptEditCategory 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+        checkState();
+    }
+    
+    function SAVE()
+    {
+        var items = document.getElementsByName('item');
+        var categoryname = document.getElementById('categoryname').value;
+	var description=document.getElementById('description').value;
+        var block = '';
+	
+	if (categoryname == '') 
+	{
+	    alert('Schedule Name must be English or nember');
+            return;	
+	}
+	for (i = 0; i < categoryname.length; i++)
+        {
+            var ch = categoryname.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Category Name must be English or nember");
+               return;
+            }
+        }
+	for (i = 0; i < description.length; i++)
+        {
+            var ch = description.charCodeAt(i);
+            if ( ch < 32 || ch > 126 )
+            {
+               alert("Category Description must be English ");
+               return;
+            }
+        }
+        
+        for (var i = 0; i < items.length; i++) 
+            if (items[i].checked == true)
+                block += items[i].value + ',';
+        if (block == '')
+        {
+            alert('Must Select Category');
+            return;
+        }
+        myform.block.value = block;
+        myform.action.value = 'SAVE';
+        myform.submit();
+    }
+    
+    function checkcategory(status)
+    {
+        var items = document.getElementsByName('item');
+    
+        for (var i = 0; i < items.length; i++) 
+            items[i].checked = status;
+    }
+    
+    function checkState()
+    {
+        var action = document.getElementById('action').value;
+        var oldcategoryname = document.getElementById('oldcategoryname');
+        var categoryname = document.getElementById('categoryname');
+        
+        if ( oldcategoryname.value != '' )
+        {
+            categoryname.disabled = true;
+        }
+                
+        if ( action != '' )
+            window.top.mainFrame.location.href="category.cgi";
+    }
+    
+    </script>
+SCRIPT
+}
+#scriptEditCategory
+
+
+#======================================================================================================================
+#maintainCategory( %action )
+sub maintainCategory 
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    my $squid=XMLread($gPATH.'squidgen.xml');
+    my $categoryref=XMLread($gPATH.'category.xml');
+    my $categorylist = $categoryref->{category};
+    
+    if ( $action{action}=~m/^SAVE$/ )
+    {
+        my @categoryarray; 
+        foreach my $item ( @$categorylist )
+        {
+            if ( $item->{categoryname} eq 'system' ) { next; }
+            push(@categoryarray, $item->{categoryname});
+        }
+        delete($action{action});
+        if ( $action{oldcategoryname} eq '' )
+        {
+            if ( grep(/^$action{categoryname}$/, @categoryarray) )
+            {
+                $gMSGPROMPT.=qq (Category Already Exists\\n\\n);
+                return;
+            }
+            delete($action{oldcategoryname});
+            push(@$categorylist, \%action);
+        }
+        else 
+        {
+            foreach my $item ( @$categorylist )
+            {
+                if ( $action{oldcategoryname} eq $item->{categoryname} ) 
+                {
+                    $action{categoryname} = $action{oldcategoryname};
+	            delete($action{oldcategoryname});
+	            $item = \%action;
+                }
+            }
+        }
+        LogUserAction( action=>'SAVECATEGORY', categoryname=>$action{categoryname}, block=>$action{block} );
+    }
+    elsif ( $action{action}=~m/^DELET$/ )
+    {
+        my $delet=$action{categorys}; 
+        
+        if( @$delet <= 0 )
+        {
+            $gMSGPROMPT.=qq (Please select some category first\\n\\n);
+            return;
+        }
+        
+        my @temparray;
+        foreach my $item ( @$categorylist )
+        {
+            if ( grep(/^$item->{categoryname}$/, @$delet) ) { LogUserAction( action=>'DELCATEGORY', categoryname=>$item->{categoryname} ); next; }
+            push(@temparray, $item);
+        }
+        $categoryref->{category} = \@temparray;                                        
+    }
+    #-------updating category.xml------------------------ 
+    XMLwrite($categoryref, $gPATH."category.xml");
+    
+=cut    
+    if ( $squid->{isenable} eq "1" )
+    {
+       runCommand(command=>'/usr/local/apache/qb/setuid/do_qbcategory.pl', params=>'');
+       runCommand(command=>'killall', params=>'-9'.' '.'squid');
+       runCommand(command=>'sleep', params=>'5');
+       runCommand(command=>'/usr/local/squid/sbin/squid', params=>'-k'.' '.'reconfigure');
+    }
+=cut
+    
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    # sync the writing to CF
+    qbSync();
+}
+#maintainPptpinit
+#
+1

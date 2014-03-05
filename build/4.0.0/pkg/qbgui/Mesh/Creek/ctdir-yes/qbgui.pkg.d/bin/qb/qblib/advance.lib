@@ -1,0 +1,60 @@
+###############################################################################################
+#                                           Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showAdvance 
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[366]);
+
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #****************************************************************************************
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<span title="Modify MSS to 1428">$qblang[367]</span>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    my $status=( $overview->{mssmodify}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="mssmodify"  $status value="1">$qblang[368] );
+    print qq (<INPUT type="text" maxlength="4" style="width:40" class="qbtext" name="mssmodify_value" value="$overview->{mssmodify_value}">);
+    $status=( $overview->{mssmodify}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="mssmodify"  $status value ="0">$qblang[369]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    print qq (<span title="Modify the UDP routing cache timeout value">$qblang[370]</span>);
+    print qq (</td>);
+    print qq (<td class="body"  valign="center" align="left" height="30">);
+    my $status=( $overview->{udpmodify}==1 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="udpmodify"  $status value="1">$qblang[368] );
+    print qq (<INPUT type="text" maxlength="4" style="width:40" class="qbtext" name="udpmodify_value" value="$overview->{udpmodify_value}">);
+    $status=( $overview->{udpmodify}==0 ) ? ('checked') : (''); print qq (<INPUT type="radio" name="udpmodify"  $status value ="0" title="Default value = 5 seconds">$qblang[369]);
+    print qq (</td>);
+    print qq (<td class="body"  valign="top" align="left">);
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (</select><br>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+    print qq (</table>);
+
+
+    #************************************ Command Button  ********************************************
+    print qq (<table>);
+    print qq (<tr>);
+    print qq (<td align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[54]" title="Save All Parameters" onClick="goSubmit('SAVE')" style="width:180">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#showAdvance
+#
+1

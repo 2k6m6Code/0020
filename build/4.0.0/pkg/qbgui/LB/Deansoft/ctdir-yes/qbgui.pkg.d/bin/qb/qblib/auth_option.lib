@@ -1,0 +1,276 @@
+###############################################################################################
+#                                           Pptpinit Management Console
+###############################################################################################
+sub showSquidgen 
+{
+    my (%action)=@_;
+    my $filelist=XMLread("/usr/local/apache/qbconf/auth.xml");
+    my $list=$filelist->{user};
+    my $login_time;
+    my $idle_time;
+    my $time_out;
+    print qq (<tr><td colspan="8" class="bigtitle">Authentication Setting</td></tr>);
+   
+    foreach my $timer (@$list)
+    {
+        if ($timer->{schname} eq 'system')
+        {
+           $login_time = $timer->{login_time};
+           $idle_time = $timer->{idle_time};
+           $time_hr = $timer->{time_hr};
+           $time_sec = $timer->{time_sec};
+        }
+    }
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Timer Setting]</td></tr>);
+    print qq (<tr><div>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (Login Time Out</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (<INPUT type="text" class="qb" name="login_time" id="login_time" value="$login_time">Sec.);
+    print qq (</td></tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (Idle Interval </td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (<INPUT type="text" class="qb" name="idle_time" id="idle_time" value="$idle_time">Sec.);
+    print qq (</td></tr>);
+    if ($time_hr eq '' )
+    {
+        $time_hr = 23;
+    }
+    if ($time_sec eq '')
+    {
+        $time_sec = 59;
+    }
+    
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (Time to Reset </td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (<INPUT type="text" class="qb" name="time_out" id="time_hr" value="$time_hr" style="width:40px">);
+    print qq (:<INPUT type="text" class="qb" name="time_out" id="time_sec" value="$time_sec" style="width:40px">);
+    print qq (</td></tr>);
+    
+    
+    print qq (<tr>);
+    print qq (<td colspan=2 align="center">);
+    print qq (<hr size="1">);
+    print qq (<input class="qb" type="button" align="center" name="apply" value="Apply" title="Apply All Parameters now !" onClick="savedata('Timer')" style="width:80">);
+    print qq (</td></tr>);
+    
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Multi-Add User ]</td></tr>);
+    print qq (<tr><div>);
+    print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 150px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (<div style="border-color:red; border-style:dotted;" align="center">);
+    
+    print qq (Note<br>);
+    print qq (If you want to import your user list,<br>);
+    print qq (please find the specail from which is in the download button.);
+    
+    print qq (</div></td></tr>);
+    print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
+    print qq (Export</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (<select class="qbopt" name="export" id="export">);
+    print qq (<option value="example" >Example</option>);
+    foreach my $user (@$list)
+    {
+        if ($user->{schname} eq 'system' || $user->{schname} eq ''){next;}
+        print qq (<option value="$user->{schname}">$user->{schname}</option>);
+    } 
+    print qq (</select>);
+    print qq (<INPUT type="button" class="qb" value="Download" onclick="go('export')"></td></tr>);
+    
+    print qq (<tr><td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
+    print qq (Import</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (<select class="qbopt" id="import_name" name="import_name">);
+    foreach my $user (@$list)
+    {
+        if ($user->{schname} eq 'system' || $user->{schname} eq ''){next;}
+        print qq (<option value="$user->{schname}">$user->{schname}</option>);
+    }
+    print qq (</select>);
+    print qq (<INPUT type="file" name="user" id="user">);
+    print qq (<INPUT type="button" class="qb" value="Upload" onclick="go('user')">);
+    
+    print qq (</td></div></tr>);
+    
+    #********************************** General Setup*******************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Login Page ]</td></tr>);
+    #********************************** ***************************************************
+    
+    print qq (<tr><div>);
+    print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
+    print qq (Logo Upload</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (<INPUT type="file" name="logo" id="logo">);
+    print qq (<INPUT type="button" class="qb" value="Upload" onclick="go('logo')">);
+    
+    print qq (</td></div></tr>);
+    
+    print qq (<tr><td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
+    print qq (Message </td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    my $data;
+    open(FILE,"/usr/local/apache/qb/auth/message.htm");
+    while(<FILE>)
+    {
+        $data.="$_\n";
+    }
+    close(FILE);
+    print qq (<textarea class="qbtext" name="msg" id="msg" style="width:400;height:80">$data</textarea>);
+    
+    print qq (</td></tr>);
+    
+    print qq (<tr>);
+    print qq (<td colspan=2 align="center">);
+    print qq (<hr size="1">);
+    print qq (<iframe name="result" style="background-color:#C2D1E1; width:100%; height:100; filter:alpha(opacity=70);"></iframe>);
+    print qq (</td></tr>); 
+    
+    print qq (<tr>);
+    print qq (<td colspan=2 align="center">);
+    print qq (<hr size="1">);
+    print qq (<input class="qb" type="button" name="apply" align="center" value="Apply" title="Apply All Parameters now !" onClick="savedata('LOGO')" style="width:80">);
+    
+    #********************************** Schedule to Block ********************************************
+    
+    print qq(<input type="hidden" name="orischedule" value="$squid->{schedule}">);
+    
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Alert E-mail ]</td></tr>);
+    
+    #print qq (<tr><td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
+    #print qq (Type : </td>);
+    #print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    #print qq (<select id="type" > );
+    #print qq (<option value="a">A</option>);
+    #print qq (<option value="b">B</option>);
+    #print qq (<option value="c">C</option>);
+    #print qq (</select>);
+    
+    $path = "/mnt/qb/conf/auth/";
+    find( { wanted => sub { push(@FileList, $_) }, no_chdir => 1 }, $path );
+    my $data;
+    open(FILE,"$FileList[1]");
+    while(<FILE>)
+    {
+        $data.="$_\n";
+    }
+    close(FILE);
+    $FileList[1] =~ s/\/mnt\/qb\/conf\/auth\///g;
+    $FileList[1] =~ s/\.message//g;
+    print qq (<tr><td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
+    print qq (Mail Title </td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    print qq (<INPUT type="text" name="title" id="title" value="$FileList[1]">);
+    print qq (</td>);
+    
+    print qq (<tr><td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
+    print qq (Mail Message </td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    
+    print qq (<textarea class="qbtext" name="m_msg" id="m_msg" style="width:400;height:80">$data</textarea>);
+    print qq (</td>);
+    
+    #print qq (<tr><div style="display:none;">);
+    #print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
+    #print qq (Mail Attached </td>);
+    #print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+    #print qq (<INPUT type="file" name="m_att" id="m_att">);
+    #print qq (<INPUT type="button" class="upload" value="Send" onclick="go('m_att')">);
+    #print qq (</td></div></tr>);
+    
+    print qq (<div style="display:none"">);
+    print qq (<INPUT type="submit" id="gogo">);
+    print qq (</div>);
+    
+    #print qq (<tr>);
+    #print qq (<td colspan=2 align="center">);
+    #print qq (<hr size="1">);
+    #print qq (<iframe name="result" style="background-color:#C2D1E1; width:100%; height:100; filter:alpha(opacity=70);"></iframe>);
+    #print qq (</td></tr>); 
+    
+    print qq (<tr>);
+    print qq (<td colspan=2 align="center">);
+    print qq (<hr size="1">);
+    print qq (<input class="qb" type="button" align="center" name="apply" value="Apply" title="Apply All Parameters now !" onClick="savedata('MAIL')" style="width:80">);
+    print qq (</td></tr></table>);
+    
+print << "SCRIPT1";
+<script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+<script language="javascript">
+
+var filepath;
+function go(x)
+{
+    myform.action.value = x;
+    filepath='index.php?' + document.getElementById(x).value + '.csv';
+    
+    if (document.getElementById(x).value != '')
+        document.getElementById("gogo").click();
+    else
+        alert("Please Choose File!!");
+        
+}
+
+function startDownload()
+{
+    var returnValue;
+    
+    returnValue=window.open(filepath);
+}
+
+function savedata(x)
+{
+    if (x == 'LOGO')
+        var data=\$("#msg").val();
+    if (x == 'MAIL')
+    {
+        var data=\$("#title").val()+",";
+        data +=\$("#m_msg").val();
+    }
+    if (x == 'Timer')
+    {
+        var data=\$("#login_time").val() + ',';
+        data+=\$("#idle_time").val() + ',';
+        data+=\$("#time_hr").val()+','+\$("#time_sec").val();
+    }   
+    \$("input[name='apply']").attr("disabled",true);
+    \$("textarea").attr("disabled",true);
+    \$.get("./qblib/option.pl",{action:x,data:data},function(y)
+    {
+    	alert("Save Success!!");
+   	\$("input[name='apply']").attr("disabled",false); 
+   	\$("textarea").attr("disabled",false);
+    });    
+}
+
+    
+</script>
+SCRIPT1
+        
+  
+}
+#showConsole
+
+
+#======================================================================================================================
+sub squidgenScript 
+{
+    print << "SCRIPT";
+    <script language="javascript">
+
+    var myform; 
+    myform=window.document.forms[0];
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+    
+    </script>
+SCRIPT
+}
+#squidgenScript
+
+1

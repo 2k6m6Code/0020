@@ -1,0 +1,18 @@
+<html>
+<head>
+<link rel="stylesheet" href="help.css" type="text/css">
+<title>Bridge Setting</title>
+</head>
+<body>
+
+<h2>Bridge Setting</h2>
+<p>
+The advantage of the bridge setting is when Q-Balancer is installed on a network, the original topology needs not be changed. It is as if Q-Balancer traffics pass through Q-Balancer transparently.
+<br>	The following graph illustrates this simple transparency. When Q-Balancer is installed, in the condition that the Firewall need not change its original IP address and its gateway (211.23.43.169), a new ISP WAN link is added to achieve Outbound Load Balance. 
+</p>
+<table>
+<tr valign=top><td>Zone ID :	</td><td width=50><b>ISP 1	</b></td><td>Every WAN link can be added to the bridge setting. However, only one bridge setting can be made. </td></tr>
+<tr valign=top><td class="light">Status :	</td><td class="light"><b>On	</b></td><td class="light">The default setting is Off. If a WAN link needs to be added, change the setting to On. </td></tr>
+<tr valign=top><td>Interface :	</td><td><b>Port3	</b></td><td> This interface is the LAN port that is added to this bridge. This should be different from the WAN port. In our example ISP 1's WAN port is Port 1, but the firewall in LAN is hooked on Port 3. </td></tr>
+</table>
+</body></html>

@@ -1,0 +1,59 @@
+<html>
+<head><link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+</head>
+<title>Link Setup</title><!--連結設定-->
+<body>
+
+<h2>Link Setup</h2><!--連結設定-->
+<p>
+按【Create】開啟一家一個新的ISP設定畫面。</p>
+<b>各項設定參數定義：</b>
+<ol>
+<li>Interface</li>	<!--1-->
+<p>
+	這個ISP線路所使用的實體連接Port，Q-Balancer更具有Virtual WAN Link的功能，也就是支援多數ISP線路能同時設定在同一個實體Port上，再透過Switch或是HUB作線路串接<br>
+	另外，Q-Balancer的Interface在Web 管理介面一律以Port 1、Port 2等順序標示，不過在Packet Captor 等管理介面，則是以Eth 0、Eth 1等順序標示，兩者相對應關係如下：
+</p>
+<b><center>
+Port 1 = Eth 0<br>
+Port 2 = Eth 1
+</center></b>
+<li>Name</li>	<!--2-->
+<p>
+	ISP線路的識別名稱，但無法支援中文，也不能以數字開頭
+</p>
+<li>Subnet</li>	<!--3-->
+<p>
+	ISP的Network Number，而所有網段的子網遮罩(Sub Netmask)設定都是以Bits Netmask的方式來表示，以 / 代表 mask，詳細換算可以參考下表<br><center> 
+
+<table>
+<tr><th>Bits	</th><th class="light">Dotted Decimal Netmask</th><th>	Binary Netmask</th></tr>
+<tr><td>/24     </td><td class="light"> 255.255.255.0        </td><td>11111111 11111111 11111111 00000000</td></tr>
+<tr><td>/25     </td><td class="light"> 255.255.255.128      </td><td>11111111 11111111 11111111 10000000</td></tr>
+<tr><td>/26     </td><td class="light"> 255.255.255.192      </td><td>11111111 11111111 11111111 11000000</td></tr>
+<tr><td>/27     </td><td class="light"> 255.255.255.224      </td><td>11111111 11111111 11111111 11100000</td></tr>
+<tr><td>/28     </td><td class="light"> 255.255.255.240      </td><td>11111111 11111111 11111111 11110000</td></tr>
+<tr><td>/29     </td><td class="light"> 255.255.255.248      </td><td>11111111 11111111 11111111 11111000</td></tr>
+<tr><td>/30     </td><td class="light"> 255.255.255.252      </td><td>11111111 11111111 11111111 11111100</td></tr>
+<tr><td>/31     </td><td class="light"> 255.255.255.254      </td><td>11111111 11111111 11111111 11111110</td></tr>
+<tr><td>/32     </td><td class="light"> 255.255.255.255      </td><td>11111111 11111111 11111111 11111111</td></tr>
+</table></center>
+</p>
+<li>Gateway IP</li>	<!--4-->
+<p>
+	ISP所給予該線路網段所使用之Gateway IP，Q-Balancer支援多個線路卻有相同網段相同Gateway的線路架構，但在這種架構下不能使用virtual wan link的功能 
+</p>
+<li>System IP</li>	<!--5-->
+<p>
+	即為Q-Balancer在該ISP線路預設所使用的IP 
+</p>
+<li>Target IP</li>	<!--6-->
+<p>
+	用於偵測線路(Line Check)是否正常或是斷線的標地IP，建議設定成遠端一個固定且不容易變動的IP(通常以該ISP的DNS IP最為理想)
+</p>
+<li>Download / Upload</li>	<!--7-->
+<p>
+	線路速率，這項參數會對Load Balance有影響，建議依線路頻寬情況填寫。當實際線路頻寬小於發給頻寬(如 ADSL因為距離)，為免影響演算法，建議填小於發給頻寬 
+</ol>
+</body></html>

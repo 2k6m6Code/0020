@@ -1,0 +1,202 @@
+#!/bin/sh
+#set -x
+configfile=$1
+flag=$2
+echo $(date)  "Enter detect function " >>/tmp/usb.log
+#sleep 5 #wait udevd
+
+echo "Switching usb mode..."
+if [ $configfile ];then
+  if [ -f /opt/qb/hsdpa/config/$configfile ];then
+   if [ ! -f /etc/usb-modeswitch.conf ];then
+    ln -s /opt/qb/hsdpa/config/$configfile /etc/usb-modeswitch.conf
+   else
+    rm -f /etc/usb-modeswitch.conf
+    ln -s /opt/qb/hsdpa/config/$configfile /etc/usb-modeswitch.conf
+   fi
+   linkresult=$?
+  fi
+  
+  if [ "$linkresult" = "0" ];then
+    modswitch_result=`/usr/sbin/usb_modeswitch -c /opt/qb/hsdpa/config/$configfile`
+    echo $modswitch_result|grep successfully >/dev/null 
+    modswitch_result_chk=$?
+    if [ "$modswitch_result_chk" != "0" ] && [ "$flag" = "1" ];then
+      echo $(date) "Exit detect function " >>/tmp/usb.log
+      exit 0
+    elif [ "$modswitch_result_chk" = "0" ];then
+      sleep 10
+    fi
+  fi
+else
+  echo $(date) "Exit detect function " >>/tmp/usb.log
+  exit 0
+fi
+
+if [ -f /tmp/detectusb.lock ];then
+ sleeptime=1
+ while [ -f /tmp/detectusb.lock ]
+ do
+    sleep $sleeptime  #wait other detectusb
+    let sleeptime=$(( $RANDOM % 3 ))
+ done
+fi
+
+touch /tmp/detectusb.lock
+cp -af /tmp/usbdev.tab /tmp/usbdev.tab.bak
+sleep 10
+echo "Cleaning USB Device table..."
+rm -f /tmp/usbdev.tab
+
+echo "Detecting USB Port Information..."
+Allusbport=`ls /sys/bus/usb-serial/devices/|sed 's/\n//g'|sed 's/ttyUSB//g'|sort -n`
+UsbIDs=`/sbin/lsusb|awk '{print $6}'|sed 's/\n//g'`
+count_chk=1
+
+echo "Getting Device Information..."
+for chkinfo in $UsbIDs
+do
+   usbinfo=`/sbin/lsusb |awk -F "ID" '{print $2}'|sed 's/\n//g'|sed 's/\( [0-9a-z][0-9a-z][0-9a-z][0-9a-z]\):\([0-9a-z][0-9a-z][0-9a-z][0-9a-z] \)//g'|awk NR==$count_chk`
+   chkedinfo=`ls /etc/usb_modeswitch.d/|sed 's/\n//g'|grep "$chkinfo"`
+   if [ "$?" = "0" ] || [ "$chkinfo" = "1199:9011" ] || [ "$chkinfo" = "12d1:14ac" ] || [ "$chkinfo" = "12d1:140c" ] || [ "$chkinfo" = "1da5:4519" ] || [ "$chkinfo" = "2020:1005" ] || [ "$chkinfo" = "12d1:14c6" ] || [ "$chkinfo" = "12d1:1c05" ] || [ "$chkinfo" = "12d1:1c10" ] || [ "$chkinfo" = "12d1:1506" ] || [ "$chkinfo" = "19d2:0117" ] || [ "$chkinfo" = "1199:68a3" ] ;then
+     usbVendor=`/sbin/lsusb |awk '{print $6}'|awk -F ":" '{print $1}'|sed 's/\n//g'|awk NR==$count_chk`
+     usbProduct=`/sbin/lsusb |awk '{print $6}'|awk -F ":" '{print $2}'|sed 's/\n//g'|awk NR==$count_chk`
+     usb_devnum=`/sbin/lsusb |awk '{print $4}'|awk -F ":" '{print $1}'|sed 's/\n//g'|awk NR==$count_chk`
+     usb_idnum=`/sbin/lsusb |awk '{print $2}'|awk NR==$count_chk`
+     #/sbin/insmod /lib/modules/2.6.17.7/kernel/drivers/usb/serial/usbserial.ko
+      case $usbVendor in
+      19d2 )
+              #InterfaceNumberchk=03 #ZTE MF627
+              InterfaceNumberchk=02 #ZTE MF190
+              ;; # ex. ZTE MF627
+      1da5 )
+              InterfaceNumberchk=03
+              ;; # ex. Qisda H20 3G Module
+      1199 )
+              InterfaceNumberchk=02
+              ;; # ex. Sierra 3G Module
+       * )
+              InterfaceNumberchk=00
+              ;; # ex. Huawei
+      esac 
+      # Gary for Sierra MC8090
+      if [ "$usbVendor" = "1199" ] && [ "$usbProduct" = "68a3" ] ;then
+         InterfaceNumberchk=03
+      fi
+     #To find out the ttyUSB number
+     for usbPort in $Allusbport
+     do
+      usbPort=ttyUSB$usbPort
+      bInterfaceNumber=`/usr/bin/udevinfo -ap /sys/bus/usb-serial/devices/$usbPort|grep bInterfaceNumber|awk -F "\"" '{print $2}'`
+      devnum=`/usr/bin/udevinfo -ap /sys/bus/usb-serial/devices/$usbPort|grep devnum|awk -F "\"" '{print $2}'|head -n 1`
+      devnum_chk=`expr $usb_devnum - $devnum`
+      #busid=`/usr/bin/udevinfo -ap /sys/bus/usb-serial/devices/$usbPort|grep ID==\"usb|awk -F "\"" '{print $2}'|sed 's/usb//g'|head -n 1`
+	  busid=`/usr/bin/udevinfo -ap /sys/bus/usb-serial/devices/$usbPort|grep KERNELS==\"usb|awk -F "\"" '{print $2}'|sed 's/usb//g'|head -n 1`
+      busid_chk=`expr $usb_idnum - $busid`
+      if [ "$devnum_chk" = "0" ] && [ "$busid_chk" = "0" ];then
+       bInterfaceNumber=`/usr/bin/udevinfo -ap /sys/bus/usb-serial/devices/$usbPort|grep bInterfaceNumber|awk -F "\"" '{print $2}'`
+       if [ "$bInterfaceNumber" = "$InterfaceNumberchk" ];then
+        Information=`/sbin/lsusb |awk -F ":" '{print $3}'|sed 's/\n//g'|awk '{print $2, $3, $4, $5, $6}'|awk NR==$count_chk`
+        Information_id=`/sbin/lsusb |awk -F ":" '{print $3}'|sed 's/\n//g'|awk '{print $1}'|awk NR==$count_chk`
+        #echo "USB Port: $usbPort Hardware: $devnum Information: $Information">>/tmp/usbdev.tab
+              stty -F /dev/$usbPort -echo -echoe -echok
+              USBNO=`echo $usbPort|sed 's/ttyUSB//g'`
+              Brand=`echo $Information|awk '{print $1}'`
+              case $Brand in
+              Huawei )
+                      case $Information_id in
+                      1003 )
+                             AP_Port_NO=`expr $USBNO + 1`
+                           ;; 
+                      140c )
+                             AP_Port_NO=`expr $USBNO + 3`
+                           ;; 
+                      14ac )
+                             AP_Port_NO=`expr $USBNO + 3`
+                           ;; 
+                      1506 )
+                            grep E303 /usr/local/apache/qbconf/basic.xml >/dev/null 
+                            E303_result_chk=$?
+                            if [ "$E303_result_chk" = "0" ] || [ "$configfile" = "E303" ];then
+                             AP_Port_NO=`expr $USBNO + 2`
+                            else
+                             AP_Port_NO=`expr $USBNO + 3`
+                            fi
+                           ;; 
+                      * )
+                             AP_Port_NO=`expr $USBNO + 2`
+                           ;;
+                      esac 
+              stty -F /dev/ttyUSB$AP_Port_NO -echo -echoe -echok
+              ;; # ex.
+              Qisda )
+              AP_Port_NO=`expr $USBNO - 1`
+              stty -F /dev/ttyUSB$AP_Port_NO -echo -echoe -echok
+              ;; # ex.
+              Sierra )
+              AP_Port_NO=`expr $USBNO + 0`
+              stty -F /dev/ttyUSB$AP_Port_NO -echo -echoe -echok
+              ;; # ex.
+              * )
+              AP_Port_NO=`expr $USBNO - 1`
+              stty -F /dev/ttyUSB$AP_Port_NO -echo -echoe -echok
+              ;; # ex.
+              esac 
+        #imei_num=`echo -e "at+CGSN\r\n">/dev/ttyUSB$AP_Port_NO|head -n 4 /dev/ttyUSB$AP_Port_NO|grep -e '^[0-9][0-9]*'|sed 's/\r//g'`
+        imei_num=`catty -r 0 -d /dev/ttyUSB$AP_Port_NO -b 460800 -w "AT+CGSN\r\n"|grep -v \,|grep -e '^[0-9][0-9]*'|head -n 1|sed 's/\r//g'`
+
+        if [ "$imei_num" = "" ];then
+           if [ "$Brand" = "Sierra" ] && [ -f /tmp/Sierra.$usbPort ];then
+             imei_num=`cat /tmp/Sierra.$usbPort`
+           else
+             #imei_num=`echo -e "at+CGSN\r\n">/dev/ttyUSB$AP_Port_NO|head -n 4 /dev/ttyUSB$AP_Port_NO|grep -e '^[0-9][0-9]*'|sed 's/\r//g'`
+             imei_num=`catty -r 0 -d /dev/ttyUSB$AP_Port_NO -b 460800 -w "AT+CGSN\r\n"|grep -v \,|grep -e '^[0-9][0-9]*'|head -n 1|sed 's/\r//g'`
+           fi
+           #Check twice to make sure 3ginfo can be gotten.
+           if [ "$imei_num" = "" ];then
+             echo "USB Port: $usbPort IMEI: 000000000000000 Information: $Information">>/tmp/usbdev.tab
+           else
+             if [ "$Brand" = "Sierra" ] && [ ! -f /tmp/Sierra.$usbPort ];then
+               echo $imei_num > /tmp/Sierra.$usbPort 
+             fi
+             echo "USB Port: $usbPort IMEI: $imei_num Information: $Information">>/tmp/usbdev.tab
+           fi
+        else
+           if [ "$Brand" = "Sierra" ] && [ ! -f /tmp/Sierra.$usbPort ];then
+             echo $imei_num > /tmp/Sierra.$usbPort 
+           fi
+           echo "USB Port: $usbPort IMEI: $imei_num Information: $Information">>/tmp/usbdev.tab
+        fi
+
+     if [ "$Brand" = "Sierra" ];then
+     signal=`catty -r 0 -d /dev/ttyUSB$AP_Port_NO -b 460800 -w "AT+CSQ\r\n"|grep ^+CSQ|awk '{print $2}'|sed -e "s/,99//"`
+        if [ "$signal" = "" ];then
+            signal=`catty -r 0 -d /dev/ttyUSB$AP_Port_NO -b 460800 -w "AT+CSQ\r\n"|grep ^+CSQ|awk '{print $2}'|sed -e "s/,99//"`
+            if [ "$signal" != "" ];then
+              echo $signal > /tmp/Sierra_signal.$usbPort
+            fi
+        else
+            echo $signal > /tmp/Sierra_signal.$usbPort
+        fi
+     isp=`catty -r 0 -d /dev/ttyUSB$AP_Port_NO -b 460800 -w "AT+CPOL?\r\n"|grep ^+CPOL|sed -e "s/^+CPOL.*,\"//"|sed -e "s/\".*//"|sed -e "s/^+CPOL: //"`
+        if [ "$isp" = "" ];then
+            isp=`catty -r 0 -d /dev/ttyUSB$AP_Port_NO -b 460800 -w "AT+CPOL?\r\n"|grep ^+CPOL|sed -e "s/^+CPOL.*,\"//"|sed -e "s/\".*//"|sed -e "s/^+CPOL: //"`
+            if [ "$isp" != "" ];then
+              echo $isp > /tmp/Sierra_isp.$usbPort
+            fi
+        else
+            echo $isp > /tmp/Sierra_isp.$usbPort
+        fi
+     fi
+
+        break 1
+       fi
+      fi
+     done 
+   fi
+   count_chk=`expr $count_chk + 1`
+done
+
+  echo $(date) "Done detect function " >>/tmp/usb.log
+rm -f /tmp/usbdev.tab.bak
+rm -f /tmp/detectusb.lock

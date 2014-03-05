@@ -1,0 +1,21 @@
+<opt file="fwmark" lastupdate="" status="">
+  <dmz></dmz>
+  <from></from>
+  <from_service_to></from_service_to>
+  <from_to></from_to>
+  <lvs>
+    <mark destination="system" direction="s" dirty="0" hookpoint="OUTPUT" service="maintain" source="localhost" value="0x4647535" />
+    <mark destination="system" direction="s" dirty="0" hookpoint="OUTPUT" service="ping" source="localhost" value="0x464753A" />
+    <mark destination="system" direction="s" dirty="0" hookpoint="OUTPUT" service="ssh" source="localhost" value="0x464753F" />
+  </lvs>
+  <nat></nat>
+  <qb>
+    <mark destination="" direction="s" dirty="0" hookpoint="OUTPUT" service="ISP1" source="" value="0x3E9" />
+  </qb>
+  <sys>
+    <mark destination="" direction="d" dirty="0" hookpoint="OUTPUT" service="domain" source="" value="0x8FF2710" />
+    <mark destination="" direction="d" dirty="0" hookpoint="OUTPUT" service="smtp" source="" value="0x8FF2711" />
+    <mark destination="" direction="d" dirty="0" hookpoint="OUTPUT" service="ftp" source="" value="0x8FF2712" />
+  </sys>
+  <to></to>
+</opt>

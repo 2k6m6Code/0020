@@ -1,0 +1,89 @@
+###############################################################################################
+#                                           Snmp Management Console
+###############################################################################################
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showRegist 
+{
+    my (%action)=@_;
+    my $overview=XMLread($gPATH.'overview.xml');
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="center" class="bigtitle" colspan="2" >$qblang[301]);
+    
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+     my $registered_date_sec;
+    if (open(INSDATE, "/mnt/conf/insdate"))
+    {
+        my $registered_name=runCommand(command=>"cat", params=>'/mnt/conf/insdate');
+        my $registered_sn=runCommand(command=>"cat", params=>'/mnt/conf/qbsn');
+        my $registered_mail=runCommand(command=>"cat", params=>'/mnt/conf/contact');
+        runCommand(command=>"rm", params=>'-f /mnt/conf/dtstamp.dc');
+        runCommand(command=>"mcrypt", params=>'-d /mnt/conf/dtstamp -k 2k6m6');
+        $registered_date_sec=runCommand(command=>"cat", params=>'/mnt/conf/dtstamp.dc');
+        #date -d "1970-01-01 UTC xxxxxxxxxx seconds"
+        if ( $registered_date_sec ne '' )
+        {
+          $registered_date=runCommand(command=>'date', params=>qq(-d \"1970-01-01 UTC $registered_date_sec seconds\"));
+        }
+        print qq (<tr><td class="body" valign="center" align="left" width="130" height="30">$qblang[302]:</td>);
+        print qq (<td class="body" valign="center" align="center" width="120" height="30">);
+        print qq (<input name="registername" class="qbtext" type="text" title="Name of the company" value="$registered_name" style="width:100px"></td></tr>);
+        print qq (<tr><td class="body" valign="center" align="left" width="130" height="30">$qblang[303]:</td>);
+        print qq (<td class="body" valign="center" align="center" width="120" height="30">);
+        print qq (<input name="registermail" class="qbtext" type="text" title="Contact E-mail" value="$registered_mail" onChange="checkMail(this.value)" style="width:100px"></td></tr>);
+        print qq (<tr><td class="body" valign="center" align="left" width="130" height="30">$qblang[304]:</td>);
+        print qq (<td class="body" valign="center" align="center" width="120" height="30">);
+        print qq (<input name="registersn" class="qbtext" type="text" title="Serial number of the QB" value="$registered_sn" readonly="readonly" style="width:100px"></td></tr>);
+        print qq (<tr><td class="body" valign="center" align="left" width="130" height="30">$qblang[305]:</td>);
+        print qq (<td class="body" valign="center" align="center" width="120" height="30">);
+        print qq (<input name="registerdate" class="qbtext" type="text" title="Registered Date" value="$registered_date" readonly="readonly" style="width:100px"></td></tr>);
+        #print qq (<tr>);
+        #print qq (<input type="button" class="qb" value="Register" title="Register Company Information"  onClick="regName()" style="width:180px">);
+        print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+        print qq (</table>);
+        print qq (<table>);
+        print qq (<tr><td align="center">);
+        print qq (<input type="button" class="qb" value="$qblang[306]" title="Register Company Information"  onClick="regName()" style="width:180px">);
+        print qq (</td></tr>);
+        print qq (</table>);
+    }
+    else
+    {
+        #20100310 Brian To show QB Serial Number
+        print qq (<tr>);
+        print qq (<td class="body"  valign="top" align="left">);
+        print qq ($qblang[307]);
+        print qq (</td>);
+        print qq (<td class="body"  valign="top" align="left">);
+        my $registered_sn=runCommand(command=>"cat", params=>'/mnt/conf/qbsn');
+        print qq (<input name="registersn" class="qbtext" type="text" title="Serial number of the QB" value="$registered_sn" readonly="readonly" style="width:100px"><br>);
+        print qq (<hr size="1">);
+        print qq (</td>);
+        print qq (</tr>);
+
+    }
+    qbSync(); #20130419 To prevent DOM/CF become readonly
+    close(INSDATE);
+}
+#showRegist
+
+#======================================================================================================================
+sub RegistScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+
+    </script>
+SCRIPT
+}
+#RegistScript
+#
+1

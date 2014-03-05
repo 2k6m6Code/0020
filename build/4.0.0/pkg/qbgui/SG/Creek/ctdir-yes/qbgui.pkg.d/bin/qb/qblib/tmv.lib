@@ -1,0 +1,289 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showTMV
+{
+    my (%action)=@_;
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $isplist=$ispref->{isp};
+    
+    my @titleHeadList=( $qblang[25], $qblang[64],$qblang[29], $qblang[65], $qblang[66], $qblang[29], $qblang[67], $qblang[68], $qblang[69], $qblang[70],$qblang[71], $qblang[72], $qblang[65], $qblang[82],
+    		        $qblang[73], $qblang[74], $qblang[76], $qblang[77] ,$qblang[78], $qblang[34]);
+    #==============================================================
+    # Print Title first
+    #===============================================================
+    
+    my %titleWidth=( 'Edit'=>50, 'Enabled'=>50, 'ID'=>80, 'NIC'=>80, 'Name'=>120, 'TVLI'=>120, 'TVRI'=>120, 'THLI'=>120, 'THRI'=>120, 'PORT'=>50,'THRN'=>50,
+     		     'Status'=>50, 'ID'=>50, 'Role'=>50, 'MTU'=>50, 'MSS'=>50, 'ENC'=>50, 'Algorithm'=>70, 'COMP'=>50, 'Down/Up'=>120 );
+     		     
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">$qblang[81]);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+    
+    print qq (<div class="divframe" style="width=1350; " >);
+    #print qq (<table class="sortable" bgcolor="#332211" width="100%" border="0"><tr>); 
+    print qq (<table class="sortable" width="100%" border="0"><tr bgcolor="#332211">); 
+    print qq (<td align="center" width="50">);
+    print qq (<a href="javascript:delTMV()"><image src="image/del.gif" title="Delete Checked TMV(s)" border="0"></a>);
+    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('tmv', this.checked)"></td>);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    #==============================================================
+    # Print TMV Info 
+    #===============================================================
+    
+    my $lineCount=0;
+    foreach my $isp ( @$isplist )
+    {
+        if ( $isp->{iid} eq 'system' ) { next; }
+        if ( $isp->{isptype} eq 'dtunnel' )
+        {
+            my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+            my $status;
+            my $onoff;
+            
+            print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+            print qq (<td align="center" width="50" height="25">);
+            print qq (<input type="checkbox" name="tmv" value="$isp->{iid}"></td>);
+            print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+            print qq (<a href="newtmv.cgi?isp=$isp->{iid}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+            print qq (<td align="center" width="$titleWidth{Enabled}" height="25" >);
+            
+            
+            if ( $isp->{enabled} eq '1' ) { $onoff = $lanBasic{off}; }
+            elsif ( $isp->{enabled} eq '0' ) { $onoff = $lanBasic{on}; }
+            if ( $isp->{enabled} eq '0' ){ print qq (<input type="checkbox" name="enabled" value=$isp->{iid} onclick="enabledisp($isp->{iid})"></td>); }
+            else { print qq (<input type="checkbox" name="enabled" CHECKED value=$isp->{iid} onclick="disabledisp($isp->{iid})"></td>); }
+            
+            print qq (<td align="center" width="$titleWidth{Status}" height="25" >);
+            my $alive = maintainBasic(action=>'GETALIVEBYIID', iid=>$isp->{iid}, ispname=>$isp->{ispname});
+            my $show_status = ( $alive eq '1' ) ? "alive.png" : "dead.png";
+            print qq (<span id="$isp->{systemip}"><img src="image/$show_status" width="14" height="14" border="0" /></span></td>);
+            
+            print qq (<td align="center" width="$titleWidth{ID}" height="25" >TMV $isp->{iid}</td>);
+            print qq (<td align="center" width="$titleWidth{NIC}" height="25" >$isp->{nic}</td>);
+            print qq (<td align="center" width="$titleWidth{Name}" height="25" >$isp->{ispname}</td>);
+            print qq (<td align="center" width="$titleWidth{TVLI}" height="25" >$isp->{systemip}</td>);
+            print qq (<td align="center" width="$titleWidth{TVRI}" height="25" >$isp->{gateway}</td>);
+            print qq (<td align="center" width="$titleWidth{THLI}" height="25" >$isp->{local}</td>);
+            print qq (<td align="center" width="$titleWidth{THRI}" height="25" >$isp->{remote}</td>);
+            if ( $isp->{tunnel_role} && $isp->{port})
+            { 
+                print qq (<td align="center" width="$titleWidth{PORT}" height="25" ><a href="javascript:openclient('$isp->{local}','$isp->{port}')" style="text-decoration:none" >$isp->{port}</a></td>);
+            }else
+            {
+                print qq (<td align="center" width="$titleWidth{PORT}" height="25" >--</td>);
+            } 
+            #print qq (<td align="center" width="$titleWidth{THRN}" height="25" >);
+            if ( $isp->{remotename} ne '' )
+            {
+                print qq (<td align="center" width="$titleWidth{THDN}" height="25" title="$isp->{remotename}" >);
+                print qq (<img src="image/ddns.gif" width="13" height="13" />);
+            }
+            else
+            {
+                print qq (<td align="center" width="$titleWidth{THDN}" height="25" >);
+                print qq (-);
+            }
+            print qq (</td>);
+            #print qq (<td align="center" width="$titleWidth{THRI}" height="25" >$isp->{remotename}</td>);
+            if ( $isp->{mtu} eq '1' )
+            {
+                $status = '1500';
+            }
+            elsif ( $isp->{mtu} eq '0' )
+            {
+                $status = '1476';
+            }
+            else
+            {
+                $status = $isp->{mtu};
+            }
+              
+            print qq (<td align="center" width="$titleWidth{ID}" height="25" >$isp->{traversal_port}</td>);
+            if ( $isp->{tunnel_role} )
+            {
+                print qq (<td align="center" width="$titleWidth{Role}" height="25" >Server</td>);
+            }
+            else
+            {
+                print qq (<td align="center" width="$titleWidth{Role}" height="25" >Client</td>);
+            }
+            print qq (</td>);
+            print qq (<td align="center" width="$titleWidth{MTU}" height="25" >$status</td>);
+            if ( $isp->{mss} eq '1' )
+            {
+                $status = '1428';
+            }
+            elsif ( $isp->{mss} eq '0' )
+            {
+                $status = 'Orginal';
+            }
+            else
+            {
+                $status = $isp->{mss};
+            }
+            print qq (<td align="center" width="$titleWidth{MSS}" height="25" >$status</td>);
+            #$status = ( $isp->{mpv_nat} ) ? ( 'On' ) : ( 'Off' );
+            #print qq (<td align="center" width="$titleWidth{NAT}" height="25" >$status</td>);
+            $status = ( $isp->{enc} ) ? ( 'On' ) : ( 'Off' );
+            print qq (<td align="center" width="$titleWidth{ENC}" height="25" >$status</td>);
+            my $show_alg = ( $isp->{alg} eq '' ) ? ( 'none' ) : ( $isp->{alg} );
+            print qq (<td align="center" width="$titleWidth{Algorithm}" height="25" >$show_alg</td>);
+            $status = ( $isp->{ipcom} ) ? ( 'On' ) : ( 'Off' );
+            print qq (<td align="center" width="$titleWidth{COMP}" height="25" >$status</td>);
+            print qq (<td align="center" width="120" height="25" >$isp->{download}/$isp->{upload}</td>);
+            
+            print qq (</tr>);
+        }
+        $lineCount++;
+    }
+    print qq (</table></div>);
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="$qblang[83]" onclick="NewTMV();">);
+}
+#showTMV
+    
+
+
+#=============================================================================================
+
+sub scriptTMV 
+{
+    print << "scriptHost";
+ 
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="qbjs/sorttable.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function NewTMV() { window.top.mainFrame.location.href="newtmv.cgi"; }    
+    
+    function delTMV()
+    {
+        if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )
+        {
+            myform.action.value='DELET';
+            myform.submit();
+        }
+    }
+    
+    function enabledisp(ispid)
+    {
+        myform.action.value='ON';
+        myform.isp.value=ispid;
+        myform.submit();
+        //for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+    
+    function disabledisp(ispid)
+    {
+        myform.action.value='OFF';
+        //alert(myform.action.value);
+        myform.isp.value=ispid;
+        //alert(myform.action.value);
+        //alert(ispid);
+        myform.submit();
+        for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+    
+    function openclient(ip,port)
+    {
+        var url='http://' + ip + ':' + port;
+        window.open(url);
+    }
+
+    function ajax()
+    {
+        i=(new Date()).getTime();
+        if (window.XMLHttpRequest) { queryReqHandler=new XMLHttpRequest(); }
+        if (window.ActiveXObject) { queryReqHandler = new ActiveXObject("Microsoft.XMLHTTP"); }
+
+        queryReqHandler.onreadystatechange = fno;
+        queryReqHandler.open("GET","tmvstatus.cgi?a="+i,true);
+        queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        var str='';
+        queryReqHandler.send(str);
+    }
+
+    function fno()
+    {
+        if( (queryReqHandler.readyState == 4) && (queryReqHandler.status == 200) )
+        {
+        var msg=queryReqHandler.responseText;
+        //alert(msg);
+        var len=msg.length;
+        msg=msg.slice(0,len-1);
+        msg=msg.split(",");
+        for (var n=0; n<(msg.length); n+=2)
+        {
+            document.getElementById(msg[n]).innerHTML="<img src='image/"+msg[n+1]+"' width='14' height='14' border='0' />";
+        }
+        queryReqHandler = null;
+        setTimeout( "ajax()",10000 );
+        }
+    }
+    ajax();
+                          
+    </script>
+    
+scriptHost
+}
+sub forTMVenabled
+{
+    my (%action)=@_;
+    if ( !$action{action} ) { return; }
+    
+    my $ispref=XMLread('/usr/local/apache/qbconf/basic.xml');
+    my $active_ispref=XMLread('/usr/local/apache/active/basic.xml');
+    my $isplist=$ispref->{isp};
+    my $active_isplist=$active_ispref->{isp};
+    
+    my $target;
+    my $active_target;
+
+    foreach my $item ( @$isplist ) {  if ( $item->{iid} eq $action{iid} ) { $target=$item; last; } }
+    foreach my $active_item ( @$active_isplist ) { if ( $active_item->{iid} eq $action{iid} ) { $active_target=$active_item; last; }}
+    
+    if ( $action{action} eq "ON" )
+    {
+ 
+        $target->{alive}='1';
+        $target->{enabled}='1';
+
+        $active_target->{alive}='1';
+        $active_target->{enabled}='1';
+
+	runCommand(command=>'/usr/local/apache/qb/setuid/tmvmpv_onoff.sh', params=>$target->{nic}.' up');
+ 
+    }
+    if ( $action{action} eq "OFF" )
+    {
+    
+        $target->{alive}='0';
+        $target->{enabled}='0';
+         
+        $active_target->{alive}='0';
+        $active_target->{enabled}='0';
+        
+	runCommand(command=>'/usr/local/apache/qb/setuid/tmvmpv_onoff.sh', params=>$target->{nic}.' down');
+                                
+    }
+    XMLwrite($active_ispref, $gACTIVEPATH."basic.xml");
+    XMLwrite($ispref, $gPATH."basic.xml");
+}
+#hostScript
+#
+1

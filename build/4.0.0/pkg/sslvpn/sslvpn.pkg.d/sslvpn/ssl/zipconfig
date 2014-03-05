@@ -1,0 +1,12 @@
+set -x
+sleep 10
+rm -f  /usr/local/apache/sslvpn/config.zip
+mkdir /tmp/config
+rm -f /usr/local/apache/sslvpn/config.zip
+cp -a /etc/ssl/ca.crt /tmp/config/
+cp -a /etc/ssl/ta.key /tmp/config/
+cp -a /etc/ssl/client.ovpn /tmp/config/
+cd /tmp
+zip -r config.zip ./config/ca.crt ./config/ta.key ./config/client.ovpn
+mv config.zip /usr/local/apache/sslportal/
+rm -rf /tmp/config/

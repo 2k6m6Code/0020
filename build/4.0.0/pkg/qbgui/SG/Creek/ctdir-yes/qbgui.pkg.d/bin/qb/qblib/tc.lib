@@ -1,0 +1,1734 @@
+########################################################################################################
+#                                     Traffic Control Config
+########################################################################################################
+
+
+#=============================================================================================
+sub editClass
+{
+    my ( %action )=@_;
+    my $focusedVIP=$action{focusedvip};
+    my %areahash=maintainBasic( action=>'GETAREANAMEHASH' );
+
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Class Configuration );
+    print qq (<a href="javascript:qbShowHelp('tcclass')"><image src="image/help.gif" border="0" title="Help"></a>);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0" class="body">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+    
+    my @classlist=maintainTC(action=>'GETCLASSLIST', area=>$action{area});
+
+    my $bw=maintainTC(action=>'GETBW', area=>$action{area});
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3"><input type="hidden" name="area" value="$action{area}"></tr>);
+    print qq (<tr><td colspan="3"></tr>);
+    print qq (<tr><td colspan="3">);
+    
+    #=================================================
+    # Print Tags
+
+    if ( !$action{area} ) { $action{area}='imq0'; }
+
+    my @iidlist=maintainBasic(action=>'GETGOODIIDLIST');
+
+    print qq (<table cellspacing="0">);
+
+    my $count = 0; # counter use to focus on the first tab
+
+    if ( @iidlist <= $gNUMOFPORT-$gRESERVEDLANPORT )
+    {
+        foreach my $dir ( '-OUT', '-IN' )
+        {
+            print qq (<tr>);
+            foreach my $isp ( @iidlist )
+            {
+                my $imqnum = nicTranslate('ISP'.$isp.$dir);
+                my $onoffclass=(($imqnum eq $action{area}) ) ? ('tagOn') : ('tagOff');
+                print qq(<td class="$onoffclass" onClick="setDev('$imqnum')">ISP$isp$dir</td>);
+            }
+            print qq (</tr>);
+        }
+
+        print qq (<tr>);
+        foreach my $eth  ( 0 .. $gNUMOFPORT-$gRESERVEDLANPORT-1)
+        {
+            my $port = nicTranslate('eth'.$eth);
+            my $onoffclass=("eth$eth" eq $action{area}) ? ('tagOn') : ('tagOff');
+            print qq(<td class="$onoffclass" onClick="setDev('eth$eth')">$port</td>);
+        }
+        print qq (</tr>);
+    }
+    else
+    {
+        print qq (<tr>);
+        foreach my $eth  ( 0 .. $gNUMOFPORT-$gRESERVEDLANPORT-1)
+        {
+            my $port = nicTranslate('eth'.$eth);
+            my $onoffclass=("eth$eth" eq $action{area}) ? ('tagOn') : ('tagOff');
+            print qq(<td class="$onoffclass" onClick="setDev('eth$eth')">$port</td>);
+        }
+        print qq (</tr>);
+
+        foreach my $dir ( '-OUT', '-IN' )
+        {
+            print qq (<tr>);
+            foreach my $isp ( @iidlist )
+            {
+                my $imqnum = nicTranslate('ISP'.$isp.$dir);
+                my $onoffclass=(($imqnum eq $action{area}) ) ? ('tagOn') : ('tagOff');
+                print qq(<td class="$onoffclass" onClick="setDev('$imqnum')">ISP$isp$dir</td>);
+            }
+            print qq (</tr>);
+        }
+    }
+
+    print qq (</table>);
+
+    #============================================================================================================
+    # Print Title first
+    print qq (<div class="divframe" style="width:560">);
+    print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    print qq (<td width="14.2%">CLASS ID</td>);
+    print qq (<td width="14.2%">AREA</td>);
+    print qq (<td width="14.2%">MAX</td>);
+    print qq (<td width="14.2%">MIN</td>);
+    print qq (<td width="14.2%">PRIORITY</td>);
+    print qq (<td width="14.2%">DEFAULT</td>);
+    print qq (<td width="14.2%">EDIT</td>);
+    print qq (<td><a href="javascript:delClass()"><image src="image/del.gif" title="Delete Checked Class(es)" border="0"></a></td>);
+    print qq (</tr></table>);
+    print qq (</div>);
+    
+    print qq (<div class="divframe" style="width:560;height:150">);
+    print qq (<table id="classList" border="0" width="100%" >);
+
+    #=================================================
+    # Print class in class idnum order
+    @classlist = sort class_sort_by_idnum_cat @classlist;
+
+    my $lineCount=0;
+    foreach my $class ( @classlist ) 
+    {
+        my ($idnum, $area, $min, $max, $priority, $default)=split(/J/, $class); # split to parse
+        my $originalColor=$bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' ); # set color
+
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="14.2%">$idnum</td>);
+        
+        my $area2print = nicTranslate($area); 
+        print qq (<td width="14.2%">$area2print</td>);
+        print qq (<td width="14.2%">$max</td>);
+        print qq (<td width="14.2%">$min</td>);
+        print qq (<td width="14.2%">$priority</td>);
+        my $status=($default eq $idnum) ? ('checked') : ();
+        print qq (<td width="14.2%"><input type="radio" name="default" value="$idnum" $status onclick="goSubmit('SETDEFAULTCLASS')"></td>);
+        print qq (<td width="14.2%"><a href="javascript:setFocusedClass(classList.rows[$lineCount]);selectedColor(classList.rows[$lineCount])" ><image src="image/edit.gif" title="Set Focus to this Class" border="0"></a></td>);
+        print qq (<td><input type="checkbox" name="classtodel" value="$idnum"></td>);
+        $lineCount++;    
+    }
+    print qq (<input type="hidden" name="focusedclass" value="">);
+    print qq (</table></div>);
+    print qq (</td></tr>);
+
+    my $bwarea = nicTranslate($action{area}); 
+    
+    my $bwToShow=($bw eq 'system') ? ('') : ($bw);
+    
+    print qq (<tr><td colspan="3"> $bwarea Bandwidth: <input class="qbtext" style="width:100" maxlength="8" type="text" name="bw" value="$bwToShow"> Kbit <input type="button" class="qb" name="Set" value="Set" onClick="goSubmit('SETBW')" style="width:60"></td></tr>);
+    print qq (<tr><td align="right">);
+    print qq (<table width="100%" cellspacing="0">);
+    print qq (<tr>);
+    
+    #===========================================================================================================
+    #Prepare availabe NICs for class to choose 
+    print qq (<td valign="top" align="left">);
+    print qq (<table class="body" cellspacing="3" bgcolor="#667788" width="100%">);
+
+    #===========================================================================================================
+    print qq (<tr>);
+    print qq (<td align="left" >Class ID: </td> );
+    print qq (<td align="left" ><input class="qbtext" style="width:100" maxlength="3" type="text" name="classid" onBlur="checkClassid(this)"></td> );
+    print qq (</tr>);
+
+    #===========================================================================================================
+    # my $imqnum=$showData->{imq}; $imqnum=~s/imq//;
+    print qq (<tr>);
+    print qq (<td class="body" align="left" >Area: </td> );
+    print qq (<td class="body" align="left">);
+    print qq (<select class="qbopt" name="area2change" style="width:100">);
+    print qq (<option $status value="-1">None</option>);
+
+    for my $isp ( @iidlist )
+    {
+        my $imqvalue = nicTranslate('ISP'.$isp.'-IN');
+        print qq (<option $status value="$imqvalue">ISP$isp-IN</option>);
+    }
+
+    for my $isp ( @iidlist )
+    {
+        my $imqvalue = nicTranslate('ISP'.$isp.'-OUT');
+        print qq (<option $status value="$imqvalue">ISP$isp-OUT</option>);
+    }
+
+    foreach my $eth ( 0..$gNUMOFPORT-$gRESERVEDLANPORT-1 )
+    {
+        my $port=nicTranslate('eth'.$eth);
+        print qq (<option $status value="eth$eth">$port</option>);
+    }
+
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+
+    #===========================================================================================================
+    print qq (<tr>);
+    print qq (<td>Max: </td><td><input class="qbtext" style="width:100" maxlength="8" type="text" name="max"> Kbit</td>);
+    print qq (</tr>);
+    
+    #===========================================================================================================
+    print qq (<tr>);
+    print qq (<td>Min: </td><td><input class="qbtext" style="width:100" maxlength="8" type="text" name="min"> Kbit</td>);
+    print qq (</tr>);
+
+    #===========================================================================================================
+    my $priority=$showData->{priority};
+    print qq (<tr>);
+    print qq (<td class="body" align="left">Priority: </td>);
+    print qq (<td class="body" align="left">);
+    print qq (<select class="qbopt" name="priority" size="1" style="width:100">);
+    foreach my $pri ( 1..10 )
+    {
+        my $status=($priority eq $pri) ? ('selected') : ();
+        print qq (<option $status value="$pri">$pri</option>);
+    }
+    print qq(</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</td>);
+    
+    print qq (<td valign="bottom" align="right">);
+    print qq (<input type="button" class="qb" name="Add" value="Add" onClick="goSubmit('APPENDCLASS')" style="width:60"><br>);
+    print qq (<input type="button" class="qb" name="Update" value="Update" onClick="goSubmit('UPDATECLASS');" style="width:60"><br>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#editClass
+
+#=============================================================================================
+sub editClassScript
+{
+    print << "EDITCLASSSCRIPT";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function setFocusedClass(myobj)
+    {
+        myform.classid.value = myobj.cells[0].innerText;
+
+        // Try matching ISP or Port and turn into imq or eth respectively
+        
+        var aa;
+        if (myobj.cells[1].innerText.match(/PORT(.*)/) != null)
+        {
+            aa = "eth" + (parseInt(RegExp.\$1)-1);
+        }
+        else if (myobj.cells[1].innerText.match(/ISP(.*)IN/) != null)
+        {
+            aa = "imq" + (parseInt(RegExp.\$1)*2-1);
+        }
+        else if (myobj.cells[1].innerText.match(/ISP(.*)OUT/) != null)
+        {
+            aa = "imq" + (parseInt(RegExp.\$1)*2-2);
+        }
+        myform.area2change.value = aa;
+
+        myform.max.value = myobj.cells[2].innerText;
+        myform.min.value = myobj.cells[3].innerText;
+        myform.priority.value = myobj.cells[4].innerText;
+
+        // port + max + min + priority
+        myform.focusedclass.value = myform.area2change.value + 'J' + myobj.cells[2].innerText + 'J' +
+                                    myobj.cells[3].innerText + 'J' + myobj.cells[4].innerText;
+    }
+
+    function checkClassid(classid)
+    {
+        classid.value=isNaN(parseInt(classid.value))?'':parseInt(classid.value);
+    }
+
+    function delClass()  
+    { 
+        if ( qbConfirm(2, 'Confirm Deletion?') != 1 )  return;
+        goSubmit('DELETECLASS');
+    }
+
+    function setDev(area)
+    {
+        myform.area.value=area;
+        goSubmit('');
+    }
+
+    </script>
+
+EDITCLASSSCRIPT
+
+}
+#editClassScript
+
+#=============================================================================================
+sub editFilter
+{
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr><td class="bigtitle">Service-based Filter Configuration );
+    print qq (<a href="javascript:qbShowHelp('tcfilter')"><image src="image/help.gif" border="0" title="Help"></a>);
+    print qq (<tr><td>);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+    
+    my @classlist=maintainTC(action=>'GETCLASSLIST', area=>'all');
+
+    my @filterlist=maintainTC(action=>'GETFILTERLIST');
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    
+    #=================================================
+    # Print Title first
+    print qq (<div class="divframe" style="width:830">);
+    print qq (<table bgcolor="#332211" width="100%" border="0"><tr>);
+    print qq (<td width="14%">SRC NET</td>);
+    print qq (<td width="9%">SRC PORT</td>);
+    print qq (<td width="14%">DST NET</td>);
+    print qq (<td width="9%">DST PORT</td>);
+    print qq (<td width="11%">SERVICE</td>);
+    print qq (<td width="8%">BURST</td>);
+    print qq (<td width="5%">OC</td>);
+    print qq (<td width="5%">TOS</td>);
+    print qq (<td width="7%">AREA</td>);
+    print qq (<td width="8%">CLASS ID</td>);
+    print qq (<td width="5%">PRI</td>);
+    print qq (<td width="5%">EDIT</td>);
+
+    print qq (<td width="3%"><a href="javascript:delFilter()"><image src="image/del.gif" title="Delete Checked Class(es)" border="0"></a></td>);
+    print qq (</tr></table>);
+    print qq (</div>);
+    
+    print qq (<div class="divframe" style="width:830;height:200">);
+    print qq (<table id="filterList" border="0" width="100%" >);
+
+    #=================================================
+    # List by classid
+    @filterlist = sort filter_sort_by_classid_cat @filterlist;
+
+    my $lineCount=0;
+    foreach my $filter( @filterlist ) 
+    {
+        my ($classid, $area, $srcnet, $srcprt, $dstnet, $dstprt, $l7service,  $tos, $priority, $burst, $oc, $dirty)=split(/J/, $filter); # split to parse
+        my $originalColor=$bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' ); # set color
+
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        print qq (<td width="14%">);
+        ($srcnet ne "") ? print qq ($srcnet) : print qq (any);
+        print qq (</td>);
+
+        print qq (<td width="9%">);
+        ($srcprt ne "") ? print qq ($srcprt) : print qq (any);
+        print qq (</td>);
+
+        print qq (<td width="14%">);
+        ($dstnet ne "") ? print qq ($dstnet) : print qq (any);
+        print qq (</td>);
+
+        print qq (<td width="9%">);
+        ($dstprt ne "") ? print qq ($dstprt) : print qq (any);
+        print qq (</td>);
+
+        print qq(<td width="11%">$l7service</td>);
+
+        print qq(<td width="8%">$burst</td>);
+
+        print qq(<td width="5%">$oc</td>);
+
+        print qq (<td width="5%">);
+        ($tos ne "") ? print qq ($tos) : print qq (any);
+        print qq (</td>);
+
+        my $areatoprint=nicTranslate($area);
+        if ($areatoprint)
+        {
+            print qq (<td width="7%">$areatoprint</td>);
+        }
+        else
+        {
+            print qq (<td width="7%">None</td>);
+        }
+
+        print qq (<td width="8%">$classid</td>);
+
+        print qq (<td width="5%">);
+        ($priority ne "") ? print qq ($priority) : print qq ();
+        print qq (</td>);
+
+        my $key = $srcnet . "J" . $srcprt . "J" . $dstnet . "J" . $dstprt . "J" . $l7service . "J" . $tos . 'J' . $priority . "J" . $area . "J" . $burst . "J" . $oc; 
+        print qq (<td width="5%"><a href="javascript:setFocusedFilter(filterList.rows[$lineCount]);selectedColor(filterList.rows[$lineCount])" ><image src="image/edit.gif" title="Set Focus to this Class" border="0"></a></td>);
+
+        print qq (<td width="3%"><input type="checkbox" name="filtertodel" value="$key"></td>);
+
+        $lineCount++;    
+    }
+    print qq (<input type="hidden" name="focusedfilter" value="">);
+    print qq (</table></div>);
+    print qq (</td></tr>);
+    
+    print qq (<tr><td align="right">);
+    print qq (<table width="100%" cellspacing="0">);
+    print qq (<tr>);
+
+    #Prepare availabe IPs of each AREA for VS to choose 
+
+    my @iid_list=sort keys %areahash;
+    print qq (<td valign="top" align="left">);
+    print qq (<table class="body" cellspacing="3" bgcolor="#667788" width="100%">);
+
+    print qq (<tr>);
+    print qq (<td class="body">Source Network: </td><td><input class="qbtext" style="width:130" maxlength="15" type="text" name="srcip"> / <input class="qbtext" style="width:20" maxlength="2" type="text" name="srcnetnet"></td>);
+    print qq (<td class="body">Source port: </td><td><input class="qbtext" style="width:160" maxlength="5" type="text" name="srcprt"></td>);
+    print qq (</tr>);
+
+    print qq (<tr>);
+    print qq (<td class="body">Destination Network: </td><td><input class="qbtext" style="width:130" maxlength="15" type="text" name="dstip"> / <input class="qbtext" style="width:20" maxlength="2" type="text" name="dstnetnet"></td>);
+    print qq (<td class="body">Destination port: </td><td><input class="qbtext" style="width:160" maxlength="5" type="text" name="dstprt"></td>);
+    print qq (</tr>);
+
+    #20070823 Brian for Layer7 QOS
+    print qq (<tr>);
+    print qq (<td class="body">Layer7 Service: </td>);
+    print qq (<td colspan="3">);
+    print qq (<select class="qbopt"  name="l7service" style="width:350"> );
+    print qq (<option value="">None</option>);
+
+    foreach my $mode ( sort keys %gL7PROTOCOLHASH )
+    {
+        print qq (<option $mode value="$mode"  >$gL7PROTOCOLHASH{$mode}</option>);
+    }
+    #20080221 Brian Disable layer7 file type QOS
+    #foreach my $mode ( sort keys %gL7FILEHASH )
+    #{
+    #    print qq (<option $mode value="$mode"  >$gL7FILEHASH{$mode}</option>);
+    #}
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (<tr>);
+    print qq (<td class="body">Burst: </td><td><input class="qbtext" style="width:140" maxlength="5" type="text" name="burst"> kb</td>);
+    print qq (<td class="body" align="left" >Overrun Class ID: </td>);
+    print qq (<td class="body" align="left">);
+    my %numlist;
+    foreach my $class ( @classlist ) 
+    {
+        my ($idnum, $imq, $min, $max, $priority, $default)=split(/J/, $class); # split to parse
+        $numlist{$idnum}=1;
+    }
+
+    print qq (<select class="qbopt" name="oc" style="width:160" onChange="modifyClassToPortMap()" >);
+    print qq (<option value="">None</option>);
+    foreach my $idnum ( sort sort_by_num keys %numlist) 
+    {
+        my $classidvalue=( $idnum eq "" ) ? ('None') : ('Class ID '. $idnum);
+        print qq (<option value="$idnum">$classidvalue</option>);
+    }
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+
+
+    print qq (<tr>);
+    print qq (<td class="body">TOS: </td><td><select class="qbopt" name="tos" style="width:160">);
+    print qq (<option value="">None</option>);
+    print qq (<option value="0x10">Minimize-Delay 16 (0x10)</option>);
+    print qq (<option value="0x08">Maximize-Throughput 8 (0x08)</option>);
+    print qq (<option value="0x04">Maximize-Reliability 4 (0x04)</option>);
+    print qq (<option value="0x02">Minimize-Cost 2 (0x02)</option>);
+    print qq (<option value="0x00">Normal-Service 0 (0x00)</option>);
+    print qq (</select></td>);
+
+    my @iidlist=maintainBasic(action=>'GETIIDLIST');
+    my $imqnum=$showData->{imq}; $imqnum=~s/imq//;
+
+    print qq (<td class="body" align="left" >Area: </td> );
+    print qq (<td class="body" align="left">);
+    print qq (<select class="qbopt" name="area" style="width:160">);
+    print qq (<option $status value="-1">None</option>);
+    
+    for my $isp( @iidlist )
+    {
+        my $imqnum = nicTranslate('ISP'.$isp.'-OUT');
+        print qq (<option $status value="$imqnum">ISP$isp-OUT</option>);
+    }
+
+    for my $isp( @iidlist )
+    {
+        my $imqnum = nicTranslate('ISP'.$isp.'-IN');
+        print qq (<option $status value="$imqnum">ISP$isp-IN</option>);
+    }
+
+    foreach my $eth ( 0..$gNUMOFPORT-$gRESERVEDLANPORT-1 )
+    {
+        my $portnum = nicTranslate('eth'.$eth);
+        print qq (<option $status value="eth$eth">$portnum</option>);
+    }
+    print qq (</td>);
+    
+    print qq (</tr>);
+
+
+    #****************************************************************************************
+    # Class ID number
+    #******************************** List selection of IDs ********************************
+    print qq (<tr>);
+    print qq (<td class="body" align="left" >Class ID: </td> );
+    print qq (<td class="body" align="left">);
+
+    my %numlist;
+    foreach my $class ( @classlist ) 
+    {
+        my ($idnum, $imq, $min, $max, $priority, $default)=split(/J/, $class); # split to parse
+        $numlist{$idnum}=1;
+    }
+
+    print qq (<select class="qbopt" name="classid" style="width:160" onChange="modifyClassToPortMap()" >);
+    print qq (<option value="-1">None</option>);
+    foreach my $idnum ( sort sort_by_num keys %numlist) 
+    {
+        my $classidvalue=( $idnum eq "-1" ) ? ('None') : ('Class ID '. $idnum);
+        print qq (<option value="$idnum">$classidvalue</option>);
+    }
+    print qq (</select>);
+    print qq (</td>);
+
+    print qq (<td class="body" align="left">Priority: </td>);
+    print qq (<td class="body" align="left">);
+    print qq (<select class="qbopt" name="priority" size="1" style="width:160">);
+    foreach my $pri ( 1..10 )
+    {
+        my $status=($priority eq $pri) ? ('selected') : ();
+        print qq (<option $status value="$pri">Priority $pri</option>);
+    }
+    print qq(</td>);
+
+    print qq (</tr>);
+
+    print qq (</table>);
+    print qq (</td>);
+    
+    print qq (<td valign="bottom" align="right">);
+    print qq (<input type="button" class="qb" name="Add" value="Add" onClick="goSubmit('APPENDFILTER')" style="width:60"><br>);
+    print qq (<input type="button" class="qb" name="Update" value="Update" onClick="goSubmit('UPDATEFILTER');" style="width:60"><br>);
+    print qq (</td>);
+    print qq (</tr>);
+    print qq (</table>);
+    print qq (</td></tr>);
+}
+#editFilter
+
+
+#=============================================================================================
+sub editFilterScript
+{
+    print << "EDITFILTERSCRIPT";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function setFocusedFilter(myobj)
+    {
+
+        myform.classid.value = myobj.cells[9].innerText;
+
+        if ( myform.classid.value == '' ) 
+        {
+            var msg="Class ID " + myobj.cells[9].innerText + " no longer exists !!";
+            myform.classid.value='-1';
+            alert(msg); 
+        }
+
+        modifyClassToPortMap();
+    
+    
+        if (myobj.cells[0].innerText != "any")
+        {
+            var srcnet = myobj.cells[0].innerText.split('/');
+            myform.srcip.value = srcnet[0];
+            myform.srcnetnet.value = srcnet[1];
+        }
+        else
+        {
+            myform.srcip.value = "";
+            myform.srcnetnet.value = "";
+        }
+
+        if (myobj.cells[1].innerText != "any")
+        {
+            myform.srcprt.value = myobj.cells[1].innerText;
+        }
+        else
+        {
+            myform.srcprt.value = "";
+        }
+
+        if (myobj.cells[2].innerText != "any")
+        {
+            var dstnet = myobj.cells[2].innerText.split('/');
+            myform.dstip.value = dstnet[0];
+            myform.dstnetnet.value = dstnet[1];
+        }
+        else
+        {
+            myform.dstip.value = "";
+            myform.dstnetnet.value = "";
+        }
+
+        if (myobj.cells[3].innerText != "any")
+        {
+            myform.dstprt.value = myobj.cells[3].innerText;
+        }
+        else
+        {
+            myform.dstprt.value = "";
+        }
+
+        if (myobj.cells[7].innerText != "any")
+        {
+            myform.tos.value = myobj.cells[7].innerText;
+        }
+        else
+        {
+            myform.tos.value = "";
+        }
+
+        var aa;
+        if (myobj.cells[8].innerText.match(/PORT(.*)/) != null)
+        {
+            aa = "eth" + (parseInt(RegExp.\$1)-1);
+        }
+        else if (myobj.cells[8].innerText.match(/ISP(.*)IN/) != null)
+        {
+            aa = "imq" + (parseInt(RegExp.\$1)*2-1);
+        }
+        else if (myobj.cells[8].innerText.match(/ISP(.*)OUT/) != null)
+        {
+            aa = "imq" + (parseInt(RegExp.\$1)*2-2);
+        }
+        //Show selected layer7 service
+        myform.l7service.value = myobj.cells[4].innerText;
+
+        myform.burst.value = myobj.cells[5].innerText;
+        
+        myform.oc.value = myobj.cells[6].innerText;
+
+        myform.area.value = aa;
+
+        if (myform.area.value=="") 
+        {   
+            var msg="Class ID " + myform.classid.value + " is no longer set on  " + myobj.cells[8].innerText +  " now !!";
+            alert(msg); 
+            myform.area.value="-1";
+        }
+
+        myform.priority.value=myobj.cells[10].innerText;
+
+        if (myobj.cells[0].innerText != "any")
+        {
+            myform.focusedfilter.value = myobj.cells[0].innerText;
+        }
+        myform.focusedfilter.value +=  'J';
+        if (myobj.cells[1].innerText != "any")
+        {
+            myform.focusedfilter.value += myobj.cells[1].innerText;
+        }
+        myform.focusedfilter.value += 'J';
+        if (myobj.cells[2].innerText != "any")
+        {
+            myform.focusedfilter.value += myobj.cells[2].innerText;
+        }
+        myform.focusedfilter.value += 'J';
+        if (myobj.cells[3].innerText != "any")
+        {
+            myform.focusedfilter.value += myobj.cells[3].innerText;
+        }
+        myform.focusedfilter.value += 'J';
+        if (myobj.cells[4].innerText != "")
+        {
+            myform.focusedfilter.value += myobj.cells[4].innerText;
+        }
+        myform.focusedfilter.value += 'J';
+        if (myobj.cells[7].innerText != "any")
+        {
+            myform.focusedfilter.value += myobj.cells[7].innerText;
+        }
+
+        myform.focusedfilter.value += 'J' + myobj.cells[10].innerText + 'J' +
+            myobj.cells[9].innerText + 'J' + aa + 'J' + myobj.cells[5].innerText + 'J' + myobj.cells[6].innerText;
+    }
+
+
+    function delFilter()  
+    { 
+        if ( qbConfirm(2, 'Confirm Deletion?') != 1 )  return;
+        goSubmit('DELETEFILTER');
+    }
+
+    function modifyClassToPortMap()
+    {
+        var portsel=myform.area;
+        var preselected=portsel.options[portsel.selectedIndex].value;
+        
+        if ( !myform.classid.value || myform.classid.value == -1 ) { return; } 
+
+        while(portsel.options.length > 1) { portsel.options[1]=null; }
+        
+        if ( preselected == -1 ) { portsel.value="-1"; }
+
+        var classareatableid='TABLE' + myform.classid.value; 
+        var areaarray=eval(classareatableid); 
+        
+        for (var loop=1;loop<=areaarray.length;loop++)
+        {
+            var area=areaarray[loop-1];
+            var areashow;
+
+            if (area.match(/eth(.*)/) != null)
+            {
+                areashow = "Port" + (parseInt(RegExp.\$1)+1);
+            }
+            else if (area.match(/imq(.*)/) != null)
+            {
+                var imqid=parseInt(RegExp.\$1);
+
+                if ( imqid%2 )
+                {
+                    areashow= 'ISP'+(Math.floor(imqid/2)+1)+'-IN';
+                }
+                else
+                {
+                    areashow= 'ISP'+(Math.floor(imqid/2)+1)+'-OUT';
+                }
+            }
+
+            portsel.options[loop]=new Option(areashow, area);
+            if ( area==preselected ) { portsel.value=area; }
+        }
+
+    }
+
+    </script>
+
+EDITFILTERSCRIPT
+
+}
+#editFilterScript
+
+#=======================================================================================================
+#maintainTC(%action)
+# $_[0]: action
+# $_[1]: imq to show (for class), or all for all imqs
+sub maintainTC
+{
+    my ( %action )=@_;
+    if ( !$action{action} ) { return; }
+    
+    my %iphash;
+    my @temparray;
+
+    #-- for edit VIP
+    #-- Tricky point:-split $action{focusedvip} (ex: 1/61.30.78.123) into 
+    #-- $targetarea:1 and $targetvip:61.30.78.123
+    # my ( $targetarea, $targetvip )=split(/J/, $action{focusedvip});  
+
+    #===============================================================
+    if ( $action{action} eq "GETBW" )
+    {
+        my $tcclass=XMLread($gPATH."tcclass.xml");
+        my $temparea = $tcclass->{area};
+        $action{area} = "imq0" if ($action{area} eq "");
+        foreach my $areaitem ( @$temparea )
+        {
+            if ($areaitem->{area} eq $action{area})
+            {
+                return $areaitem->{bw};
+            }
+        }
+    }
+    elsif ( $action{action} eq "SETBW" )
+    {
+        if ($action{bw} !~ m/^\d+$/ && $action{bw} ne "")
+        {
+            $gMSGPROMPT.=qq (Bandwidth value should be a decimal value.\\n);
+            return;
+        }
+
+        if ($action{bw} ne "" && $action{bw} > ($gMAXETHBW * 1024))
+        {
+            my $total = $gMAXETHBW * 1024;
+            $gMSGPROMPT.= qq (Bandwidth value exceeding box restriction, setting it to the allowed maximum $total kb\\n);
+            $action{bw} = $gMAXETHBW * 1024;
+        }
+
+        my $tcclass=XMLread($gPATH."tcclass.xml");
+        my $temparea = $tcclass->{area};
+        $action{area} = "imq0" if ($action{area} eq "");
+
+        foreach my $areaitem ( @$temparea )
+        {
+            my $tempclass=$areaitem->{class};
+            if ($areaitem->{area} eq $action{area})
+            {
+                $areaitem->{bw} = $action{bw};
+		last;
+            }
+        }
+
+        #--------updating tcclass.xml------------------------ 
+        XMLwrite($tcclass, $gPATH."tcclass.xml");
+
+        write_script();
+    }
+    elsif ( $action{action} eq "GETNICCLASSMAP" )
+    {
+        my $tcclass=XMLread($gPATH."tcclass.xml");
+        my $allareas=$tcclass->{area};
+        my %NicClassTable;
+
+        foreach my $area ( @$allareas )
+        {
+            if ( $area->{area} eq "system" ) { next; }
+            
+            my $areaclass=$area->{class};
+            my @classarray;
+   
+            foreach my $class ( @$areaclass )
+            {
+                if ( $class->{idnum} eq "system" ) { next; }
+                push( @classarray, $class->{idnum} );
+            }
+
+            @classarray=sort class_sort_by_idnum @classarray;
+        
+            $NicClassTable{$area->{area}}=\@classarray;
+        }
+
+        return %NicClassTable;
+
+    }
+    elsif ( $action{action} eq "GETCLASSLIST" )
+    { 
+        my $tcclass=XMLread($gPATH."tcclass.xml");
+        my $temparea = $tcclass->{area};
+        $action{area} = "imq0" if ($action{area} eq "");
+
+        foreach my $areaitem ( @$temparea )
+        {
+            my $tempclass=$areaitem->{class};
+            if ($areaitem->{area} eq $action{area})
+            {
+                foreach my $classitem ( @$tempclass ) 
+                { 
+                    # skip filter tags where attribute idnum is "system"
+                    if ( $classitem->{idnum} eq 'system' || $classitem->{idnum} eq '') { next; }
+                    $classhash{"$classitem->{idnum}".'J'."$areaitem->{area}".'J'.$classitem->{min}.'J'.
+                                $classitem->{max}.'J'.$classitem->{priority}.'J'.$areaitem->{default}}=1; 
+                }
+                last;
+            }
+            elsif ($action{area} eq 'all')
+            {
+                foreach my $classitem ( @$tempclass ) 
+                { 
+                    # skip filter tags where attribute idnum is "system"
+                    if ( $classitem->{idnum} eq 'system' || $classitem->{idnum} eq '') { next; }
+                    $classhash{"$classitem->{idnum}".'J'."$areaitem->{area}".'J'.$classitem->{min}.'J'.
+                                $classitem->{max}.'J'.$classitem->{priority}.'J'.$areaitem->{default}}=1; 
+                }
+            }
+        }
+
+        return sort keys %classhash;
+    }
+    elsif ( $action{action} eq "APPENDCLASS" || $action{action} eq "UPDATECLASS" )
+    {
+        #---- Check if user selected a port
+        if ($action{area2change} eq -1)
+        {
+            $gMSGPROMPT.=qq (Please select an AREA.\\n);
+            return;
+        }
+
+        if ($action{min} eq "" ||
+            $action{max} eq "" ||
+            $action{priority} eq "")
+        {
+            $gMSGPROMPT.=qq (Please fill in min, max, and priority\\n);
+            return;
+        }
+
+        #---- Check min and max and priority are numbers
+        if ($action{min} !~ m/^\d+$/ || 
+            $action{max} !~ m/^\d+$/ ||
+            $action{priority} !~ m/^\d+$/ )
+        {
+            $gMSGPROMPT.=qq (Min, max, and priority need to be numerical.\\n);
+            return;
+        }
+
+        #---- Check idnum are numbers
+        if ($action{classid} !~ m/^\d+$/)
+        {
+            $gMSGPROMPT.=qq (Class ID needs to be numerical.\\n);
+            return;
+        }
+
+        #---- Check valid min and max
+        if ($action{max} < $action{min})
+        {
+            $gMSGPROMPT.=qq (Max need to be greater than min.\\n);
+            return;
+        }
+
+        my $tcclass=XMLread($gPATH."tcclass.xml");
+        my $temparea=$tcclass->{area};
+
+        $action{area} = "imq0" if ($action{area} eq "");
+
+        my $idnum = $action{classid};
+
+        #---- Check for same classid in the same port if appendclass
+
+        if ($action{action} eq APPENDCLASS)
+        {
+            foreach my $areaitem ( @$temparea )
+            {
+                if ($areaitem->{area} eq $action{area2change})
+                {
+                    my $tempclass=$areaitem->{class};
+                    foreach my $classitem ( @$tempclass)
+                    {
+                        if ($idnum eq $classitem->{idnum})
+                        {
+                            $gMSGPROMPT.=qq (Class id number already exists on this area.\\n);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        #--- if updateclass, delete the old entry and add the new one
+        #--- otherwise if appendclass then only add
+        if ($action{action} eq UPDATECLASS)
+        {
+            foreach my $areaitem ( @$temparea )
+            {
+                #--- Need to delete the old entry and add the new one
+                #--- if imq that is selected is not equal to the area it was shown,
+                #--- it means the user is changing the port selection
+                #--- otherwise it is the same, in any case delete the entry
+
+                if ( ($action{area2change} ne $action{area} && $areaitem->{area} eq $action{area}) ||
+                     ($action{area2change} eq $action{area} && $areaitem->{area} eq $action{area2change})
+                    )
+                {
+                    my $matchkey="$action{area2change}J$action{max}J$action{min}J$action{priority}";
+                    my $focusedclass = $action{focusedclass};
+
+                    my $tempclass=$areaitem->{class};
+                    foreach my $classitem ( @$tempclass)
+                    {
+                        if ($focusedclass ne "$areaitem->{area}J$classitem->{max}J$classitem->{min}J" . 
+                            "$classitem->{priority}")
+                        {
+                            push( @temparray, $classitem ); 
+                        }
+                        else #--- the one to be appended, so save the idnum
+                        {
+                            $idnum = $classitem->{idnum};
+                        }
+                    }
+
+                    #--- clear default if all the class for this imq are gone
+                    my $length = $#temparray + 1;
+                    $areaitem->{default} = "system" if ($length eq '1');
+
+                    $areaitem->{class}=\@temparray;
+
+                    last;
+                }
+            }
+        }
+
+        #--- add the new class
+        foreach my $areaitem ( @$temparea )
+        {
+            if ($areaitem->{area} eq $action{area2change})
+            {
+                #--- Append or update to the area that is assigned.
+                #--- (so not the area that was shown ($action{area}) but the area that's
+                #--- added $action{area2change}
+                #--- if APPENDCLASS check duplicate and add
+                #--- if UPDATECLASS update in place but also check duplicates
+
+                my $matchkey="$action{area}J$action{max}J$action{min}J$action{priority}";
+
+                my $tempclass = $areaitem->{class};
+                foreach my $classitem ( @$tempclass)
+                {
+                    if ($matchkey eq "$areaitem->{area}J$classitem->{max}J$classitem->{min}J" . 
+                        "$classitem->{priority}")
+                    {
+                        $gMSGPROMPT.=qq (Min, max, and priority are overlapped with class $classitem->{idnum}.\\n);
+                        return;
+                    }
+                }
+
+                my $temp=$areaitem->{class};
+                #---- append new class into  $tcclass->{class}   
+                my %tempclass=('idnum' => $idnum, 'min' => $action{min}, 'max' => $action{max},
+                               'priority' => $action{priority}); 
+
+                push(@$temp, \%tempclass);
+
+                @$temp = sort class_sort_by_idnum @$temp;
+
+                #--- if there is only one class for this imq, set this one the default
+                my $length = $#$temp+ 1;
+                $areaitem->{default} = "$idnum" if ($length eq '2');
+
+                last;
+            }
+        }
+
+        #--------updating tcclass.xml------------------------ 
+        XMLwrite($tcclass, $gPATH."tcclass.xml");
+
+        #@dep
+        maintainTC(action => 'FILTER_MARK_CLEAN', classid=>$idnum);
+
+        write_script();
+    }
+    elsif ( $action{action} eq "DELETECLASS" ) 
+    {
+        #--- Delete class
+        #--- $action{action} needs to be DELETECLASS,
+        #--- $action{classtodel} needs to be an array of idnum that needs to be deleted
+    
+        my $tcclass=XMLread($gPATH."tcclass.xml");
+        my $temparea=$tcclass->{area};
+
+        $action{area} = "imq0" if ($action{area} eq "");
+
+        my $defaultclassprompt = 0;
+        foreach my $areaitem ( @$temparea )
+        {
+            my $temp=$areaitem->{class};
+            if ($areaitem->{area} eq $action{area})
+            {
+                my $classtodel=$action{classtodel};
+
+                foreach my $item (@$temp) 
+                { 
+                    if ( grep(/^$item->{idnum}$/, @$classtodel) )
+                    {
+                        # this is an item to be deleted, check if it's also the default class
+                        # If it is the default class that is deleted, prompt the user to select a default class
+                        if ($areaitem->{default} eq $item->{idnum})
+                        {
+                            $defaultclassprompt = 1;
+                        }
+                        next;
+                    } 
+                    push( @temparray, $item ); 
+                }
+
+                #--- if default is deleted, check length, if any class left, prompt user to select a new default class
+                my $length = $#temparray + 1;
+                if ($defaultclassprompt == 1 && $length ne '1')
+                {
+                    $gMSGPROMPT.=qq (The default class for this AREA is deleted, please select a new default class.\\n);
+                }
+
+                #--- clear default if all the class for this imq are gone
+                $areaitem->{default} = "system" if ($length eq '1');
+
+                $areaitem->{class}=\@temparray;
+            }
+        }
+
+        #--------updating tcclass.xml------------------------ 
+        XMLwrite($tcclass, $gPATH."tcclass.xml");
+
+        #@dep
+        $classtodel=$action{classtodel};
+
+        foreach my $item (@$classtodel)
+        {
+            maintainTC(action=>'FILTER_MARK_DIRTY', classid=>$item);
+        }
+
+        write_script();
+    }
+    elsif ( $action{action} eq "SETDEFAULTCLASS" )
+    {
+        my $tcclass=XMLread($gPATH."tcclass.xml");
+        my $temparea=$tcclass->{area};
+
+
+        #my $temparea=$tcclass->{port};
+        # $tcclass->{default} = $action{default};
+
+        $action{area} = "imq0" if ($action{area} eq "");
+
+        foreach my $areaitem ( @$temparea )
+        {
+            my $temp=$areaitem->{class};
+            if ($areaitem->{area} eq $action{area})
+            {
+                $areaitem->{default} = $action{default};
+            }
+        }
+
+        #--------updating tcclass.xml------------------------ 
+        XMLwrite($tcclass, $gPATH."tcclass.xml");
+    }
+    elsif ( $action{action} eq "GETFILTERLIST" )
+    { 
+        my $tcfilter=XMLread($gPATH."tcfilter.xml");
+        my $filtertemp=$tcfilter->{filter};
+
+        foreach my $item ( @$filtertemp ) 
+        {
+            # skip class tags where attribute classid is "system"
+            if ( $item->{classid} eq 'system' || $item->{classid} eq '') { next; }
+            $filterhash{"$item->{classid}J$item->{area}J$item->{srcnet}J$item->{srcprt}J$item->{dstnet}J" .
+                        "$item->{dstprt}J$item->{l7service}J$item->{tos}J$item->{priority}J$item->{burst}J$item->{oc}J$item->{dirty}"}=1; 
+        }
+ 
+        return sort keys %filterhash;
+    }
+    elsif ( $action{action} eq "APPENDFILTER" ||  $action{action} eq "UPDATEFILTER" )
+    {
+        my $tcfilter=XMLread($gPATH."tcfilter.xml");
+        my $temp=$tcfilter->{filter};
+
+        #---- Check error conditions
+
+        #--- Check if area is selected
+        if ($action{area} == -1)
+        {
+            $gMSGPROMPT.=qq (Please choose the an appropriate area this filter should apply to.\\n);
+            return;
+        }
+
+        #---- Check if user selected port
+        if ($action{classid} == -1)
+        {
+            $gMSGPROMPT.=qq (Please choose the class ID this filter should apply to.\\n);
+            return;
+        }
+
+        if ( $action{srcip} || $action{srcnetnet} )
+        {
+            my $srcnet=get_subnet($action{srcip}.'/'.$action{srcnetnet});
+            if (!$srcnet)
+            {
+                $gMSGPROMPT.=qq (source network error\\n);
+                return;
+            }
+            ( $action{srcip}, $action{srcnetnet})=split(/\//,$srcnet);
+        }
+
+
+        if ( $action{dstip} || $action{dstnetnet} )
+        {
+            my $dstnet=get_subnet($action{dstip}.'/'.$action{dstnetnet});
+            if (!$dstnet)
+            {
+                $gMSGPROMPT.=qq (destination network error\\n);
+                return;
+            }
+            ( $action{dstip}, $action{dstnetnet})=split(/\//,$dstnet);
+        }
+
+
+        #---- Check valid port number
+        if ( (($action{srcprt} ne "") && ($action{srcprt} !~ m/^\d+$/))  || 
+             (($action{dstprt} ne "") && ($action{dstprt} !~ m/^\d+$/))    )
+        {
+            $gMSGPROMPT.=qq (Port format incorrect.\\n);
+            return;
+        }
+
+        #---- Check valid port number
+        if ((($action{srcprt} ne "") && ($action{srcprt} > 65536 || $action{srcprt} <= 0)) ||
+            (($action{dstprt} ne "") && ($action{dstprt} > 65536 || $action{dstprt} <= 0 ))  )
+        {
+            $gMSGPROMPT.=qq (Port out of range.\\n);
+            return;
+        }
+
+        #---- Check format of the network
+        if ($action{srcip} ne "" && get_subnet("$action{srcip}/$action{srcnetnet}") eq "")
+        {
+            $gMSGPROMPT.=qq (Source network has incorrect specification.\\n);
+            return;
+        }
+        if ($action{srcip} ne "" && get_subnet("$action{srcip}/$action{srcnetnet}") eq "")
+        {
+            $gMSGPROMPT.=qq (Destination network has incorrect specification.\\n);
+            return;
+        }
+
+        #---- Check priority
+        if ($action{priority} eq "")
+        {
+            $gMSGPROMPT.=qq (Priority should not be empty.\\n);
+            return;
+        }
+
+        if ($action{priority} !~ m/^\d+$/)
+        {
+            $gMSGPROMPT.=qq (Priority should be a decimal value.\\n);
+            return;
+        }
+
+        #--- Check burst
+        if ($action{burst} != '' && $action{burst} !~ m/^\d+$/)
+        {
+            $gMSGPROMPT.=qq (Burst should be a decimal value.\\n);
+            return;
+        }
+
+        #--- Make sure that burst and oc goes together
+        if (($action{burst} != '' && $action{oc} == '') || ($action{burst} == '' && $action{oc} != ''))
+        {
+            $gMSGPROMPT.=qq (Please set both the burst and the overrun class fields.\\n);
+            return;
+        }
+
+        #---- check if such configuration already exists.
+        #--- if APPENDFILTER check duplicate and add
+        #--- if UPDATEFILTER update in place but also check duplicates
+        my $matchkey = "$action{srcip}/$action{srcnetnet}" if ($action{srcip} ne "");
+        $matchkey = $matchkey . "J$action{srcprt}J";
+        $matchkey = $matchkey . "$action{dstip}/$action{dstnetnet}" if ($action{dstip} ne "");
+        $matchkey = $matchkey . "J$action{dstprt}J$action{tos}J$action{priority}J$action{area}";
+
+        if ($action{action} eq "APPENDFILTER")
+        {
+            foreach my $item ( @$temp)
+            {
+                if ($matchkey eq "$item->{srcnet}J$item->{srcprt}J$item->{dstnet}J$item->{dstprt}J$item->{tos}J$item->{priority}J$item->{area}") #key matched err
+                {
+                    #$gMSGPROMPT.=qq (Subnets, ports, tos, priority and Area overlapped.\\n);
+                    return;
+                }
+            }
+
+            #---- Append new class into  $tcclass->{class}   
+            my %tempfilter=('classid' => $action{classid}, 'dirty' => '0', 'priority' => $action{priority});
+
+            $tempfilter{'srcnet'} = ($action{srcip} ne "") ? ("$action{srcip}/$action{srcnetnet}") : ("");
+            $tempfilter{'srcprt'} = ($action{srcprt} ne "") ? ($action{srcprt}) : ("");
+            $tempfilter{'dstnet'} = ($action{dstip} ne "") ? ("$action{dstip}/$action{dstnetnet}") : ("");
+            $tempfilter{'dstprt'} = ($action{dstprt} ne "") ? ($action{dstprt}) : ("");
+            $tempfilter{'l7service'} = ($action{l7service} ne "") ? ($action{l7service}) : ("");
+            $tempfilter{'tos'} = ($action{tos} ne "-1") ? ($action{tos}) : ("");
+            $tempfilter{'area'} = ($action{area} ne "") ? ($action{area}) : ("");
+            $tempfilter{'burst'} = $action{burst};
+            $tempfilter{'oc'} = ($action{oc} ne "") ? ($action{oc}) : ("");
+
+            push(@$temp, \%tempfilter);
+        }
+        else #UPDATEFILTER
+        {
+            my $focusedfilter = $action{focusedfilter};
+            my $counter = 0;
+
+            foreach my $item ( @$temp)
+            {
+                if ($focusedfilter eq "$item->{srcnet}J$item->{srcprt}J$item->{dstnet}J$item->{dstprt}J$item->{l7service}J" . 
+                                      "$item->{tos}J$item->{priority}J$item->{classid}J$item->{area}J" .
+                                      "$item->{burst}J$item->{oc}")
+                {
+                    last
+                }
+                $counter++;
+            }
+
+            #--- matched, this is the one to be replaced
+            my %tempfilter=('classid' => $action{classid}, 'area' => $action{area}, 'srcprt' => $action{srcprt},
+                            'dstprt' => $action{dstprt}, 'l7service' => $action{l7service}, 'tos' => $action{tos}, 'priority' => $action{priority},'dirty' => '0', 'burst' => $action{burst});
+
+            $tempfilter{'srcnet'} = ($action{srcip} ne "" && $action{srcnetnet} ne "") ? 
+                                    $action{srcip} . '/' . $action{srcnetnet} : "";
+            $tempfilter{'dstnet'} = ($action{dstip} ne "" && $action{dstnetnet} ne "") ? 
+                                    $action{dstip} . '/' . $action{dstnetnet} : "";
+            $tempfilter{'oc'} = ($action{oc} ne "") ? ($action{oc}) : ("");
+
+            @$temp[$counter] = \%tempfilter;
+        }
+
+        @$temp = sort filter_sort_by_classid @$temp;
+
+        #--------updating tcfilter.xml------------------------ 
+        XMLwrite($tcfilter, $gPATH."tcfilter.xml");
+
+        write_script();
+    }
+    elsif ( $action{action} eq "DELETEFILTER" ) 
+    {
+        my $tcfilter=XMLread($gPATH."tcfilter.xml");
+        my $temp=$tcfilter->{filter};
+
+        my $filtertodel=$action{filtertodel};
+
+        foreach my $tcfilter (@$temp) 
+        { 
+            if ( grep(/^$tcfilter->{srcnet}J$tcfilter->{srcprt}J$tcfilter->{dstnet}J$tcfilter->{dstprt}J$tcfilter->{l7service}J$tcfilter->{tos}J$tcfilter->{priority}J$tcfilter->{area}J$tcfilter->{burst}J$tcfilter->{oc}$/, @$filtertodel) ){ next;} 
+            push( @temparray, $tcfilter); 
+        }
+        $tcfilter->{filter}=\@temparray;
+
+        #--------updating tcfilter.xml------------------------ 
+        XMLwrite($tcfilter, $gPATH."tcfilter.xml");
+
+        write_script();
+    }
+    elsif( $action{action} eq "FILTER_MARK_DIRTY")
+    {
+        #--- if filter acts on an non-existent class, mark the dirty attribute
+        #--- $action{action} need to be FILTER_MARK_DIRTY
+        #--- $action{classid} need to be the classid that need to be checked.
+
+        my $tcfilter=XMLread($gPATH."tcfilter.xml");
+        my $tempfilter=$tcfilter->{filter};
+
+        #--- now try to find if the classid is in any of the filters
+        #--- if yes, mark it dirty
+
+        my $dirty = 0;
+        foreach my $filteritem ( @$tempfilter)
+        {
+            if ( $action{classid} eq $filteritem->{classid})
+            {
+                if ( $filteritem->{classid} eq 'system' || $filteritem->{classid} eq '') { next; }
+                $filteritem->{dirty} = '1';
+            }
+        }
+
+        #--------updating tcfilter.xml------------------------ 
+        XMLwrite($tcfilter, $gPATH."tcfilter.xml");
+    }
+    elsif( $action{action} eq "FILTER_MARK_CLEAN")
+    {
+        #--- if filter acts on a previously non-existent class that are now in existence,
+        #--- mark the dirty attribute 0
+        #--- $action{action} need to be FILTER_MARK_DIRTY
+        #--- $action{classid} need to be the classid that need to be checked.
+
+        my $tcfilter=XMLread($gPATH."tcfilter.xml");
+        my $tempfilter=$tcfilter->{filter};
+
+        #--- now try to find if the classid is in any of the filters
+        #--- if yes, mark it dirty
+
+        my $dirty = 0;
+        foreach my $filteritem ( @$tempfilter)
+        {
+            if ( $action{classid} eq $filteritem->{classid})
+            {
+                if ( $filteritem->{classid} eq 'system' || $filteritem->{classid} eq '') { next; }
+                $filteritem->{dirty} = '0';
+            }
+        }
+        #--------updating tcfilter.xml------------------------ 
+        XMLwrite($tcfilter, $gPATH."tcfilter.xml");
+    }
+    elsif ( $action{action} eq "ISPUPDATED" )
+    {
+        my $tcclass=XMLread($gPATH."tcclass.xml");
+        my $areaarray=$tcclass->{area};
+        my %allimqhash;
+        my %areatemplate;
+        my @goodiidlist=maintainBasic(action=>'GETGOODIIDLIST');
+
+        #======================================================================
+        # 1. reset content of areas, of which ISP does no longer exist 
+        foreach my $area ( @$areaarray )
+        {
+            $allimqhash{$area->{area}}=1;
+
+            #==========================================================
+            # get area template for use in step 2.
+            if ( $area->{area}=~m/system/ ) { %areatemplate=%$area; }
+
+            if ( $area->{area}!~m/imq/ ) { next; }
+
+            my $isp_in_out=nicTranslate($area->{area}); 
+
+            my ($ispid)=($isp_in_out=~m/ISP(\d+)-.+/i);
+
+            # if isp of this $hardarea still exist, skip it ... 
+            if ( grep(/^$ispid$/, @goodiidlist) ) { next; }
+
+            #reset bw value
+            $area->{bw}='system';
+            $area->{default}='system';
+
+            my $classarray=$area->{class};
+            my @newclassarray;
+        
+            foreach my $class ( @$classarray ) 
+            { 
+                if ( $class->{idnum} eq 'system' )  
+                {
+                    push( @newclassarray, $class );
+                    last;
+                }
+            }
+
+            $area->{class}=\@newclassarray;
+        }
+
+        #======================================================================
+        # 2. making up missed  imq? area for ISP(s) without imq entry in tcclass.xml
+
+        foreach my $dir ( '-IN', '-OUT' )
+        {
+            foreach my $iid ( @goodiidlist )
+            {
+                $newimq=nicTranslate('ISP'.$iid.$dir);
+                if ( exists($allimqhash{$newimq}) ) { next; }
+
+                my %newarea=%areatemplate;
+                my $classarray=$areatemplate{class};
+                my @newimqclassarray;
+                foreach my $class ( @$classarray ) { my %newimqclass=%$class; push(@newimqclassarray, \%newimqclass); }
+                $newarea{class}=\@newimqclassarray;
+                $newarea{area}=$newimq;
+                push(@$areaarray, \%newarea);
+            }
+        }
+
+        #--------updating tcclass.xml------------------------ 
+        XMLwrite($tcclass, $gPATH."tcclass.xml");
+    }
+}
+#maintainTC
+
+#==============================================================================================================
+sub createClassNicMap
+{
+    my $tcclass=XMLread($gPATH."tcclass.xml");
+    my $allports=$tcclass->{area};
+    my %ClassNicTable;
+
+    foreach my $port ( @$allports )
+    {
+        if ( $port->{area} eq "system" ) { next; }
+        
+        my $portclass=$port->{class};
+
+        foreach my $class ( @$portclass )
+        {
+            if ( $class->{idnum} eq "system" ) { next; }
+
+            if ( exists($ClassNicTable{$class->{idnum}}) ) 
+            {
+                my $portarray=$ClassNicTable{$class->{idnum}};
+                push ( @$portarray, "$port->{area}" );
+            }
+            else
+            {
+                $ClassNicTable{$class->{idnum}}=["$port->{area}"];
+            }
+        }
+    }
+
+    print qq (<script language="javascript"> \n);
+    
+    foreach my $class ( sort keys %ClassNicTable )
+    {
+        print qq(var TABLE$class = new Array(););
+        
+        my $classarea=$ClassNicTable{$class};
+        
+        foreach my $area ( @$classarea ) 
+        {
+            print qq(TABLE$class.push(\"$area\"););   
+        }
+        
+        print "\n";
+    }
+
+    print qq ( </script> );
+}
+#createClassNicMap
+
+
+#================================================================================================
+# write tc script
+sub write_script
+{
+    if (!open(FOUT, ">$gTCSCRIPT"))
+    {
+        $gMSGPROMPT.=qq (QoS Write Permission Error\\n);
+        return;
+    }
+
+    my $tcclass=XMLread($gPATH."tcclass.xml");
+    my $temparea=$tcclass->{area};
+
+    my $tcfilter=XMLread($gPATH."tcfilter.xml");
+    my $filtertemp=$tcfilter->{filter};
+    my $fwfiltertemp=$tcfilter->{fwfilter};
+
+
+    print FOUT "#!/bin/bash \n";
+
+    #---- write the root class
+    foreach my $areaitem ( @$temparea )
+    {
+        if ( $areaitem->{area} eq 'system' || $areaitem->{area} eq '') { next; }
+
+        print FOUT "/usr/local/sbin/tc qdisc delete dev $areaitem->{area} root \n";
+        print FOUT "/usr/local/sbin/tc qdisc add dev $areaitem->{area} root handle 100: htb default 1\n";
+
+	my $bw = ( $areaitem->{bw} ne "" && $areaitem->{bw} ne "system" ) ? ($areaitem->{bw}) : ($gMAXETHBW << 10);
+        print FOUT "/usr/local/sbin/tc class add dev $areaitem->{area} parent 100: classid 100:1 htb rate $bw"."kbit\n\n";
+
+        #--- if no class is configured, default is system, then don't bother to set up any root class
+        if ( $areaitem->{default} ne 'system')
+        {
+            print FOUT "/usr/local/sbin/tc qdisc add dev $areaitem->{area} parent 100:1 handle 1: htb default $areaitem->{default}\n\n";
+        }
+        elsif ($areaitem->{area} ne 'system')
+        {
+            print FOUT "/usr/local/sbin/tc qdisc add dev $areaitem->{area} parent 100:1 handle 1: htb default 501 \n\n";
+        }
+    }
+
+    my $ID = $gMAXNUMTC + 1;
+
+    #---- write classes
+    print FOUT "\n# User defined classes\n";
+
+    foreach my $areaitem ( @$temparea )
+    {
+        if ( $areaitem->{area} eq 'system' || $areaitem->{area} eq '') { next; }
+
+        my $classtemp=$areaitem->{class};
+     
+        #--- The extra layer
+        print FOUT "\n# The extra layer\n";
+	my $bw = ( $areaitem->{bw} ne "" && $areaitem->{bw} ne "system" ) ? ($areaitem->{bw}) : ($gMAXETHBW << 10);
+        print FOUT "/usr/local/sbin/tc class add dev $areaitem->{area} parent 1:0 classid 1:$ID htb rate $bw"."kbit\n\n";
+
+        foreach my $item ( @$classtemp ) 
+        { 
+            # skip filter tags where attribute idnum is "system"
+            if ( $item->{idnum} eq 'system' || $item->{idnum} eq '') { next; }
+
+            print FOUT "/usr/local/sbin/tc class add dev $areaitem->{area} parent 1:$ID classid 1:$item->{idnum} htb ";
+            print FOUT "rate $item->{min}kbit ceil $item->{max}kbit prio $item->{priority}  \n";
+
+            my $handleid = 300 + $item->{idnum};
+            print FOUT "/usr/local/sbin/tc qdisc add dev $areaitem->{area} parent 1:$item->{idnum} handle $handleid: sfq perturb 10\n";
+        }
+    }
+
+    #---- write filter
+    print FOUT "\n# User defined filter\n";
+
+    foreach my $filter ( @$filtertemp ) 
+    { 
+        if ( $filter->{classid} eq 'system' || $filter->{classid} eq '' || $filter->{dirty} eq '1') { next; }
+
+        #--- try to find the right area first, area depends on which class this filter belongs to
+        foreach my $areaitem ( @$temparea )
+        {
+            if ($areaitem->{area} eq $filter->{area})
+            {
+                my $classtemp=$areaitem->{class};
+                if ($filter->{l7service} eq "")
+                {
+                   print FOUT "\n/usr/local/sbin/tc filter add dev $areaitem->{area} parent 1:0 protocol " .
+                              "ip prio $filter->{priority} u32";
+                   print FOUT " match ip src $filter->{srcnet}" if ($filter->{srcnet} ne "");
+                   print FOUT " match ip sport $filter->{srcprt} 0xffff" if ($filter->{srcprt} ne "");
+                   print FOUT " match ip dst $filter->{dstnet}" if ($filter->{dstnet} ne "");
+                   print FOUT " match ip dport $filter->{dstprt} 0xffff" if ($filter->{dstprt} ne "");
+                   print FOUT " match ip tos $filter->{tos} 0xff" if ($filter->{tos} ne "");
+                   print FOUT " flowid 1:$filter->{classid}";
+
+                   # --- dynamic qos withe burst and police
+                   if ($filter->{burst} != '' && $filter->{oc} != '')
+                   {
+                       print FOUT " police rate 1Mbit burst $filter->{burst}kbit continue\n";
+
+                       print FOUT "/usr/local/sbin/tc filter add dev $areaitem->{area} parent 1:0 protocol ip prio ";
+                       print FOUT ($filter->{priority})+1;
+                       print FOUT " u32";
+                       print FOUT " match ip src $filter->{srcnet}" if ($filter->{srcnet} ne "");
+                       print FOUT " match ip sport $filter->{srcprt} 0xffff" if ($filter->{srcprt} ne "");
+                       print FOUT " match ip dst $filter->{dstnet}" if ($filter->{dstnet} ne "");
+                       print FOUT " match ip dport $filter->{dstprt} 0xffff" if ($filter->{dstprt} ne "");
+                       print FOUT " match ip tos $filter->{tos} 0xff" if ($filter->{tos} ne "");
+                       print FOUT " flowid 1:$filter->{oc}";
+                   }
+                   print FOUT "\n";
+                   last;
+                }
+                else
+                {
+                   print FOUT "\n/usr/local/sbin/iptables -t mangle -A POSTROUTING ";
+                   print FOUT " -s $filter->{srcnet}" if ($filter->{srcnet} ne "");
+                   print FOUT " -d $filter->{dstnet}" if ($filter->{dstnet} ne "");
+                   print FOUT " -m layer7 --l7proto $filter->{l7service} -j CLASSIFY --set-class 1:$filter->{classid}"; 
+                   print FOUT "\n/usr/local/sbin/iptables -t mangle -A POSTROUTING ";
+                   print FOUT " -d $filter->{srcnet}" if ($filter->{srcnet} ne "");
+                   print FOUT " -s $filter->{dstnet}" if ($filter->{dstnet} ne "");
+                   print FOUT " -m layer7 --l7proto $filter->{l7service} -j CLASSIFY --set-class 1:$filter->{classid}"; 
+                } 
+            }
+        }
+    }
+
+    #=========================================================================
+    # call ptcscrpt to enable policy traffic control shell script
+    print FOUT qq(\n# call ptcscrpt to enable policy traffic control shell script\n);
+    print FOUT qq(/usr/local/apache/active/ptcscrpt);
+
+    close(FOUT);
+}
+
+
+
+#=========================================================================
+sub writePtcShellScript
+{
+    my $gDEFAULTPRIORITY="2";
+
+    if (!open(FOUT, ">$gPTCSCRIPT"))
+    {
+        $gMSGPROMPT.=qq (Policy QoS Write Permission Error\\n);
+        return;
+    }
+
+    my $ptcset=XMLread($gPATH."proute.xml");
+
+    #========================================================
+    # write policy-based  filter
+
+    print FOUT qq(#!/bin/bash \n);
+    print FOUT qq(# User defined policy-based filter from proute.xml \n);
+
+    foreach my $group ( keys %$ptcset ) 
+    { 
+        my $classarray=$ptcset->{$group}->[0]->{class};
+        if ( @$classarray == 0 ) { next; }
+        
+        print FOUT qq(#===========================================\n);
+        print FOUT qq(# Policy-based filter of policy group $group\n);
+
+        foreach my $class ( @$classarray )
+        {
+            if ( !exists($class->{qos}) ) { next; }
+            
+            my $qosarray=$class->{qos};
+            
+            print FOUT qq(#==================================================================================================================\n);
+            print FOUT qq(# For $class->{subnettype} => $class->{source} => $class->{service} => $class->{destination} => $class->{direction}\n);
+            
+            foreach my $qos ( @$qosarray ) 
+            {
+                if ( $qos->{classid} eq '' ) { next; }   
+                
+                my $isp_in_out=nicTranslate($qos->{area});
+                
+                if ( $isp_in_out=~m/OUT/ )
+                {
+                    my $out_flow_mark=$class->{fwmark};
+                    print FOUT qq(/usr/local/sbin/tc filter add dev $qos->{area} parent 1:0 prio $gDEFAULTPRIORITY protocol ip handle $out_flow_mark fw flowid 1:$qos->{classid} \n);
+                }
+                elsif ( $isp_in_out=~m/IN/ )
+                {
+                    my $in_flow_mark=$class->{fwmark};
+                    $in_flow_mark=~s/^0x//g; 
+                    $in_flow_mark=hex($in_flow_mark); 
+                    $in_flow_mark |= 0x40000000;
+                    $in_flow_mark='0x'.dec2hex($in_flow_mark);
+
+                    print FOUT qq(/usr/local/sbin/tc filter add dev $qos->{area} parent 1:0 prio $gDEFAULTPRIORITY protocol ip handle $in_flow_mark fw flowid 1:$qos->{classid} \n);
+                }
+            }
+        }
+    }
+
+    close(FOUT);
+}
+#writePtcShellScript
+
+
+#================================================================================================
+sub sort_by_num
+{
+    $a <=> $b;
+}
+
+#================================================================================================
+sub class_sort_by_idnum
+{
+    $a->{idnum} <=> $b->{idnum};
+}
+
+#================================================================================================
+sub class_sort_by_idnum_cat
+{
+    my ($aidnum, $aimq, $amin, $amax, $apriority)=split(/J/, $a); # split to parse
+    my ($bidnum, $bimq, $bmin, $bmax, $bpriority)=split(/J/, $b); # split to parse
+
+    $aidnum <=> $bidnum;
+}
+
+#================================================================================================
+sub filter_sort_by_classid
+{
+    $a->{classid} <=> $b->{classid};
+}
+
+#================================================================================================
+sub filter_sort_by_classid_cat
+{
+    my ($aclassid, $asrcnet, $asrcprt, $adstnet, $adstprt)=split(/J/, $a); # split to parse
+    my ($bclassid, $bsrcnet, $bsrcprt, $dstnet, $bdstprt)=split(/J/, $b); # split to parse
+
+    $aclassid <=> $bclassid;
+}
+
+1

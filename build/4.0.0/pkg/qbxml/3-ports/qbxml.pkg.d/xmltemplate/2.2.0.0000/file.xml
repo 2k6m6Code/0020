@@ -1,0 +1,26 @@
+<opt>
+  <file block="0" description="" filename="system" />
+  <file block="0" description="audio" filename="mp3" />
+  <file block="0" description="audio" filename="mp4" />
+  <file block="0" description="audio" filename="wma" />
+  <file block="0" description="compression" filename="zip" />
+  <file block="0" description="compression" filename="rar" />
+  <file block="0" description="document" filename="doc" />
+  <file block="0" description="document" filename="pdf" />
+  <file block="0" description="document" filename="ppt" />
+  <file block="0" description="executable" filename="ocx" />
+  <file block="0" description="executable" filename="exe" />
+  <file block="0" description="executable" filename="bin" />
+  <file block="0" description="executable" filename="dll" />
+  <file block="0" description="executable" filename="cab" />
+  <file block="0" description="executable" filename="ocx" />
+  <file block="0" description="java" filename="class" />
+  <file block="0" description="java" filename="jar" />
+  <file block="0" description="program information file" filename="pif" />
+  <file block="0" description="script" filename="vbs" />
+  <file block="0" description="vedio" filename="wmv" />
+  <file block="0" description="vedio" filename="mpeg" />
+  <file block="0" description="vedio" filename="rm" />
+  <file block="0" description="vedio" filename="avi" />
+  <file block="0" description="vedio" filename="rmvb" />
+</opt>

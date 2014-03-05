@@ -1,0 +1,86 @@
+ #!/bin/sh
+ #set -x
+ ispid=$1
+ BASICXML="/usr/local/apache/qbconf/basic.xml"
+ ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+ TEMPXML="/tmp/temp.xml"
+ #20090209 To fix nslookup fail problem
+ remoteorgip=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*remote=\"//"|sed -e "s/\".*//"`
+ remotename=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*remotename=\"//"|sed -e "s/\".*//"`
+ if [ "$remotename" = "" ];then
+   exit 1 
+ fi
+while : ; do
+ #A simple DNS check loop
+ #20090209 To fix nslookup fail problem
+ remoteorgip=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*remote=\"//"|sed -e "s/\".*//"`
+ if [ "$remoteorgip" = "" ];then
+     exit
+ fi
+ remotenewip=`/opt/qb/bin/script/ns $remotename`
+ localorg_ip=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*local=\"//"|sed -e "s/\".*//"`
+ tunneldev=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`
+ isencrypt=`grep "iid=\"$ispid\"" $ACTIVEBASICXML |grep -c "enc=\"1\""`
+ isipsec=`grep "iid=\"$ispid\"" $ACTIVEBASICXML |grep -c "isptype=\"ipsec\""`
+ ispname=`grep "iid=\"$ispid\"" $ACTIVEBASICXML |sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+ if [ "$remoteorgip" = "$remotenewip" ];then
+  sleep 30
+  if [ "$isencrypt" = "1" ]; then
+     sleep 10
+     #prevent "resource temporarily unavailable"
+     /sbin/setkey -f /etc/racoon/delipsec.$ispname
+     /sbin/setkey -f /etc/racoon/addipsec.$ispname
+     /usr/sbin/racoonctl flush-sa ipsec
+  fi
+  if [ "$isipsec" = "1" ]; then
+     sleep 10
+     /etc/racoon/ipsecroute
+     /usr/sbin/racoonctl flush-sa ipsec
+  fi
+ elif [ "$remotenewip" = "" ];then
+  sleep 30
+ elif [ "$remoteorgip" = "" ];then
+  sleep 30
+ else
+#   if [ ! -f /var/lock/ddnsmpv ]; then 
+#   touch /var/lock/ddnsmpv
+    line=`grep -n iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/:.*//"|sed -e "s/\n//"`
+    while [ -f /tmp/basiclock ]
+    do sleep 1
+    done
+    touch /tmp/basiclock
+    sed -i -e $line,$line's/'$remoteorgip'/'$remotenewip'/g' $ACTIVEBASICXML
+    sedresult=$?
+    /usr/bin/tail -n 2 $ACTIVEBASICXML|grep "</opt>"
+    chkresult=$?
+     if [ "$sedresult" != "1" ] && [ "$chkresult" != "1" ];then
+     echo "$(date -R) IP Change:ISP$ispid NEW_IP:$remotenewip ORG_IP:$remoteorgip" >>/var/log/ipchange.log
+      cp -af $ACTIVEBASICXML $BASICXML
+      #isencrypt=`grep "iid=\"$ispid\"" $ACTIVEBASICXML |grep -c "enc=\"1\""`
+      #ispname=`grep "iid=\"$ispid\"" $ACTIVEBASICXML |sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+      if [ "$isencrypt" = "1" ] || [ "$isipsec" = "1" ]; then
+         /sbin/setkey -f /etc/racoon/delipsec.$ispname
+         #create ipsec racoon configure
+         /usr/local/apache/qb/setuid/do_qbddipsec.pl $ispid
+         /usr/local/apache/qb/setuid/do_qbracoon.pl
+         sleep 5
+         /sbin/setkey -f /etc/racoon/addipsec.$ispname
+         if [ "$isipsec" = "1" ]; then
+         	/etc/racoon/ipsecroute
+         fi
+         /usr/sbin/racoonctl reload-config
+      fi
+      `/sbin/ip tunnel change $tunneldev  mode gre remote $remotenewip local $localorg_ip ttl 255`
+#      echo 101 > /tmp/fifo.qbserv
+#      rm -f /var/lock/ddnsmpv #useless =>ispup
+#       exit 0
+     elif [ "$sedresult" != "1" ] && [ "$chkresult" = "1" ];then
+      cp -af $BASICXML $ACTIVEBASICXML
+     echo "$(date -R) $tunneldev damaged the config file...Need to be fixed" >>/mnt/log/error.log
+     fi
+     rm -f /tmp/basiclock
+#   sleep 60
+#   rm -f /var/lock/ddnsmpv #useless =>ispup
+#   fi
+ fi
+done

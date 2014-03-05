@@ -1,0 +1,26 @@
+#set -x
+ispid=$1
+BASICACTIVE="/usr/local/apache/active/basic.xml"
+count=0
+while : ; do
+alive=`grep "iid=\"$ispid\"" $BASICACTIVE|sed -e "s/  <isp.*alive=\"//"|sed -e "s/\".*//"`
+ if [ "$alive" = "0" ];then
+    /etc/racoon/ipsecroute
+    sleep 15
+    /usr/sbin/racoonctl flush-sa ipsec &
+    echo $(date) "Flush IPSEC tunnel SA ISPID=$ispid !!!" >>/mnt/log/link.log
+    let count=$count+1
+    if [ "$count" = "3" ];then
+     echo $(date) "Reset IPSEC tunnel ISPID=$ispid !!!" >>/mnt/log/link.log
+     killall -9 racoon
+     /sbin/setkey -f /etc/racoon/ipsec.conf
+     sleep 5
+     /usr/sbin/racoon
+     /etc/racoon/ipsecrule
+     count=0
+     sleep 30
+    fi
+ else
+    exit 0
+ fi
+done                                                    

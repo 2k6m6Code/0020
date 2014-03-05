@@ -1,0 +1,260 @@
+ #!/bin/sh
+ #set -x
+ ispid=$1
+ CNCINBOUND="/usr/local/apache/qbconf/cncin.sh"
+ CNCINBOUNDDEL="/usr/local/apache/qbconf/cncindel.sh"
+ CTCINBOUND="/usr/local/apache/qbconf/ctcin.sh"
+ CTCINBOUNDDEL="/usr/local/apache/qbconf/ctcindel.sh"
+ DNSXML="/usr/local/apache/active/dns.xml"
+ CHANGEPOLICY="/tmp/changepolicy"
+ TEMP_CNCISP="/tmp/tmp_cncisp"
+ TEMP_CTCISP="/tmp/tmp_ctcisp"
+ DNSXML="/usr/local/apache/qbconf/dns.xml"
+ BASICACTIVE="/usr/local/apache/active/basic.xml"
+ QBCONFACTIVE="/usr/local/apache/qbconf/basic.xml"
+ 
+ #Deltet old process and add new check remote pppoe or dhcp link have new ip or not
+ isptype=`grep iid=\"$ispid\" $BASICACTIVE|sed -e "s/  <isp.*isptype=\"//"|sed -e "s/\".*//"`
+ device=`grep iid=\"$ispid\" $BASICACTIVE|sed -e "s/  <isp.*pppoeportdev=\"//"|sed -e "s/\".*//"`
+ pppdevice=`grep iid=\"$ispid\" $BASICACTIVE|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`
+ targetip=`grep iid=\"$ispid\" $BASICACTIVE|sed -e "s/  <isp.*target=\"//"|sed -e "s/\".*//"`
+ interface_name=`grep iid=\"$ispid\" $BASICACTIVE|sed -e "s/  <isp.*interface_name=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+ imei=`grep iid=\"$ispid\" $BASICACTIVE|sed -e "s/  <isp.*imei=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+ enabled=`grep iid=\"$ispid\" $QBCONFACTIVE|sed -e "s/  <isp.*enabled=\"//"|sed -e "s/\".*//"|sed -e "s/  <isp.*//"`
+ if [ "$enabled" == "0" ];then
+ exit 0
+ fi
+
+ case "$device" in
+        ttyACM*)
+                   delpid=`ls /tmp/|grep "\<3greconnect$ispid\>" |awk '{print $1}' |sed -e "s/\n//" |sed -e "s/.3greconnect$ispid//"`
+                   if [[ -n $delpid ]]
+                   then
+                       kill -9 $delpid
+                       rm -f /tmp/$delpid.3greconnect$ispid
+                   fi
+                   /opt/qb/hsdpa/3greconnect $ispid $device & >/tmp/$!.3greconnect$ispid
+                   exit 0
+        ;;
+        ttyUSB*)
+                   delpid=`ls /tmp/|grep "\<3greconnect$ispid\>" |awk '{print $1}' |sed -e "s/\n//" |sed -e "s/.3greconnect$ispid//"`
+                   if [[ -n $delpid ]]
+                   then
+                       kill -9 $delpid
+                       rm -f /tmp/$delpid.3greconnect$ispid
+                   fi
+                   if [ "$interface_name" = "" ];then
+                     /opt/qb/hsdpa/3greconnect $ispid $device & >/tmp/$!.3greconnect$ispid
+                   else
+                     usbmodemtype=`grep iid=\"$ispid\" $BASICACTIVE|sed -e "s/  <isp.*usbmodemtype=\"//"|sed -e "s/\".*//"`
+                     if [ "$usbmodemtype" != "H20" ] && [ "$usbmodemtype" != "T77Z" ] && [ "$usbmodemtype" != "MC8090" ];then
+                       /opt/qb/hsdpa/detectusb $usbmodemtype 1
+                     fi
+                                                            
+                     if [ -f /tmp/usbdev.tab ];then
+                     device_3g=`cat /tmp/usbdev.tab |grep $imei|awk '{print $3}'|head -n 1`
+                     else
+                     device_3g=`cat /tmp/usbdev.tab.bak |grep $imei|awk '{print $3}'|head -n 1`
+                     fi 
+                     if [ "$device_3g" != "" ];then
+                      /opt/qb/hsdpa/3greconnect $ispid $device_3g & >/tmp/$!.3greconnect$ispid
+                     else
+                      checktime=1
+                      while test $checktime -gt 0
+                      do
+                        if [ -f /tmp/usbdev.tab ];then
+                          device_3g=`cat /tmp/usbdev.tab |grep $imei|awk '{print $3}'|head -n 1`
+                        else
+                          device_3g=`cat /tmp/usbdev.tab.bak |grep $imei|awk '{print $3}'|head -n 1`
+                        fi 
+                        if [ "$device_3g" != "" ] || [ "$checktime" = "10" ];then
+                        checktime=0
+                        else
+                        let checktime=$checktime+1
+                         if [ "$checktime" = "6" ] && [ "$usbmodemtype" != "T77Z" ] && [ "$usbmodemtype" != "MC8090" ];then
+                           /opt/qb/hsdpa/detectusb H20& 
+                         fi
+                        fi
+                        sleep 2
+                        done
+                        if [ "$device_3g" != "" ];then
+                         /opt/qb/hsdpa/3greconnect $ispid $device_3g & >/tmp/$!.3greconnect$ispid
+                        else
+                         echo "$interface_name can't get the device when ISP$ispid down" >>/tmp/ppplog/error
+                        fi
+                      fi
+                   fi
+                   exit 0
+        ;;
+        SIM*)
+                   delpid=`ls /tmp/|grep "\<3greconnect$ispid\>" |awk '{print $1}' |sed -e "s/\n//" |sed -e "s/.3greconnect$ispid//"`
+                   if [[ -n $delpid ]]
+                   then
+                       kill -9 $delpid
+                       rm -f /tmp/$delpid.3greconnect$ispid
+                   fi
+                   if [ "$interface_name" = "" ];then
+                     /opt/qb/hsdpa/3greconnect $ispid $device & >/tmp/$!.3greconnect$ispid
+                   else
+                     usbmodemtype=`grep iid=\"$ispid\" $BASICACTIVE|sed -e "s/  <isp.*usbmodemtype=\"//"|sed -e "s/\".*//"`
+                     if [ "$usbmodemtype" != "H20" ] && [ "$usbmodemtype" != "T77Z" ] && [ "$usbmodemtype" != "MC8090" ];then
+                       /opt/qb/hsdpa/detectusb $usbmodemtype 1
+                     fi
+                                                            
+                     if [ -f /tmp/usbdev.tab ];then
+                     device_3g=`cat /tmp/usbdev.tab |grep $imei|awk '{print $3}'|head -n 1`
+                     else
+                     device_3g=`cat /tmp/usbdev.tab.bak |grep $imei|awk '{print $3}'|head -n 1`
+                     fi 
+                     if [ "$device_3g" != "" ];then
+                      /opt/qb/hsdpa/3greconnect $ispid $device_3g & >/tmp/$!.3greconnect$ispid
+                     else
+                      checktime=1
+                      while test $checktime -gt 0
+                      do
+                        if [ -f /tmp/usbdev.tab ];then
+                          device_3g=`cat /tmp/usbdev.tab |grep $imei|awk '{print $3}'|head -n 1`
+                        else
+                          device_3g=`cat /tmp/usbdev.tab.bak |grep $imei|awk '{print $3}'|head -n 1`
+                        fi 
+                        if [ "$device_3g" != "" ] || [ "$checktime" = "10" ];then
+                        checktime=0
+                        else
+                        let checktime=$checktime+1
+                         if [ "$checktime" = "6" ] && [ "$usbmodemtype" != "T77Z" ] && [ "$usbmodemtype" != "MC8090" ];then
+                           /opt/qb/hsdpa/detectusb H20& 
+                         fi
+                        fi
+                        sleep 2
+                        done
+                        if [ "$device_3g" != "" ];then
+                         /opt/qb/hsdpa/3greconnect $ispid $device_3g & >/tmp/$!.3greconnect$ispid
+                        else
+                         echo "$interface_name can't get the device when ISP$ispid down" >>/tmp/ppplog/error
+                        fi
+                      fi
+                   fi
+                   exit 0
+        ;;
+        eth*)
+#                   sleep 50
+#                   ping -I $pppdevice $targetip -c 1 >/dev/null 2>&1
+#                   pingresult=$?
+#                   if [ $pingresult != '0' ] && [ -f /var/run/pppoe.conf$ispid-pppoe.pid.pppd ]
+#                   then
+#                       /sbin/ifconfig $device down
+#                       sleep 10
+#                       /sbin/ifconfig $device up
+#                   fi
+#                   exit 0
+        ;;
+ esac
+  /usr/sbin/pptpaddroute & #Need to add route for PPTP Clients.
+  /opt/qb/xl2tp/l2tpconnect & #Need to add route for L2TP server.                                                                                       
+ if [ "$isptype" = "tunnel" ] || [ "$isptype" = "ipsec" ] || [ "$isptype" = "dtunnel" ];then
+    remotename=`grep iid=\"$ispid\" $BASICACTIVE|grep remotename|sed -e "s/  <isp.*remotename=\"//"|sed -e "s/\".*//"`
+    isencrypt=`grep "iid=\"$ispid\"" $BASICACTIVE |grep -c "enc=\"1\""`
+    delpid=`ls /tmp/|grep "\<ddnsmpv$ispid\>" |awk '{print $1}' |sed -e "s/\n//" |sed -e "s/.ddnsmpv$ispid//"`
+    if [[ -n $delpid ]]
+    then
+    kill -9 $delpid
+    rm -f /tmp/$delpid.ddnsmpv$ispid
+    fi
+    if [ "$remotename" = "" ];then
+      if [ "$isptype" = "ipsec" ];then
+        /opt/qb/bin/script/ipsecreconnect $ispid &
+        #/etc/racoon/ipsecroute
+      fi
+      #if [ "$isptype" = "ipsec" ] || [ "$isencrypt" = "1" ];then
+      #    sleep 15
+      #    /usr/sbin/racoonctl flush-sa ipsec &
+      #fi
+      if [ "$isptype" = "tunnel" ];then
+          ispname=`grep iid=\"$ispid\" $BASICACTIVE|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+          localip=`grep "iid=\"$ispid\"" $BASICACTIVE|sed -e "s/  <isp.*local=\"//"|sed -e "s/\".*//"`
+          localisptype=`grep "systemip=\"$localip\"" $BASICACTIVE|sed -e "s/  <isp.*isptype=\"//"|sed -e "s/\".*//"`
+          if [ "$localisptype" = "normal" ] && [ "$isencrypt" != "1" ];then
+            exit 1
+          fi
+          `ps -ef|grep "dmpv.sh $ispid"|grep -v grep >/dev/null`
+          checkdmpv=$?
+          if [ "$checkdmpv" = "1" ];then
+          /opt/qb/bin/script/dmpv.sh $ispid 2>/tmp/$ispname&
+          fi
+      fi
+      if [ "$isptype" = "dtunnel" ];then
+          `ps -ef|grep "dmpv.sh $ispid"|grep -v grep >/dev/null`
+          checkdmpv=$?
+          if [ "$checkdmpv" = "1" ];then
+          /opt/qb/bin/script/dmpv.sh $ispid 2>/tmp/$ispname&
+          fi
+      fi 
+      exit 1
+    fi
+    #20090121 Brian Need to delete the process,if no remote name.
+    #delpid=`ls /tmp/|grep ddnsmpv$ispid |awk '{print $1}' |sed -e "s/\n//" |sed -e "s/.ddnsmpv$ispid//"`
+    #kill -9 $delpid
+    #rm -f /tmp/$delpid.ddnsmpv$ispid
+    #/opt/qb/bin/script/ddnsmpv $ispid & >/tmp/$!.ddnsmpv$ispid
+    #/opt/qb/bin/script/ddnsmpv "$ispid" 2>/tmp/$!.ddnsmpv$ispid &
+    /opt/qb/bin/script/ddnsmpv $ispid &
+    echo "" >/tmp/$!.ddnsmpv$ispid
+
+    exit 1
+ fi
+ if [ -f $CNCINBOUND ]; then
+
+  `grep group=\"CNC\" $DNSXML|sed -e "s/  <isp.*ispnum=\"//"|sed -e "s/\".*//">$TEMP_CNCISP`
+  `grep group=\"CTC\" $DNSXML|sed -e "s/  <isp.*ispnum=\"//"|sed -e "s/\".*//">$TEMP_CTCISP`
+  grep $ispid $TEMP_CNCISP
+  testresult=$?
+  grep $ispid $TEMP_CNCISP
+  testresult1=$?
+  if [ "$testresult" != "0" ];then
+   if [ "$testresult1" != "0" ];then
+     exit 1
+   fi
+  fi
+
+ intime=`date`
+ echo "$intime In ispdown function ISPID:$ispid" >>/tmp/aa
+
+ #Create New Rules
+ weight=`grep ispnum=\"$ispid\" $DNSXML|sed -e "s/  <isp.*weight=\"//"|sed -e "s/\".*//"`
+ sed -e "s/--to-destination 172.31.0.$ispid-0.0.0.$weight//" $CNCINBOUND>$CHANGEPOLICY
+ if [ "$?" != "1" ];then
+    cp -af $CHANGEPOLICY $CNCINBOUND
+ fi
+ sed -e "s/--to-destination 172.31.0.$ispid-0.0.0.$weight//" $CTCINBOUND>$CHANGEPOLICY
+ if [ "$?" != "1" ];then
+    cp -af $CHANGEPOLICY $CTCINBOUND
+ fi
+
+ #Delete Old Rules
+ if [ -f $CNCINBOUNDDEL ]; then
+    chmod a+x $CNCINBOUNDDEL
+    . $CNCINBOUNDDEL
+ fi
+ if [ -f $CTCINBOUNDDEL ]; then
+    chmod a+x $CTCINBOUNDDEL
+    . $CTCINBOUNDDEL
+ fi
+
+ #Execute New Rules
+ if [ -f $CNCINBOUND ]; then
+    chmod a+x $CNCINBOUND
+    . $CNCINBOUND
+ fi
+ if [ -f $CTCINBOUND ]; then
+    chmod a+x $CTCINBOUND
+    . $CTCINBOUND
+ fi
+
+ #Generate Delete Policy for Link up and down
+ sed -e "s/-I/-D/" $CNCINBOUND>$CNCINBOUNDDEL
+ sed -e "s/-I/-D/" $CTCINBOUND>$CTCINBOUNDDEL
+ outtime=`date`
+ echo "$outtime Exit ispdown function ISPID:$ispid" >>/tmp/aa
+else
+exit 0
+fi

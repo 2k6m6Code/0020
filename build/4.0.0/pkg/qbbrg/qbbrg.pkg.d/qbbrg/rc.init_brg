@@ -1,0 +1,5 @@
+#! /bin/sh
+BRGTOOLPATH=/opt/qb/qbbrg
+cp -f $BRGTOOLPATH/ebtables    /usr/local/sbin/
+cp -f $BRGTOOLPATH/brctl       /usr/local/sbin/
+cp -f $BRGTOOLPATH/ethertypes  /etc/

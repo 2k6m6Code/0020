@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+#set -x
+
+QB_HOME_DIR=/opt/qb
+QBREG_FILE=$QB_HOME_DIR/registry
+OVERVIEWCONFIG="/usr/local/apache/qbconf/overview.xml"
+
+#Enable Analyser
+ENABLEANALYSER=$(awk "/ENABLEANALYSER/ {print \$2}"  $QBREG_FILE)
+MODELNAME=$(awk  "/HARDWARE/ { print \$2 }" $QBREG_FILE)
+if [ $ENABLEANALYSER = '1' ]
+then
+    tar zxfC /mnt/analyweb.pkg /usr/local/apache/qb/
+    #ln -s /mnt/tclog/analyser/var/analyser_web /usr/local/apache/qb/analyser_web
+    DEVICENAME=`ls /mnt/conf/*.dev|sed -e "s/.dev//"`
+    FSTYPE=`ls /mnt/conf/*.tpe|sed -e "s/.tpe//"`
+    MOUNTDEV=`grep analydev $OVERVIEWCONFIG|sed -e "s/<opt.*analydev=\"//"|sed -e "s/\".*//"`
+    DEVICENAME=${DEVICENAME#/mnt/conf/}
+    FSTYPE=${FSTYPE#/mnt/conf/}
+    ln -s /usr/local/apache/qb/analyser_web/.pgpass /root
+    FORMATCMD="/opt/qb/bin/script/format"
+    if [ "$DEVICENAME" != "" ] && [ "$FSTYPE" != "" ]; then
+    chmod a+x $FORMATCMD
+    $FORMATCMD $DEVICENAME $FSTYPE
+    rm -f /mnt/conf/*.dev /mnt/conf/*.tpe
+    fi
+
+    /sbin/service syslog stop
+    rm -f /mnt/tclog/*
+
+    #20110704 Brian For PHP eAccelerator
+    ln -s /usr/local/apache/qb/analyser_web/modules_php/eaccelerator.ini /etc/php.d/
+    mkdir /tmp/eaccelerator
+    chmod 777 /tmp/eaccelerator
+
+    if [ -f /mnt/fsck.tmp ] && [ "$MOUNTDEV" != "" ]; then
+    echo "Checking USB HDD ...." >>/mnt/log/bootlog
+    /sbin/fsck -a /dev/$MOUNTDEV 2>>/mnt/log/bootlog
+    mount /dev/$MOUNTDEV /mnt/tclog
+    /sbin/service syslog start
+    else
+    mount /dev/$MOUNTDEV /mnt/tclog
+    /sbin/service syslog start
+    fi
+
+    if [ -d /mnt/tclog/analyser/etc/httpd ] && [ "$MOUNTDEV" != "" ]
+    then
+     ln -s /mnt/tclog/analyser/usr/share/phpPgAdmin /usr/local/apache/qb/phpPgAdmin
+     rm -f /usr/local/apache/qb/english.xml
+     rm -f /usr/local/apache/qb/english_only.xml
+     rm -f /usr/local/apache/qb/chinese.xml
+     cat >> /etc/crontab <<!
+*/2 * * * *  root       /usr/bin/php /usr/local/apache/qb/analyser_web/decode2.php > /dev/null 2>&2
+*/120 * * * *  root       /usr/bin/php /usr/local/apache/qb/analyser_web/diskclear.php > /dev/null 2>&2
+!
+     issg=`grep -c SG /opt/qb/registry`
+     if [ $issg = '1' ]; then
+      ln -s /usr/local/apache/qb/analyser_web/english_sg.xml /usr/local/apache/qb/english.xml
+      ln -s /usr/local/apache/qb/analyser_web/english_only_sg.xml /usr/local/apache/qb/english_only.xml
+     else
+      ln -s /usr/local/apache/qb/analyser_web/english.xml /usr/local/apache/qb/english.xml
+      ln -s /usr/local/apache/qb/analyser_web/english_only.xml /usr/local/apache/qb/english_only.xml
+     fi
+
+     ln -s /usr/local/apache/qb/analyser_web/chinese.xml /usr/local/apache/qb/chinese.xml
+     # Brian 20100909 Need to change the attribute or the postgresql can't be started. 
+     chmod 777 /var/tmp
+     chmod 777 /tmp
+
+     #Check memory size
+     Physical_Mem=$(cat /proc/meminfo |grep MemTotal|head -n 1|awk '{print $2}')
+
+     if [ $Physical_Mem -ge 2000000 ];then   #2G RAM
+       /sbin/sysctl -w kernel.shmmax=234881024 #192M+32M
+     elif [ $Physical_Mem -ge 1000000 ];then #1G RAM
+       /sbin/sysctl -w kernel.shmmax=134217728 #96M+32M
+     elif [ $Physical_Mem -ge 500000 ];then   #512M RAM
+       /sbin/sysctl -w kernel.shmmax=83886080 #48M+32M
+     elif [ $Physical_Mem -ge 220000 ];then   #256M RAM
+       /sbin/sysctl -w kernel.shmmax=58720256 #24M+32M
+     fi
+
+     rm -f /mnt/tclog/analyser/var/lib/pgsql/data/postmaster.pid
+     /sbin/service postgresql start
+     /sbin/service httpd restart
+
+     #20110629 To limit the CPU usage of analyser
+     #/sbin/cpulimit -e postmaster -l 25 &
+     #/sbin/cpulimit -e php -l 25 &
+     /sbin/cpulimit_daemon.sh &
+    fi
+fi
+chmod 777 /tmp/

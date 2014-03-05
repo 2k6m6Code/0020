@@ -1,0 +1,413 @@
+#! /bin/sh
+#set -x
+QB_HOME_DIR=/opt/qb
+QBREG_FILE=$QB_HOME_DIR/registry
+QBREG_FILE_BAK=/mnt/conf/registry
+
+C_TYPE="PLATFORM"
+E_TYPE="EZIOTYPE"
+M_TYPE="MODEL"
+
+if [ -f /mnt/function.pkg ];
+then
+	tar zxfC /mnt/function.pkg $QB_HOME_DIR 
+	cp -f /opt/qb/conf/registry $QB_HOME_DIR
+else
+	cp -f /mnt/conf/registry $QB_HOME_DIR
+fi
+
+ENABLE_VMWARE=$(awk '/^ENABLEVM/ {print $2}' $QBREG_FILE)
+    MODEL=$(awk  "/$M_TYPE/ { print \$2 }" $QBREG_FILE|head -n 1) 
+ CPU_TYPE=$(awk  "/$C_TYPE/ { print \$2 }" $QBREG_FILE) 
+EZIO_TYPE=$(awk  "/$E_TYPE/ { print \$2 }" $QBREG_FILE) 
+   ENGINE=$(awk  "/ENGINE/ { print \$2 }" $QBREG_FILE) 
+ENABLEWDT=$(awk  "/WATCHDOG/ { print \$2 }" $QBREG_FILE)
+#$MANUFACTURER=$(awk  "/MANUFACTURER/ { print \$2 }" $QBREG_FILE)
+#For 2620 run on portwell 5520 and axiomtek na-710
+MANUFACTURER=$(awk  "/MANUFACTURER/ { print \$2 }" $QBREG_FILE_BAK)
+ENABLEWIRELESS=$(awk  "/ENABLEWIRELESS/ { print \$2 }" $QBREG_FILE)
+HARDWARENAME=$(awk  "/HARDWARE/ { print \$2 }" $QBREG_FILE)
+MEMORY=$(awk  "/MemTotal/ { print \$2 }" /proc/meminfo)
+#For 2620 run on portwell 5520 and axiomtek na-710
+HARDWARENAME_ORG=$(awk  "/HARDWARE/ { print \$2 }" $QBREG_FILE_BAK)
+
+# uncompress /mnt/mod2622.pkg to /lib/modules/2.6.22
+tar zxfC /mnt/mod2622.pkg /lib/modules
+sync
+
+insmod /lib/modules/2.6.22/kernel/fs/squashfs/squashfs.ko
+#insmod /lib/modules/2.6.22/kernel/drivers/block/loop.ko
+#insmod /lib/modules/2.6.22/kernel/net/8021q/8021q.ko #Packed into kernel
+#insmod /lib/modules/2.6.22/kernel/drivers/usb/storage/usb-storage.ko
+
+#[ $MODEL = '1620' ] && insmod /lib/modules/2.6.22/kernel/drivers/net/r8168.ko
+#insmod /lib/modules/2.6.22/kernel/drivers/net/r8168.ko
+#Brian for Image upgrade
+if [ -f /mnt/bak/libimage.100 ];
+then
+        rm -f /mnt/image.squ
+        mv -f /mnt/bak/libimage.100 /mnt/image.squ
+fi
+        sync
+
+if [ ! -d /mnt/extra ];then
+mkdir /mnt/extra
+fi
+
+mount -t squashfs -o loop /mnt/image.squ /mnt/extra
+
+# uncompress /mnt/qbwdt.pkg to /opt/qb/qbwdt
+if [ "$ENABLE_VMWARE" != "1" ];then
+tar zxfC /mnt/qbwdt.pkg $QB_HOME_DIR
+             
+case $MANUFACTURER in
+    AXIOMTEK )
+            if [ "$ENABLEWDT" = "1" ]
+            then
+             case $HARDWARENAME in
+             NA-551 )
+                 ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/watchdog_na550 /opt/qb/bin/watchdog
+                 ln -s /opt/qb/qbwdt/lib8a550.so.0 /usr/lib/
+                     ;; # ex. TM2000
+             esac
+             case $MODEL in
+             320 )
+                 ln -s /opt/qb/qbwdt/lib8a100.so.0 /usr/lib/lib8a100.so.0 #Support Axiomtek NA-100
+                 ln -s /opt/qb/qbwdt/watchdog_na100 /opt/qb/bin/watchdog 
+                     ;; # ex. 320
+             60?D )
+                 ln -s /opt/qb/qbwdt/lib8a110.so.0 /usr/lib/lib8a110.so.0 #Support Axiomtek NA-110
+                 ln -s /opt/qb/qbwdt/watchdog_na110 /opt/qb/bin/watchdog 
+                     ;; # ex. 320
+             410 )
+                 ln -s /opt/qb/qbwdt/lib8a110.so.0 /usr/lib/lib8a110.so.0 #Support Axiomtek NA-110
+                 ln -s /opt/qb/qbwdt/watchdog_na110 /opt/qb/bin/watchdog 
+                     ;; # ex. 410
+             520 )
+                 ln -s /opt/qb/qbwdt/lib8a100.so.0 /usr/lib/lib8a100.so.0 #Support Axiomtek NA-100
+                 ln -s /opt/qb/qbwdt/watchdog_na100 /opt/qb/bin/watchdog 
+                     ;; # ex. 520
+             2710 )
+                 ln -s /opt/qb/qbwdt/ezio_na820 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmlezio_na820 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/lib8a820.so.0 /usr/lib
+                 ln -s /opt/qb/qbwdt/watchdog_na820 /opt/qb/bin/watchdog 
+                     ;; # ex. 2710
+             1120 )
+                 ln -s /opt/qb/qbwdt/ezio_na820 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmlezio_na820 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/lib8a820.so.0 /usr/lib
+                 ln -s /opt/qb/qbwdt/watchdog_na820 /opt/qb/bin/watchdog 
+                     ;; # ex. 1120
+             2620 )
+                 if  [ "$HARDWARENAME_ORG" = "NA710" ];then
+                     ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                     ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                     ln -s /opt/qb/qbwdt/watchdog_na710 /opt/qb/bin/watchdog
+                     ln -s /opt/qb/qbwdt/lib8a710.so.0 /usr/lib/
+                 fi   # ex. New Axiomtek Hardware
+                 if  [ "$HARDWARENAME_ORG" = "NA560" ];then
+                     ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                     ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                     ln -s /opt/qb/qbwdt/watchdog_na560 /opt/qb/bin/watchdog
+                     ln -s /opt/qb/qbwdt/lib8a560.so.0 /usr/lib/
+                 fi   # ex. New Axiomtek Hardware
+                 #Most of the old 2620 use portwell 5520.Test hardware by sysinit
+                 ln -s /opt/qb/qbwdt/watchdog_4040 /opt/qb/bin/watchdog
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                     ;; # ex. LB 2620
+             3620 )
+                 ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/watchdog_na710 /opt/qb/bin/watchdog
+                 ln -s /opt/qb/qbwdt/lib8a710.so.0 /usr/lib/
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                     ;; # ex. LB 3620
+             60 )
+                 ln -s /opt/qb/qbwdt/lib8a320.so.0 /usr/lib/
+                 ln -s /opt/qb/qbwdt/watchdog_na320 /opt/qb/bin/watchdog
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                     ;; # ex. SG 60
+             6?? )
+                 ln -s /opt/qb/qbwdt/lib8a320.so.0 /usr/lib/
+                 ln -s /opt/qb/qbwdt/watchdog_na320 /opt/qb/bin/watchdog
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                     ;; # ex. 622 625 630 635
+             150 )
+                 ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/watchdog_na710 /opt/qb/bin/watchdog
+                 ln -s /opt/qb/qbwdt/lib8a710.so.0 /usr/lib/
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                     ;; # ex. SG 150
+             250 )
+                 ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/watchdog_na710 /opt/qb/bin/watchdog
+                 ln -s /opt/qb/qbwdt/lib8a710.so.0 /usr/lib/
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                     ;; # ex. SG 250
+             500 )
+                 ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/watchdog_na710 /opt/qb/bin/watchdog
+                 ln -s /opt/qb/qbwdt/lib8a710.so.0 /usr/lib/
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                     ;; # ex. SG 500
+             1000 )
+                 ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/watchdog_na710 /opt/qb/bin/watchdog
+                 ln -s /opt/qb/qbwdt/lib8a710.so.0 /usr/lib/
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                     ;; # ex. SG 1000
+             1010 )
+                 ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/watchdog_na710 /opt/qb/bin/watchdog
+                 ln -s /opt/qb/qbwdt/lib8a710.so.0 /usr/lib/
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                     ;; # ex. SG 1000
+             2000 )
+                 ln -s /opt/qb/qbwdt/lcm_na710 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmllcm_na710 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/watchdog_na710 /opt/qb/bin/watchdog
+                 ln -s /opt/qb/qbwdt/lib8a710.so.0 /usr/lib/
+                 if  [ "$HARDWARENAME_ORG" = "NA710" ];then #TM 2000(NA-551) need to change the nic's order
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                 fi
+                     ;; # ex. SG 2000
+             50 )
+                 ln -s /opt/qb/qbwdt/lib8a810.so.0 /usr/lib
+                 ln -s /opt/qb/qbwdt/watchdog_na810 /opt/qb/bin/watchdog
+                     ;; # ex. SG50
+             * )
+                 ln -s /opt/qb/qbwdt/ezio_na820 /opt/qb/qbwdt/ezio  
+                 ln -s /opt/qb/qbwdt/xmlezio_na820 /opt/qb/qbwdt/xmlezio 
+                 ln -s /opt/qb/qbwdt/watchdog_na820 /opt/qb/bin/watchdog 
+                  ;; # ex. ?
+             esac
+            fi
+            ;; # ex.AXIOMTEK xxx
+
+    PORTWELL )
+            ln -s /opt/qb/qbwdt/ezio_portwell /opt/qb/qbwdt/ezio    # ex.PORTWELL 2710 1610 1510
+            if [ "$HARDWARENAME" = "5520" ] || [ "$HARDWARENAME" = "4060" ] || [ "$HARDWARENAME" = "CAR-3005" ];then
+            ln -s /opt/qb/qbwdt/xmlezio_portwell.5520 /opt/qb/qbwdt/xmlezio  # ex.PORTWELL 3000 2710 1610 1510
+            else
+            ln -s /opt/qb/qbwdt/xmlezio_portwell /opt/qb/qbwdt/xmlezio  # ex.PORTWELL 2710 1610 1510
+            fi
+            if [ "$ENABLEWDT" = "1" ]
+            then
+            case $MODEL in
+            1510 )
+                 ln -s /opt/qb/qbwdt/watchdog_4040 /opt/qb/bin/watchdog
+                    ;; # ex. 1510
+            1420 )
+                 VIACPU_test=`cat /proc/cpuinfo|grep "VIA"`
+                 if [ "$VIACPU_test" != "" ]
+                 then
+                 ln -s /opt/qb/qbwdt/lib8a810.so.0 /usr/lib
+                 ln -s /opt/qb/qbwdt/watchdog_na810 /opt/qb/bin/watchdog
+                 # ex. VIA C7
+                 else
+                 ln -s /opt/qb/qbwdt/watchdog_4040 /opt/qb/bin/watchdog
+                 # ex. Intel 4040
+                 fi
+                 ;;
+            1620 )
+                 ln -s /opt/qb/qbwdt/watchdog_4040_1min /opt/qb/bin/watchdog
+                    ;; # ex. 1620
+            100  )
+                 ln -s /opt/qb/qbwdt/watchdog_4040_1min /opt/qb/bin/watchdog
+                    ;; # ex. SG100
+            2820 )
+                 ln -s /opt/qb/qbwdt/watchdog_4040 /opt/qb/bin/watchdog
+                    ;; # ex. 2820
+            2620 )
+                 ln -s /opt/qb/qbwdt/watchdog_4040 /opt/qb/bin/watchdog
+                 insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+                    ;; # ex. 2620
+            3000 )
+                 ln -s /opt/qb/qbwdt/car3005.wdt /opt/qb/bin/watchdog
+                 ;; # ex. 3000 for CAR-3005 hardware
+            * )
+                 ln -s /opt/qb/qbwdt/watchdog_3061 /opt/qb/bin/watchdog
+                 ;; # ex. 3000, 2710, 1610
+            esac
+            fi
+            ;; # ex.PORTWELL 2710 1610 1510
+
+    ARINFOTEK )
+            ln -s /opt/qb/qbwdt/ezio_portwell /opt/qb/qbwdt/ezio  
+            ln -s /opt/qb/qbwdt/xmlezio_portwell /opt/qb/qbwdt/xmlezio  
+            if [ $ENABLEWDT = '1' ]
+            then
+            ln -s /opt/qb/qbwdt/watchdog_800 /opt/qb/bin/watchdog 
+            rm -f /dev/watchdog
+            mknod /dev/watchdog c 39 0
+            /sbin/insmod /opt/qb/qbwdt/wdt_800.ko
+            ln -s /opt/qb/qbwdt/lib8a100.so.0 /usr/lib/lib8a100.so.0 #Support Axiomtek NA-100
+            fi
+            ;; # ex.ARINFOTEK S200 S200Lite S400
+    * )
+            ln -s /opt/qb/qbwdt/ezio_portwell /opt/qb/qbwdt/ezio  
+            ln -s /opt/qb/qbwdt/xmlezio_portwell /opt/qb/qbwdt/xmlezio  
+            if [ $ENABLEWDT = '1' ]
+            then
+            ln -s /opt/qb/qbwdt/watchdog_portwell /opt/qb/bin/watchdog 
+            fi
+            ;; 
+esac
+
+[ "$EZIO_TYPE" = "1" ] && /opt/qb/qbwdt/rc.qbwdt
+
+EZIO_PRINT="/opt/qb/qbwdt/ezio -c 1 -t  "
+
+if [ "$EZIO_TYPE" = "1" ];then
+ if [[ -n $ENGINE ]]  # for odm...050128
+ then
+	$EZIO_PRINT "$ENGINE:booting ..."
+ else
+        if [ "$HARDWARENAME" = "CAR-3005" ];then
+	  $EZIO_PRINT "Q-Balancer $MODEL:"
+        else
+	  $EZIO_PRINT "Q-Balancer $MODEL:booting ..."
+        fi
+ fi
+fi
+fi
+#20090210 Brian For USB device monitor daemon
+# if [ $MEMORY -ge 120000 ];
+#then
+        #tar zxfC /mnt/hald.pkg $QB_HOME_DIR
+        #For udev daemon
+        #rm -rf /etc/udev
+        #ln -s $QB_HOME_DIR/hald/etc/udev /etc/
+        #rm -rf /lib/udev
+        #ln -s $QB_HOME_DIR/hald/lib/udev /lib/
+        #rm -f /sbin/udevd
+        #ln -s $QB_HOME_DIR/hald/sbin/udevd /sbin/
+        #ln -s $QB_HOME_DIR/hald/sbin/udevadm /sbin/
+        #ln -f -s /sbin/udevadm /sbin/udevtrigger
+        #ln -f -s /sbin/udevadm /sbin/udevsettle
+        #ln -f -s /sbin/udevadm /sbin/udevcontrol
+        #ln -f -s /sbin/udevadm /usr/bin/udevinfo
+        #ln -f -s /sbin/udevadm /usr/bin/udevtest
+        
+        #/sbin/start_udev
+
+        #For dbus daemon
+        
+        if [ ! -d /var/run/dbus ]
+        then
+        mkdir /var/run/dbus
+        fi
+#fi
+
+#Support Siemens HSDPA Wireless Module
+if [ -f /mnt/hsdpa.pkg ]
+then
+tar zxfC /mnt/hsdpa.pkg $QB_HOME_DIR
+ln -s $QB_HOME_DIR/hsdpa/lsusb /sbin/
+#ln -s $QB_HOME_DIR/hsdpa/usbchk /usr/sbin/
+#mv $QB_HOME_DIR/hsdpa/usbchk /usr/sbin/
+ln -s $QB_HOME_DIR/hsdpa/wvdialsetup /usr/bin/
+ln -s $QB_HOME_DIR/hsdpa/wvdial.conf /etc/
+ln -s $QB_HOME_DIR/hsdpa/catty /bin/
+
+/sbin/insmod /lib/modules/2.6.22/kernel/drivers/usb/serial/usbserial.ko
+
+#For light speed 3G control
+stty 115200 -isig -icanon -iexten -echo -echoe -echok -echonl -noflsh -xcase -tostop -echoprt -echoctl -echoke  -onlcr -parenb -parodd cs8 -hupcl -cstopb cread clocal crtscts ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr -icrnl -ixon -ixoff  -F /dev/ttyS1
+
+#2010603 Brian to persist pppx device
+rm -f /usr/bin/wvdial
+ln -s $QB_HOME_DIR/hsdpa/wvdial /usr/bin/
+
+ln -s $QB_HOME_DIR/hsdpa/usb.ids /usr/share/usb.ids
+ln -s $QB_HOME_DIR/hsdpa/usb_modeswitch /usr/sbin/
+ln -s $QB_HOME_DIR/hsdpa/usb_modeswitch.d /etc/
+#ln -s $QB_HOME_DIR/hsdpa/usb-modeswitch.conf /etc/
+ln -s $QB_HOME_DIR/hsdpa/40-usb_modeswitch.rules /etc/udev/rules.d/
+ln -s $QB_HOME_DIR/hsdpa/K89usbdev /etc/rc6.d/
+udevchk=`ps -ef|grep -c udevd`
+if [ "$udevchk" = "0" ];then
+echo
+/sbin/start_udev
+fi
+
+#sleep 10
+ #if [ "$ENABLE_VMWARE" != "1" ];then
+ #/opt/qb/bin/script/set_HC25_to_Mdm_mode.sh start &
+ #fi
+fi
+
+if [ "$ENABLEWIRELESS" = "1" ];then
+ tar zxfC /mnt/wireless.pkg /opt/qb/
+ ln -s /opt/qb/wireless/Wireless /etc/
+ ln -s /opt/qb/wireless/iwconfig /sbin/
+ ln -s /opt/qb/wireless/iwpriv /sbin/
+ insmod /opt/qb/wireless/rt3562ap.ko 
+ /sbin/ifconfig ra0 up
+fi
+
+#Network Drivers
+insmod /lib/modules/2.6.22/kernel/drivers/net/r8168.ko
+
+if [ "$CPU_TYPE" != "PIV" ] && [ "$CPU_TYPE" != "PIV64" ];then
+        #For PIII
+ case $HARDWARENAME in
+  5071 )
+        insmod /lib/modules/2.6.22/kernel/drivers/net/tg3.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000/e1000.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/8139too.ko
+        ;; # ex. Portwell 2710
+     * )
+        if [ -f /lib/modules/2.6.22/kernel/drivers/net/e1000/e1000.ko ];then
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000/e1000.ko
+        fi
+        if [ -f /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko ];then
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+        fi
+        if [ -f /lib/modules/2.6.22/kernel/drivers/net/igb.ko ];then
+        insmod /lib/modules/2.6.22/kernel/drivers/net/igb.ko
+        fi
+        if [ -f /lib/modules/2.6.22/kernel/drivers/net/8139too.ko ];then
+        insmod /lib/modules/2.6.22/kernel/drivers/net/8139too.ko
+        fi
+        ;; # ex. 3000, 2710, 1610
+ esac
+else
+        #For PIV
+ case $HARDWARENAME in
+     CAR-3005 )
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000/e1000.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/igb.ko    #For 82575EB Fiber Driver
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/8139too.ko
+        ;; # ex. LB 3000
+     NA-550 )
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000/e1000.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/igb.ko    #For 82575EB Fiber Driver
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/8139too.ko
+        ;; # ex. LB 5000
+     NA-551 )
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000/e1000.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/igb.ko    #For 82575EB Fiber Driver
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/8139too.ko
+        ;; # ex. LB 5300
+     * )
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000/e1000.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/e1000e.ko
+        insmod /lib/modules/2.6.22/kernel/drivers/net/8139too.ko
+        ;; # ex. others
+ esac
+fi
+
+# !! tricky hook !! ------- change Access mode of /opt/qb/bin/script/run
+chmod 4755 /opt/qb/bin/script/run

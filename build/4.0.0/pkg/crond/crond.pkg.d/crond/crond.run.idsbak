@@ -1,0 +1,2 @@
+30 * * * *    root   /opt/crond/idsbak.sh 
+

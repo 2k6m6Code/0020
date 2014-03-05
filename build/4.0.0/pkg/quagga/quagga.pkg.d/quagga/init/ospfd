@@ -1,0 +1,67 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides: ospfd
+# chkconfig: - 16 84
+# config: /etc/quagga/ospfd.conf
+# Short-Description: A OSPF v2 routing engine
+# Description: An OSPF v2 routing engine for use with Zebra
+### END INIT INFO
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+# quagga command line options
+. /etc/sysconfig/quagga
+
+RETVAL=0
+PROG="ospfd"
+cmd=ospfd
+LOCK_FILE=/var/lock/subsys/ospf6d
+CONF_FILE=/etc/quagga/ospf6d.conf
+
+case "$1" in
+  start)
+	# Check that networking is up.
+	[ "${NETWORKING}" = "no" ] && exit 1
+
+	# The process must be configured first.
+	[ -f $CONF_FILE ] || exit 6
+
+	echo -n $"Starting $PROG: "
+        daemon $cmd -d $OSPFD_OPTS
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch $LOCK_FILE
+	echo
+	;;
+  stop)
+	echo -n $"Shutting down $PROG: "
+	killproc $cmd
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
+	echo
+	;;
+  restart|reload)
+        $0 stop
+        $0 start
+	RETVAL=$?
+        ;;
+  condrestart)
+        if [ -f $LOCK_FILE ]; then
+                $0 stop
+		$0 start
+        fi
+	RETVAL=$?
+        ;;
+  status)
+        status $cmd
+	RETVAL=$?
+        ;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|reload|condrestart|status}"
+	exit 2
+esac
+
+exit $RETVAL

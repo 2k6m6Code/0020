@@ -1,0 +1,20 @@
+#!/bin/sh
+# stopeng A|B
+# Use for stop engineA/engineB
+# use to register in conf/sprog
+PROC=$1
+SYS=$2
+PSLINE=
+PSTMP=/tmp/afs.pstmp.$$
+su root -c "ps -ef" >$PSTMP
+if [ $? -ne 0 ] ;then
+	ps -ef >$PSTMP
+fi
+grep -v "stopp" $PSTMP|grep "/usr/afs/$PROC $SYS"|while read PSLINE ;do
+	if [ -n "$PSLINE" ] ;then
+   		set $PSLINE
+   	    kill $2
+	fi
+done
+rm -f $PSTMP
+exit 0

@@ -1,0 +1,77 @@
+#!/bin/bash
+#set -x
+eth=$1
+target=$2
+platform=$3
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+ 
+if [ "$platform" = "VIA" ]
+    then
+        echo "wait to fix reconnect bug"
+fi
+
+while : ; do
+#A simple healthy check
+sleep 10
+dhcp_oriip=`grep isptype=\"dhcp.*\" $ACTIVEBASICXML|grep $eth|sed -e "s/  <isp.*systemip=\"//"|sed -e "s/\".*//"`
+ping -I $dhcp_oriip $target -c 1 >/dev/null 2>&1
+pingresult1=$?
+sleep 6 
+ping -I $dhcp_oriip $target -c 1 >/dev/null 2>&1
+pingresult2=$?
+sleep 6 
+ping -I $dhcp_oriip $target -c 1 >/dev/null 2>&1
+pingresult3=$?
+    if [ $pingresult1 != '0' ]
+    then
+        if [ $pingresult2 != '0' ]
+        then
+            if [ $pingresult3 != '0' ]
+            then
+                #If dhcpcd kill all nic's ip,QB will update qb automatically.
+                #So after dhcpcd,need to bind an 172.x.x.x again.
+                #address=`/sbin/ifconfig $eth|grep 'inet' |awk '{print $2}' |sed -e "s/addr\://"`
+                /sbin/ifconfig $eth up                    
+                address=`/usr/local/sbin/ip addr show dev $eth|grep '172.31.0.*/32' |awk '{print $2}' |sed -e "s/\\n//"`
+                address1=`/usr/local/sbin/ip addr show dev $eth|grep '172.31.1.*/32' |awk '{print $2}' |sed -e "s/\\n//"`
+                dhcp_oriip=`grep isptype=\"dhcp.*\" $ACTIVEBASICXML|grep $eth|sed -e "s/  <isp.*systemip=\"//"|sed -e "s/\".*//"`
+                dhcp_origw=`grep isptype=\"dhcp.*\" $ACTIVEBASICXML|grep $eth|sed -e "s/  <isp.*gateway=\"//"|sed -e "s/\".*//"`
+                dhcp_iid=`grep isptype=\"dhcp.*\" $ACTIVEBASICXML|grep $eth|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"`
+                
+                ping -I $dhcp_oriip $target -c 1 >/dev/null 2>&1
+                pingresult4=$?
+                if [ $pingresult4 != '0' ]
+                then
+                /sbin/dhcpkill $eth
+                #/sbin/ip address add $dhcp_oriip
+                echo $(date) "DHCP Link $eth reconnect !!!" >>/mnt/log/link.log
+                /sbin/dhcpcd -n $eth
+                connectresult=$?
+                if [ $connectresult != '0' ]   #If get ip fail,need to add new routing rule for traceroute healthy check.
+                then
+                    echo $(date) "DHCP Link $eth reconnect fail!!!" >>/mnt/log/link.log
+                    sleep 1
+                    /sbin/ifconfig $eth up                    
+                    /sbin/ip address flush dev $eth
+                    sleep 1
+                    /sbin/ip address add $dhcp_oriip/24 dev $eth
+                    /sbin/ip address add 172.31.0.$dhcp_iid dev $eth 
+                    #[ "$address" != "" ] && /sbin/ip address add $address dev $eth    
+                    [ "$address1" != "" ] && /sbin/ip address add $address1 dev $eth    
+                    let tablenum=$dhcp_iid+100
+                    #/sbin/ifconfig $eth $dhcp_oriip netmask 255.255.255.0
+                    #/sbin/ip route add default via $dhcp_origw table $tablenum
+                    /sbin/ifconfig $eth up     #For kernel 2.6               
+                fi
+                fi
+                sleep 18
+            else
+               sleep 60
+            fi
+         else
+           sleep 60
+        fi
+      else
+        sleep 60
+     fi
+done

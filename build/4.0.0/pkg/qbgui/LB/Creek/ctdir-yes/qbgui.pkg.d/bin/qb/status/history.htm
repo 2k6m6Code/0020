@@ -1,0 +1,771 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml">
+
+<head>
+<link rel="stylesheet" href="../gui.css" type="text/css"></link>
+<title>PolyLine02</title>
+
+<style>
+v\:*{behavior:url(#default#vml)}
+body{
+	background:#336699;
+	text-align:center;
+	scrollbar-base-color:#336699;
+}
+</style>
+
+<script type="text/javascript" src="../qb.js"></script>
+
+<script>
+
+//PolyMaster
+//PolyMaster.add()
+//PolyMaster.show()
+//PolyMaster.showmycard()
+//PolyMaster.chmode()
+//PolyMaster.clear()
+
+
+function polymaster(element_id,name){
+
+	var PA;
+	
+	if(!(PA=document.all[element_id]))
+		return null;
+	
+	while(PA.childNodes.length){
+		PA.firstChild.removeNode(1);
+	}
+	
+	//definition
+	
+	this.name = name;
+	this.maxValue = 128;
+	this.unitIndex = 0;
+	this.cards = new Array();
+	this.today = new Date();
+	this.mode = 1;
+	this.count = 0;
+	this.obj = document.createElement("TABLE");
+	this.ispselobj = document.createElement("SELECT");
+	this.ispselobj.style.font = "10 Verdana";
+	this.ispselobj.style.background = "#336699";
+	this.ispselobj.style.color = "white";
+	this.mycard = new polycard(this,0);		
+
+	PA.appendChild(this.obj);
+
+	PA = null;
+}
+
+//宣告 Unit 相關資料
+function unitdataObj(range,width,minutes,text,value){
+	this.range = range;		//點群數 (說明多少點為一區間單位)
+	this.nodewidth = width;		//點間距
+	this.minwidth = width;		//最小點間距 (for zoonin)
+ 	this.inoutsize = width;		//縮放差距
+	this.base = minutes;		//將單位換算為分鐘
+	this.text = text;		//select 中的 text
+	this.value = value;		//select 中的 value
+}
+polymaster.prototype.unitdata = new Array();
+polymaster.prototype.unitdata.push(new unitdataObj(12,5,5,'5 Minutes','mins'));
+polymaster.prototype.unitdata.push(new unitdataObj(12,5,60,'1 Hour','hours'));
+polymaster.prototype.unitdata.push(new unitdataObj(7,8,1440,'1 Day','days'));
+
+
+function polymaster.prototype.setTime(yy,mm,dd,hh,mi){
+
+	this.today.setYear(parseInt(yy));
+	this.today.setMonth(parseInt(mm)-1);
+	this.today.setDate(parseInt(dd));
+	this.today.setHours(parseInt(hh));
+	this.today.setMinutes(parseInt(mi));
+}
+
+function polymaster.prototype.add(ispname,path){
+
+	if(this.cards.length <= this.count){
+		var PCARD = new polycard(this,1);
+		this.cards.push(PCARD);
+		if(this.mode)
+			PCARD.construct();
+		this.ispselobj.options.add(new Option(ispname,this.count));
+	}
+	else{
+		var PCARD = this.cards[this.count];
+		if(this.mode && !PCARD.mount)
+			PCARD.construct();
+		if(!this.mode && PCARD.mount)
+			PCARD.deconstruct();
+		this.ispselobj.options[this.count] = new Option(ispname,this.count);
+	}
+	PCARD.index = this.count;
+	PCARD.set(ispname,path);
+	this.count++;
+	PCARD = ispname = polydata = path = null;
+}
+
+
+function polymaster.prototype.show(){
+	
+	//balance
+	while(this.count < this.cards.length){
+		this.cards[this.count].del();
+		this.ispselobj.options.remove(this.count);
+	}
+	//執行每個 PolyCard 的 Show() : 秀圖
+	for(var i=0;i<this.cards.length;i++){
+		this.cards[i].show();
+	}
+	if(!this.mode)
+		this.showmycard();
+	i = null;
+}
+
+function polymaster.prototype.showmycard(){
+	
+	if(!this.ispselobj.options.length)
+		return null;
+	this.mycard.set(this.cards[this.ispselobj.value].ispname.innerText,this.cards[this.ispselobj.value].data.toString());
+	this.mycard.show();
+}
+
+function polymaster.prototype.chmode(num){
+	if(num){
+		if(this.mode)
+			return null;
+		this.mycard.deconstruct();
+		for(var i=0;i<this.cards.length;i++){
+			this.cards[i].construct();
+		}
+		this.mode = 1;
+		i = null;
+	}
+	else{
+		if(!this.mode)
+			return null;
+		for(var i=this.cards.length-1;i>=0;i--){
+			this.cards[i].deconstruct();
+		}
+		this.mycard.construct();
+		this.mode = 0;
+		i = BT = TR = TD = null;
+	}
+	this.show();
+}
+
+function polymaster.prototype.clear(){
+	this.count = 0;
+}
+
+//PolyCard
+//PolyCard.set()
+//PolyCard.del()
+//PolyCard.show()
+//PolyCard.showRow()
+//PolyCard.showColumn()
+//PolyCard.showPoly()
+//PolyCard.showUnit()
+//PolyCard.construct()
+//PolyCard.deconstruct()
+
+function polycard(masterObj,mode){
+
+	this.index = 0;
+	this.parent = masterObj;
+	this.mount = 0;
+	this.unitIndex = 0;
+	this.ispname = document.createElement("span");
+	this.maxValue = null;
+	this.data = null;
+	this.path = null;
+	this.unit_height = 16;
+	this.blockwidth = 0;
+	this.blocknum = 0;
+	this.unitselobj = document.createElement("select");
+	this.unitselobj.style.font = "10 Verdana";
+	this.unitselobj.style.background = "#336699";
+	this.unitselobj.style.color = "white";
+	for(var i=0;i<3;i++)
+		this.unitselobj.options.add(new Option(this.parent.unitdata[i].text,i));
+	this.showbut = document.createElement("button");
+	this.showbut.innerText = "Show";	
+	this.showbut.style.font = "10 Verdana";
+
+	//流量圖中的 PolyLine 物件
+	this.poly = document.createElement("v:polyline");
+	this.poly.strokecolor = '#ccffcc';
+	this.poly.strokeweight = '1px';
+	this.poly.fillcolor = '#000000';
+	this.poly.style.position = 'absolute';
+	this.poly.style.zIndex = 5;
+	this.poly.style.top = this.unit_height >> 1;
+	this.poly.style.left = 0;
+
+	//流量圖中的水平背景線 TABLE 物件
+	this.Trow = document.createElement("TABLE");
+	this.Trow.cellSpacing = 0;
+	this.Trow.cellPadding = 0;
+	this.Trow.border = 0;
+	this.Trow.style.fontSize = 1;
+	this.Trow.style.position = 'absolute';
+	this.Trow.style.zIndex = 7;
+	this.Trow.style.top = this.unit_height >> 1;
+	this.Trow.style.left = 0;
+
+	//流量圖中的垂直背景線 TABLE 物件
+	this.Tcolumn = document.createElement("TABLE");
+	this.Tcolumn.cellSpacing = 0;
+	this.Tcolumn.cellPadding = 0;
+	this.Tcolumn.style.color = "white";
+	this.Tcolumn.style.font = "10 Verdana";
+	this.Tcolumn.style.position = 'absolute';
+	this.Tcolumn.style.zIndex = 6;
+	this.Tcolumn.style.top = this.unit_height >> 1;
+	this.Tcolumn.style.left = 0;
+	this.Tcolumn.border = 0;
+
+	//流量圖中的流量標記 TABLE 物件
+	this.Tunit = document.createElement("TABLE");
+	this.Tunit.width = "100%";
+	this.Tunit.style.color = "white";
+	this.Tunit.style.font = "10 Verdana";
+	this.Tunit.style.textAlign = 'right';
+	this.Tunit.cellSpacing = 0;
+	this.Tunit.cellPadding = 0;
+	this.Tunit.border = 0;
+	
+	for(var i=0;i<9;i++)
+		this.Tunit.insertRow().insertCell();
+
+	//包含流量圖的 DIV 物件
+	this.viewer = document.createElement("DIV");
+	this.viewer.style.width = 450 - 50;
+	this.viewer.style.height = "100%";
+	this.viewer.style.background = "#000000";
+	this.viewer.style.overflowX = "scroll";
+	
+	/*
+	this.viewer.onscroll = function(){			//捲軸統一
+		for(var i = 0 ; i < this.parent.cards.length; i++)
+			this.parent.cards[i].viewer.scrollLeft = event.srcElement.scrollLeft;
+	};
+	*/
+
+//	this.viewer.appendChild(this.Trow);
+//	this.viewer.appendChild(this.Tcolumn);
+
+	//錯誤訊息視窗
+	this.errorobj = document.createElement("TABLE");
+	this.errorobj.style.width = "100%";
+	this.errorobj.style.height = "100%";
+	this.errorobj.style.textAlign = "center";
+	this.errorobj.style.font = "20 Verdana";
+	this.errorobj.insertRow();
+	this.errorobj.rows[0].insertCell();
+	this.errorobj.rows[0].cells[0].style.color = "white";
+
+	//本身的 TABLE 物件
+	this.obj = document.createElement("TABLE");
+	this.obj.width = 450;
+	this.obj.height = 20 + this.unit_height * 8.5 + 30 + 20;
+	this.obj.border = '1';
+	this.obj.cellSpacing = 0;
+	this.obj.cellPadding = 0;
+	this.obj.insertRow();
+	this.obj.insertRow();
+	this.obj.rows[0].insertCell();
+	this.obj.rows[1].insertCell();
+	this.obj.rows[1].insertCell();
+	this.obj.rows[0].cells[0].appendChild(document.createTextNode("Unit : (KBytes) "));
+	if(mode){
+		this.obj.rows[0].cells[0].appendChild(this.ispname);
+		this.obj.rows[0].cells[0].appendChild(document.createTextNode("  "));
+	}
+	else
+		this.obj.rows[0].cells[0].appendChild(this.parent.ispselobj);
+	
+	this.obj.rows[0].cells[0].appendChild(this.unitselobj);
+	this.obj.rows[0].cells[0].appendChild(this.showbut);
+	this.obj.rows[0].cells[0].style.font = "11 Verdana";
+	this.obj.rows[0].cells[0].style.color = "white";
+	this.obj.rows[0].cells[0].colSpan = 2;
+	this.obj.rows[0].cells[0].height = 20;
+
+	this.obj.rows[1].cells[0].width = 50;
+	this.obj.rows[1].cells[0].height = 200 - 20;
+	this.obj.rows[1].cells[0].appendChild(this.Tunit);
+	this.obj.rows[1].cells[0].vAlign = 'top';
+
+	this.obj.rows[1].cells[1].width = 450 - 50;
+	this.obj.rows[1].cells[1].appendChild(this.viewer);
+	
+}
+
+function polycard.prototype.construct(){
+	var TR = this.parent.obj.insertRow();
+	var TD = TR.insertCell();
+	TD.appendChild(this.obj);
+	this.mount = 1;
+	TR = TD = null;
+}
+
+function polycard.prototype.deconstruct(){
+	//從 PolyMaster.obj 中移除
+	this.parent.obj.rows[this.index].removeNode(1);
+	this.mount = 0;
+}
+
+function polycard.prototype.del(){
+
+	//從 polymaster.cards 中移除
+	this.parent.cards.splice(this.index,1);
+	for(var i=this.index;i<this.parent.cards.length;i++)
+		this.parent.cards[i].index=i;
+	this.obj.removeNode(1);
+	if(this.parent.mode)
+		this.deconstruct();
+	i = null;
+}
+
+function polycard.prototype.set(ispname,path){
+	//將點數字串存成陣列
+	this.data = path.split(",");
+	
+	for(var i=0;i<this.data.length;i++)
+		this.data[i] = parseInt(this.data[i]);
+	
+	//處理 ispname
+	this.ispname.innerText =ispname;
+
+	if(this.parent.mode)
+		this.showbut.onclick = new Function("eval(" + this.parent.name + ".cards[" +this.index+ "]).show();");	
+	else
+		this.showbut.onclick = new Function("eval(" + this.parent.name + ").showmycard();");
+}
+
+function polycard.prototype.show(){
+	
+	var UD = this.parent.unitdata[this.unitselobj.value];
+	var loop = UD.base / 5;
+	var count = loop;
+	var tmp = 0;
+	this.path = new Array();
+	this.maxValue = 128;
+	
+	//依照所選之單位計算出資料長度
+	//同時算出 maxValue
+	for(var i=0;i<this.data.length;i++){
+		tmp += this.data[i];
+		count--;
+		if(count<=0){
+			if(tmp > this.maxValue)
+				this.maxValue = tmp;
+			this.path.push(tmp);
+		 	tmp=0;
+		 	count = loop;
+		}
+	}
+	
+	//對 maxValue 處理
+	i = 128;
+	while(i < this.maxValue){
+		i <<= 1;
+	}
+	this.maxValue = i;
+	
+	//underflow check
+	if(this.path.length<=1){
+		this.Trow.removeNode(1);
+		this.Tcolumn.removeNode(1);
+		this.poly.removeNode(1);
+		this.errorobj.rows[0].cells[0].innerText = "Underflow!!";
+		this.viewer.appendChild(this.errorobj);
+	}
+	else{
+		if(this.errorobj.parentElement)
+			this.errorobj.removeNode(1);
+		this.blockwidth = UD.range * UD.nodewidth;
+		this.blocknum = Math.ceil(this.path.length / UD.range );
+		this.showRow();
+		this.showColumn();
+		this.showPoly();
+	}
+	this.showUnit();
+}
+
+function polycard.prototype.showPoly(){
+	
+	//從網頁中移除 ( polyline 需移除才能設定 )
+	if(this.poly.parentElement)
+		this.poly.removeNode(1);
+	
+	//設定
+	var height = this.unit_height << 3;
+	var UD = this.parent.unitdata[this.unitselobj.value];
+	var path = new Array();
+	var temp = 0;
+	var const1 = height / this.maxValue;
+	var const2 = height - 1;
+
+	for(var i=0;i<this.path.length;i++){			//every node
+		path.push(temp);				//x position
+		path.push(const2 - this.path[i]*const1);	//y position
+		temp += UD.nodewidth;
+	}
+
+	this.poly.points = path.join();
+
+	//擺回網頁中
+	if(!this.poly.parentElement)
+		this.viewer.appendChild(this.poly);
+
+	height = UD = temp = path = null;
+}
+
+function polycard.prototype.showRow(){
+
+	var i;
+	
+	//是否重建 (只有第一次需要重建)
+	if(!this.Trow.rows.length){
+		for(i=0;i<8;i++){
+			TD = this.Trow.insertRow().insertCell();
+			TD.innerHTML = '&nbsp;';
+			switch(i){
+			case 0:TD.style.borderBottom='1 solid #444444';		TD.style.borderTop="1 solid red";break;
+			case 1:TD.style.borderBottom='1 solid gray';		break;
+			case 3:TD.style.borderBottom='1 solid lightblue';	break;
+			case 5:TD.style.borderBottom='1 solid gray';		break;
+			case 7:TD.style.borderBottom='1 solid white';		break;
+			default:TD.style.borderBottom='1 solid #444444';	break;
+			}
+		}
+	}
+
+	//設定
+	for(var i=0;i<8;i++)
+		this.Trow.rows[i].cells[0].height = this.unit_height;
+
+	this.Trow.width = this.blocknum * this.blockwidth;
+	
+	if(!this.Trow.parentElement)
+		this.viewer.appendChild(this.Trow);
+	
+	i = null;
+}
+
+function polycard.prototype.showColumn(){
+	
+	while(this.Tcolumn.rows.length){
+		this.Tcolumn.rows[0].removeNode(1);
+	}
+	this.Tcolumn.insertRow();
+	this.Tcolumn.insertRow();
+
+	//設定
+
+	var today = new Date();
+
+	today.setYear(this.parent.today.getYear());
+	today.setMonth(this.parent.today.getMonth());
+	today.setDate(this.parent.today.getDate());
+	today.setHours(this.parent.today.getHours());
+	today.setMinutes(this.parent.today.getMinutes());
+
+	this.Tcolumn.width = this.blocknum * this.blockwidth;
+	
+	var UD = this.parent.unitdata[this.unitselobj.value];	
+	m = UD.base * UD.range;
+
+	for(var i=0 ; i < this.blocknum ; i++){
+		
+		this.Tcolumn.rows[0].insertCell();
+		this.Tcolumn.rows[1].insertCell();
+
+		this.Tcolumn.rows[0].cells[i].innerHTML='&nbsp;';
+		this.Tcolumn.rows[0].cells[i].style.borderLeft='1 solid threedface';
+		
+		if(i)today.setMinutes( today.getMinutes() + m);
+		tmp1 = today.getMonth()+1;
+		tmp2 = today.getDate();
+		tmp3 = today.getHours();
+		tmp4 = today.getMinutes();
+		this.Tcolumn.rows[1].cells[i].innerHTML = (tmp1)+'/'+tmp2+'<br>'+(parseInt(tmp3/10)?tmp3:'0'+tmp3)+':'+(parseInt(tmp4/10)?tmp4:'0'+tmp4);
+	}
+
+	//高度
+	this.Tcolumn.rows[0].height = this.unit_height << 3
+
+	if(!this.Tcolumn.parentElement)
+		this.viewer.appendChild(this.Tcolumn);
+}
+
+function polycard.prototype.showUnit(){
+	//設定高
+	this.Tunit.height = this.unit_height * 9;
+
+	//設定值
+	
+	tmp = parseInt(this.maxValue >> 3);
+	tmp2 = 0;
+	
+	for(var i=0;i<9;i++){
+		this.Tunit.rows[8-i].cells[0].innerText = tmp2;
+		tmp2+=tmp;
+	}
+	
+	i = null;
+}
+
+//
+function policymaster(element_id,name){
+
+	if(!(PA=document.all[element_id]))
+		return null;
+	
+	while(PA.childNodes.length){
+		PA.firstChild.removeNode(1);
+	}
+	
+	//definition
+	
+	this.name = name;
+	this.multiple = 0;	
+	
+	this.checks = new Array();
+
+	FRM = document.createElement("TABLE");
+	FRM.border= 0;
+	FRM.cellPadding= 0;
+	FRM.cellSpacing = 0;
+	FRM.style.font = "10 Verdana";
+	FRM.style.color = "white";
+	FRM.bgColor = "#336699";	
+	TR = FRM.insertRow();
+	TR.align = "center";
+	TD = TR.insertCell();
+	TD.width = 20;
+	
+	TD = TR.insertCell();
+	TD.width = 100;
+	TD.innerText = "SrcIp";
+	
+	TD = TR.insertCell();
+	TD.width = 60;
+	TD.innerText = "SrcPort";
+	
+	TD = TR.insertCell();
+	TD.width = 100;
+
+	TD.innerText = "DstIp";
+	
+	TD = TR.insertCell();
+	TD.width = 60;
+	TD.innerText = "DstPort";
+	
+	TD = TR.insertCell();
+	TD.width = 60;
+	TD.innerText = "Protocol";
+	
+	TD = TR.insertCell();
+	TD.width = 20;
+
+	
+	TR = FRM.insertRow();
+	TD = TR.insertCell();
+	TD.colSpan = 7;
+	
+	oDIV = document.createElement("DIV");
+	oDIV.style.width = "100%";
+	oDIV.style.height = "100";
+	oDIV.style.backgroundColor = "black";
+	oDIV.style.overflowY = "scroll";
+	oDIV.style.scrollbarBaseColor = "#336699";
+	this.obj = document.createElement("TABLE");
+	this.obj.border = 0;
+	
+	this.obj.cellPadding = 0;
+	this.obj.cellSpacing = 0;
+	this.obj.style.font = "10 Verdana";
+	this.obj.style.color = "white";
+	oDIV.appendChild(this.obj);
+	
+	TD.appendChild(oDIV);
+	
+	PA.appendChild(FRM);
+
+	PA = null;
+
+}
+
+function policymaster.prototype.clear(){
+	while(this.obj.rows.length)
+		this.obj.rows[0].removeNode(1);
+	while(this.checks.length)
+		this.checks.pop();
+}
+
+function policymaster.prototype.add(SrcIp,SrcPort,DstIp,DstPort,Protocol){
+	
+	TR = this.obj.insertRow();
+	TR.align = "center";
+	TD = TR.insertCell();
+	TD.width = 20;
+	
+	RA = document.createElement("INPUT");
+	RA.type = "checkbox";
+
+	RA.onclick = new Function("eval("+this.name+".checkcheck(this))");
+
+
+	this.checks.push(RA);
+	TD.appendChild(RA);
+	
+	
+
+	TD = TR.insertCell();
+	TD.width = 100;
+	TD.innerText = SrcIp;
+	
+	TD = TR.insertCell();
+	TD.width = 60;
+	TD.innerText = SrcPort;
+	
+	TD = TR.insertCell();
+	TD.width = 100;
+	TD.innerText = DstIp;
+	
+	TD = TR.insertCell();
+	TD.width = 60;
+	TD.innerText = DstPort;
+	
+	TD = TR.insertCell();
+	TD.width = 60;
+	TD.innerText = Protocol;
+}
+
+
+function policymaster.prototype.checkcheck(oCheck){
+	
+	if(!this.multiple)
+
+	for(var i=0;i<this.checks.length;i++){
+		if(this.checks[i]!=oCheck){
+			this.checks[i].checked = false ;
+		}
+	}
+	
+}
+
+function toQuery(){
+	
+	result = "";	
+
+	for(var i=0;i<pcmaster.checks.length;i++){
+		if(pcmaster.checks[i].checked){
+			result += pcmaster.obj.rows[i].cells[1].innerText + "|";
+			result += pcmaster.obj.rows[i].cells[2].innerText + "|";
+			result += pcmaster.obj.rows[i].cells[3].innerText + "|";
+			result += pcmaster.obj.rows[i].cells[4].innerText + "|";
+			result += pcmaster.obj.rows[i].cells[5].innerText + ";";
+		}
+	}
+
+        var yy = form1.elements.from_year.value;
+        var mm = form1.elements.from_month.value;
+        var dd = form1.elements.from_date.value;
+        var hh = form1.elements.from_hour.value;
+        var mi = form1.elements.from_minute.value;
+        pmaster.setTime(yy,mm,dd,hh,mi);
+
+	document.forms['form1'].policy.value = result;
+	document.forms['form1'].submit();
+
+}
+
+</script>
+
+</head>
+
+<body>
+<table><tr><td>
+<div id="myspace"></div>
+</td><td valign=top> <a href="javascript:qbShowHelp('history')"><image src="/image/help.gif" border="0" title="Help"></a></td></table>
+<script>(pmaster = new polymaster("myspace","pmaster")).chmode(0);</script>
+
+<form name='form1' style='margin:0' target='ppIF' method='post' action='history.cgi'>
+
+<fieldset style="width:420;text-align:left;color:white;font:12 Verdana">
+<legend>Query Conditions</legend>
+
+<div id="mypolicy"></div>
+<script>pcmaster = new policymaster("mypolicy","pcmaster");</script>
+
+<TABLE border="0" style="color:white;font:11 Verdana">
+
+<TR>
+<TD width='50'></TD>
+<TD width='90'>Year</TD>
+<TD width='90'>Month</TD>
+<TD width='90'>Date</TD>
+<TD width='90'>Hour</TD>
+<TD width='90'>Minute</TD>
+</TR>
+
+<TR>
+<TD>From:</TD>
+<TD><select class="qbopt" name='from_year'></select></TD>
+<TD><select class="qbopt" name='from_month'></select></TD>
+<TD><select class="qbopt" name='from_date'></select></TD>
+<TD><select class="qbopt" name='from_hour'></select></TD>
+<TD><select class="qbopt" name='from_minute'></select></TD>
+</TR>
+
+<TR>
+<TD>To:</TD>
+<TD><select class="qbopt" name='to_year'></select></TD>
+<TD><select class="qbopt" name='to_month'></select></TD>
+<TD><select class="qbopt" name='to_date'></select></TD>
+<TD><select class="qbopt" name='to_hour'></select></TD>
+<TD><select class="qbopt" name='to_minute'></select></TD>
+</TR>
+
+<TR>
+<TD colspan='5' align='right'></TD>
+<TD><button class="qb" align="left" style="width:60" onclick="toQuery();">Query</button></TD>
+</TR>
+
+</TABLE>
+
+</fieldset>
+<input type="hidden" name="action" value="query">
+<input type="hidden" name="policy">
+</form>
+
+<iframe name="ppIF" src="history.cgi?action=policy" style="display:none"></iframe>
+
+<script>
+today = new Date();
+FRM = document.forms.form1;
+for(var i=0;i<2;i++)	FRM.from_year.options.add(new Option(today.getYear()-i,today.getYear()-i));
+for(var i=0;i<12;i++)	FRM.from_month.options.add(new Option(i+1,i+1));
+for(var i=0;i<31;i++)	FRM.from_date.options.add(new Option(i+1,i+1));
+for(var i=0;i<24;i++)	FRM.from_hour.options.add(new Option(i,i))
+for(var i=0;i<60;i++)	FRM.from_minute.options.add(new Option(i,i));
+
+for(var i=0;i<2;i++)	FRM.to_year.options.add(new Option(today.getYear()-i,today.getYear()-i));
+for(var i=0;i<12;i++)	FRM.to_month.options.add(new Option(i+1,i+1));
+for(var i=0;i<31;i++)	FRM.to_date.options.add(new Option(i+1,i+1));
+for(var i=0;i<24;i++)	FRM.to_hour.options.add(new Option(i,i))
+for(var i=0;i<60;i++)	FRM.to_minute.options.add(new Option(i,i));
+
+FRM.from_month.value = FRM.to_month.value = today.getMonth()+1;
+FRM.from_date.value = FRM.to_date.value = today.getDate();
+
+
+</script>
+</body>
+
+
+</html>

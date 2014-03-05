@@ -1,0 +1,13 @@
+#!/bin/sh
+if [ $# = 1 ] ;then
+	VERSION=$1
+else
+	VERSION="/usr/afs/VERSION"
+fi
+if [ ! -f $VERSION ] ;then
+	echo missing $VERSION
+	exit 1
+fi
+read REL < $VERSION
+echo "AFS2000 Version ($REL)"
+exit 0

@@ -1,0 +1,482 @@
+###############################################################################################
+#                           Line Check Configuration
+###############################################################################################
+
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblanguage = QBlanguage();
+
+
+$lanHcconf{link_check_parameters}            =$qblanguage[41];
+$lanHcconf{link_check_method}                =$qblanguage[42];
+$lanHcconf{"By Ping"}                        =$qblanguage[43];
+$lanHcconf{"By Ping And Trace Route"}        =$qblanguage[44];
+$lanHcconf{"By Connection to Specified Port"}=$qblanguage[45];
+$lanHcconf{"By Connection And Trace Route"}  =$qblanguage[46];
+$lanHcconf{advanced_setting}                 =$qblanguage[47];
+$lanHcconf{disable_passive_line_check}       =$qblanguage[48];
+$lanHcconf{port}                             =$qblanguage[49];
+$lanHcconf{ping_time_out}                    =$qblanguage[50];
+$lanHcconf{traceroute_time_out}              =$qblanguage[51];
+$lanHcconf{connection_time_out}              =$qblanguage[52];
+$lanHcconf{check_time_interval}              =$qblanguage[53];
+$lanHcconf{save}                             =$qblanguage[54];
+
+sub showHCconf 
+{
+    my (%action)=@_;
+    my $hcconf=XMLread($gPATH.'hcconf.xml');
+    my $HCMODE=$hcconf->{hcmode}->[0]->{mode};
+    my $HCMETHOD=$hcconf->{hcmethod}->[0];
+    my $HCTYPE=$HCMETHOD->{type};
+        
+    #generating presentation format in TABLE 
+    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<tr><td align="left" class="bigtitle" colspan="2">$lanHcconf{link_check_parameters} ); # </td></tr>);
+    print qq (<a href="javascript:qbShowHelp('hcconf')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+
+    #***********************************   Line Check Mode ******************************************
+    #print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="right">);
+    #print qq (Line Check Mode:);
+    #print qq (</td>);
+
+    #print qq (<td class="body"  align="left">);
+    #foreach my $mode ( @$HCMODE ) 
+    #{ 
+    #    print qq (<input type="radio" name="hcmode" value="$mode->{value}" $mode->{status}>$mode->{text}<br>); }
+    #}
+    #print qq (</td>);
+    #print qq (</tr>);
+
+    #*********************************** Line Check Configuration ******************************************
+    print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="right">);
+    #print qq ($lanHcconf{link_check_method}:<br>);
+    #print qq (</td>);
+
+    print qq (<td class="body" align="left">);
+    #2006/04/13 Brian default healthy check=Ping
+	my $view_value=1;
+    foreach my $type ( @$HCTYPE )
+    { 
+        if ( $type->{value} == 1 ) 
+        { 
+        print qq (<input type="radio" name="hctype" value="$type->{value}" checked $type->{status} onclick="sel_display($type->{value})">$lanHcconf{$type->{text}}<br>);
+        }
+        if ( $type->{value} == 5 ) { next; }
+        if ( $type->{value} != 1 )
+        { 
+        print qq (<input type="radio" name="hctype" value="$type->{value}" $type->{status} onclick="sel_display($type->{value})">$lanHcconf{$type->{text}}<br>);
+        }
+		if ($type->{status} eq 'checked')
+		{
+			$view_value = $type->{value};
+		}
+    }
+    print qq (</td>);
+    print qq (</tr>);
+	
+	print qq (<input id="view_value" type="hidden" value="$view_value">);
+	
+    print qq (<tr>);
+    #print qq (<td class="body"  valign="top" align="right">);
+    #print qq ($lanHcconf{advanced_setting}:);
+    #print qq (</td>);
+    
+    print qq (<td align="left">);
+    print qq (<table class="body" width="100%" cellspacing="0" border="0">);
+    
+    #=================================================================================
+    my $status=( $HCMETHOD->{nopassive} ) ? ( "checked" ) : ( "" );
+    print qq (<tr>);
+	print qq (<td style="display:none;"><input type="checkbox" $status name="nopassive" value="1">);
+    print qq ($lanHcconf{disable_passive_line_check}:</td>);
+    print qq (</tr>);
+
+    #=================================================================================
+    #my $status=( $HCMETHOD->{nospeed} ) ? ( "checked" ) : ( "" );
+    #print qq (<tr>);
+    #print qq (<td>Disable Speed Mode:</td>);
+    #print qq (<td>);
+    #print qq (<input type="checkbox" $status name="nospeed" value="1"></td>);
+    #print qq (</tr>);
+    
+    #=================================================================================
+    #print qq (<tr>);
+    #print qq (<td>Target:</td>);
+    #print qq (<td align="right">);
+    #print qq (<input class="qbtext" type="text" name="target" value="$HCMETHOD->{target}" style="width:80"></td>);
+    #print qq (</tr>);
+    
+    #=================================================================================
+    print qq (<tr id="port" style="display:true;">);
+    print qq (<td>$lanHcconf{port}:</td>);
+    print qq (<td align="left">);
+    print qq (<input class="qbtext" type="text" maxlength="5" name="port" value="$HCMETHOD->{port}" style="width:80"></td>);
+    print qq (</tr>);
+    print qq (</div>);
+    #=================================================================================
+    #print qq (<tr>);
+    #print qq (<td>Dead Nodes:</td>);
+    #print qq (<td align="right">);
+    #print qq (<select class="qbopt" name="deadnode" style="width:80">); 
+    #foreach my $num (3..20) 
+    #{
+    #    my $status; ( $num eq $HCMETHOD->{deadnode}) ? ( $status="selected" ) : ( $status );
+    #    print qq (<option value="$num" $status >$num</option>);
+    #} 
+    #print qq (</select>);
+    #print qq (</td>);
+    #print qq (</tr>);
+    
+    #=================================================================================
+    #print qq (<tr>);
+    #print qq (<td>Fail Nodes:</td>);
+    #print qq (<td align="right">);
+    #print qq (<select class="qbopt" name="failnode" style="width:80">); 
+    #foreach my $num (3..20) 
+    #{
+    #    my $status; ( $num eq $HCMETHOD->{failnode}) ? ( $status="selected" ) : ( $status );
+    #    print qq (<option value="$num" $status >$num</option>);
+    #} 
+    #print qq (</select>);
+    #print qq (</td>);
+    #print qq (</tr>);
+    
+    #=================================================================================
+    #print qq (<tr>);
+    #print qq (<td>Do DFD Time:</td>);
+    #print qq (<td align="right">);
+    #print qq (<select class="qbopt" name="dodfdtime" style="width:80">); 
+    #foreach my $num (0..3) 
+    #{
+    #    my $status; ( $num eq $HCMETHOD->{dodfdtime}) ? ( $status="selected" ) : ( $status );
+    #    print qq (<option value="$num" $status >$num</option>);
+    #} 
+    #print qq (</select>);
+    #print qq (</td>);
+    #print qq (</tr>);
+    
+    #=================================================================================
+    #print qq (<tr>);
+    #print qq (<td>RFD Default:</td>);
+    #print qq (<td align="right">);
+    #print qq (<select class="qbopt" name="rfddefault" style="width:80">); 
+    #foreach my $num (3..20) 
+    #{
+    #    my $status; ( $num eq $HCMETHOD->{rfddefault}) ? ( $status="selected" ) : ( $status );
+    #    print qq (<option value="$num" $status >$num</option>);
+    #} 
+    #print qq (</select>);
+    #print qq (</td>);
+    #print qq (</tr>);
+    
+    #=================================================================================
+    print qq (<tr width="100%" id="pto" style="display:true;">);
+    print qq (<td>$lanHcconf{ping_time_out}:</td>);
+    print qq (<td align="left">);
+    print qq (<select class="qbopt" name="timeout" style="width:80" >); 
+    foreach my $num (3..30,60,120,180,240,300) 
+    {
+        my $status; ( $num eq $HCMETHOD->{timeout} ) ? ( $status="selected" ) : ( $status );
+        if ($num < 30){print qq (<option value="$num" $status >$num secs</option>);}
+        if ($num eq 30){print qq (<option value="$num" $status >0.5 min</option>);}
+        if ($num eq 60){print qq (<option value="$num" $status > 1 min</option>);}
+        if ($num eq 120){print qq (<option value="$num" $status > 2 mins</option>);}
+        if ($num eq 180){print qq (<option value="$num" $status > 3 mins</option>);}
+        if ($num eq 240){print qq (<option value="$num" $status > 4 mins</option>);}
+        if ($num eq 300){print qq (<option value="$num" $status > 5 mins</option>);}
+    } 
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+    
+
+    #=================================================================================
+    print qq (<tr width="100%" id="tto" style="display:true;">);
+    print qq (<td>$lanHcconf{traceroute_time_out}:</td>);
+    print qq (<td align="left">);
+    print qq (<select class="qbopt" name="traceroutetimeout" style="width:80" >); 
+    foreach my $num (3..30,60,120,180,240,300) 
+    {
+        my $status; ( $num eq $HCMETHOD->{traceroutetimeout} ) ? ( $status="selected" ) : ( $status );
+        if ($num < 30){print qq (<option value="$num" $status >$num secs</option>);}
+        if ($num eq 30){print qq (<option value="$num" $status >0.5 min</option>);}
+        if ($num eq 60){print qq (<option value="$num" $status > 1 min</option>);}
+        if ($num eq 120){print qq (<option value="$num" $status > 2 mins</option>);}
+        if ($num eq 180){print qq (<option value="$num" $status > 3 mins</option>);}
+        if ($num eq 240){print qq (<option value="$num" $status > 4 mins</option>);}
+        if ($num eq 300){print qq (<option value="$num" $status > 5 mins</option>);}
+    } 
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+    
+    #=================================================================================
+    print qq (<tr width="100%" id="cto" style="display:true;">);
+    print qq (<td>$lanHcconf{connection_time_out}:</td>);
+    print qq (<td align="left">);
+    print qq (<select class="qbopt" name="connecttimeout" style="width:80">); 
+    foreach my $num (3..30,60,120,180,240,300) 
+    {
+        my $status; ( $num eq $HCMETHOD->{connecttimeout} ) ? ( $status="selected" ) : ( $status );
+        if ($num < 30){print qq (<option value="$num" $status >$num secs</option>);}
+        if ($num eq 30){print qq (<option value="$num" $status >0.5 min</option>);}
+        if ($num eq 60){print qq (<option value="$num" $status > 1 min</option>);}
+        if ($num eq 120){print qq (<option value="$num" $status > 2 mins</option>);}
+        if ($num eq 180){print qq (<option value="$num" $status > 3 mins</option>);}
+        if ($num eq 240){print qq (<option value="$num" $status > 4 mins</option>);}
+        if ($num eq 300){print qq (<option value="$num" $status > 5 mins</option>);}
+    } 
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+
+    #=================================================================================
+    #print qq (<td class="body"  valign="top" align="right">);
+    #print qq (<td class="body" align="right">);
+    #print qq (<td align="right">);
+    #print qq ($lanHcconf{advanced_setting}:);
+    #print qq (</td>);
+	
+	print qq (<tr>);
+	print qq (<td class="body" align="right">&nbsp</td>);
+	print qq (<td class="body" align="right">&nbsp</td>);
+	print qq (</tr>);
+
+	#=================================================================================
+	my $status=( $HCMETHOD->{enable_latencychk} ) ? ( "checked" ) : ( "" );
+    print qq (<tr>);
+    print qq (<td align="left" class="body" colspan="2">);
+    #print qq (<table class="body" width="100%" cellspacing="0" border="0">);
+	print qq (<input type="checkbox" $status name="enable_latencychk" value="1">);
+	#print qq (Enable );
+    print qq (Eliminate link );
+    #print qq (</table>);
+    #print qq (</td>);
+    #print qq (</tr>);
+	
+	my $latency_total_times = $HCMETHOD->{latency_time}/$HCMETHOD->{interhctime};
+    #print qq (<tr>);
+    #print qq (<td align="left" class="body">);
+    #print qq (<table class="body" width="100%" cellspacing="0" border="0">);
+	print qq (when Latency is > );
+    print qq (<input class="qbtext" type=text name="latency_rate" style="WIDTH:30px" value="$HCMETHOD->{latency_rate}"> ms in );
+    print qq (<input class="qbtext" type=text name="latency_time" style="WIDTH:30px" value="$latency_total_times">times. );
+    #print qq (eliminate the link.);
+    #print qq (</table>);
+    print qq (</td>);
+    print qq (</tr>);
+	
+    my $status=( $HCMETHOD->{enable_pktlosschk} ) ? ( "checked" ) : ( "" );
+    print qq (<tr>);
+    #print qq (<td class="body" align="right">);
+    #print qq (</td>);
+    print qq (<td align="left" class="body" colspan="2">);
+    #print qq (<table class="body" width="100%" cellspacing="0" border="0">);
+	print qq (<input type="checkbox" $status name="enable_pktlosschk" value="1">);
+	#print qq (Enable );
+    print qq (Eliminate link );
+    #print qq (</table>);
+    #print qq (</td>);
+    #print qq (</tr>);
+
+	my $pkt_rate=50;
+	if($HCMETHOD->{pktloss_rate} ne ''){$pkt_rate=$HCMETHOD->{pktloss_rate};}
+	my $times = 6;
+	if($HCMETHOD->{pktloss_time} ne ''&&$HCMETHOD->{pktloss_base_time} ne ''){$HCMETHOD->{pktloss_time}/$HCMETHOD->{pktloss_base_time};}
+    #print qq (<tr>);
+    #print qq (<td class="body" align="right">);
+    #print qq (</td>);
+    #print qq (<td align="left" class="body">);
+    #print qq (<table class="body" width="100%" cellspacing="0" border="0">);
+	print qq (when packet loss is > );
+    print qq (<input class="qbtext" type=text name="pktloss_rate" style="WIDTH:30px" value="$HCMETHOD->{pktloss_rate}"> % in );
+    print qq (<input class="qbtext" type=text name="pktloss_time" style="WIDTH:30px" value="$times">times. );
+    #print qq (eliminate the link.);
+    #print qq (</table>);
+    print qq (</td>);
+    print qq (</tr>);
+	
+	#=================================================================================
+    print qq (<tr>);
+    print qq (<td>$lanHcconf{check_time_interval}:</td>);
+    print qq (<td align="left">);
+    print qq (<select class="qbopt" name="interhctime" style="width:80">); 
+    foreach my $num (3..30,60,120,180,240,300) 
+    {
+        my $status; ( $num eq $HCMETHOD->{interhctime}) ? ( $status="selected" ) : ( $status );
+        if ($num < 30){print qq (<option value="$num" $status >$num secs</option>);}
+        if ($num eq 30){print qq (<option value="$num" $status >0.5 min</option>);}
+        if ($num eq 60){print qq (<option value="$num" $status > 1 min</option>);}
+        if ($num eq 120){print qq (<option value="$num" $status > 2 mins</option>);}
+        if ($num eq 180){print qq (<option value="$num" $status > 3 mins</option>);}
+        if ($num eq 240){print qq (<option value="$num" $status > 4 mins</option>);}
+        if ($num eq 300){print qq (<option value="$num" $status > 5 mins</option>);}
+    } 
+    print qq (</select>);
+    print qq (</td>);
+    print qq (</tr>);
+	
+	print qq (<tr>);
+    #print qq (<td>);
+		#print qq (<table class="body" width="100%" cellspacing="0" border="0">);
+		#print qq (<tr>);
+		print qq (<td>Packet-loss Check Time Interval:</td>);
+		print qq (<td align="left">);
+		print qq (<select class="qbopt" name="pktloss_base_time" style="width:80">); 
+		foreach my $num (10,20,30,60,120,180,240,300) 
+		{
+			my $status; ( $num eq $HCMETHOD->{pktloss_base_time}) ? ( $status="selected" ) : ( $status );
+			if ($num < 30){print qq (<option value="$num" $status >$num secs</option>);}
+			if ($num eq 30){print qq (<option value="$num" $status >0.5 min</option>);}
+			if ($num eq 60){print qq (<option value="$num" $status > 1 min</option>);}
+			if ($num eq 120){print qq (<option value="$num" $status > 2 mins</option>);}
+			if ($num eq 180){print qq (<option value="$num" $status > 3 mins</option>);}
+			if ($num eq 240){print qq (<option value="$num" $status > 4 mins</option>);}
+			if ($num eq 300){print qq (<option value="$num" $status > 5 mins</option>);}
+		} 
+		print qq (</select>);
+		print qq (</td>);
+		#print qq (</tr>);
+		#print qq (</table>);
+    print qq (</td>);
+    print qq (</tr>);
+	
+	print qq (</table>);
+    print qq (</td>);
+    print qq (</tr>);
+
+    print qq (<tr><td align="center" colspan="2"><input class="qb" type="button" value="$lanHcconf{save}" onclick="goSubmit('UPDATE')" style="width:180"></td></tr>);
+    print qq (</tr>);
+
+   print qq (</table>);
+}
+#showHCconf
+
+#======================================================================================
+sub maintainHCconf
+{
+    my (%action)=@_;
+    my $hcconf=XMLread($gPATH.'hcconf.xml');
+    my $HCMODE=$hcconf->{hcmode}->[0]->{mode};
+    my $HCMETHOD=$hcconf->{hcmethod}->[0];
+    my $HCTYPE=$HCMETHOD->{type};
+    
+    if ( $action{action} eq "UPDATE")
+    {
+        foreach my $mode ( @$HCMODE )
+        { 
+            if ( $mode->{value} eq $action{hcmode} )
+            {
+                $mode->{status}="checked";
+                $mode->{checked}=1;
+            }
+            else
+            {
+                $mode->{status}="";
+                $mode->{checked}=0;
+            }
+        }
+        
+        foreach my $type ( @$HCTYPE )
+        { 
+            if ( $type->{value} eq $action{hctype} )
+            {
+                $type->{status}="checked";
+                $type->{checked}=1;
+            }
+            else
+            {
+                $type->{status}="";
+                $type->{checked}=0;
+            }
+        }
+
+        $HCMETHOD->{target}=$action{target};
+        $HCMETHOD->{port}=$action{port};
+        $HCMETHOD->{nospeed}=$action{nospeed};
+        $HCMETHOD->{nopassive}=$action{nopassive};
+        $HCMETHOD->{deadnode}=$action{deadnode};
+        $HCMETHOD->{failnode}=$action{failnode};
+        $HCMETHOD->{dodfdtime}=$action{dodfdtime};
+        $HCMETHOD->{rfddefault}=$action{rfddefault};
+        $HCMETHOD->{timeout}=$action{timeout};
+        $HCMETHOD->{connecttimeout}=$action{connecttimeout};
+        $HCMETHOD->{traceroutetimeout}=$action{traceroutetimeout};
+        $HCMETHOD->{interhctime}=$action{interhctime};
+        $HCMETHOD->{pktloss_base_time}=$action{pktloss_base_time};
+        $HCMETHOD->{enable_latencychk}=$action{enable_latencychk};
+        $HCMETHOD->{latency_rate}=$action{latency_rate};
+		my $latency_total_times = $action{latency_time}*$action{interhctime};
+        $HCMETHOD->{latency_time}=$latency_total_times;
+        $HCMETHOD->{enable_pktlosschk}=$action{enable_pktlosschk};
+        $HCMETHOD->{pktloss_rate}=$action{pktloss_rate};
+		my $total_pktloss_time = $action{pktloss_base_time} * $action{pktloss_time};
+        $HCMETHOD->{pktloss_time}=$total_pktloss_time;
+        
+        LogUserAction( action=>'SAVEHEALTHCHECK', nopassive=>$action{nopassive}, port=>$action{port}, timeout=>$action{timeout}, traceroutetimeout=>$action{traceroutetimeout}, connecttimeout=>$action{connecttimeout}, interhctime=>$action{interhctime} , latency_rate=>$action{latency_rate}, latency_time=>$action{latency_time}, pktloss_rate=>$action{pktloss_rate}, pktloss_time=>$total_pktloss_time);
+    }
+
+    #==========================================
+    XMLwrite($hcconf, $gPATH."hcconf.xml");
+}
+#maintainHCconf
+
+#======================================================================================================================
+sub hcconfScript 
+{
+    print << "HCCONFSCRIPT";
+
+    <script language="javascript">
+
+    myform=window.document.forms[0];    
+    function cgi_dep_onload() {}
+	
+	var view_value=document.getElementById("view_value");
+	function sel_display(value)
+	{
+		var value = value;
+		var port = document.getElementById("port");
+		var pto = document.getElementById("pto");
+		var tto = document.getElementById("tto");
+		var cto = document.getElementById("cto");
+		
+		if(value == 1)
+		{
+			port.style.display = 'none';
+			pto.style.display = 'table-row';
+			tto.style.display = 'none';
+			cto.style.display = 'none';
+		}
+		if(value == 3)
+		{
+			port.style.display = 'none';
+			pto.style.display = 'table-row';
+			tto.style.display = 'table-row';
+			cto.style.display = 'none';
+		}
+		if(value == 2)
+		{
+			port.style.display = 'table-row';
+			pto.style.display = 'none';
+			tto.style.display = 'none';
+			cto.style.display = 'table-row';			
+		}
+		if(value == 4)
+		{
+			port.style.display = 'table-row';
+			pto.style.display = 'none';
+			tto.style.display = 'table-row';
+			cto.style.display = 'table-row';
+		}
+	}
+	sel_display(view_value.value);
+    </script>
+
+HCCONFSCRIPT
+}
+#hcconfScript
+#
+1

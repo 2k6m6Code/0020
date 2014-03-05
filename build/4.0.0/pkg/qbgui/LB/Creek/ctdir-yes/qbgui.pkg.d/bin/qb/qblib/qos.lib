@@ -1,0 +1,141 @@
+#=============================================================================================
+sub showQoS
+{
+    my (%action)=@_;
+    my $qosref=XMLread($gPATH.'qos.xml');
+    my $qoslist=$qosref->{qos};
+    
+    #my @titleHeadList=('Name', 'Upload Bandwidth', 'Download Bandwidth', 'Pool', 'Edit' );
+    #my %titleWidth=('Name'=>150, 'Upload Bandwidth'=>200, 'Download Bandwidth'=>200, 'Pool'=>100, 'Edit'=>100, 'Checkbox'=>50);
+    my @titleHeadList=('Name', 'Upload Bandwidth', 'Download Bandwidth', 'Edit' );
+    my %titleWidth=('Name'=>200, 'Upload Bandwidth'=>200, 'Download Bandwidth'=>200, 'Edit'=>50, 'Checkbox'=>100);
+    
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">$qblang[182]);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+
+    #==============================================================
+    # Print Title first
+    # show 
+    #===============================================================
+    # print qq (<div class="divframe" style="width:800">);
+    # print qq (<table bgcolor="#332211" width="100%" border="0"><tr>); 
+    # foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    # print qq (<td align="center" width="$titleWidth{Checkbox}">);
+    # print qq (<a href="javascript:delqos()"><image src="image/del.gif" title="Delete Checked qos(s)" border="0"></a>);
+    # print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('qos', this.checked)">);
+    # print qq (</tr></table>);
+    # print qq (</div>);
+    print qq (<div class="divframe" style="height:300; width:800">);
+    print qq (<table id="qosList" width="100%"  class="body" border="0">);
+    print qq (<thead><tr style="background-color:#332211;">);
+    print qq (<th width="200" align="center">$qblang[29]</th>);    #Name
+    print qq (<th width="200" align="center">$qblang[155]</th>);   #Upload Bandwidth
+    print qq (<th width="200" align="center">$qblang[154]</th>);   #Download Bandwidth
+    print qq (<th width="100" align="center">Qos Type</th>);       #Qos Type
+    print qq (<th width="50" align="center">$qblang[25]</th>);     #Edit
+    print qq (<th width="100" align="center"><a href="javascript:delqos()"><img border="0" title="Delete Checked qos(s)" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('qos', this.checked)" title="select or deselect all items"></th></tr></thead>);
+    my $lineCount=0;
+    foreach my $item ( @$qoslist )
+    {
+        if ( $item->{qosname} eq "system" ) { next; }
+        if ( $item->{default} eq "1" ) { next; }
+        my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+        print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+        my $showname=$item->{qosname};
+        print qq (<td align="center" width="$titleWidth{Name}" height="25" >$showname);
+        #if ( $item->{pool} ne '' )
+        #{
+        #    print qq ( \[Pool $item->{pool}\] );
+        #}
+        print qq (</td>);
+        
+        if ( $item->{qosisp} ne '' )
+        {
+            my $isplist = $item->{isp};
+            print qq (<td align="center" width="$titleWidth{'Upload Bandwidth'}" height="25">);
+            print qq (<table>);
+            foreach my $isp ( @$isplist )
+            {
+                #$isp->{iid} =~ /(\d+)$/ ;
+                #my $ISPNAME=maintainBasic(action=>'GETNAMEBYIID', iid=>$1 );
+                print qq (<tr><td align="left" width="20%">$isp->{iid}</td>);
+               
+                print qq (<td align="right" width="80%">$isp->{uploadmin} - $isp->{uploadmax}kbits</td>);
+                print qq (</tr>);
+            }
+            print qq (</table>);
+            
+            print qq (<td align="center" width="$titleWidth{'Download Bandwidth'}" height="25">);
+            print qq (<table>);
+            foreach my $isp ( @$isplist )
+            {
+                print qq (<tr><td align="left" width="20%">$isp->{iid}</td>);
+                print qq (<td align="right" width="80%">$isp->{downloadmin} - $isp->{downloadmax}kbits</td>);
+                print qq (</tr>);
+            }
+            print qq (</table>);
+        }
+        else
+        {
+            print qq (<td align="center" width="$titleWidth{'Upload Bandwidth'}" height="25">$item->{uploadmin} - $item->{uploadmax}kbit);
+            print qq (<td align="center" width="$titleWidth{'Download Bandwidth'}" height="25">$item->{downloadmin} - $item->{downloadmax}kbit);
+        }
+        #Gary qos type
+        print qq (<td align="center" width="50" height="25">$item->{qostype}</td>);
+        print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+        print qq (<a href="newqos.cgi?qosname=$item->{qosname}"; selectedColor(qosList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit qos properties" border="0"></a></td>);
+        print qq (</td>);
+        print qq (<td align="center" width="$titleWidth{Checkbox}" height="25">);
+        print qq (<input type="checkbox" name="qos" value="$item->{qosname}">);
+        print qq (</td></tr>);
+        $lineCount++;
+    }
+                                            
+    print qq (</table>);
+    print qq (</div>);
+   
+    print qq (<hr size=1>);
+    print qq (<div>); 
+    print qq (<table cellspacing="0" width="100%">);
+    print qq (<tr><td align="center">);
+    print qq (<input class="qb" type="button" width="100" value="$qblang[162]" onclick="NewQos();">);
+}
+#showqos
+    
+
+
+#=============================================================================================
+
+sub scriptQoS 
+{
+    print << "scriptqos";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+
+    function NewQos() { window.top.mainFrame.location.href="newqos.cgi?qostype=default"; }    
+    
+    function delqos()
+    {
+        myform.action.value='DELET';
+        myform.submit();
+    }
+    </script>
+    
+scriptqos
+}
+#qosScript
+#
+1

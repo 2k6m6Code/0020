@@ -1,0 +1,100 @@
+###############################################################################################
+#                                          SSL Portal 
+###############################################################################################
+sub showSslportal 
+{
+    my (%action)=@_;
+    
+    my $wintitle=runCommand(command=>'cat', params=>'/usr/local/apache/qbconf/ssltitle');
+    my $loginmsg=runCommand(command=>'cat', params=>'/usr/local/apache/qbconf/loginmsg');
+    print qq (<tr><td colspan="8" class="bigtitle">$qblang[230]</td></tr>);
+    
+    #********************************** Genaral Setting ********************************************
+    print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ $qblang[231] ]</td></tr>);
+    print qq (<tr>);
+    print qq (<td class="body" valign="center" align="left"  style="height: 30px; width: 150px">);
+    print qq ($qblang[232]);
+    print qq (</td>);
+    print qq (<td class="body" valign="center" align="left"  style="height: 30px; width: 350px">);
+    print qq (<input class="qbtext" name="wintitle" style="WIDTH: 150px" value="$wintitle" >\n);
+    print qq (</td></tr>);
+   
+    print qq (<tr>);
+    print qq (<td class="body" valign="center" align="left"  style="height: 30px; width: 150px">);
+    print qq ($qblang[233]);
+    print qq (</td>);
+    print qq (<td class="body" valign="center" align="left"  style="height: 30px; width: 350px">);
+    print qq (<input class="qbtext" name="loginmsg" style="WIDTH: 250px" value="$loginmsg" >\n);
+    print qq (</td></tr>);
+   
+    print qq (<tr>);
+    print qq (<td class="body" valign="center" align="left"  style="height: 30px; width: 150px">);
+    print qq ($qblang[234]);
+    print qq (</td>);
+    print qq (<td class="body" valign="center" align="left"  style="height: 30px; width: 350px">);
+    #print qq (<input type="radio" name="user" value="1" onclick="" );
+    print qq (<input type="file" class="qbtext" name="logopath" style="WIDTH: 300px" >\n);
+    print qq (</td>);
+    #print qq (<td>);
+    #print qq (<input class="qb" type="button" value="Upload" title="Apply All Parameters now !" onClick="go()" style="width:50">);
+    #print qq (</td>); 
+    print qq (</tr>);
+    print qq (<tr>);
+    #print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Portal Logo ]</td></tr>);
+    print qq (</table>);
+
+    print qq (<table cellspacing="0" border="0">);
+    print qq (<tr>);
+    #print qq (<tr>);
+    #print qq (<td colspan="2" align="center" valign="center" style="height: 200px">);
+    #print qq(<img name="portal_logo" src="image/ssllogo.jpg" border="0"></td>);
+    #print qq (</td>);
+    print qq (<tr>);
+    print qq (<tr><td align="center" colspan="2"><hr size="1" width="500" ></td></tr>);
+    print qq (<td colspan="2" align="center">);
+    print qq (<input class="qb" type="button" value="$qblang[139]" title="Apply All Parameters now !" onClick="go()" style="width:50">);
+    print qq (</td></tr>);    
+    
+    print qq (<tr>);
+    print qq (<td colspan="2" align="center">);
+    print qq (<iframe name="result" type="hidden" style="width:0; height:0;"></iframe>);
+    
+    
+
+}
+#showConsole
+
+
+#======================================================================================================================
+sub sslportalScript 
+{
+    print << "SCRIPT";
+
+    <script language="javascript">
+
+    var myform; 
+    
+    function cgi_dep_onload() 
+    {
+        myform=window.document.forms[0]; 
+    }
+    
+    function go()
+    {
+    	var filename = myform.logopath.value;
+        myform.action.value = 'uploadlogo';
+        if ( filename != '' && !filename.match("\.jpg") && !filename.match("\.gif") && !filename.match("\.jpeg"))
+        {
+            alert('Upload Logo Must jpg , jpeg or gif');
+            reutrn;
+        }
+       
+        myform.submit();
+    }
+                                                            
+    </script>
+SCRIPT
+}
+#sslinitScript
+#
+1

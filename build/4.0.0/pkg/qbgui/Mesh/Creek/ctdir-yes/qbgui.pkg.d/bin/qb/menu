@@ -1,0 +1,111 @@
+<html>
+<head>
+<title>Tree Menu</title>
+<style>
+
+body
+{
+    scrollbar-base-color:#336699;
+    overflow:auto;
+}
+
+a
+{
+    text-decoration:none;
+    color:#bbbbbb;
+}
+
+a:hover
+{
+    text-decoration:underline;
+    color:gold;
+}
+
+</style>
+
+<script language="JavaScript">
+function cgi_dep_onload() {}
+
+function askAndApply() 
+{ 
+    if ( getcookie('language') == "chinese" )
+    {
+        if ( qbConfirm(2, '確定執行 ？')==1 ) { goSubmit('UPDATE'); } 
+    }
+    else
+    {
+        if ( qbConfirm(2, 'Are You Sure ?')==1 ) { goSubmit('UPDATE'); } 
+    }
+}
+
+function confirmLogout() 
+{
+    var answer=( getcookie('language') == "chinese" ) ? qbConfirm(2, '確定要登出 ？') : qbConfirm(2,'Sure to Logout ?'); 
+    
+    if (answer==1) { window.top.location.href="index.htm"; }
+}
+
+function switchLanguage(language) 
+{
+    document.cookie="language="+language;
+    window.top.configFrame.location.reload();
+    window.top.mainFrame.location.reload();
+}
+
+function printCookie() 
+{
+    alert(document.cookie);
+}
+
+
+</script>
+
+<script src="qb.js"></script>
+<script src="./qbjs/xtree.js"></script>
+</head>
+
+<body style="margin:0" background="/image/left_bg.png">
+
+<table border="0" cellspacing="0" cellpadding="0" width="100%" height="100%">
+<tr> <td height="60" valign="top" align="left"> <img src="/image/deansoft.png"> </td> </tr>
+
+<tr><td width="150" valign="top"><div style="font:11px Verdana;" id="myTree" xTreeSrc="" xTreeTarget="mainFrame"></div><div style="font:11px Verdana;display:none" id="flowTree" xTreeSrc="" xTreeTarget="mainFrame"></div></td></tr>
+</table>
+
+</body>
+</html>
+<script>
+
+
+
+function getCookie(c_name)
+{
+var i,x,y,ARRcookies=document.cookie.split(";");
+for (i=0;i<ARRcookies.length;i++)
+{
+  x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
+  y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+  x=x.replace(/^\s+|\s+$/g,"");
+  if (x==c_name)
+    {
+    return unescape(y);
+    }
+  }
+}
+var sslang = getCookie("locale");
+if(getCookie("flow")==1){
+document.cookie="flow=0";
+document.getElementById("myTree").style.display="none";
+document.getElementById("flowTree").style.display="block";
+xTree("flowTree","english_flow.xml");
+}else
+if(sslang=="en_US"){
+xTree("myTree","english.xml");
+}else
+if(sslang=="zh_TW"){
+xTree('myTree','chinese.xml');
+}else
+if(sslang=="fr_FR"){
+xTree("myTree",'french.xml');
+}
+</script>

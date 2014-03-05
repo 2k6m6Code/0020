@@ -1,0 +1,6 @@
+<h1>ERROR</h1>
+<h2>The requested URL could not be retrieved</h2>
+<hr>
+<p>The following error was encountered while trying to retrieve the URL: {url} Category: {category} </p>
+<blockquote><p><b>AccessDenied.</b></p></blockquote>
+<br><hr>

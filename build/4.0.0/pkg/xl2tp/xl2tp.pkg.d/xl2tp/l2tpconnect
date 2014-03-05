@@ -1,0 +1,24 @@
+#!/bin/bash
+#set -x
+
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+L2TPIID=`grep isptype=\"l2tp\" $ACTIVEBASICXML|sed -e "s/  <isp.*iid=\"//"|sed -e "s/\".*//"|sed -e "s/\n//"`
+
+if [ "$L2TPIID" != "" ];then
+ for ispid in $L2TPIID
+ do
+     ispname=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*ispname=\"//"|sed -e "s/\".*//"`
+     pppispid=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pppispid=\"//"|sed -e "s/\".*//"`
+     pptproutegw=`grep iid=\"$pppispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*gateway=\"//"|sed -e "s/\".*//"`
+     pptproutenic=`grep iid=\"$pppispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`
+     pptpserver=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pptpserver=\"//"|sed -e "s/\".*//"`
+     pptpusername=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pppoename=\"//"|sed -e "s/\".*//"`
+     pptppasswd=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*pppoepasswd=\"//"|sed -e "s/\".*//"`
+     case "$pptpserver" in *[a-zA-Z]*) pptpserver=`/opt/qb/bin/script/ns $pptpserver`;; esac
+     /opt/qb/xl2tp/l2tpsetup --create $ispname --ispid $ispid --server $pptpserver --username $pptpusername --password $pptppasswd
+     /sbin/ip route replace $pptpserver via $pptproutegw dev $pptproutenic table 254
+ done
+ #sleep 60
+ /opt/qb/xl2tp/configxl2tp.pl
+ /sbin/service xl2tpd start &
+fi

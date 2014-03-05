@@ -1,0 +1,52 @@
+
+#Brian 20100326 find . -name registry |xargs sed -i '14 a MAX3GISP 2'
+
+Some Notes about QB Specification : (to be updated)
+---------------------------------------------------
+
+Deansoft:S400Lite
+Deansoft:S400
+Deansoft:S410(AMD)
+Deansoft:1510
+Deansoft:1610
+Deansoft:2610
+Deansoft:2710
+Deansoft:3000
+
+XRIO:S400Lite
+XRIO:S400
+XRIO:1510
+XRIO:1511
+XRIO:1610
+XRIO:1611
+XRIO:2610
+XRIO:2710
+
+ZeroOneTech:BL10400
+ZeroOneTech:BL10800
+ZeroOneTech:BL21200
+ZeroOneTech:BL21600
+
+
+
+
+
+
+
+* The models for XRIO are almost the same with those for Deansoft, but :
+  1. for VIA-based QB (S400Lite, S400, 1510) :
+
+	XRIO:S400Lite	= Deansoft:S400Lite
+			  + XRIO-qbgui (with no Chinese)
+
+	XRIO:S400	= Deansoft:S400	
+			  - Chinese-
+
+  2. for Intel-based QB :
+	XRIO
+
+* No CTDIR is enabled for any VIA-based QB.
+
+
+* ZeroOneTech ...
+

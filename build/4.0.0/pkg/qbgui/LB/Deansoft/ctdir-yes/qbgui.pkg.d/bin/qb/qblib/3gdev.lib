@@ -1,0 +1,311 @@
+#===================================================================================================
+sub listModules
+{
+    my (%action)=@_;
+    my $minfo=XMLread($gINITPATH."module_3g.xml");
+    my $module_3gList=$minfo->{module_3g};
+    my %titleWidth=(Model=>'200',  IMEI=>'100', Name=>'55' );
+    my @titleList=('Model', 'IMEI', 'Name');
+    
+    print qq (<font class="bigtitle">3G Modules Setting</font><hr size="1">);
+    print qq (<table cellspacing="0" cellpadding="0" class="body" >);
+    print qq (<tr bgcolor="#664422">);
+    foreach my $title ( @titleList ) { print qq (<td class="body" width="$titleWidth{$title}" align="center">$title</td>); }
+    print qq (<td align="center" width="50"><image src="image/del.gif" border="0"></td>);
+    print qq (</tr>);
+    
+    my $lineCount=1;
+    foreach my $module_3g ( @$module_3gList ) 
+    {
+        my $bgColor=($lineCount%2) ? ("#556677") : ("#334455");
+        if ( $module_3g->{imei} eq 'system' ) { next; }
+        print qq (<tr bgcolor="$bgColor" originalColor="$bgColor" cellspacing="0" cellpadding="0" onclick="selectedColor(this);focusModulesInfo('$module_3g->{imei}','$module_3g->{interface_name}','$module_3g->{model_3g}')" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
+        
+        #===================================================================      
+        my $display=$module_3g->{module_device_name_info};
+        print qq (<td class="body" align="center" width="$titleWidth{Model}">$display</td>);
+
+        #===================================================================      
+        my $display=$module_3g->{imei};
+        print qq (<td class="body" align="center" width="$titleWidth{IMEI}">$display</td>);
+
+        #===================================================================      
+        my $display=$module_3g->{interface_name};
+        $display=~s/SIM//;
+        print qq (<td class="body" align="center" width="$titleWidth{Name}">SIM $display</td>);
+        
+        #===================================================================      
+        print qq (<td class="body" align="center" width="50">);
+        print qq (<input type="button" class="qb" onclick="delModules()" value="-" style="width:20;height:20" title="Delete this module name">);
+        print qq (</td>);
+        print qq (</tr>);
+        
+        $lineCount++;
+    }
+
+    print qq (<tr><td colspan="8"><hr size="1"></td></tr>);
+    print qq (<tr><td colspan="8" align="left" class="body">);
+    print qq (Detect Model:  <select class="qbopt"  name="model_3g" style="width:130" onChange="goSubmit('SWITCHMODEM')"><font color="#336699">||</font>);
+    foreach my $types ( sort keys %gUSBmodem , -1 )
+    {
+        my $status=( $types eq $action{model_3g} ) ? ('selected'):('');
+        my $showvalue=( $types eq "-1" ) ? ('None') : ($gUSBmodem{$types});
+        print qq (<option $status value="$types" title="$gUSBmodem{$types}" >$showvalue</option>/n);
+    }
+    print qq (</select>);
+
+    my $usbdeviceinfo=runCommand(command=>"cat", params=>'/tmp/usbdev.tab');
+    my @usbdevicerecord=split(/\n/, $usbdeviceinfo);
+    my @imeilist;
+
+    foreach my $record ( @usbdevicerecord )
+    {
+       my @modem=split(/\s+/, $record);
+       push ( @imeilist, $modem[4]);
+    }
+                                                          
+    print qq (        IMEI:  <select class="qbopt"  name="imei" style="width:130"  onChange="VALUE_input()"><font color="#336699">||</font>);
+
+    foreach my $imei_num ( @imeilist ) 
+    {  
+       my $device_name;
+       my $device_name_info;
+       foreach my $record ( @usbdevicerecord )
+       {
+         if ( grep(/$imei_num/, $record) )
+         {
+           my @modem=split(/\s+/, $record);
+           $device_name=$modem[2];
+           my @modeminfo=split(/Information:/, $record);
+           $device_name_info=$modeminfo[1];
+         }
+       }
+      print qq (<option value="$imei_num" title="$device_name : $device_name_info">$imei_num</option>); 
+    }
+    print qq (</select>);
+    
+    print qq (<input type="hidden" name="module_device_name" value="$action{module_device_name}">);
+    print qq (<input type="hidden" name="module_device_name_info" value="$action{module_device_name_info}">);
+
+    print qq (        Name:  <select class="qbopt"  name="interface_name" style="width:55"><font color="#336699">||</font>);
+    foreach my $sim_no ( 1..$gMAX3GISP )
+    {
+    print qq (<option value="SIM$sim_no">SIM $sim_no</option>); 
+    }
+    print qq (</select>);
+
+    #20080220 Brian To modify "+/U" button become "Add/Update".
+    print qq (<input type="button" name="ADDVID" class="qb" onclick="goSubmit('ADDVID')" value="Add" title="Add New Modules" style="width:40;height:20">);
+    print qq (<input type="button" class="qb" onclick="updateModulesInfo()" value="Update" title="Update Modules Info" style="width:50;height:20">);
+    print qq (</td></tr>);
+    print qq (</table>);
+}
+#listModules
+                    
+#===================================================================================================
+sub editModules
+{
+    my (%action)=@_;
+    my $minfo=XMLread($gINITPATH."module_3g.xml");
+    my $module_3gList=$minfo->{module_3g};
+    
+    if ( !$action{action} ) { return; }
+
+    if ( $action{action}=~m/^UPDATEMODULESINFO$/ )
+    {
+        my $targetModules;
+        
+        foreach my $module_3g( @$module_3gList )
+        {
+            if ( $module_3g->{imei} ne $action{imei} ) { next; }
+            $targetModules=$module_3g;
+            last;
+        }
+
+        if ( !$targetModules ) { $gMSGPROMPT.=qq($action{device_name_info} Only support to modify the Interface name!!!\\n); }
+        else
+        {
+        
+          if ( $action{interface_name_info} eq '' )
+          {
+            my $usbdeviceinfo=runCommand(command=>"cat", params=>'/tmp/usbdev.tab');
+            my @usbdevicerecord=split(/\n/, $usbdeviceinfo);
+            my $device_name;
+            my $device_name_info;
+            foreach my $record ( @usbdevicerecord )
+            {
+             if ( grep(/$action{imei}/, $record) )
+             {
+               my @modem=split(/\s+/, $record);
+               $device_name=$modem[2];
+               my @modeminfo=split(/Information:/, $record);
+               $device_name_info=$modeminfo[1];
+             }
+            $targetModules->{module_device_name_info}=$device_name_info;
+            }
+          }
+            $targetModules->{interface_name}=$action{interface_name};
+            $targetModules->{device_name}=$action{device_name};
+            $targetModules->{imei}=$action{imei};
+            $gMSGPROMPT.=qq(Updated OK\\n);
+        }
+    }
+    elsif ( $action{action}=~m/^ADDVID$/ )
+    {
+        my %template;
+
+        foreach my $module_3g ( @$module_3gList ) 
+        {
+            if ( $module_3g->{imei} ne $action{imei} ) { next;}
+            $gMSGPROMPT.=qq ( IMEI: $action{imei} exists already\\n);
+            return;
+        }
+        
+#        foreach my $module_3g ( @$module_3gList ) 
+        #{
+            #if ( $module_3g->{module_3gnic} ne 'system' ) { next;}
+            #%template=%$module_3g;
+            #last;
+        #}
+
+        my $usbdeviceinfo=runCommand(command=>"cat", params=>'/tmp/usbdev.tab');
+        my @usbdevicerecord=split(/\n/, $usbdeviceinfo);
+        my $device_name;
+        my $device_name_info;
+        foreach my $record ( @usbdevicerecord )
+        {
+         if ( grep(/$action{imei}/, $record) )
+         {
+           my @modem=split(/\s+/, $record);
+           $device_name=$modem[2];
+           my @modeminfo=split(/Information:/, $record);
+           $device_name_info=$modeminfo[1];
+         }
+        }
+        $template{module_device_name_info}=$device_name_info;
+        $template{model_3g}=$action{model_3g};
+        $template{interface_name}=$action{interface_name};
+        $template{device_name}=$action{device_name};
+        $template{imei}=$action{imei};
+        
+        push(@$module_3gList, \%template);
+    }
+    elsif ( $action{action}=~m/^DELMODULES$/ )
+    {
+        my  @newModulesArray;
+        
+        foreach my $module_3g ( @$module_3gList ) 
+        {
+            if ( $module_3g->{interface_name} eq $action{interface_name} ){next;}
+            push(@newModulesArray, $module_3g);
+        }
+
+        $minfo->{module_3g}=\@newModulesArray;
+    }
+    elsif ( $action{action} eq "GETMODULESDEVLIST" )
+    {
+        my %module_3glisthash;
+        foreach my $module_3g ( @$module_3gList )
+        {
+            if( $module_3g->{interface_name} ne 'system' && $module_3g->{interface_name} ne '0' ) { $module_3glisthash{"$module_3g->{interface_name}"}=1; }
+        }
+
+        return sort num_sort keys %module_3glisthash;
+    }
+    elsif ( $action{action} eq "CHKIMEINO"  )
+    {
+        foreach my $item ( @$module_3gList )
+        {
+            if( $item->{imei} eq $action{imei} )
+            {
+              return 1;
+            }
+        }
+    }
+    elsif ( $action{action} eq "GETMODULEINFOBYNAME"  )
+    {
+        foreach my $item ( @$module_3gList )
+        {
+            if( $item->{interface_name} eq $action{interface_name} )
+            {
+              return $item->{module_device_name_info};
+            }
+        }
+    }
+    elsif ( $action{action} eq "GETIMEINOBYNAME"  )
+    {
+        foreach my $item ( @$module_3gList )
+        {
+            if( $item->{interface_name} eq $action{interface_name} )
+            {
+              return $item->{imei};
+            }
+        }
+    }
+    elsif ( $action{action} eq "SWITCHMODEM" && $action{model_3g} ne "-1" )
+    {
+        runCommand(command=>'/opt/qb/hsdpa/detectusb', params=>$action{model_3g});
+        return;
+    }
+ 
+    #--------updating module_3g.xml------------------------ 
+    XMLwrite($minfo, $gINITPATH."module_3g.xml");
+
+    #--------overwrite  module_3g.xml from $gPATH  to  /mnt/qb/conf/module_3g.xml
+    runCommand(command=>'do_qbmodule_3g.pl', params=>'');
+    #================================================================================================
+    # to make sure the writing to CF succefully, we have to sync for a certain times
+    qbSync();
+}
+#editModules
+
+sub module_3gScript
+{
+    
+print << "MODULESSCRIPT";
+
+    <script type="text/javascript" src="grid.js"></script>
+    
+    <script language="javascript">
+
+    var myform;
+    
+    function cgi_dep_onload() { myform=document.forms[0]; }
+    
+    function VALUE_input()
+    {
+        myform.ADDVID.disabled=false;
+        //document.getElementById('newmodule_3gnic').value = document.getElementById('model_3g').value+'.'+document.getElementById('imei').value;
+    } 
+
+    function focusModulesInfo(imei,interface_name,model_3g)    
+    {   
+        myform.interface_name.value=interface_name;
+ 
+        for(var i=0;i<myform.imei.options.length;i++) 
+        { if (myform.imei.options[i].value==imei) { myform.imei.options[i].selected=true; } }
+        for(var i=0;i<myform.model_3g.options.length;i++) 
+        { if (myform.model_3g.options[i].value==model_3g) { myform.model_3g.options[i].selected=true; } }
+        
+        myform.ADDVID.disabled=true;
+    }
+    
+    function updateModulesInfo()
+    {
+        goSubmit('UPDATEMODULESINFO');
+    }
+    
+    function delModules()
+    {
+        goSubmit('DELMODULES');
+    }
+
+    </script>
+
+MODULESSCRIPT
+}
+#module_3gScript
+
+#================================================================================================
+# must do this
+1

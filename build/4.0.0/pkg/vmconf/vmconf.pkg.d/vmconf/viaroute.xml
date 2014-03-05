@@ -1,0 +1,23 @@
+<opt file="viaroute" lastupdate="" status="lock">
+  <dmz>
+    <class advance="system" direction="system" dirty="0" method="system" priority="system" service="system" source="system" subnettype="dmz" table="system" />
+  </dmz>
+  <lvs>
+    <class advance="system" direction="system" dirty="0" priority="system" service="system" source="system" subnettype="lvs" table="system" />
+    <class advance="0" destination="system" direction="s" dirty="0" isp="system" method="none" priority="1" service="maintain" source="localhost" subnettype="lvs" table="100">
+      <time>0:1439</time>
+    </class>
+    <class advance="0" destination="system" direction="s" dirty="0" isp="system" method="none" priority="1" service="ping" source="localhost" subnettype="lvs" table="100">
+      <time>0:1439</time>
+    </class>
+    <class advance="0" destination="system" direction="s" dirty="0" isp="system" method="none" priority="1" service="ssh" source="localhost" subnettype="lvs" table="100">
+      <time>0:1439</time>
+    </class>
+  </lvs>
+  <nat>
+    <class advance="system" direction="system" dirty="0" method="system" priority="system" service="system" source="system" subnettype="nat" table="system" />
+  </nat>
+  <service>
+    <class advance="system" direction="system" dirty="0" method="system" priority="system" service="system" source="system" subnettype="service" table="system" />
+  </service>
+</opt>

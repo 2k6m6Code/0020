@@ -1,0 +1,21 @@
+#!/bin/bash
+#set -x
+ispid=$1
+device=$2
+
+ACTIVEBASICXML="/usr/local/apache/active/basic.xml"
+
+sleep 180
+pppdev=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*nic=\"//"|sed -e "s/\".*//"`
+targetIP=`grep iid=\"$ispid\" $ACTIVEBASICXML|sed -e "s/  <isp.*target=\"//"|sed -e "s/\".*//"`
+ping -I $pppdev $targetIP -c 1 >/dev/null 2>&1
+pingresult=$?
+if [ $pingresult != '0' ] && [ -f /var/run/pppoe.conf$ispid-pppoe.pid.pppd ]
+then
+    /sbin/ifconfig $device down
+    sleep 18
+    /sbin/ifconfig $device up
+    echo "$(date -R) ISP$ispid reconnected on device $device" >>/mnt/log/ppprecon.log
+else
+    exit 0
+fi

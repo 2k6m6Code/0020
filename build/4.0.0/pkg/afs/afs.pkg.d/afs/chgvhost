@@ -1,0 +1,75 @@
+#!/bin/sh
+## Usage: chgvhost -e vhostid
+## 				chgvhost -d vhostid 
+## where vhostid=A|B
+## Ex:		chgvhost -a A				
+
+SNET=/usr/afs/conf/snet
+F_TMP2=/tmp/tmp_mm_$$
+VHIP=
+VHNAME=
+
+function usage () {
+	echo "usage: $0 -e serviceID ...   to enable virtual host"      
+	echo "       $0 -d serviceID ...   to disable virtual host"      
+	echo "       where <serviceID> = A or B"
+	echo "eg.:   $0 -e A"
+	exit 1
+}	
+
+# die ( mesg )
+
+function die () {
+	echo 	$1
+	exit 1
+}	
+
+# dellsfile ( e1 listfile )
+
+function dellsfile () {
+	[ ! -f $2 ] && return 1
+	grep -v "$1" $2 > $F_TMP2
+	cp -f $F_TMP2 $2
+	rm -f $F_TMP2
+}
+# inslsfile ( e1 listfile )
+
+function inslsfile () {
+	[ ! -f $2 ] && return 1
+	echo "$1" > $F_TMP2
+	cat $2 >> $F_TMP2
+	cp -f $F_TMP2 $2
+	rm -f $F_TMP2
+}	
+	
+[ $# -gt 0 -a "$1" = "-e" -o "$1" = "-d" ] || usage
+OPT=$1 ;shift
+[ $# -gt 0 -a "$1" = "A" -o "$1" = "B" ] || usage
+VHID="H$1SVC$1"
+
+exec 3< $SNET
+while read LINE <&3 ;do
+	if [ -n "$LINE" ] ;then
+		set $LINE
+		case $1 in
+		\#*) continue
+			;;
+		$VHID)
+			VHIP=$3
+			VHNAME=$6
+			;;
+		esac
+	fi
+done
+
+[ ! "$VHIP" = "" -a ! "VHNAME" = "" ] || die "$0 : Can't find virtual host definition. Please check $SNET"
+case "$OPT" in 
+-e)
+	inslsfile "$VHIP $VHNAME" /etc/hosts
+	;;
+-d)
+	dellsfile "$VHIP $VHNAME" /etc/hosts
+	;;
+esac
+
+exit 0

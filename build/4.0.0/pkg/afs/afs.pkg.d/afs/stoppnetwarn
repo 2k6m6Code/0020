@@ -1,0 +1,19 @@
+#!/bin/sh
+# stopeng A|B
+# Use for stop engineA/engineB
+# use to register in conf/sprog
+SYS=$1
+PSLINE=
+PSTMP=/tmp/afs.pstmp.$$
+su root -c "ps aux" >$PSTMP
+if [ $? -ne 0 ] ;then
+	ps aux >$PSTMP
+fi
+grep -v "stoppnetwarn" $PSTMP|grep "/usr/afs/pnetwarn $SYS"|while read PSLINE ;do
+	if [ -n "$PSLINE" ] ;then
+   		set $PSLINE
+   	    kill $2
+	fi
+done
+rm -f $PSTMP
+exit 0

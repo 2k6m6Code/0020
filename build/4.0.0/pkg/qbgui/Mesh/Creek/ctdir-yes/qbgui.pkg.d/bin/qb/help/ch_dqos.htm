@@ -1,0 +1,98 @@
+<html>
+<head>
+<link rel="stylesheet" href="ch_help.css" type="text/css">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<title>DOS Prevention</title><!--中斷服務攻擊保護-->
+</head>
+<body>
+
+<h2>DOS Prevention</h2><!--中斷服務攻擊保護-->
+<p>
+針對疑似有異常行為的網路封包實施管制與提供警告，有些功能並可和QoS的功能結合</p>
+<ol>
+<li>特權名單（Privileged List to bypass checks）</li> <!--1-->
+<p>
+鑑於某些特殊狀況，管理者可能希望特定對象 (以 IP 或 subnet 表達之) 可略過其他DoS的管制，所以設計特權名單機制。填在這列名單中的 IP 或 subnet 可以略過封包安全管制。<br> 
+設定方式：<br>
+<ul>
+<li><b>新增：</b>將欲給予特權的IP或 subnet 鍵入後，按ADD鍵加入
+<li><b>刪除：</b>將欲從特權名單中移除的IP或 subnet挑選 (可複選)，然後按DEL鍵即可
+</ul> 
+<p><em>不論是新增或刪除都需要按SAVE鍵使變更寫入資料庫，如欲立刻套用，則需在SAVE之後再按下主選單的 UPDATE 鍵</em></p>
+</p>
+<li>溢量偵測（Quota Overflow Detection）</li> <!--2-->
+<p>
+在一個共用的網路環境中可能出現某些使用者不斷的在下載或上傳大容量的檔案，因此常將對外的網路頻寬大量佔用，本功能可針對每一個 connection 的總量作檢測，再依據所設定的參數來變更超過設定量之connection 的封包的 TOS 值，搭配在QoS->Service-based filter中的設定，可引導這樣的封包進入低頻寬的QoS class中或將其丟棄(DROP)，藉此以達到部份保護對外頻寬的功能。
+<br>
+設定方式：<br>  
+<ul>
+<li><b>Enable：</b> 勾選後可啟動本管制功能
+<li><b>特權名單：</b>在此名單中之IP或 subnet 將不受 QOD 功能之管制
+<li><b>Log Rate：</b>勾選後可產生QOD之 Syslog 紀錄，為避免產生過量的 Syslog而導致系統效能嚴重受到影響，可透過設定 Log Rate 來限制產生syslog紀錄的頻率
+<li><b>Log Prefix：</b>填入此欄位的字串，會成為QOD產生之syslog 資料的開頭字串，適當的設定此字串，有助於在眾多的syslog資料中，過濾出由本功能所產生的紀錄
+ 
+<li><b>"If quota > ? KB => Set TOS Value as 0x02"，等五條政策：</b> 提供最多五個Set TOS 或 Drop 封包的政策，每個政策都可以自由的設或不設，如果該政策沒有填入任何值，則不會對封包產生任何效應。
+</ul>
+<p><em>這裡設定的政策只能改變封包的TOS值，須搭配在QoS -> Service-Based filter中針對 TOS 值設定的QoS 規則，才能達成動態QoS的效果</em></p>
+</p>
+<li>FPFD（fuzzy ping flooding detection）</li> <!--3-->
+<p>
+網路中若有人或惡意程式(疾風病毒等)不斷的發出大量的ICMP封包，非常容易造成區域網路癱瘓或對外網路頻寬被佔用，更甚者大部分的網路設備(router，firewall等)當機，為了防範這樣的網路攻擊，常常需要將對內外的 ICMP全數阻擋，這樣做固然安全，也常造成許多應用程式無法運作；本模組導入模糊理論的觀念，依使用者自訂的參數來判斷ICMP攻擊的程度，如果攻擊的程度嚴重，系統會自動調昇丟棄封包的比重；反之則自動調降比重。根據實驗結果，這樣的做法在一般量的ICMP封包經過時，不會被誤判成攻擊；而在真正遭受攻擊之際，也能有效的保護網路與系統，搭配Syslog紀錄，更能找出攻擊者或者區域網路中受病毒程式入侵的電腦，提供我們額外的資訊來解除受攻擊的狀況。<br>
+
+設定方式：<br>
+<ul>
+<li><b>Enable：</b> 勾選後可啟動本管制功能
+<li><b>特權名單：</b> 填於此名單中之IP或 subnet 將不受 FPFD 功能之管制
+<li><b>Log Rate：</b> 勾選後可產生FPFD之 Syslog 紀錄，為避免產生過量的 Syslog而導致系統效能嚴重受到影響，可透過設定 Log Rate 來限制產生syslog紀錄的頻率
+<li><b>Log Prefix：</b> 填入此欄位的字串，會成為FPFD產生之syslog 資料的開頭字串，適當的設定此字串，有助於在眾多的syslog資料中，過濾出由本功能所產生的紀錄
+<li><b>Drop Packet if matched：</b>勾選時，當封包被PFPD判定為符合丟棄的條件時，才會真正的執行丟棄的動作
+<li><b>Lower and Upper (pkts/s 每秒經過的ICMP封包數)</b>
+<ol type=a> 
+<li>當icmp封包瞬間流速低於Lower值時，則不會觸動丟棄封包的動作
+<li>當瞬間流速介於 Lower 與 Upper 兩值之間時，則越接近 Upper 值時，封包被丟棄的比例越接近99%
+<li>當瞬間流速超過Upper值時，則丟棄掉 99% 的封包
+</ol>
+</ul>	
+<p><em>QB實際上的取樣頻率為 1/10 秒 ( 100ms )</em></p>
+</p> 
+<li>連接埠掃描偵測（Port Scan Detection）</li> <!--4-->
+<p> 
+本模組乃用來偵測網路上的駭客或程式對區域網路內任意機器所進行的連接埠掃描行為，並予以紀錄或啟動丟棄封包的保護行動。<br>
+設定方式：<br>
+<ul>
+<li><b>Enable：</b> 勾選後可啟動PSD管制模組 
+<li><b>Privileged to bypass PSD：</b> 填於此名單中之IP或 subnet 將不受 PSD 模組之管制
+<li><b>Log Rate：</b> 勾選後可產生FSD之 Syslog 紀錄，為避免產生過量的 Syslog而導致系統效能嚴重受到影響，可透過設定 Log Rate 來限制產生syslog紀錄的頻率
+<li><b>Log Prefix：</b>填入此欄位的字串，會成為PSD模組產生之Syslog 資料的開頭字串，適當的設定此字串，有助於在眾多的syslog資料中，過濾出由本模組所產生的紀錄
+<li><b> Drop Packet if matched：</b>當勾選時，封包被PSD判定為連接埠掃瞄行為時，才會真正的執行丟棄的動作
+<li><b>Weight Threshold，Hight Port Weight，Low Port Weight，Delay Threshold</b><br>
+<b>四個參數：</b>
+<ol type=a>
+<li>	Weight Threshold： 預設值 21
+<li>	Low Port Weight： 預設值 3
+<li>	High Port Weight： 預設值 1
+<li>	Delay Threshold： 預設值 300 seconds
+</ol>
+</ul>
+<p>
+玆以系統預設值，針對PSD管制模組的設計理念，簡單說明如下：<br>  
+在一給定的時間(Delay Threshold： 300 秒)內，假設某來源IP不停的在建connection，則在第一個connection建立時，PSD模組會將此紀錄下來，並給此來源IP某數量的權值(Weight Threshold： 21點)，當此來源IP對 1~1024 port建任一connection時，則以低port權值(low port weight )折扣其權值；另當此來源IP對1024以上的port建立任一connection時，則以高port權值(hight port weight)折扣之，當總權值小於等於0時，PSD模組即判定此來源IP確實有執行連接埠掃瞄的行為，將根據設定對該來源IP所發出的封包該如何處置(丟棄，記錄或置之不理)</p>
+</p>	 
+<li>連接數溢量偵測（Connection Overflow Detection）</li> <!--5-->
+<p>
+為了防止網路上的駭客或惡意的攻擊程式以快速建立任意連接的方式來增加網路負荷甚而癱瘓網路的行為；使用本模組可以限制同一來源IP同一時間可建立的連接的總數，進而達成上述的功能。 
+<br>
+設定方式：<br>
+<ul> 
+<li><b>Enable：</b>勾選後可啟動COD管制模組
+<li><b>Privileged List to bypass COD：</b>填於此名單中之IP或 subnet 將不受 COD 模組之管制 
+<li><b>Log Rate：</b> 勾選後可產生COD之 Syslog 紀錄，為避免產生過量的 Syslog而導致系統效能嚴重受到影響 ，可透過設定 Log Rate 來限制產生syslog紀錄的頻率
+<li><b>Log Prefix：</b>填入此欄位的字串，會成為COD模組產生之Syslog 資料的開頭字串，適當的設定此字串，有助於在眾多的syslog資料中，過濾出由本模組所產生的紀錄
+<li><b>Drop Packet if matched：</b>勾選時，對於溢量的連接才會真正的執行丟棄的動作
+<li><b>Can not go over [...] connections per IP：</b>將連接數上限值填入即可
+</ul><p>
+注意：<br> 
+     由於連線溢量對於負載平衡的傷害性是最大的，因此超過本設定中上限的的封包將會被記錄到系統日誌中，由 Analysis tools -> System Log -> [ show alert log]可觀察，即使沒有 enable本功能也會啟動紀錄。
+</p>
+</ol>
+</body></html>
