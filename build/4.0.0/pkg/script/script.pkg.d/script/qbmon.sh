@@ -70,15 +70,11 @@ then
      rm -f /tmp/ispnet/$Oldest_filename
 fi
 
-INFO=`df |grep /mnt/log |awk '{print $5}'`
-if [ $INFO -ge 95 ];then
-    Oldest_filename=$(ls /mnt/log/ispnet|awk NR==1)
-    rm -f /mnt/log/ispnet/$Oldest_filename
-    rm -rf /mnt/tclog/nfcapd/*
-fi
-
 INFO1=`df |grep /mnt/tclog |awk '{print $5}'`
-if [ $INFO1 -ge 95 ];then
+DATA_CHECK=`echo $INFO1|sed "s/%//g"`
+LIMIT_ref=`cat /mnt/conf/registry |grep LIMIT`
+LIMIT=`echo $LIMIT_ref|sed "s/##LIMIT//g"`
+if [ $DATA_CHECK -ge $LIMIT ];then
     Oldest_filename=$(ls /mnt/tclog/ispnet|awk NR==1)
     rm -f /mnt/tclog/ispnet/$Oldest_filename
     rm -rf /mnt/tclog/nfcapd/*

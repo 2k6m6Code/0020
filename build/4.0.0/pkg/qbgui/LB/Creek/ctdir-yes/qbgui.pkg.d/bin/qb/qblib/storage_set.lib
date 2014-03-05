@@ -52,60 +52,31 @@ sub showl7log
     print qq (<tr><td align="center" class="bigtitle" colspan="3">Storage Setting);
     print qq (<tr><td colspan="2"><hr size="1"></td></tr>); 
     print qq (<tr><td style="vertical-align: top;"><table style="width:100%"></tr>);
-    #print qq (<td colspan="2" class="body"  valign="top" align="left" style="width:50%">);
-    #print qq (<a>Partition Two : </a>);
-    #print qq (</td>);
     
     print qq (<tr>);
     print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
     print qq (<a> Available : $first_Available</a>);
     print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
-    #print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:40%">);
-    #print qq (<a> Available : $second_Available</a>);
-    #print qq (</td>);
     
     print qq (<tr>);
     print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
     print qq (<a> Used : $first_used</a>);
     print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
-    #print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:40%">);
-    #print qq (<a> Used : $second_used</a>);
-    #print qq (</td>);
     
     print qq (<tr>);
     print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
     print qq (<a> Used(%) : $first_usedpa</a>);
     print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
-    #print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:40%">);
-    #print qq (<a> Used(%) : $second_usedpa</a>);
-    #print qq (</td>);
     
     print qq (<tr >);
     print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
     print qq (<a> Limit : </a><input type="text" id="first" name="first" value="$first_limit" style="width:8%" maxlength="2" >%);
     print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
-    #print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:40%">);
-    #print qq (<a> Limit : </a><input type="text" id="second" name="second" value="$second_limit" style="width:8%" maxlength="2">%);
-    #print qq (</td>);
     
     print qq (<tr>);
     print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="center" style="width:100%" align="center">);
-    #print qq (<input type="button" value="Format" onclick="format('tclog','CLEAR','$first_name');goSubmit('CLEAR');" >);
     print qq (<input type="button" value="Clear Partition" onclick="format('tclog','FORMAT');goSubmit('FORMAT');" >);
     print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="left" style="width:10%">);
-    #print qq (</td>);
-    #print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="center" style="width:40%">);
-    #print qq (<input type="button" value="Format" onclick="format('log','CLEAR','$second_name');goSubmit('CLEAR');" >);
-    #print qq (<input type="button" value="Clear Partition" onclick="format('log','FORMAT');goSubmit('FORMAT');" >);
     print qq (</td>);
     print qq (<tr><td colspan="4" class="body"  valign="top" align="left" style="width:100%"><hr size="1"></td>);
     print qq (<tr><td colspan="4" class="body"  valign="top" align="center" style="width:100%">);
@@ -174,9 +145,9 @@ sub l7logScript
         //switchl7logServerIP();   
     }
 	
-    function format(oo,aa,bb)	
+    function format(oo,aa)	
     {
-        document.getElementById('path').value = '/mnt/' + oo + "," + bb;
+        document.getElementById('path').value = '/mnt/' + oo ;
         document.getElementById('action').value = aa;
     }
     
@@ -288,7 +259,6 @@ sub maintainL7log
     my (%action)=@_;
     if ( !$action{action} ) { return; }
     my $l7log=XMLread($gPATH.'l7log.xml');
-    
     if ($action{action}=~m/^CLEAR$/)
     {
         my @data;
@@ -313,11 +283,11 @@ sub maintainL7log
     }elsif ($action{action}=~m/^FORMAT$/)
     {
         if (!$action{path}){return;}
-        $action{path} =~ s/,$//;
-        system("/usr/local/apache/qb/setuid/run /bin/rm -rf $action{path}*");
-        system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/analyser");
-        system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/squid");
-        system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/ispnet");
+        system("/usr/local/apache/qb/setuid/run /bin/rm -rf $action{path}/total*");
+        system("/usr/local/apache/qb/setuid/run /bin/rm -rf $action{path}/nfcapd/*");
+        #system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/analyser");
+        #system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/squid");
+        #system("/usr/local/apache/qb/setuid/run echo $action{path} > /tmp/asdfghjkl");
         system("sync");
         system("sync");
         system("sync");   
@@ -508,23 +478,23 @@ sub maintainL7log
     XMLwrite($l7log, $gPATH."l7log.xml");
     
     
-    if ( $action{action}=~m/^APPLY$/ ) 
-    {
-        if ($action{ser} ne '' || $action{tra} ne '' || $action{pro} ne '')
-        {
-            my $syslog=XMLread($gINITPATH.'syslog.xml');
-            $syslog->{serverlog}=$action{ser};
-            $syslog->{kernellog}=$action{tra};
-            $syslog->{squidlog}=$action{pro};
-            XMLwrite($syslog,$gINITPATH."syslog.xml");
-            runCommand(command=>'do_qbsyslog.pl', params=>'');
-            runCommand(command=>'cp', params=>'-f '.$gINITPATH.'syslog.xml /mnt/qb/conf/syslog.xml');
-            qbSync();
-            runCommand(command=>'service', params=>'syslog restart');
-        }
-    }
+    #if ( $action{action}=~m/^APPLY$/ ) 
+    #{
+    #    if ($action{ser} ne '' || $action{tra} ne '' || $action{pro} ne '')
+    #    {
+    #        my $syslog=XMLread($gINITPATH.'syslog.xml');
+    #        $syslog->{serverlog}=$action{ser};
+    #        $syslog->{kernellog}=$action{tra};
+    #        $syslog->{squidlog}=$action{pro};
+    #        XMLwrite($syslog,$gINITPATH."syslog.xml");
+    #        runCommand(command=>'do_qbsyslog.pl', params=>'');
+    #        runCommand(command=>'cp', params=>'-f '.$gINITPATH.'syslog.xml /mnt/qb/conf/syslog.xml');
+    #        qbSync();
+    #        runCommand(command=>'service', params=>'syslog restart');
+    #    }
+    #}
     #@dep
-    runCommand(command=>'do_qbl7log.pl', params=>'');
+    #runCommand(command=>'do_qbl7log.pl', params=>'');
 
 }
 #maintainL7log
