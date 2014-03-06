@@ -25,11 +25,11 @@ if (!$dig)
         my @index  = $act->getfile("$PATH"."$name"."/"."$date");
         $name_index{$name} = ($#index+1);
     }
-    @title=('Top','Account number','Frequency');
+    @title=('Top','Account','Count');
 }else
 {
     @table_name  = $act->getfile("$PATH"."$dig"."/"."$date");
-    if ($dig eq 'suspicious'){@title=('Time','IP','Account number','Status');}
+    if ($dig eq 'suspicious'){@title=('Time','IP','Account','Status');}
     else{@title=('Time','IP','Status');}
 }
 print qq (<table bgcolor="#332211" width="100%" border="0" id="tables">);
