@@ -24,6 +24,7 @@ $action{remote} = $form->param('remote');
 $action{remotename} = $form->param('remotename');
 $action{systemip} = $form->param('systemip');
 $action{gateway} = $form->param('gateway');
+$action{time} = $form->param('time_1');
 $action{download} = $form->param('download');
 $action{port} = $form->param('port');
 $action{dport} = 60000;

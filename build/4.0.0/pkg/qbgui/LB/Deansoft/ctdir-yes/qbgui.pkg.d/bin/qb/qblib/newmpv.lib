@@ -155,10 +155,11 @@ sub showNewMPV
     print qq (Download/Upload :);
     my $bylist=( $target->{download} && $target->{upload} ) ? ('') : ('checked');
     my $byhand=( $bylist eq 'checked' ) ? ('') : ('checked');
+    my $byhand_1=( $target->{time} ) ? ('checked') : (' ');
     
     #-->A by List
     print qq (<td class="body" align="left">);
-    print qq (<input type="radio" name="udmethod"  id="bylist" value="bylist" $bylist>);
+    print qq (<input type="radio" name="udmethod"  id="bylist" value="bylist" $bylist onclick="byhand_action_2();">);
     print qq (<select class="qbopt" name="downupspeed" id="downupspeed" style="width:180">\n);
     foreach my $rate ( sort @gDOWNUPRATE ) { print qq (<option value="$rate">$rate</option>\n); }
     print qq (</select></td>);
@@ -180,16 +181,35 @@ sub showNewMPV
     }
 
     print qq (</tr>);
+    print qq (<tr>);
 
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
     #-->B by user keying in
     print qq (<td class="body" align="left">);
-    print qq (<input type="radio" name="udmethod" id="byhand" value="byhand" $byhand>);
+    print qq (<input type="radio" name="udmethod" id="byhand" value="byhand" $byhand onclick="byhand_action_2();">);
     print qq (<input class="qbtext" type="text" maxlength="8" size="8" name="download" value="$target->{download}">/);
     print qq (<input class="qbtext" type="text" maxlength="8" size="8" name="upload" value="$target->{upload}">(Kbit));
     print qq (</td></tr>);
+    print qq (<tr>);
     
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+    #-->C action
+    print qq (<td class="body" align="left">);
+    print qq (<input type="radio" name="udmethod" id="byhand_action" value="byhand" $byhand_1 onclick="byhand_action_1();">);
+    print qq (Action);
+    if ($target->{time})
+    {
+        print qq (<div id="action_table" style="display:block">);
+    }else
+    {
+        print qq (<div id="action_table" style="display:none">);
+    }
+    my $time = ($target->{time})?($target->{time}):('5');
+    print qq (Test per <input id="time" class="qbtext" maxlength="2" value="$time" style="width:20">Min. );
+    print qq (</td></tr>);
+    print qq (<input type="hidden" name="time_1" id="time_1" value="">);
     #-------------------------------------------------------------------------------------------
     #  MPV MTU
     #-------------------------------------------------------------------------------------------
@@ -472,6 +492,7 @@ sub showNewMPV
     print qq (</table>);
     print qq (</table>);
     
+    
 }
 #showNewMPV
 
@@ -507,7 +528,7 @@ sub scriptNewMPV
            }
         }
     }
-                   
+    
     function cgi_dep_onload() 
     { 
     	myform=window.document.forms[0]; 
@@ -751,7 +772,54 @@ sub scriptNewMPV
         ipcom_off.checked = true;
         algslt.value = 'none';
     }
-
+    
+    function byhand_action_2()
+    {
+       var main = document.getElementById("action_table");
+       main.setAttribute('style','display:none');
+    }
+    
+    function byhand_action_1()
+    {
+       var main = document.getElementById("action_table");
+       main.removeAttribute("style");
+    }
+    
+    function action_del()
+    {
+        var sch = document.getElementsByName("subschs");
+        var total = sch.length;
+        for (var i = total ; i > 0; i--)
+        {
+            if ( sch[i-1].checked == true )
+                document.getElementById('action_table_1').deleteRow(i);
+        }
+        
+    }
+    
+    function action_add()
+    {
+        var main = document.getElementById("action_table_1").rows;
+        var index = main.length;
+        var ser = document.getElementById("ser").value;
+        var pri = document.getElementById("pri").value;
+        
+        for (var x = 0;x < index;x++)
+        {
+            if (main[x].cells[0].innerHTML == ser)
+                return;
+        }
+        var schedule = document.getElementById('action_table_1').insertRow(index);
+        var t_ser = schedule.insertCell(0);
+        var t_pri = schedule.insertCell(1);
+        var t_del = schedule.insertCell(2);
+        
+        t_ser.innerHTML=ser; 
+        t_pri.innerHTML=pri; 
+        var tochecked = '<input type=\"checkbox\" name=\"subschs\" class=\"qbopt\" >';
+        t_del.innerHTML = tochecked;
+    }
+    
     function default_mtu_click()
     {
         var mtu_value = document.getElementById('mtu_value');
@@ -766,6 +834,9 @@ sub scriptNewMPV
     
     function SaveMPV()
     {
+        if (document.getElementById('byhand_action').checked)
+            myform.time_1.value= document.getElementById('time').value;
+            
         var slt_wan = document.getElementById('wanisp');
         //var udmethod = document.getElementById('udmethod').value;
         var bylist = document.getElementById('bylist');
@@ -781,7 +852,6 @@ sub scriptNewMPV
         var ipcom_on = document.getElementById('ipcom_on');
         var algslt = document.getElementById('algslt').value;
         var local;
-        
         if (!checkIP(systemip) || !checkIP(gateway))
             return;
         if (systemip == gateway)
@@ -892,7 +962,11 @@ sub maintainMPV
 	$action{enabled}='1';
 	$action{isptype}='tunnel';
         $action{target} = $action{gateway};
-        
+        if($action{ser})
+        {
+            $action{upload}=10240;
+            $action{download}=10240;
+        }
         #------------------------------------
         #  to check local and  remote ip
         #------------------------------------
@@ -1078,7 +1152,6 @@ sub maintainMPV
         @$isplist = sort { $a->{iid} <=> $b->{iid} } @$isplist;
         $gIid = $action{iid};
         XMLwrite($ispref, $gPATH."basic.xml");
-
 	#@dep5: update ipaddr for system IP and VS IP of ISP $action{iid}
         #**************************************************************************************
         my %dmzip_of_this_isp=maintainDMZreg(isp=>$action{iid}, action=>"GETDMZIPHASH");
@@ -1100,6 +1173,7 @@ sub maintainMPV
 	maintainRtable(action=>'NEWISP', isp=>$action{iid} );
 
 	#$gMSGPROMPT.=qq (Save Success!!\\n); 
+	`/usr/local/apache/qb/setuid/run /usr/local/apache/qb/tunnel_crontab.pl &`;
         LogUserAction( action=>'SAVEMPV', iid=>$action{iid}, ispname=>$action{ispname}, systemip=>$action{systemip}, target=>$action{target}, remote=>$action{remote}, nic=>$action{nic} );
     }
     elsif ( $action{action}=~m/^APPLYDOWNUP$/ )

@@ -1,0 +1,377 @@
+#=============================================================================================
+require ("/usr/local/apache/qb/language/qblanguage.cgi");
+@qblang = QBlanguage();
+sub showMPV
+{
+    my (%action)=@_;
+    my $ispref=XMLread($gPATH.'basic.xml');
+    my $serref=XMLread($gPATH.'service.xml');
+    my $isplist=$ispref->{isp};
+    my $serlist=$serref->{service};
+    
+    my @titleHeadList=( 'Edit',$qblang[24], $qblang[65], $qblang[66], $qblang[29], $qblang[34]);
+    #==============================================================
+    # Print Title first
+    #===============================================================
+    
+    my %titleWidth=( 'Edit'=>50, 'Enabled'=>50, 'ID'=>80, 'NIC'=>80, 'Name'=>120, 'TVLI'=>120, 'TVRI'=>120, 'THLI'=>120, 'THRI'=>120,'PORT'=>50, 'THRN'=>50,
+     		     'Status'=>50, 'MTU'=>50, 'MSS'=>50, 'NAT'=>50, 'ENC'=>50, 'Algorithm'=>70, 'COMP'=>50, 'Down/Up'=>120 );
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<tr><td class="bigtitle">Application Priority);
+    print qq (<tr><td>);
+    print qq (<table cellspacing="0">);
+    print qq (<tr>);
+    print qq (<td class="body" colspan="3" align="left">);
+
+    print qq (<tr><td colspan="3"><hr size=1></td></tr>);
+    print qq (<tr><td colspan="3">);
+    print qq (</tabel>);
+ 
+    print qq (<div id="main" class="divframe" style="width=1350;">);
+    #print qq (<table class="sortable" bgcolor="#332211" width="100%" border="0"><tr>);
+    print qq (<table class="sortable" width="100%" border="0"><tr bgcolor="#332211">);
+    #print qq (<td align="center" width="50">);
+    #print qq (<a href="javascript:delMPV()"><img src="image/del.gif" title="Delete Checked MPV(s)" border="0"></a>);
+    #print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('mpv', this.checked)"></td>);
+    foreach my $title ( @titleHeadList ) { print qq (<td align="center" width="$titleWidth{$title}">$title</td>); }
+    #==============================================================
+    # Print MPV Info 
+    #===============================================================
+    
+    my $lineCount=0;
+    foreach my $isp ( @$isplist )
+    {
+        if ( $isp->{iid} eq 'system' ) { next; }
+            my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
+            my $status, $onoff;
+            print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">); 
+            
+            print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
+            print qq (<a onclick="NewMPV_1(\'ISP $isp->{iid}\',\'$isp->{ispname}\',\'$isp->{nic}\');" ><img src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+            #***************************************************************************************
+            # Status
+            #***************************************************************************************
+            my $service_list = $isp->{service};
+            my $service_data;
+            my $print_service;
+            foreach my $isp_service (@$service_list)
+            {
+                if ($isp_service->{service} && $isp_service->{priority})
+                {
+                    $service_data .= "$isp_service->{service}-$isp_service->{priority}:";
+                    $print_service .= "Service : $isp_service->{service}  Priority : $isp_service->{priority}\n";
+                }
+            }
+            print qq (<input type="hidden" id="$isp->{nic}" value="$service_data">);
+            print qq (<td align="center" width="$titleWidth{Status}" height="25" >);
+            my $img = ($service_data)?("file.png"):("stop.png");
+            print qq (<span id="$isp->{systemip}"><img src="image/$img" width="14" height="14" border="0" title="$print_service"/></span></td>);
+            print qq (<td align="center" width="$titleWidth{ID}" height="25" >ISP $isp->{iid}</td>);
+            print qq (<td align="center" width="$titleWidth{NIC}" height="25" >$isp->{nic}</td>);
+            print qq (<td align="center" width="$titleWidth{Name}" height="25" >$isp->{ispname}</td>);
+            print qq (<td align="center" width="120" height="25" >$isp->{download}/$isp->{upload}</td>);
+            print qq (</tr>);
+        $lineCount++;
+    }
+    print qq (</table></div>);
+    print qq (<hr size=1>);
+    #print qq (<div>); 
+    #print qq (<table cellspacing="0" width="100%">);
+    #print qq (<tr><td align="center">);
+    #print qq (<input class="qb" type="button" width="100" value="$qblang[79]" onclick="NewMPV_1();"></td></tr></table>);
+    
+    
+    #==============================
+    # Edit Page
+    #=============================
+    print qq (<div class="new" id='new_page' style='display:none;'>);
+    print qq (<table>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 100px">);
+    print qq (ID :</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<a id="id" ></a></td></tr>);
+    
+    print qq (<tr>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 100px">);
+    print qq (Name :</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<a id="name" ></a></td></tr>);
+    
+    print qq (<input type="hidden" id="main_link" value="">);
+    
+    print qq (<tr><td class="body" colspan="3"><hr size="1"></td></tr>);
+    print qq (<tr><td class="body" colspan="3" align="left">Application</td></tr>);
+    
+    print qq (<tr id="group_table" style="display:none">);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px"></td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 100px">);
+    print qq (Group Name :</td>);
+    print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+    print qq (<input type="text" class="qbopt" id="group_name" ></td></tr>);
+    
+    print qq (<tr><td class="body" colspan="3"><hr size="1"></td></tr>);
+    
+    print qq (<tr><td colspan="3"><table border="1">);
+    my $index = 0;
+    foreach my $ser (@$serlist)
+    {
+   	if($ser->{type} eq 'layer7' || $ser->{type} eq 'system' || $ser->{title} eq 'icmp'){next;}
+   	if (($index%3) eq 0){print qq(<tr>);}
+   	my $portlist = $ser->{port};
+   	my $port_title;
+   	foreach my $port (@$portlist)
+   	{
+   	    if ($port->{protocol} eq 'system'){next;}
+   	    $port_title.="Protocol : $port->{protocol} Port : $port->{value} \n";
+   	}
+   	print qq (<td class="body" width="350px" title="$port_title">);
+   	print qq (<input type="checkbox" name="service" value="$ser->{title}" title="$port_title">$ser->{title}</td>);
+	print qq (<td class="body" width="200px"><select id="$ser->{title}">);
+	foreach (1..7)
+	{
+	    print qq(<option value="$_">$_</option>);
+	}
+	print qq (</select>);
+   	print qq (</td>); 
+   	$index++;
+    }
+    print qq (</table></td></tr>);
+    
+    print qq (<tr><td class="body" colspan="3"><hr size="1"></td></tr>);
+    print qq (<tr><td class="body" colspan="3"><a onclick="other(this)"> << Alse To :</a></td></tr>);
+    print qq (<tr><td class="body" colspan="3"><div id="other" style="display:none;"><table>);
+    my $index = 0;
+    foreach my $isp ( @$isplist )
+    {
+        if($isp->{iid} eq 'system'){next;}
+        if(($index%5) eq 0){print qq(<tr>);}
+        print qq (<td class="body">);
+        print qq (<input name="isp" type="checkbox" value="$isp->{nic}">ISP $isp->{iid});
+        print qq (</td>);
+        $index++;
+    }
+    print qq (</table></td></tr>);
+    print qq (<tr><td class="body" colspan="3"><hr size="1"></td></tr>);
+    
+    print qq (<tr><td class="body" colspan="3" align="center">);
+    print qq (<input class="qbopt" id="save" type="button" value="Save" onclick="SaveLink();">);
+    print qq (<input class="qbopt" type="button" value="Exit" onclick="exit_action();"><BR>);
+    print qq (<input type="checkbox" id="group" onclick="group_action();">Selected Application Option Save To Service Group);
+    print qq (</td></tr>);
+    
+    print qq (</table>);
+    print qq (</div>);
+}
+#showPV
+    
+
+
+#=============================================================================================
+
+sub scriptMPV 
+{
+    print << "scriptHost";
+
+   <script type="text/javascript" src="grid.js"></script>
+   <script type="text/javascript" src="qbjs/sorttable.js"></script>
+   <script language="javascript">
+
+    var myform;
+ 
+    function cgi_dep_onload() { myform=window.document.forms[0]; }
+    function obj_init()
+    {
+        var service = document.getElementsByName("service");
+        var isp = document.getElementsByName("isp");
+        for(var z = 0; z < service.length;z++)
+        {
+            service[z].checked = false;
+            document.getElementById(service[z].value).value= 1;
+        }
+        for(var y = 0; y < isp.length;y++)
+        {
+            isp[y].checked = false;
+        }
+    }
+    
+    function SaveLink()
+    {
+        var service = document.getElementsByName("service");
+        var result_service = result_group = '';
+        var result_isp = document.getElementById("main_link").value + ":";
+        if (!result_isp)
+            return;
+        for(var x = 0; x < service.length ; x++)
+        {
+            if (service[x].value == document.getElementById("group_name").value && document.getElementById("group").checked)
+            {
+                alert("Group Name Can't Repeat!!");
+                return;
+            }
+            if (service[x].checked)
+            {
+                var priority=document.getElementById(service[x].value);
+                result_service += service[x].value + "-" + priority.value + ":";
+            }
+        }
+        
+        if (document.getElementById("other").style.display != 'none')
+        {
+            var isp = document.getElementsByName("isp");
+            for(var y = 0; y < isp.length ; y++)
+            {
+                if (isp[y].checked)
+                    result_isp+= isp[y].value + ":";
+            }
+        }
+         
+        if (document.getElementById("group").checked)
+        {
+            if (!document.getElementById("group_name").value)
+            {
+                alert("If you checked 'Save To Service Group',Group Name can't Emtpy!!");
+                return;
+            }
+            if (!result_service)
+            {
+                alert("If you checked 'Save To Service Group',Service option can't Empty!!");
+                return;
+            }
+            result_group = document.getElementById("group_name").value; 
+        }
+        ajax(result_service,result_isp,result_group);
+    }
+    
+    function exit_action()
+    {
+        document.getElementById("new_page").style.display='none';
+        document.getElementById("main").disabled=false;
+    }
+
+    function NewMPV_1(id,name,nic) 
+    {
+        if (!document.getElementById("new_page").style.display)
+            return;
+        obj_init();
+        document.getElementById("id").text=id;   
+        document.getElementById("name").text=name;
+        var isp = document.getElementsByName("isp");
+        var service_data = document.getElementById(nic).value;
+        var service_list = service_data.split(/:/);
+        if (service_list.length > 1)
+        {
+            for(var z = 0 ;z < service_list.length ; z++)
+            {
+                if (service_list[z])
+                {
+                    var service = service_list[z].split(/-/);
+                    document.getElementById(service[0]).value = service[1];
+                    var service_button = document.getElementsByName("service");
+                    for (var g = 0 ; g < service_button.length;g++)
+                    {
+                        if (service_button[g].value == service[0])
+                            service_button[g].checked=true;
+                    }
+                }    
+            }
+        }
+        for(var x = 0; x < isp.length ; x++)
+        {
+            if (isp[x].value == nic)
+            {
+                isp[x].disabled=true;
+                document.getElementById("main_link").value = nic;
+            }
+        }
+        document.getElementById("new_page").style.display='';
+        document.getElementById("main").disabled=true;
+    } 
+    
+    function group_action()
+    {
+        if (document.getElementById("group").checked == true)
+            document.getElementById("group_table").style.display = '';
+        else
+            document.getElementById("group_table").style.display = 'none';
+    }
+    
+    function other(obj) 
+    {
+        if (document.getElementById("other").style.display == 'none')
+        {
+            document.getElementById("other").style.display="";
+            obj.text=">> Alse To :";
+        }else
+        {
+            document.getElementById("other").style.display="none";
+            obj.text="<< Alse To :";
+        }
+    }
+ 
+    function delMPV()
+    {
+        if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )
+        {
+            myform.action.value='DELET';
+            myform.submit();
+        }
+    }
+ 
+    function enabledisp(ispid)
+    {
+        myform.action.value='ON';
+        myform.isp.value=ispid;
+    	myform.submit();
+    	for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+    
+    function disabledisp(ispid)
+    {
+        myform.action.value='OFF';
+        myform.isp.value=ispid;
+        myform.submit();
+        for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+ 
+    function openclient(ip,port)
+    {
+        var url='http://' + ip + ':' + port;
+        window.open(url);
+    }
+    
+    function ajax(service,isp,group)
+    {
+        i=(new Date()).getTime();
+        if (window.XMLHttpRequest) { queryReqHandler=new XMLHttpRequest(); }
+        if (window.ActiveXObject) { queryReqHandler = new ActiveXObject("Microsoft.XMLHTTP"); }
+
+        queryReqHandler.onreadystatechange = fno;
+        queryReqHandler.open("GET","application.pl?service="+service+"&isp="+isp+"&group="+group,true);
+        queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        var str='';
+        queryReqHandler.send(str);
+    }
+    
+    function fno()
+    {
+        if( (queryReqHandler.readyState == 4) && (queryReqHandler.status == 200) )
+        {
+	    var msg=queryReqHandler.responseText;
+	    if (msg)
+	        alert(msg);
+            document.getElementById("new_page").style.display="none";
+            document.getElementById("main").disabled=false;
+            window.location.href="link_service.cgi";
+            //window.location.reload();
+	}
+    }
+    </script>
+ 
+scriptHost
+}
+
+1

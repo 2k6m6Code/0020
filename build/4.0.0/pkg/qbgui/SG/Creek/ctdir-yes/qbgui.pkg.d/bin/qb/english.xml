@@ -389,6 +389,11 @@
 				<title>Configure routing policies for real servers</title>
 				<link>policy.cgi?viewpoint=lvs</link>
 			</menu>
+			<menu>
+				<name>Application Priority</name>
+				<title></title>
+				<link>link_service.cgi</link>
+			</menu>
 		</child>
 	</menu>
 

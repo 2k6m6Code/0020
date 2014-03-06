@@ -47,7 +47,7 @@ sub showRtable
 
     # Print Summary Lists of Routing Tables
     print qq (<div class="divframe" style="height:160">);
-    print qq (<table  id="rtableList" width="100%"><thead><tr  style="background-color:#332211";><th width="8%">$qblang[172]</th><th width="20%">$qblang[173]</th><th width="10%">$qblang[174]</th><th width="10%">$qblang[175]</th><th width="12%">$qblang[176]</th><th width="15%">$qblang[177]</th><th width="15%">$qblang[178]</th><th width="5%">$qblang[25]</th><th><a href="javascript:deleteTables()"><img border="0" title="Delete Selected Pools" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('tablestodel', this.checked)" title="select or deselect all items"></th></tr></thead>);
+    print qq (<table  id="rtableList" width="100%"><thead><tr  style="background-color:#332211";><th width="8%">$qblang[172]</th><th width="20%">$qblang[173]</th><th width="10%">$qblang[174]</th><th width="10%">$qblang[175]</th><th width="12%">$qblang[176]</th><th width="15%">$qblang[177]</th><th width="15%">$qblang[178]</th><th width="5%">$qblang[25]</th><th width="5%">Speed Test</th><th><a href="javascript:deleteTables()"><img border="0" title="Delete Selected Pools" src="image/del.gif"></a><input type="checkbox" onclick="setAllCheckBoxValue('tablestodel', this.checked)" title="select or deselect all items"></th></tr></thead>);
     my $lineCount=1;
     foreach my $table ( @sortedTables )
     {
@@ -57,7 +57,7 @@ sub showRtable
 
         # Collect Table Info.
         my $byPacket=($table->{equalize} ) ? ( 'Yes' ):( 'No' );
-        my $aggregate=( $table->{aggregate} || $table->{mode}=~m/^FRTT$|^BSWLT$|^DSWLT$|^USWLT$|^FAST$/  ) ? ( 'Yes' ):( 'No' );
+        my $aggregate=( $table->{aggregate} || $table->{mode}=~m/^FRTT$|^BSWLT$|^FAST$/  ) ? ( 'Yes' ):( 'No' );
         my $balancemode=($table->{mode}) ? ($table->{mode}) : ('WRR');
         if ($table->{mode1} eq 'TB' && $table->{mode} eq 'WLC')
         {
@@ -70,6 +70,7 @@ sub showRtable
         my $showBackup=( $table->{backup_table} ) ? ( $table->{backup_table} ) : ('N/A');
         my $showNote=( $table->{note} ) ? ( $table->{note} ) : ('N/A');
         my $allPaths=$table->{path};
+        my $nic='';
         print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
         print qq (<td width="8%">$table->{table_num}</td>);
         print qq (<td width="20%">);
@@ -80,7 +81,12 @@ sub showRtable
             my $pathcontent='';
             $firstpath=qq(ISP$firstpath->{isp} [weight:$firstpath->{weight}]);
             $firstpath.=( $table->{numpath} > 1 ) ? (' ...') : ('');
-            foreach my $path ( @$allPaths ) { $pathcontent.= qq (ISP$path->{isp} [weight:$path->{weight}]\n); }
+            foreach my $path ( @$allPaths ) 
+            { 
+                $pathcontent.= qq (ISP$path->{isp} [weight:$path->{weight}]\n); 
+                foreach my $iisp ( @$allisp ){if($iisp->{iid} eq $path->{isp}){$nic.="$iisp->{nic},";}}
+            }
+            $nic=~s/,$//;
             print qq ( <span title="$pathcontent">$firstpath</span> );
         }
         elsif ( $table->{mode} eq "REDIRECT" )
@@ -100,6 +106,7 @@ sub showRtable
         print qq (<td width="15%">$balancemode</td>);
         print qq (<td width="15%">$showNote</td>);
         print qq (<td width="5%"><a href="javascript:selectRtable('$table->{table_num}');selectedColor(rtableList.rows[$lineCount])"><image src="image/edit.gif" title="Edit Pool properties" border="0"></a></td>);
+        print qq (<td width="15%"><input type="button" value="Go" name="speed" onclick="tunnel_speed(\'$nic\')"></td>);
         print qq (<td><input type="checkbox" name="tablestodel" value="$table->{table_num}"></td>);
         print qq (</tr>);
         if ( $table->{table_num} eq $table_num ) { print qq (<script>initSelect(rtableList.rows[$lineCount]);</script>); }
@@ -129,27 +136,17 @@ sub showRtable
     if ( $balanceMode eq "BTK" && $target->{equalize}  ) { $balanceMode="BTK_EQUALIZE"; }
     #20110411
     if ( $balanceMode eq "BBL" && $target->{equalize}  ) { $balanceMode="WRR_LATENCY";  }
-    if ( $balanceMode eq "BBLP" && $target->{equalize}  ) { $balanceMode="WRR_LCY_PKT";  }
     if ( $target->{mode1} eq "TB" && $target->{mode} eq "WLC"){$balanceMode="TB";}
     
     print qq (<table width="100%">);
     print qq (<tr><td width="60%" align="left">);
     print qq (<font class="subtitle">$qblang[179]</font><br>); 
-    print qq (<select name="mode" id="mode" class="qbopt" size='6' style="width:400;height:150" onChange="switchSomeOption()">);
+    print qq (<select name="mode" id="mode" class="qbopt" size='6' style="width:280" onChange="switchSomeOption()">);
     #foreach my $mode ( sort keys %gMODEHASH_v2 )
-    #foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
-    #foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
-    print qq (<option value="">------For All Links------</option>);
     foreach my $mode ( sort { $gMODEHASH_v2{$a} cmp $gMODEHASH_v2{$b} } keys %gMODEHASH_v2 )
     {   
         my $status=($balanceMode eq $mode ) ? ( 'selected' ):( '' );
         print qq (<option value="$mode" $status>$gMODEHASH_v2{$mode}</option>);
-    }
-    print qq (<option value="">------For TMV/MTV Only------</option>);
-    foreach my $mode ( sort { $gMODEHASH_v3{$a} cmp $gMODEHASH_v3{$b} } keys %gMODEHASH_v3 )
-    {
-        my $status=($balanceMode eq $mode ) ? ( 'selected' ):( '' );
-        print qq (<option value="$mode" $status>$gMODEHASH_v3{$mode}</option>);
     }
     print qq (</select><br>);
     print qq (<span class="body">Proxy:</span><input type="text" class="qbtext" name="redirect" value="$target->{redirect}" maxlength="15" style="width:240"  onBlur="if(!isValidIP(this.value)) this.value='';">);
@@ -166,7 +163,7 @@ sub showRtable
     print qq (<table width="100%">);
     $backup_table=$target->{backup_table};
     print qq (<tr>);
-    print qq (<td class="body" align="right">$qblang[174] </td>);
+    print qq (<td class="body" align="left">$qblang[174] </td>);
     print qq (<td class="body" align="left">);
     print qq (<select class="qbopt" name="backup_table" style="width:80">);
 
@@ -287,59 +284,6 @@ sub showRtable
     print qq (<td><table width="10" border="0"></table></td>);
     print qq (</tr></table>);
     print qq (<td><table width="1" border="0"></table></td>);
-    print qq (<td>);
-
-########################-------------New HC for Algorithms-------------######################## Brian
-#    if ( $target->{tolerance_latency} eq '' ) { $target->{tolerance_latency} = '400' }
-#    if ( $target->{latency_diff} eq '' ) { $target->{latency_diff} = '50' }
-
-    my $display_newhc = ($balanceMode eq "WRR") ? 'block' : 'none';
-    print qq (<td align="left">);
-    print qq (<fieldset class="fieldsetb" id="bblp_field" style="width:360px;display:$display_newhc">);
-    print qq (<legend class="subtitle">Eliminate Link From Pool</legend>);
-    print qq (<input type="hidden" name="level" value="1">);
-    print qq (<hr size="1">);
-    print qq (<table width="100%">);
-
-###----------When latency tolerance-------------------------------------------------------------------------
-    print qq (<tr>);
-    print qq (<td class="body" align="left">);
-    #my $latency_tolerance_check=( $target->{enable_latency_tolerance}==1 ) ? ('checked') : ('');
-    my $status=( $target->{enable_latency_tolerance} ) ? ('checked') : ('');
-    print qq (<input type="checkbox" $status id="enable_latency_tolerance" name="enable_latency_tolerance">);
-    print qq (when latency &#62</td>);
-
-    print qq (<td><input type="text" class="qbtext" maxlength="4" name="latency_tolerance" style="width:40" value="$target->{latency_tolerance}" onChange="CheckNumber(this.value)"></td>);
-    print qq (<td class="body" align="left">ms for</td>);
-    print qq (<td><input type="text" class="qbtext" name="latency_tolerance_keeptime" style="width:40" value="$target->{latency_tolerance_keeptime}" onChange="CheckNumber(this.value)"></td>);
-    print qq (<td class="body" align="left">secs</td>);
-    print qq (</tr>);
-###-----------When latency difference-----------------------------------------------------------------------
-    print qq (<tr id="latency_difference">);
-    print qq (<td class="body" align="left">);
-    my $status=( $target->{enable_latency_difference} ) ? ('checked') : ('');
-    print qq (<input type="checkbox" $status id="enable_latency_difference" name="enable_latency_difference">);
-    print qq (latency difference &#62</td>);
-
-    print qq (<td><input type="text" class="qbtext" maxlength="4" name="latency_difference" style="width:40" value="$target->{latency_difference}" onChange="CheckNumber(this.value)"></td>);
-    print qq (<td class="body" align="left">ms for</td>);
-    print qq (<td><input type="text" class="qbtext" name="latency_difference_keeptime" style="width:40" value="$target->{latency_difference_keeptime}" onChange="CheckNumber(this.value)"></td>);
-    print qq (<td class="body" align="left">secs</td>);
-    print qq (</tr>);
-###-----------When packet loss rate-------------------------------------------------------------------------
-    print qq (<tr>);
-    print qq (<td class="body" align="left">);
-    my $status=( $target->{enable_pktloss_rate} ) ? ('checked') : ('');
-    print qq (<input type="checkbox" $status id="enable_pktloss_rate" name="enable_pktloss_rate">);
-    print qq (packet loss rate &#62</td>);
-    
-    print qq (<td><input type="text" class="qbtext" maxlength="3" id="pktloss_rate" name="pktloss_rate" style="width:40" value="$target->{pktloss_rate}" onChange="CheckPktlossRate()"></td>);
-    print qq (<td class="body" align="left">%&nbsp;&nbsp;for</td>);
-    print qq (<td><input type="text" class="qbtext" name="pktloss_rate_keeptime" style="width:40" value="$target->{pktloss_rate_keeptime}" onChange="CheckNumber(this.value)"></td>);
-    print qq (<td class="body" align="left">secs</td>);
-    print qq (</tr>);
-
-    print qq (</table>);
     print qq (<td>);
 
 #------------------------------------------------------------------------------------------------------------
@@ -522,6 +466,49 @@ sub rtable_script
     
     function deleteTables() { if( qbConfirm(2, 'Confirm Deletion ?') == 1 ) { goSubmit('DELETETABLES'); } }
 
+    function tunnel_speed(nic)
+    {
+        var nic_array = nic.split(/,/);
+        for(var x = 0 ; x < nic_array.length;x++)
+            ajax_2_0(nic_array[x])
+        TTEER('30');
+        for(var x = 0 ; x < document.getElementsByName("speed").length;x++)
+            document.getElementsByName("speed")[x].disabled=true;
+    }
+    
+    function TTEER(index)
+    {
+        index--;
+        for(var x = 0 ; x < document.getElementsByName("speed").length;x++)
+            document.getElementsByName("speed")[x].value=index;
+        if (index > 0)
+            return setTimeout("TTEER("+index+");",1000);
+        else
+            for(var x = 0 ; x < document.getElementsByName("speed").length;x++)
+            {
+                document.getElementsByName("speed")[x].value="Go";
+                document.getElementsByName("speed")[x].disabled=false;
+            }
+    }
+    function ajax_2_0(nic)
+    {
+	if (window.XMLHttpRequest) { queryReqHandler=new XMLHttpRequest(); }
+	if (window.ActiveXObject) { queryReqHandler = new ActiveXObject("Microsoft.XMLHTTP"); }
+        queryReqHandler.onreadystatechange = fno_2;
+        queryReqHandler.open("GET","./pool_speed.pl?nic="+nic,true);
+        queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        var str='';
+	queryReqHandler.send(str);
+    }
+    function fno_2()
+    {
+        if( (queryReqHandler.readyState == 4) && (queryReqHandler.status == 200) )
+        {
+            var msg=queryReqHandler.responseText;
+            alert(msg);
+        }
+   }
+
     function switchSomeOption()
     {
         //var mode=myform.mode.value;
@@ -531,15 +518,10 @@ sub rtable_script
         var measure_time = document.getElementById('measure_time');
         var btk_field = document.getElementById('btk_field');
         var bbl_field = document.getElementById('bbl_field');
-        var bblp_field = document.getElementById('bblp_field');
-        var latency_difference = document.getElementById('latency_difference');
         
-        myform.wltegress.value=( mode=="WLT_EQUALIZE" || mode=="USWLT" )  ? 1 : 0;
-        if (mode == 'BSWLT')
-        {
-            myform.wltegress.value = 2; //Brian 20140128 DSWLT=0,USWLT=1,BSWLT=2.
-        }   
-        myform.equalize.value=( mode=="WLT_EQUALIZE" || mode=="BTK_EQUALIZE" || mode=="WRR_EQUALIZE" || mode=="WRR_LATENCY" || mode=="WRR_LCY_PKT") ? 1 : 0;
+        myform.wltegress.value=( mode=="WLT_EQUALIZE" )  ? 1 : 0;
+    
+        myform.equalize.value=( mode=="WLT_EQUALIZE" || mode=="BTK_EQUALIZE" || mode=="WRR_EQUALIZE" || mode=="WRR_LATENCY") ? 1 : 0;
         
         myform.aggregate.value=( mode=="WRR_AGGREGATE" ) ? 1 : 0;
         if (mode == 'WRR_LATENCY')
@@ -547,26 +529,12 @@ sub rtable_script
             tolerance.disabled = false;    
             latency_diff.disabled = false;
             bbl_field.style.display = 'block';
-            bblp_field.style.display = 'none';
-        }
-        else if (mode == 'WRR_LCY_PKT')
-        {
-            bbl_field.style.display = 'none';
-            bblp_field.style.display = 'block';
-            latency_difference.style.display = '';
-        }
-        else if (mode == 'USWLT' || mode == 'DSWLT' || mode == 'BSWLT')
-        {
-            bbl_field.style.display = 'none';
-            bblp_field.style.display = 'block';
-            latency_difference.style.display = 'none';
         }
         else
         {
             tolerance.disabled = true;    
             latency_diff.disabled = true;
             bbl_field.style.display = 'none';
-            bblp_field.style.display = 'none';
         }
         
         if (mode == 'BTK_EQUALIZE') 
@@ -603,30 +571,6 @@ sub rtable_script
         myform.ADD.disabled=false;
         myform.focused_rtable.disabled=false;
         myform.action.disabled=false;
-    }
-
-    function CheckPktlossRate()
-    {
-        var pktloss_rate = document.getElementById('pktloss_rate').value;
-        if (isNaN(pktloss_rate))
-        { 
-          myform.pktloss_rate.value="";
-          alert('Please enter the number between 1~99 !!!');
-          return; 
-        }
-        if ( pktloss_rate >99 )
-        { 
-          myform.pktloss_rate.value="";
-          alert('Max packet loss rate is 99 % !!!'); 
-        }
-    }
-        
-    function CheckNumber(check)
-    {
-        if (isNaN(check))
-        { 
-          alert('Please enter the number !!!');
-        }
     }
     
     function selectRtable(table)
@@ -1364,16 +1308,6 @@ sub maintainRtable
         $temp->{latency_diff}          =   $action{latency_diff};
         $temp->{warning}        =   $warning;
 
-        $temp->{enable_latency_tolerance}    =   $action{enable_latency_tolerance};
-        $temp->{enable_latency_difference}   =   $action{enable_latency_difference};
-        $temp->{enable_pktloss_rate}         =   $action{enable_pktloss_rate};
-        $temp->{latency_tolerance}           =   $action{latency_tolerance};
-        $temp->{latency_difference}          =   $action{latency_difference};
-        $temp->{pktloss_rate}                =   $action{pktloss_rate};
-        $temp->{latency_tolerance_keeptime}  =   $action{latency_tolerance_keeptime};
-        $temp->{latency_difference_keeptime} =   $action{latency_difference_keeptime};
-        $temp->{pktloss_rate_keeptime}       =   $action{pktloss_rate_keeptime};
-
         my $enable_path_count=0;
         my $dsip_count=0;
         my $allpath=$temp->{path};
@@ -1397,7 +1331,6 @@ sub maintainRtable
         $action{mode}=~s/WLT_EQUALIZE/WLT/g;
         #20110411
         $action{mode}=~s/WRR_LATENCY/BBL/g;
-        $action{mode}=~s/WRR_LCY_PKT/BBLP/g;
         $temp->{mode}=($action{mode}) ? ($action{mode}) : ('WRR');
         $temp->{mode1}=''; 
         if ($action{mode} eq 'TB')

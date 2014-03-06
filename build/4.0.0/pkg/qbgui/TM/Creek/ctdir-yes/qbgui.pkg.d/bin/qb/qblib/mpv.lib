@@ -137,8 +137,18 @@ sub showMPV
             print qq (<td align="center" width="$titleWidth{Algorithm}" height="25" >$show_alg</td>);
             $status = ( $isp->{ipcom} ) ? ( 'On' ) : ( 'Off' );
             print qq (<td align="center" width="$titleWidth{COMP}" height="25" >$status</td>);
-            print qq (<td align="center" width="120" height="25" >$isp->{download}/$isp->{upload}</td>);
-            
+            if ($isp->{time})
+            {
+                my $action_download = ($isp->{action_download})?($isp->{action_download}):($isp->{download});
+                my $action_upload = ($isp->{action_upload})?($isp->{action_upload}):($isp->{upload});
+                $action_download =~ s/\..*//g;
+                $action_upload =~ s/\..*//g;
+                print qq (<td align="center" width="120" height="25" ><a title="$action_download/$action_upload">$action_download/$action_upload</a></td>);
+            }
+            else
+            {
+                print qq (<td align="center" width="120" height="25" >$isp->{download}/$isp->{upload}</td>);
+            }
             print qq (</tr>);
         }
         $lineCount++;
@@ -199,6 +209,28 @@ sub scriptMPV
     {
         var url='http://' + ip + ':' + port;
         window.open(url);
+    }
+    
+    function tunnel_speed(nic)
+    {
+        if(!confirm("Are you Test Again??"))
+            return;
+        if (window.XMLHttpRequest) { queryReqHandler=new XMLHttpRequest(); }
+        if (window.ActiveXObject) { queryReqHandler = new ActiveXObject("Microsoft.XMLHTTP"); }
+        queryReqHandler.onreadystatechange = fno_2;
+        queryReqHandler.open("GET","../setuid/tunnel.pl?nic="+nic,true);
+        queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        var str='';
+        queryReqHandler.send(str);
+    
+    }
+    function fno_2()
+    {
+        if( (queryReqHandler.readyState == 4) && (queryReqHandler.status == 200) )
+        {
+	    var msg=queryReqHandler.responseText;
+	    alert(msg);
+	}
     }
     
     function ajax()

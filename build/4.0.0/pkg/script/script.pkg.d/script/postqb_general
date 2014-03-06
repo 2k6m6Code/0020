@@ -543,6 +543,9 @@ $iptables_access &
 fi
 
 /usr/bin/perl /usr/local/apache/qb/data_search.pl action=SEARCH
+/usr/local/apache/qb/setuid/run /bin/sh /usr/local/apache/qbconf/do_tunnel_speed.sh &
+/usr/local/apache/qb/setuid/run /bin/rm -f /usr/local/apache/qbconf/do_tunnel_speed.sh
+/usr/bin/perl /usr/local/apache/qb/tunnel_crontab.pl
 
 # ========================================================================================
 # Gary 20130712 netflow
