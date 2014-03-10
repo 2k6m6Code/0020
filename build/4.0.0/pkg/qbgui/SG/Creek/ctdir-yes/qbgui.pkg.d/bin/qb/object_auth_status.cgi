@@ -45,9 +45,9 @@ if ($tm ne '')
        	    if (!grep(/^$user->{idd}$/,@namelist)){next;} 
            $user->{time} = $time;
            system("/usr/local/apache/qb/setuid/run /usr/bin/mutt -s \" $title \" $user->{mail} < $FileList[1] &");
-           my $ip = $user->{ip};
-           if ($ip eq ''){$ip = $user->{iip};}
-           system("/usr/local/apache/qb/setuid/run /sbin/iptables -t nat -D AUTH -s $ip -j ACCEPT");
+           my $ip = ($user->{ip})?($user->{ip}):($user->{iip});
+           #if ($ip eq ''){$ip = $user->{iip};}
+           system("/usr/local/apache/qb/setuid/run /sbin/iptables -t nat -D AUTH -s $ip -j RETURN");
            
     	}
     }
@@ -64,11 +64,11 @@ foreach my $group (@$list)
     foreach $user (@$userlist)
     {
 	if ($user->{idd} eq '' ){next;}
-	if (($now_time - $user->{time}) < 0 || $user->{time} eq '' || ($now_time - $user->{time}) > 43200){next;}
+	if (($now_time - $user->{time}) < 0 || $user->{time} eq '' || ($now_time - $user->{time}) > 43200 ||(!$user->{ip} && !$user->{iip})){next;}
 	my $originalColor=my $bgcolor=($lineCount%2) ? ( '#556677' ) : ( '#334455' );
 	print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
 	my $ip;
-	if ($user->{ip} eq ''){$ip= "*".$user->{iip};}
+	if ($user->{ip}){$ip= "*".$user->{iip};}
 	else{$ip= $user->{ip};}
 	print qq (<td width="200" align="center" id="$nb">$ip</td>);
 	print qq (<td width="200" align="center" >$user->{idd}</td>);

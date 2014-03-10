@@ -49,10 +49,10 @@ print qq(<form name="rttform" method="post" action="rttraffic.cgi">);
 
 
 print qq(<DIV>);
-print qq (<div align="center"><table border=0><tr>);
-print qq(<td><th><div id="total_down" style="width: 340px; height: 300px;" ></div></th></td>);
-print qq(<td><th><div id="total_up"   style="width: 340px; height: 300px;" ></div></th></td></tr>);
-print qq (</table></div>);
+print qq(<div class="qbCopy" align="center" style="width:100%;"><table style="border:1px #FFFFFF solid;padding:5px;" ><tr>);
+print qq(<th><div id="total_down" style="width: 340px; height: 300px;" ></div></th>);
+print qq(<th><div id="total_up"   style="width: 340px; height: 300px;" ></div></th></tr>);
+print qq(</table></div>);
 print qq(<div align="center"><table><tr><td>);
 print qq(<span style="width:100;color:white;font:12 Verdana;border:2px ridge white;filter:progid:DXImageTransform.Microsoft.Gradient(gradientType=0,startColorStr=white,endColorStr=green);background-image: -ms-linear-gradient(top, #FFFFFF 0%, #008000 100%);background: -moz-linear-gradient(center top , white, green) repeat scroll 0 0 transparent;background: -webkit-gradient(linear, left top, left bottom, from(white), to(green));"><b>INBOUND</b></span>);
 print qq(<span style="width:100;color:white;font:12 Verdana;border:2px ridge white;filter:progid:DXImageTransform.Microsoft.Gradient(gradientType=0,startColorStr=white,endColorStr=purple);background-image: -ms-linear-gradient(top, white 0%, purple 100%);background: -moz-linear-gradient(center top , white, purple) repeat scroll 0 0 transparent;background: -webkit-gradient(linear, left top, left bottom, from(white), to(purple));"><b>OUTBOUND</b></span>);
@@ -609,7 +609,7 @@ function speed_meter()
                 backgroundColor: "#336699",
                 plotBackgroundColor: null,
                 plotBackgroundImage: null,
-                plotBorderWidth: 1,
+                plotBorderWidth: 0,
                 plotShadow: false
             },
             title: {

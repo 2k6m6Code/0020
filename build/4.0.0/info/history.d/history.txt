@@ -2,7 +2,10 @@
 ======== Wed Mar  5 18:01:02 CST 2014 ========
 Version : 4.0.0-0020
 
-	1. put Shane code
+    1.If enable "External Log Server\Enable Remote Syslog Server" Local log will disappear.
+     The modification include : do_qbsyslog.pl,syslog.cgi
+    2.put Shane code
+
 ======== Tue Feb 11 19:18:37 CST 2014 ========
 Version : 4.0.0-0019
 

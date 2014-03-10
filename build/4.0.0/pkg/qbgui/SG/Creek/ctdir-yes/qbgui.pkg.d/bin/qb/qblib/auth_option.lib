@@ -60,7 +60,7 @@ sub showSquidgen
     print qq (<tr><div>);
     print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 150px"></td>);
     print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
-    print qq (<div style="border-color:red; border-style:dotted;" align="center">);
+    print qq (<div style="border-color:red; border-style:dotted;" align="left">);
     
     print qq (Note<br>);
     print qq (If you want to import your user list,<br>);
@@ -91,8 +91,8 @@ sub showSquidgen
     }
     print qq (</select>);
     print qq (<INPUT type="file" name="user" id="user">);
-    print qq (<INPUT type="button" class="qb" value="Upload" onclick="go('user')">);
-    
+    print qq (<INPUT type="button" class="qb" value="Upload" onclick="go('user')"></td>);
+    print qq (<tr><td colspan=2><iframe name="result" style="background-color:#C2D1E1; width:100%; height:100; filter:alpha(opacity=70);"></iframe>);
     print qq (</td></div></tr>);
     
     #********************************** General Setup*******************************************

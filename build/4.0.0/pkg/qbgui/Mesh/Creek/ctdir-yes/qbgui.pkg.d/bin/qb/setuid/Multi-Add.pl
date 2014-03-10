@@ -13,25 +13,13 @@ if ($action eq 'import')
     my $choose;
     my @subscharrary;
     my $schdule;
+    my @duble;
     foreach my $dd (@$list)
     {
        if ($dd->{schname} ne $file){next;}
        
        $choose=$dd->{member};
-       my %newschedule;
-       foreach my $user (@$choose)
-       {
-          if ($user->{idd} eq '' || $user->{pwd} eq ''){next;}
-          $schdule=$user->{type};
-          my %newschedule;
-          $newschedule{ip}=$user->{ip};
-          $newschedule{idd}=$user->{idd};
-          $newschedule{pwd}=$user->{pwd};
-          $newschedule{mail}=$user->{mail};
-          $newschedule{type}=$user->{type};
-          $newschedule{time}=$user->{time};
-          push(@subscharray, \%newschedule); 
-       }
+       $schdule=$dd->{description};
         if (open(FILE,"/tmp/tmpupg/user.tmp"))
         {
     	    foreach $data (<FILE>)
@@ -44,6 +32,7 @@ if ($action eq 'import')
     	        if ($tmp[1] eq 'Name' || $tmp[1] eq ''){next;}
     	        if ($tmp[2] eq 'Pwd' || $tmp[2] eq ''){next;}
     	        my %newschedule;
+    	        push(@duble,$tmp[1]);
           	$newschedule{ip}=$tmp[0];
           	$newschedule{idd}=$tmp[1];
           	$newschedule{pwd}=$tmp[2];
@@ -54,6 +43,24 @@ if ($action eq 'import')
     	    }
     	}
     	close(FILE);
+       foreach my $user (@$choose)
+       {
+           my %newschedule;
+          if ($user->{idd} eq '' || $user->{pwd} eq ''){next;}
+          if (grep(/$user->{idd}/,@duble))
+          {
+              next;
+          }else
+          {
+              $newschedule{ip}=$user->{ip};
+              $newschedule{idd}=$user->{idd};
+              $newschedule{pwd}=$user->{pwd};
+              $newschedule{mail}=$user->{mail};
+              $newschedule{type}=$user->{type};
+              $newschedule{time}=$user->{time};
+          }
+          push(@subscharray, \%newschedule); 
+       }
     }
     $newschedule{member}=\@subscharray;
     $newschedule{schname}=$file;
