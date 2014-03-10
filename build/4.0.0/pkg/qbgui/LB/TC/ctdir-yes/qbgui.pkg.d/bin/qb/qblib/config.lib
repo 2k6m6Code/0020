@@ -100,6 +100,7 @@ print << "CONFIGSCRIPT";
             
             myform=window.document.forms[0];  
             if ( myform.action.value=="LOADCONFIG" ) { window.top.mainFrame.location.reload(); }
+            if ( myform.action.value=="UPDATE" ) { window.top.mainFrame.location.reload(); }
         }
         
         function loadConfig()

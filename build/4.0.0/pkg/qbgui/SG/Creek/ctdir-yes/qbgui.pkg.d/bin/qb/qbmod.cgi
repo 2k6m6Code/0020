@@ -448,7 +448,9 @@ sub maintainFwmark
                                     value=>'', 
                     		        #luke add qos
                     		        qos=>'',
-                                    dirty=>$subnet->{dirty}
+                                    dirty=>$subnet->{dirty},
+                                    #Gary on off policy 20140306
+                                    enabled=>''
                                 );
                     #my @temp1=checkhostobj( fwmark=>\%fwmark );
                     my @temp1=checkhostobj( fwmark=>\%fwmark, location=>'source' );
@@ -462,7 +464,9 @@ sub maintainFwmark
                                     value=>'', 
                     		        #luke add qos
                     		        qos=>'',
-                                    dirty=>$subnet->{dirty}
+                                    dirty=>$subnet->{dirty},
+                                    #Gary on off policy 20140306
+                                    enabled=>''
                                 );
                     #my @temp2=checkhostobj( fwmark=>\%fwmark );
                     my @temp2=checkhostobj( fwmark=>\%fwmark, location=>'source' );
@@ -480,7 +484,9 @@ sub maintainFwmark
                                       destination=>'system',
                     		      qos=>'',
                                       value=>'',
-                                      dirty=>$subnet->{dirty}
+                                      dirty=>$subnet->{dirty},
+                                    #Gary on off policy 20140306
+                                    enabled=>''
                                  ); 
                       push( @fwmark_array, \%fwmark );
                   }
@@ -533,7 +539,9 @@ sub maintainFwmark
                     		    qos=>$item->{qos},
                                     dirty=>'',
                                     #20101224 add schedule
-                                    schedule=>$item->{schedule}
+                                    schedule=>$item->{schedule},
+                    		    #Gary 20140306
+                    		    enabled=>$item->{enabled}
                                 );
                 #runCommand(command=>'echo', params=>"CK1-1:TYPE:$type $item->{source} $item->{service} HOOK:$hook>>/tmp/aa");
                 }
@@ -548,7 +556,9 @@ sub maintainFwmark
                     		    #luke add qos
                     		    qos=>$item->{qos},
                                     dirty=>$item->{dirty},
-                                    schedule=>$item->{schedule}
+                                    schedule=>$item->{schedule},
+                    		    #Gary 20140306
+                    		    enabled=>$item->{enabled}
                                 );
                 #runCommand(command=>'echo', params=>"CK1-2:TYPE:$type $item->{source} $item->{service} HOOK:$hook>>/tmp/aa");
                 }
@@ -618,7 +628,9 @@ sub maintainFwmark
                     #luke add qos
                     schedule=>$class->{schedule},
                     qos=>$class->{qos},
-                    dirty=>'0' 
+                    dirty=>'0', 
+                    #Gary 20140306
+                    enabled=>$class->{enabled}
                 );
                 #my @temp=checkhostobj( fwmark=>\%fwmark );
                 my @temp=checkhostobj( fwmark=>\%fwmark, location=>'destination' );
@@ -662,7 +674,10 @@ sub maintainFwmark
                     #luke add qos
                     schedule=>$class->{schedule},
                     qos=>$class->{qos},
-                    dirty=>'0' 
+                    dirty=>'0',
+                    #Gary 20140306
+                    enabled=>$class->{enabled}
+                     
                 );
                 #my @temp=checkhostobj( fwmark=>\%fwmark );
                 my @temp=checkhostobj( fwmark=>\%fwmark, location=>'source' );
@@ -715,6 +730,8 @@ sub maintainFwmark
                     schedule=>$class->{schedule},
                     qos=>$class->{qos},
                     dirty=>0, 
+                    #Gary 20140306
+                    enabled=>$class->{enabled}
                 );
             
                 #push( @view_fwmark_array, \%fwmark );    
@@ -777,6 +794,8 @@ sub maintainFwmark
                     qos=>$class->{qos},
                     schedule=>$class->{schedule},
                     dirty=>0, 
+                    #Gary 20140306
+                    enabled=>$class->{enabled}
                 );
 
                 #push( @view_fwmark_array, \%fwmark );    
@@ -876,6 +895,7 @@ sub maintainFwmark
         maintainIniroute( action=>'JUDGEDIRTYVALUEOFPOLICY' );
     }
 }
+#maintainFwmark
 sub setDirty
 {
     my ( $location, $ip, $dirty ) = ( $_[0], $_[1], $_[2] );
@@ -891,7 +911,6 @@ sub setDirty
         return $dirty;
     }
 }
-#maintainFwmark
 sub checkhostobj
 {
     my %action=@_;
@@ -912,6 +931,7 @@ sub checkhostobj
         #add qos
         schedule=>$class->{schedule},
         qos=>$class->{qos},
+        enabled=>$class->{enabled},
     );
     
     

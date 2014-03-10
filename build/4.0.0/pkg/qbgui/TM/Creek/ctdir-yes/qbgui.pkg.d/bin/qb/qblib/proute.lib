@@ -7,7 +7,7 @@ sub showPolicyTitle
 {
     my (%action)=@_;
     my $viewpoint=$action{viewpoint};
-    my %titleWidth=(Source=>'150', Service=>'120', Destination=>'150', 'NAT Status'=>'90', Pool=>'100', Schedule=>'120', Status=>'50', QoS=>'80', 'Quota D/U'=>'80', Edit=>'30',Action=>'100');
+    my %titleWidth=(Enabled=>'80', Source=>'150', Service=>'120', Destination=>'150', 'NAT Status'=>'90', Pool=>'100', Schedule=>'120', Status=>'50', QoS=>'80', 'Quota D/U'=>'80', Edit=>'30',Action=>'100');
     #my %titleWidth=(Source=>'18%', Service=>'11%', Destination=>'13%', 'NAT Status'=>'10%', Pool=>'22%', Schedule=>'8%', Status=>'3%', QoS=>'5%', Edit=>'2%');
     my @titleList=('Schedule', 'Pool', 'NAT Status', 'Status', 'Edit');
     if ( $action{showqos} eq '1' )
@@ -22,18 +22,24 @@ sub showPolicyTitle
 			@titleList=('Schedule', 'Action', 'Status', 'QoS', 'Edit');
 		}
     }
-	if ( $action{viewpoint} eq 'nat' && $action{showqos} ne '1')
-	{
-		@titleList=('Schedule', 'Pool', 'NAT Status', 'Status', 'Quota D/U', 'Edit');
-	}
-	if ( $action{viewpoint} eq 'app' && $action{showqos} ne '1')
-	{
-		@titleList=('Schedule', 'Action', 'Status', 'Edit');
-	}
+    if ( $action{viewpoint} eq 'nat' && $action{showqos} ne '1')
+    {
+	@titleList=('Schedule', 'Pool', 'NAT Status', 'Status', 'Quota D/U', 'Edit');
+    }
+    if ( $action{viewpoint} eq 'app' && $action{showqos} ne '1')
+    {
+	@titleList=('Schedule', 'Action', 'Status', 'Edit');
+    }
     
     print qq (<div class="divframe">);
     print qq (<table width="100%" bgcolor="#332211" border="0" align="center"> );
     print qq (<tr>);
+    if ( $action{viewpoint} eq 'nat' )
+    {
+        print qq (<td align="center" style="width:$titleWidth{Enabled}">Enabled);
+#        print qq (<input type="checkbox" onClick="setAllCheckBoxValue('enabled_policy', this.checked);enabled_disabled_policy('SelectAll',this.status);">);
+	print qq (</td>);
+    }
     print qq (<td align="center" width="$titleWidth{'Source'}" ><a href="javascript:sortPolicy('BYSOURCE')" title="Sort by Source" border="0">Source</a></td>);
     print qq (<td align="center" width="$titleWidth{'Destination'}" >Destination</td>);
     my $title = ( $action{viewpoint} eq 'app' ) ? ( 'Application' ) : ( 'Service' );
@@ -60,7 +66,7 @@ sub list_ini_rule
     my %priority=(1=>'High', 3=>'Medium', 5=>'Low');
     my $sortingKEY=$action{sortingkey};
     #add qos
-    my %titleWidth=(Source=>'150', Service=>'120', Destination=>'150', 'NAT Status'=>'90', Pool=>'100', Schedule=>'120', Status=>'50', QoS=>'80', 'Quota D/U'=>'80', Edit=>'30');
+    my %titleWidth=(Enabled=>'80', Source=>'150', Service=>'120', Destination=>'150', 'NAT Status'=>'90', Pool=>'100', Schedule=>'120', Status=>'50', QoS=>'80', 'Quota D/U'=>'80', Edit=>'30');
     
     my @titleList=('Schedule', 'Pool', 'NAT Status', 'Status', 'QoS', 'Edit');
     #host obj to sort
@@ -159,6 +165,14 @@ sub list_ini_rule
 
         print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
         
+        # Gary 20140220 add enabled/disabled function
+        if ( $action{viewpoint} eq 'nat' )
+        {
+            my $update_or_not=(`/usr/local/apache/qb/setuid/run diff /usr/local/apache/active/iniroute.xml /usr/local/apache/qbconf/iniroute.xml`)?'disabled':'';
+            print qq (<td align="center" style="width:$titleWidth{Enabled}" >);
+            my $status=($class->{enabled} eq '0')?'':'checked';
+            print qq (<input type="checkbox" $status name="enabled_policy" $update_or_not id="enabled_policy" style="" value="$checkrulekey" onClick="enabled_disabled_policy(this.value,this.status);"></td>);
+        }
         #===================================================================      
         if ( $viewpoint eq 'dmz' &&  $class->{source} ne 'system' && !exists($source2isp{$class->{source}}) ) 
         {
@@ -413,6 +427,25 @@ sub list_ini_rule_script
             window.top.mainFrame.iniroute.document.forms[0].action.value="UPDATEINTERFACE";        
             window.top.mainFrame.iniroute.document.forms[0].submit();
         }          
+    }
+    
+    function enabled_disabled_policy(checkKey,enabled_or_not)
+    {
+    	var params=checkKey.split(':');
+    	if ( enabled_or_not ) enabled_or_not='1';
+    	else enabled_or_not='0';
+    	if ( checkKey == "SelectAll" ) { enabled_or_not=checkKey+":"+enabled_or_not; }
+    	i=(new Date()).getTime();
+    	if (window.XMLHttpRequest) {
+    	    queryReqHandler=new XMLHttpRequest();
+    	}
+    	if (window.ActiveXObject) {
+    	    queryReqHandler = new ActiveXObject("Microsoft.XMLHTTP");
+    	}
+    	queryReqHandler.open("GET","enable_disable_policy.cgi?a="+i+"&source="+params[0]+"&service="+params[1]+"&direction="+params[2]+"&destination="+params[3]+"&method="+params[4]+"&table="+params[5]+"&enabled_or_not="+enabled_or_not,true);
+    	queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+    	var str='';
+    	queryReqHandler.send(str);
     }
     
     function edit_this_rule(rule_key_to_edit, focusedrule)
@@ -2719,6 +2752,7 @@ sub maintainIniroute
 		else{ $destkey = ( $action{destination} ne 'system' && get_subnet($destkey) eq '' ) ? ( maintainHost( action=>'GETADDRESSLIST', hostname=>$destkey) ) : $destkey;  }
         my $ruleContentToAddOrUpdate=$sourcekey.$action{service}.$destkey.$action{schedule};
 		#$gMSGPROMPT.=qq([$sourcekey].[$action{service}].[$destkey].[$action{schedule}] \\n);
+	my $target_enabled;
         foreach my $item ( @$classes ) 
         { 
             my $rulekey;
@@ -2740,7 +2774,7 @@ sub maintainIniroute
             if ( $rulekey eq $action{focusedrule} ) { $target=$item; }
             #if ( $rulekey eq $ruleContentToAddOrUpdate ) { $target=$item; }
             #if ( $rulekey eq $ruleContentToAddOrUpdate ) { $target_exist=1; last; } 
-            if ( $iprulekey eq $ruleContentToAddOrUpdate ) { $target_exist=1; last; } 
+            if ( $iprulekey eq $ruleContentToAddOrUpdate ) { $target_exist=1; $target_enabled=$item->{enabled}; last; } 
             #runCommand(command=>'echo', params=>"$iprulekey >>/tmp/aaa");
         }
 		
@@ -2792,8 +2826,8 @@ sub maintainIniroute
 
             # in xml we save both manual_ls and ls as ls method
             $action{method}=~s/manual_ls/ls/g; 
-            
-			if($action{viewpoint}=~m/^app$/){$action{method}='none';}
+            if ( !$action{enabled} ) { $action{enabled}='1'; }
+	    if($action{viewpoint}=~m/^app$/){$action{method}='none';}
             
             #%newDMZNATclass=( 
             %newclass=( 
@@ -2812,7 +2846,9 @@ sub maintainIniroute
                         schedule    =>  $action{schedule},
                         enables     =>  $action{enables},
                         #luke add qos
-                        qos         =>  $action{qos}
+                        qos         =>  $action{qos},
+                        #Gary add enabled/disabled function
+                        enabled     =>  $target_enabled
             ); 
 #            if ($action{viewpoint}=~m/^nat$/ && $action{enables} ne '1' &&  $action{enables} ne '2' && $direction ne 's')
 #            {
@@ -3823,10 +3859,16 @@ sub via2prt
                         my $sipptr=$class->{sip}; 
                         my @siparray; foreach my $sip ( @$sipptr ) { my %newsip=%$sip; push(@siparray, \%newsip); } 
                         $newclass{sip}=\@siparray; 
+                        if ( $view eq 'nat' ) 
+                        {
+                            $newclass{process_me}=$class->{process_me};
+                            $newclass{enabled}=$class->{enabled};
+                        }
                     }
                             
                     $newclass{subnettype}=$view;
 =cut
+#start
                     if ( grep(/^host-/, $class->{source}))
                     {
                         foreach my $host ( @$hostlist )
@@ -3862,6 +3904,7 @@ sub via2prt
                         $newclass{destination}=$class->{destination};
                         $newclass{destinationtype}='normal';
                     }
+#end
 =cut
                     $newclass{service}=$class->{service};
                     $newclass{direction}=$class->{direction};
@@ -3880,6 +3923,7 @@ sub via2prt
                     #20101224 add schedule
                     #my $markkey=$newclass{source}.$class->{service}.$class->{direction}.$class->{destination}.$class->{schedule}; 
 =cut
+#start
                     my $srckey = $newclass{source};
                     my $dstkey = $newclass{destination};
                     #if ( $newclass{sourcetype} eq 'iplist' )
@@ -3906,10 +3950,12 @@ sub via2prt
                     {
                         push(@dest_array, $newclass{destination});
                     }
+#end
 =cut
                     
                     $newclass{source}=$src;
-                    $newclass{deatination}=$dest;
+                    # 20140214 looks wrong. Gary hide deatination
+                    # $newclass{deatination}=$dest;
                     #my $markkey=$srckey.$class->{service}.$class->{direction}.$dstkey.$class->{schedule};
                     my $markkey=$src.$class->{service}.$class->{direction}.$dest.$class->{schedule};
                     my $markvalue=$fwmarkvalue{$markkey};
@@ -4045,6 +4091,8 @@ sub via2prt
                     elsif ( $class->{service} eq "others" && $class->{advance}==0 ) 
                     {
                         $newclass{destination}="";
+                        if ( $class->{enabled} eq '0' ) {  $newclass{enabled}=$class->{enabled};  }
+                        else                            {  $newclass{enabled}='1';		  }
                         #runCommand(command=>'echo', params=>"$newclass{source} >>/tmp/kkk");
                         $newclass{priority}=25000;
                         push ( @subnet, \%newclass );
@@ -4938,4 +4986,5 @@ sub check_proute_qb
     XMLwrite($prouteref, $gPATH."proute.xml");
 }
 
+#
 1
