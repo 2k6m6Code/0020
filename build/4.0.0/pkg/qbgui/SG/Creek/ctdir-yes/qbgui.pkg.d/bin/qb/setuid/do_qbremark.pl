@@ -71,8 +71,8 @@ $sproxyport=~s/\n//g;
 
 print PROXY qq "/usr/local/sbin/iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port $proxyport\n";
 print DELPROXY qq "/usr/local/sbin/iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to-port $proxyport\n";
-#print PROXY qq "/usr/local/sbin/iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port $sproxyport\n";
-#print DELPROXY qq "/usr/local/sbin/iptables -t nat -D PREROUTING -p tcp --dport 443 -j REDIRECT --to-port $sproxyport\n";
+print PROXY qq "/usr/local/sbin/iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port $sproxyport\n";
+print DELPROXY qq "/usr/local/sbin/iptables -t nat -D PREROUTING -p tcp --dport 443 -j REDIRECT --to-port $sproxyport\n";
 #------------------------------------------------------------------
 # accept dmz
 #------------------------------------------------------------------

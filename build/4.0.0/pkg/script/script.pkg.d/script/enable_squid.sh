@@ -92,7 +92,10 @@ if [ -f $SQUIDPXY ]; then
         /usr/local/squid/etc/content.sh
    fi
    
-   if [ "$enablesquidpxy" = "1" ] && [ "$ismnt" == "" ] && [ "$enablesquidfilter" != "1" ];then
+#   if [ "$enablesquidpxy" = "1" ] && [ "$ismnt" == "" ] && [ "$enablesquidfilter" != "1" ];then
+#  	exit 
+#   fi
+   if [ "$enablesquidpxy" != "1" ] && [ "$enablesquidfilter" != "1" ];then
   	exit 
    fi
 	mkdir /mnt/tclog/squid/cache

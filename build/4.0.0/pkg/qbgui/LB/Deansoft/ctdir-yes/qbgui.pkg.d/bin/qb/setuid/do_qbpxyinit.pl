@@ -109,4 +109,24 @@ if ( $pxyinit->{pxycachesize} )
 {
     modifyfile($QB_SQUID_CONF,"cache_dir.*","cache_dir ufs /mnt/tclog/squid/cache ".$pxyinit->{pxycachesize}." 8 64"); # 
 }
+
+#------------------------------------------------------------------
+# accept parent
+#------------------------------------------------------------------
+
+my $parents = $pxyinit->{parent};
+$statement="accept parent";
+my $newstatement=$statement."\n";
+foreach my $parent ( @$parents )
+{
+   if ( $parent ne '' )
+   {
+		my ($server,$port)= split(/:/, $parent);
+		if($port eq ''){$port = '3128'}
+		$newstatement .= "cache_peer ".$server." parent ".$port." 0 round-robin no-query"."\n";
+   }
+}
+print $newstatement;
+modifyfile($QB_SQUID_CONF,$statement,$newstatement);
+                
 qbSync(); #20130419 To prevent DOM/CF become readonly

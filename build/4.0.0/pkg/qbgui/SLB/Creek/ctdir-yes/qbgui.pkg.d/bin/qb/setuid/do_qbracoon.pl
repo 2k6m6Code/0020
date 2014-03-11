@@ -41,6 +41,7 @@ foreach my $isp ( @$isplist )
 {
 	if ( $isp->{enc} || $isp->{isptype} eq "ipsec" )
 	{
+		if($isp->{isptype} eq "ipsec" && $isp->{enabled} eq "0"){next;}
 		print RACOON qq	"\tisakmp $isp->{local} [500];\n";
           	if ( $isp->{mpv_nat} )
           	{
@@ -90,6 +91,7 @@ foreach my $isp ( @$isplist )
 	}
 	if ( $isp->{isptype} eq "ipsec" )
 	{
+		if($isp->{enabled} eq "0"){next;}
 		#postqb_general grep tunnel racoon.conf
 		print RACOON qq "#ipsec tunnel\n";
 		if ( $isp->{remote} ne "0.0.0.0" ) #Brian 20130906 Brian For unknown NATed source IP

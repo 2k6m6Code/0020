@@ -1,0 +1,26 @@
+V	141124120000Z		12CDB268DFF34D36FD78D3044B9F5D6B1212D186	unknown	/C=US/ST=CA/L=Sunnyvale/O=Yahoo! Inc./CN=*.yimg.com+Sign=signTrusted
+V	150805235959Z		3E638F070FFDCC318EFA0B9D9CFA077147018511	unknown	/C=US/ST=California/L=Palo Alto/O=Facebook, Inc./CN=*.facebook.com+Sign=signTrusted
+V	140717041540Z		5EDC48C4924378D1B8BA0DE1493BC21E139B21B6	unknown	/C=US/ST=MA/L=Cambridge/O=Akamai Technologies, Inc./CN=a248.e.akamai.net+Sign=signTrusted
+V	141126055728Z		33FDB5D27B47EFDE8889FC264ABE88679A896D0C	unknown	/CN=210.61.248.242+Sign=signTrusted
+V	140808180942Z		23722B00FA93F6CA42A2C40642ED4F31F68AF413	unknown	/description=H3k7JO60Bs1D9D02/C=US/ST=Illinois/L=Chicago, IL/O=Aaron Griffin/CN=*.archlinux.org/emailAddress=webmaster@archlinux.org+Sign=signTrusted
+V	140515000000Z		642456E0441CEA36D4AE0D23BDAD9079B6026D50	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=mail.google.com+Sign=signTrusted
+V	140515000000Z		2D5694546DB6130B76878A2F4A5F750D67672618	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.gstatic.com+Sign=signTrusted
+V	150128230656Z		556D80694A33492DD686978ABC979444A2845CF2	unknown	/CN=ieonlinews.microsoft.com+Sign=signTrusted
+V	140515000000Z		6072C4C0BD037CE9554BE38367FA1965BF30C9C8	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=google.com+Sign=signTrusted
+V	140515000000Z		2C7A0C19F713832D29A4680B5647D1C8CA20AABB	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=accounts.google.com+Sign=signTrusted
+V	140515000000Z		1A2D801A261B45F065B2F8C4450EE457948FAA77	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.g.doubleclick.net+Sign=signTrusted
+V	140515000000Z		33F320A1A5C1FDC06FFA94BAEB81551528FC5D78	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=www.google.com+Sign=signTrusted
+V	181210231550Z		5153BFDA6249C52D36B6B48C97FF09845AED515F	unknown	/OU=Domain Control Validated/CN=*.insight.ly+Sign=signTrusted
+V	140529000000Z		18C84A6F98DA149DCCB92F3E7EE3610B1D90E0EA	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.googleapis.com+Sign=signTrusted
+V	140515000000Z		36D8E142C95053D0CB6114077E7CC4B05BA0CF69	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.googleusercontent.com+Sign=signTrusted
+V	140515000000Z		35BB1A1CFDD8E17EF24CE0B3D77268712C8A8CAE	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.appspot.com+Sign=signTrusted
+V	140515000000Z		7BB4F9863B634E2F625D4CA5A018A1F3CF263297	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.google.com+Sign=signTrusted
+V	151014112411Z		5CB11261DDFC546980227F68CFF3ABE2E9F1B81D	unknown	/O=*.gravatar.com/OU=Domain Control Validated/CN=*.gravatar.com+Sign=signTrusted
+V	141022235959Z		4EB7D3865C2DE1639138DF5EEA510A965900FF3D	unknown	/C=US/ST=Washington/L=Seattle/O=Amazon.com Inc./CN=*.s3.amazonaws.com+Sign=signTrusted
+V	160706120000Z		707D87BBF372B764D578323336E81CB58D65A871	unknown	/C=US/ST=NY/L=New York/O=Stack Exchange, Inc./CN=*.stackexchange.com+Sign=signTrusted
+V	150511182246Z		1C134340AE93DEEDB42EB3600559C5EED916CF45	unknown	/O=*.wp.com/OU=Domain Control Validated/CN=*.wp.com+Sign=signTrusted
+V	140515000000Z		70BBD31C96DFA82ADB7A54AF69FB5BD9E3CEFC77	unknown	/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.google-analytics.com+Sign=signTrusted
+V	150105120000Z		79C789DAE5F2ABF7918E9145B94F7E03078A12F0	unknown	/C=US/ST=California/L=San Francisco/O=Fastly, Inc./CN=*.a.ssl.fastly.net+Sign=signTrusted
+V	150219120000Z		559A4710304F9EBB9E31121EA9BFEB8DAAC935A6	unknown	/C=US/ST=California/L=San Francisco/O=Fastly, Inc./CN=*.github.com+Sign=signTrusted
+V	150902120000Z		6C24132B275D1EE514A6B3F0EC6856A4762A8B3E	unknown	/2.5.4.15=Private Organization/1.3.6.1.4.1.311.60.2.1.3=US/1.3.6.1.4.1.311.60.2.1.2=Delaware/serialNumber=5157550/streetAddress=548 4th Street/postalCode=94107/C=US/ST=California/L=San Francisco/O=GitHub, Inc./CN=github.com+Sign=signTrusted
+V	150107120000Z		42AEE0DBF7E3A9EA4F2EACC7A90436442693D85A	unknown	/C=US/ST=California/L=San Francisco/O=GitHub, Inc./CN=*.githubapp.com+Sign=signTrusted

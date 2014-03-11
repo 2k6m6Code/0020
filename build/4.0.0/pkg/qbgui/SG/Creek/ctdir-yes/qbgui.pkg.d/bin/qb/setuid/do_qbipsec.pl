@@ -72,6 +72,7 @@ foreach my $isp ( @$isplist )
     
     if ( $isp->{isptype} eq "ipsec" )
     {
+        if ($isp->{enabled} eq "0"){next;}
         if ( $isp->{remote} ne "0.0.0.0" ) #Brian 20130906 Brian For unknown NATed source IP
         {
         my $QB_IPSEC_DELCONF = "/etc/racoon/delipsec." . $isp->{ispname};

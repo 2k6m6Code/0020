@@ -1,11 +1,13 @@
 #Recommended minimum configuration:
-acl manager proto cache_object
-acl localhost src 127.0.0.1/32
-acl to_localhost dst 127.0.0.0/8 0.0.0.0/32
+#acl manager proto cache_object
+#acl localhost src 127.0.0.1/32
+#acl to_localhost dst 127.0.0.0/8 0.0.0.0/32
 
 #accept dmz
 
+
 #accept lan
+
 
 #privilege pc
 acl exempt src "/usr/local/squid/etc/exempt.txt"
@@ -105,15 +107,26 @@ strip_query_terms off
 
 # Squid normally listens to port 3128
 http_port 3128 transparent
+https_port 3129 transparent ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size=4MB cert=/usr/local/squid/ssl_cert/myCA.pem key=/usr/local/squid/ssl_cert/myCA.pem
 always_direct allow all
+ssl_bump server-first all
+sslproxy_cert_error allow all 
+sslproxy_flags DONT_VERIFY_PEER 
+sslcrtd_program /usr/local/squid/libexec/ssl_crtd -s /usr/local/squid/var/lib/ssl_db -M 4MB 
+sslcrtd_children 5
 
-emulate_httpd_log off
-log_ip_on_direct on
+#accept parent
 
-error_directory /usr/local/squid/share/errors/English
+#emulate_httpd_log off
+#log_ip_on_direct on
+
+error_directory /usr/local/squid/share/errors/templates
 
 cache_store_log none
 cache_access_log /usr/local/squid/var/logs/access.log
 cache_effective_user squid
 cache_effective_group squid
-#url_rewrite_program /usr/local/bin/squidGuard -c /usr/local/squidGuard/squidGuard.conf
+#url_rewrite_program /usr/local/bin/squidGuard -c /usr/local/squidGuard/squidGuard.con
+
+
+

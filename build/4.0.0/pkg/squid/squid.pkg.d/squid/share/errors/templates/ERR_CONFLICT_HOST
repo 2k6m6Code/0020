@@ -17,18 +17,19 @@ body
 <hr>
 
 <div id="content">
-<p>An FTP protocol error occurred while trying to retrieve the URL: <a href="%U">%U</a></p>
+<p>The following error was encountered while trying to retrieve the URL: <a href="%U">%U</a></p>
 
-<p>Squid sent the following FTP command:</p>
 <blockquote id="data">
-<pre>%f</pre>
+<pre>URI Host Conflict</pre>
 </blockquote>
 
-<p>The server responded with:</p>
-<blockquote id="error">
-<pre>%F</pre>
-<pre>%g</pre>
-</blockquote>
+<p>This means the domain name you are trying to access apparently no longer exists on the machine you are requesting it from.</p>
+
+<p>Some possible problems are:</p>
+<ul>
+<li>The domain may have moved very recently. Trying again will resolve that.</li>
+<li>The website may require you to use a local country-based version. Using your ISP provided DNS server(s) should resolve that.</li>
+</ul>
 
 <p>Your cache administrator is <a href="mailto:%w%W">%w</a>.</p>
 <br>
