@@ -600,6 +600,7 @@ sub showDHCP
     my $status=( $targetnat->{dhcp} ) ? ('Enabled') : ('Disabled');
     print qq (<div valign="center"><br><br><br>);
     print qq (<table bgcolor="#224488" class="body" border="0">);
+    
     print qq (<tr bgcolor="112233"><td>Network</td><td>$targetnat->{network}</td></tr>);
     print qq (<tr><td>Status</td><td>$status</td></tr>);
 
@@ -620,9 +621,11 @@ sub showDHCP
     }
 
     my $range=$targetnat->{rangelist}; $range=~s/\;/\;\n/g;
-    print qq (<tr><td>Range</td><td><textarea name="rangelist" class="qbtext" style="width:300;height:50" title="a list of range for the specified subnet -- seperated by semicolon. Example:x.x.x.a-x.x.x.b; x.x.x.c-x.x.x.d" >$range</textarea></td></tr>);
+    
+    my $version=(grep(/:/,$targetnat->{network}))?('none'):('block');
+    $range = (grep(/:/,$targetnat->{network}))?('None'):($range);
+    print qq (<tr style="display:$version"><td>Range</td><td><textarea name="rangelist" class="qbtext" style="width:300;height:50" title="a list of range for the specified subnet -- seperated by semicolon. Example:x.x.x.a-x.x.x.b; x.x.x.c-x.x.x.d" >$range</textarea></td></tr>);
     print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
-
     ## for dhcp-DNS setting...nancy 20040901
     print qq (<tr bgcolor="112233"><td colspan="2">Option:</td></tr>);
     my $dname=$targetnat->{dname};
@@ -643,13 +646,6 @@ sub showDHCP
         
         my @ethlist=( $gRESERVEDLANPORT ) ? ( ($gNUMOFPORT-$gRESERVEDLANPORT..$gNUMOFPORT-1) ) : ( (0..$gNUMOFPORT-1) );
         my @vlandev=editVlan(action=>'GETVLANDEVLIST');        
-#        foreach my $nicitem ( @ethlist,@vlandev ) 
-#        { 
-#            $nicitem=~s/eth//;
-#            my $portnum=$nicitem+1; 
-#            my $status; ( 'eth'.$nicitem eq $targetnat->{dhcprelayinterface} ) ? ( $status='selected' ):( $status='' );
-#            print qq (<option $status value="eth$nicitem">PORT $portnum </option>\n);
-#        }
         my $wirelessdev=( $gENABLEWIRELESS ) ? ( 'ra0' ) : ( '' );
         foreach my $nicitem ( @ethlist,@vlandev,$wirelessdev )
         {
@@ -673,59 +669,6 @@ sub showDHCP
             print qq (<option $status value="$isp->{nic}">PORT $isp->{nic} </option>\n);
         }
         print qq (</select></td></tr>);
-=cut
-
-    ##  DHCP relay setting...Brian 20081028 #Listen on multi port=>unfinished
-    #****************************************************************************************
-    # Listen Interface
-    #****************************************************************************************
-    print qq (<tr bgcolor="112233"><td colspan="2">DHCP Relay:</td></tr>);
-    print qq (<tr>);
-    print qq (<td class="body"  align="left" >Listen on Interface: </td> );
-    #print qq (<td class="body"  align="right"><select class="qbopt" name="dhcprelayinterface"  style="WIDTH: 240px">\n);
-    print qq (<td class="body"  align="right"><select class="qbopt"  multiple  name="dhcprelayinterface" style="WIDTH:300">\n);
-    #print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:160"> );
-    if ( !($targetnat->{dhcprelayinterface}) ) { print qq (<option selected value="">None</option>\n); }
-        
-        my @ethlist=( $gRESERVEDLANPORT ) ? ( ($gNUMOFPORT-$gRESERVEDLANPORT..$gNUMOFPORT-1) ) : ( (0..$gNUMOFPORT-1) );
-        my @vlandev=editVlan(action=>'GETVLANDEVLIST');        
-        foreach my $nicitem ( @ethlist,@vlandev ) 
-        { 
-            $nicitem=~s/eth//;
-            my $portnum=$nicitem+1; 
-            my $status; ( 'eth'.$nicitem eq $targetnat->{dhcprelayinterface} ) ? ( $status='selected' ):( $status='' );
-            print qq (<option $status value="eth$nicitem">PORT $portnum</option>\n);
-        }
-        print qq (</select></td></tr>);
-    my $siplist=$pptpinit->{sip};
-
-    print qq (<tr>);
-    print qq (<td class="body"  valign="top" align="left">);
-    print qq (Server Local IP:);
-    print qq (</td>);
-    print qq (<td class="body"  colspan="2" valign="top" align="left">);
-    #==== sip infomation  ========================================================
-    my @iidlist=maintainBasic(action=>'GETGOODIIDLIST');
-    print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:160"> );
-    #print qq (<select class="qbopt" multiple size="$action{sipstatus}" name="sip" style="WIDTH:360"> );
-    foreach my $iid ( @iidlist)
-    {
-         my @natips=maintainIPBank(action=>'READPUBLICIP', isp=>$iid);
-         my $targetsip;
-         foreach my $sip ( @$siplist ) { if ( $sip->{isp} eq $iid ) { $targetsip=$sip; } }
-         foreach my $natip ( @natips )
-         {
-             my $sipip=$iid.'j'.$natip;
-             my $status=( grep(/^$natip$/, $targetsip->{ip}) ) ? ( 'selected' ) : ('');
-             #print qq (<option $status value="$sipip">ISP $iid [ $natip ][ $targetsip->{ip} ][$status]</option>);
-             print qq (<option $status value="$sipip">ISP $iid [ $natip ]</option>);
-         }
-
-    }
-    print qq (</select><br>);
-    print qq (</td>);
-    print qq (</tr>);
-=cut                                                                                                                             
     my $relayip=$targetnat->{dhcprelayip}; $relayip=~s/\;/\;\n/g; 
     print qq (<tr><td>Relay to Server's IP</td><td><textarea name="dhcprelayip" class="qbtext" style="width:300;height:20" title="Relay to which dhcp server? Keep this field empty can disable this relay function.Specify dhcp servers,please seperate ips by comma" >$relayip</textarea></td></tr>);
     print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
@@ -1633,7 +1576,8 @@ sub maintainZone
 
             $targetnat->{dftlease}=$dhcpinfo[0];
             $targetnat->{maxlease}=$dhcpinfo[1];
-            $targetnat->{rangelist}=$dhcpinfo[2];
+            $targetnat->{rangelist}=($dhcpinfo[2] eq 'None')?(''):($dhcpinfo[2]);
+            $targetnat->{version}=($dhcpinfo[2] eq 'None')?('6'):('');
 
             ## for dhcp-DNS setting...nancy 20040901
             $targetnat->{dname}=(!$dhcpinfo[3]? "" : $dhcpinfo[3] );
