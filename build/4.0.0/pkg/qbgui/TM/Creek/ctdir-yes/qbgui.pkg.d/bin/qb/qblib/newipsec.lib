@@ -210,7 +210,7 @@ sub showNewIPSec
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
     print qq (Healthcheck IP:);
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
-    print qq (<input class="qbtext" name="target" style="WIDTH: 120px" value="$target->{target}" >\n);
+    print qq (<input class="qbtext" name="target" id="target" style="WIDTH: 120px" value="$target->{target}" >\n);
     print qq (</td></tr>);
     print qq (<input type="hidden" name="oritarget" value="$target->{target}">);    
     
@@ -523,19 +523,38 @@ sub scriptNewIPSec
         var slt_wan = document.getElementById('wanisp');
         var bylist = document.getElementById('bylist');
         var gateway = document.getElementById('gateway').value;
+        var hctarget = document.getElementById('target').value;
         var remote = document.getElementById('remote').innerHTML;
         var ipcom_on = document.getElementById('ipcom_on');
         var local;
         
         if (remote != '' && !isValidIP(remote))
         {
-            alert("IP format error !!");
+            alert("Tunnel Header Remote IP format error !!");
             return;
         }
         
+        if (gateway == '')
+        {
+            alert("Please type Remote Gateway IP !!");
+            return;
+        }
+
         if (gateway != '' && !isValidIP(gateway))
         {
-            alert("IP format error !!");
+            alert("Remote Gateway IP format error !!");
+            return;
+        }
+
+        if (hctarget == '')
+        {
+            alert("Please type Healthcheck IP !!");
+            return;
+        }
+
+        if (hctarget != '' && !isValidIP(hctarget))
+        {
+            alert("Healthcheck IP format error !!");
             return;
         }
 
@@ -641,6 +660,8 @@ sub maintainIPSec
     my $isplist = $ispref->{isp};
     my $exist = 0;
     
+    my $target;
+    
     my $QB_ZONE = "/usr/local/apache/qbconf/zonecfg.xml";
     my $zoneinfo = XMLread($QB_ZONE);
     my $zonelist = $zoneinfo->{nat};
@@ -654,6 +675,21 @@ sub maintainIPSec
     $action{systemip}=$ipsecip;
     
     if ( !$action{action} ) { return; } 
+    
+    foreach my $item ( @$isplist ) {  if ( $item->{iid} eq $action{iid} ) { $target=$item; last; } }
+    
+    if ( $action{action} eq "ONIPSEC" )
+    {
+        $target->{alive}='1';
+        $target->{enabled}='1';
+        XMLwrite($ispref, $gPATH."basic.xml");
+    }
+    elsif ( $action{action} eq "OFFIPSEC" ) 
+    {
+        $target->{alive}='0';
+        $target->{enabled}='0';
+        XMLwrite($ispref, $gPATH."basic.xml");
+    }                                        
     
     if ( $action{action}=~m/^SAVE$/ )
     {
@@ -964,6 +1000,28 @@ sub maintainIPSec
         maintainFwmark( action=>'ISPUPDATED' );
     }
     maintainRtable( action=>"DSIPUPDATE" );
+    if($action{action} eq "ONIPSEC" || $action{action} eq "OFFIPSEC")
+    {
+    	my $myfile = -f "/etc/racoon/delipsecrule";
+    	runCommand(command=>'/sbin/setkey', params=>'-f /etc/racoon/flush');
+    	runCommand(command=>'killall', params=>'-9 racoon');
+    	runCommand(command=>'rm', params=>'-f /etc/racoon/*.conf');
+    	runCommand(command=>'/usr/local/apache/qb/setuid/do_qbipsec.pl', params=>'');
+    	runCommand(command=>'/usr/local/apache/qb/setuid/do_qbipsec_route.pl', params=>'');
+    	runCommand(command=>'/usr/local/apache/qb/setuid/do_qbracoon.pl', params=>'');
+    	runCommand(command=>'sleep', params=>'5');
+    	if (grep(/sainfo address/,'/etc/racoon/racoon.conf') eq 0)
+    	{
+    	runCommand(command=>'/sbin/setkey', params=>'-f /etc/racoon/ipsec.conf');
+    	runCommand(command=>'/etc/racoon/ipsecroute', params=>'');
+    	runCommand(command=>'/usr/sbin/racoon', params=>'');
+    	}
+    	if($myfile)
+    	{
+    		runCommand(command=>'/etc/racoon/delipsecrule', params=>'');
+    	}
+    	runCommand(command=>'/etc/racoon/ipsecrule', params=>'');
+    }
 }
 #
 1

@@ -17,6 +17,7 @@ my  $form = new CGI;
 $action{action} = $form->param('action');
 my @ipsec=$form->param('ipsec');
 $action{ipsec}=\@ipsec;
+$action{iid} = $form->param('isp');
 
 print qq (<html><head><meta charset="UTF-8"><link rel="stylesheet" href="gui.css" type="text/css"></head><body bgcolor="#336699" text="#ffffff" link="#000040" >);
 

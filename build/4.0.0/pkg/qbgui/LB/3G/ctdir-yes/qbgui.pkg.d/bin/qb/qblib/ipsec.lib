@@ -7,7 +7,7 @@ sub showIPSec
     
     #my @titleHeadList=('ID', 'NIC', 'Name', 'TVLI', 'TVRI', 'THSI', 'THRI', 'Status',  'NAT', 'Isakmp_SA', 'Ph1_Encryption',
     # 		       'Hash', 'DH_Group', 'IPSec_SA', 'Ph2_Encryption', 'Authentition', 'PF_Group', 'Down/Up', 'Edit');
-    my @titleHeadList=( $qblang[25], $qblang[65], $qblang[66], $qblang[29], $qblang[67], $qblang[70], $qblang[84], $qblang[70], $qblang[24],  $qblang[75], $qblang[85], $qblang[86],
+    my @titleHeadList=( $qblang[25], $qblang[26], $qblang[65], $qblang[66], $qblang[29], $qblang[67], $qblang[70], $qblang[84], $qblang[70], $qblang[24],  $qblang[75], $qblang[85], $qblang[86],
     		       $qblang[87], $qblang[88], $qblang[89], $qblang[90], $qblang[91], $qblang[92], $qblang[34] );
     #==============================================================
     # Print Title first
@@ -15,7 +15,7 @@ sub showIPSec
     
     #my %titleWidth=( 'ID'=>80, 'NIC'=>80, 'Name'=>120, 'TVLI'=>120, 'TVRI'=>120, 'THSI'=>120, 'THRI'=>120, 'Status'=>50, 'NAT'=>50, 'Isakmp_SA'=>70, 'Ph1_Encryption'=>70,  
     # 		     'Hash'=>70, 'DH_Group'=>70, 'IPSec_SA'=>70, 'Ph2_Encryption'=>70, 'Authentition'=>70, 'PF_Group'=>70, 'Down/Up'=>120,'Edit'=>50 );
-    my %titleWidth=( 'Edit'=>50, 'ID'=>80, 'NIC'=>80, 'Name'=>120, 'TVLI'=>120, 'TVRI'=>120, 'THSI'=>120, 'THRI'=>120, 'Status'=>50, 'NAT'=>50, 'Isakmp_SA'=>70, 'Ph1_Encryption'=>70,  
+    my %titleWidth=( 'Edit'=>50, 'ID'=>80, 'Enable'=>'auto', 'NIC'=>80, 'Name'=>120, 'TVLI'=>120, 'TVRI'=>120, 'THSI'=>120, 'THRI'=>120, 'Status'=>50, 'NAT'=>50, 'Isakmp_SA'=>70, 'Ph1_Encryption'=>70,  
      		     'Hash'=>70, 'DH_Group'=>70, 'IPSec_SA'=>70, 'Ph2_Encryption'=>70, 'Authentition'=>70, 'PF_Group'=>70, 'Down/Up'=>120 );
     print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
     print qq (<tr><td class="bigtitle">$qblang[93]);
@@ -52,6 +52,9 @@ sub showIPSec
             print qq (<input type="checkbox" name="ipsec" value="$isp->{iid}"></td>);
             print qq (<td align="center" width="$titleWidth{Edit}" height="25">);
             print qq (<a href="newipsec.cgi?isp=$isp->{iid}";selectedColor(natList.rows[$lineCount])" ><image src="image/edit.gif" title="Edit host properties" border="0"></a></td>);
+            print qq (<td align="center" width="$titleWidth{Enable}" height="25">);
+            if ( $isp->{enabled} eq '0' ){ print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} onclick="enabledipsec($isp->{iid})"></td>); }
+            else { print qq (<input type="checkbox" id="enabled" name="enabled" value=$isp->{iid} CHECKED onclick="disabledipsec($isp->{iid})"></td>); }
             print qq (<td align="center" width="$titleWidth{ID}" height="25" >IPSec $isp->{iid}</td>);
             print qq (<td align="center" width="$titleWidth{NIC}" height="25" >$isp->{nic}</td>);
             print qq (<td align="center" width="$titleWidth{Name}" height="25" >$isp->{ispname}</td>);
@@ -87,6 +90,7 @@ sub showIPSec
     print qq (<table cellspacing="0" width="100%">);
     print qq (<tr><td align="center">);
     print qq (<input class="qb" type="button" width="100" value="$qblang[94]" onclick="NewIPSec();">);
+    print qq (<input type="hidden" name="isp" value="">);
 }
 #showIPSec
     
@@ -116,6 +120,23 @@ sub scriptIPSec
             myform.submit();
         }
     }
+    function enabledipsec(ispid)
+    {
+        //qbConfirm(null,ispid);
+        myform.action.value='ONIPSEC';
+        myform.isp.value=ispid;
+        myform.submit();
+        for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+    function disabledipsec(ispid)
+    {
+        //qbConfirm(null,ispid);
+        myform.action.value='OFFIPSEC';
+        myform.isp.value=ispid;
+        myform.submit();
+        for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
+    }
+                                                                                                        
     </script>
     
 scriptHost
