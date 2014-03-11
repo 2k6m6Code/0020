@@ -26,6 +26,9 @@ $action{pxycachesize}=$form->param('pxycachesize');if ( !$action{pxycachesize} )
 $action{replace_usage}=$form->param('replace_usage');if ( !$action{replace_usage} ) { $action{replace_usage}=70; }
 $action{maxobj}=$form->param('maxobj');if ( !$action{maxobj} ) { $action{maxobj}=4096; }
 $action{minobj}=$form->param('minobj');if ( !$action{minobj} ) { $action{minobj}=4; }
+my @parent=$form->param('parent');
+$action{parent}=\@parent;
+
 
 
 #$action{pxyhttpsportno}=$form->param('pxyhttpsportno');
@@ -61,8 +64,7 @@ print qq (<form name="pxyinitform" method="post" action="pxyinit.cgi">);
 
 pxyinitScript();
 
-showPxyinit( %action ); 
-
+showPxyinit( %action );
 print qq (<input type="hidden" name="action" value="">);
 print qq (</form>);
 print qq (</div>);

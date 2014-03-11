@@ -42,8 +42,9 @@ if [ -f $SQUIDPXY ]; then
 	ismnt=`mount|grep tclog|grep ext` #check /mnt/tclog is mount on SHD.
         if [ "$ismnt" != "" ]; then
             cp -a /usr/local/squid/etc/squid.conf.default /usr/local/squid/etc/squid.conf
-            /usr/local/apache/qb/setuid/do_qbpxyinit.pl
+#            /usr/local/apache/qb/setuid/do_qbpxyinit.pl
 		fi
+/usr/local/apache/qb/setuid/do_qbpxyinit.pl
    fi
 	
 	if [ ! -d /usr/local/squid/var ];then
@@ -70,10 +71,10 @@ if [ -f $SQUIDPXY ]; then
    /usr/local/apache/qb/setuid/do_qbremark.pl
    
    if [ "$enablesquidfilter" = "1" ];then
-        if [ "$enablesquidpxy" = "0" ];then
+#        if [ "$enablesquidpxy" = "0" ];then
 #  	    cp -a /usr/local/squid/etc/squid.conf.default /usr/local/squid/etc/squid.conf    
-            /usr/local/apache/qb/setuid/do_qbremark.pl
-        fi 
+#            /usr/local/apache/qb/setuid/do_qbremark.pl
+#        fi 
 	if [ -f /usr/local/squidGuard/squidGuard.conf.bak ];then
 	    cp -a /usr/local/squid/etc/squidGuard.conf.bak /usr/local/squidGuard/
 	    chown squid:squid /usr/local/squid/etc/squidGuard.conf.bak

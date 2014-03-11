@@ -47,7 +47,7 @@ sub showPxyinit
     #my $maxcachesize= int $memfree[1]/2/1000;
 
     #generating presentation format in TABLE 
-    print qq (<table cellspacing="0" border="0">\n);
+    print qq (<table id="mytable" cellspacing="0" border="0">\n);
     print qq (<tr><td align="center" class="bigtitle" colspan="2">$qblang[397] ); #</td></tr>);
     #print qq (<a href="javascript:qbShowHelp('pxyinit')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
     
@@ -240,7 +240,6 @@ sub showPxyinit
     print qq (<input class="qb" type="button" value="Clean Log" title="Clean All connection log !" onClick="goSubmit('CLEAN')" style="width:100">);
     print qq (</td>);
     print qq (</tr>); 
-
     print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
     print qq (</table>);
 
@@ -321,10 +320,53 @@ sub showPxyinit
     print qq (</table></td></tr>);
 
 =cut
+    ##################################### squid parent setting ######################################
+    print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
+#    print qq (<tr>);
+#    print qq (<td class="body"  valign="top" align="left">);
+#    print qq (Parent:);
+#    print qq (</td>);
+#    print qq (<td class="body"  valign="top" align="left">);
+#    print qq (<INPUT type="text" class="qbtext" name="parent" value="" title="test">);
+#    print qq (<input class="qb" type="button" style="width: 40" value="Add" onclick="add_new_data();">);
+#    print qq (</td>);
+#    print qq (</tr>);
+#    print qq (</td></tr>);
+    my $view_parent = $pxyinit->{parent};
+    my $num=0;
+    print qq (<tr>);
+    print qq (<td class="body"  valign="top" align="left">Parent:</td>);
+    print qq (<td><input class="qb" type="button" style="width: 40" value="Add" onclick="add_new_data();"></td>);
+    foreach my $view(@$view_parent)
+    {
+	print qq (<tr id="$num">);
+        print qq (<td class="body"  valign="top" align="left">);
+#        if($num eq 0){print qq (Parent:);}
+        print qq (</td>);
+        print qq (<td class="body"  valign="top" align="left">);
+        print qq (<INPUT type="text" class="qbtext" name="parent" value="$view">);
+#        if($num eq 0)
+#        {
+#        	print qq (<input class="qb" type="button" style="width: 40" value="Add" onclick="add_new_data();">);
+#        }
+#        else
+#        {
+        	print qq (<a href="#" onclick="remove_data('$num'); return false;"><image src="image/del.gif" valign="center" align="center" title="Delete Checked Parent" border="0"></a>);	
+#        }
+#        $num++;
+        print qq (</td>);
+        print qq (</tr>);
+        print qq (</td></tr>);
+    }
+    print qq (</table>);
+    #################################################################################################
+
     #************************************ Command Button  ********************************************
+    print qq (<table>);
     print qq (<tr>);
     print qq (<td colspan="2" align="center">);
-    print qq (<input class="qb" type="button" value="$qblang[139]" title="Save All Parameters and apply now !" onClick="goSubmit('APPLY')" style="width:120">);
+#    print qq (<input class="qb" type="button" value="$qblang[139]" title="Save All Parameters and apply now !" onClick="goSubmit('APPLY')" style="width:120">);
+    print qq (<input class="qb" type="button" value="$qblang[139]" title="Save All Parameters and apply now !" onClick="chk_parent()" style="width:120">);
     print qq (</td></tr>);
     print qq (</table>);
 
@@ -418,7 +460,69 @@ sub pxyinitScript
             weight.disabled=false;
         }
     }
-                                                                                                                                    
+    
+    var count=0;
+    function add_new_data()
+    {
+	var num = document.getElementById("mytable").rows.length;
+	var tr = document.getElementById("mytable").insertRow(num);
+        count+=1;
+        var view_count=count+1;
+	tr.setAttribute("id", count);
+//    	td = tr.insertCell(tr.cells.length);
+//    	td.setAttribute("class", "body");
+//    	td.setAttribute("valign", "center");
+//    	td.setAttribute("align", "left");
+//   	td.setAttribute("style", "height:30px; width: 20px;");
+//   	td.setAttribute("className", "body"); // for IE
+//     	td.innerHTML='<td class="body"  valign="center" align="left" style="height: 30px; width: 20px;"></td>';
+   	td = tr.insertCell(tr.cells.length);
+        td.setAttribute("class", "body");
+        td.setAttribute("valign", "center");
+        td.setAttribute("align", "left");
+	td.setAttribute("style", "height:30px; width: 20px;");
+	td.setAttribute("className", "body"); // for IE
+    	td.innerHTML='<td class="body"  valign="center" align="left"></td>';
+// 	td.innerHTML='';
+//    	add_other(num);
+        td = tr.insertCell(tr.cells.length);
+        td.setAttribute("class", "body");
+        td.setAttribute("valign", "center");
+        td.setAttribute("align", "left");
+        td.setAttribute("style", "height:30px; width: 20px;");
+        td.setAttribute("className", "body"); // for IE
+        td.innerHTML='<td class="body"  valign="center" align="left"></td>';
+        add_other(num);
+    }
+
+    function add_other(num)
+    {
+	var tt='<td class="body" valign="center" align="left" style="height:30px; width:400px;">';
+	var arr = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "All Day"];
+	var parent='<INPUT type="text" class="qbtext" name="parent" value="">';
+	var del = '<a href="#" onclick="remove_data('+count+'); return false;"><image src="image/del.gif" valign="center" align="center" title="Delete Checked Parent" border="0"></a>';
+	//var del = '<input class="qb" type="button" style="width: 40" value="Del" onclick="remove_data('+count+');">';
+	del+='</td>';
+	td.innerHTML=tt+parent+del;
+    }
+
+     function remove_data(num)
+     {
+	if(num!=null)
+        //alert(num.id)
+        var tb=document.getElementById('mytable');
+        var tr=document.getElementById(num);
+        tb.deleteRow(tr.rowIndex);
+     }
+     
+     function chk_parent()
+     {
+	var parent=document.getElementsByName('parent');
+	for (var i = 0; i < parent.length; i++) {
+	if(parent[i].value == ''){alert('Must input');return;}
+	}
+	goSubmit('APPLY');
+     }
     </script>
 SCRIPT
 }
@@ -449,6 +553,7 @@ sub maintainPxyinit
         $pxyinit->{maxobj}=$action{maxobj};
         $pxyinit->{minobj}=$action{minobj};
         $pxyinit->{replace_usage}=$action{replace_usage};
+        $pxyinit->{parent}=$action{parent};
         
         if ( $pxyinit->{pxyhttpportno}=~m/\D/ || $pxyinit->{pxyhttpportno} < 0 || $pxyinit->{pxyhttpportno} >= 65536 )
         {

@@ -29,7 +29,7 @@ $action{ftpfrequency}=$form->param('ftpfrequency');
 $action{ftpdir}=$form->param('ftpdir');
 $action{syslogdev}=$form->param('syslogdev');
 
-$action{locallog}=($form->param('locallog')) ? (1) : (0);
+$action{locallog}=($form->param('locallog')) ? (1) : (0);if ( !$action{locallog} ) { $action{locallog}=1; }
 $action{serverlog}=($form->param('serverlog')) ? (1) : (0);
 $action{kernellog}=($form->param('kernellog')) ? (1) : (0);
 $action{squidlog}=($form->param('squidlog')) ? (1) : (0);if ( !$action{squidlog} ) { $action{squidlog}=0; }

@@ -83,8 +83,8 @@ foreach my $type ( keys  %FILE_ANALY )
     if ( !$syslog->{kernellog} && $type eq 'kern.notice;kern.!warning' )  {  next; }
     if ( $syslog->{syslogserver} )  {   print SYSLOG qq($type       \@$SYSLOGSERVER\n); }
     #Check for tclog later
-    if ( !$checktclog )  {  next; }
-    if ( $syslog->{locallog} && $gENABLEANALYSER )      {   print SYSLOG qq($type       $FILE_ANALY{$type}\n); } #Brian 20120731 To prevent traffic log is saved in the CF.
+    #if ( !$checktclog )  {  next; }
+    #if ( $syslog->{locallog} && $gENABLEANALYSER )      {   print SYSLOG qq($type       $FILE_ANALY{$type}\n); } #Brian 20120731 To prevent traffic log is saved in the CF.
 }
 
 if ( $syslog->{kernellog} ) #20080424 Brian Let QB's Traffic log can be disabled
