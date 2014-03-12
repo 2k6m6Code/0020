@@ -6,7 +6,6 @@ count=0
 while : ; do
 alive=`grep "iid=\"$ispid\"" $BASICACTIVE|sed -e "s/  <isp.*alive=\"//"|sed -e "s/\".*//"`
 enable=`grep "iid=\"$ispid\"" $QBCONFACTIVE|sed -e "s/  <isp.*enabled=\"//"|sed -e "s/\".*//"`
-exit 0
  if [ "$alive" = "0" && "$enable" = "1" ];then
     /etc/racoon/ipsecroute
     sleep 15
