@@ -49,27 +49,6 @@ if [ -f "/tmp/basiclock" ];then
     fi
 fi
 
-
-# check ram disk size
-disksize=$(df| awk '/root/ {print $4}')
-#( $EZIO_PRINT "Ramdisk left:[ ${disksize} KB ]"; sleep 60; $EZIO_PRINT_DEFAULT) &
-
-if [ $disksize -le 2048 ]; # disk size <= 2MB
-then
-        echo $(date) "Ramdisk is smaller than 2 mb, self-terminate." >> $QBLOGFILE
-	cp -f $QBLOGFILE /mnt/log/qbalance.log
-	sync
-	CLEAN_FLAG="YES"
-fi
-
-disk_percentage=$(df| awk '/tclog/ {print $5}'|sed -e "s/\%//")
-if [ $disk_percentage -ge 95 ]; # disk size >= 95% need to clean the data of Historical Traffic
-then
-     #To delete the oldest file
-     Oldest_filename=$(ls /tmp/ispnet|awk NR==1)
-     rm -f /tmp/ispnet/$Oldest_filename
-fi
-
 INFO1=`df |grep /mnt/tclog |awk '{print $5}'`
 DATA_CHECK=`echo $INFO1|sed "s/%//g"`
 LIMIT_ref=`cat /mnt/conf/registry |grep LIMIT`
@@ -80,12 +59,24 @@ if [ $DATA_CHECK -ge $LIMIT ];then
     rm -rf /mnt/tclog/nfcapd/*
 fi
 
+# check ram disk size
 disk_percentage=$(df| awk '/root/ {print $5}'|sed -e "s/\%//")
 if [ $disk_percentage -ge 95 ]; # disk size >= 95% need to clean the data of Historical Traffic
 then
      #To delete the oldest file
      Oldest_filename=$(ls /tmp/ispnet|awk NR==1)
      rm -f /tmp/ispnet/$Oldest_filename
+fi
+
+disksize=$(df| awk '/root/ {print $4}')
+#( $EZIO_PRINT "Ramdisk left:[ ${disksize} KB ]"; sleep 60; $EZIO_PRINT_DEFAULT) &
+
+if [ $disksize -le 2048 ]; # disk size <= 2MB
+then
+        echo $(date) "Ramdisk is smaller than 2 mb, self-terminate." >> $QBLOGFILE
+	cp -f $QBLOGFILE /mnt/log/qbalance.log
+	sync
+	CLEAN_FLAG="YES"
 fi
 
 if [[ $R_LEVEL = "0" || $CLEAN_FLAG = "YES" ]];

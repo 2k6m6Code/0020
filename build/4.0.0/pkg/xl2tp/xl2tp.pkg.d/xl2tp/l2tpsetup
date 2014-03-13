@@ -113,7 +113,7 @@ novj
 novjccomp
 nopcomp
 noaccomp
-
+noipdefault
 noauth
 crtscts
 idle 1800

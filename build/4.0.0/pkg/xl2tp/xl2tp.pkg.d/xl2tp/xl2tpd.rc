@@ -18,7 +18,7 @@ SERVICE=xl2tpd
 # Source networking configuration.
 . /etc/sysconfig/network
 
-if [ ${NETWORKING} = "no" ]
+if [ "${NETWORKING}" = "no" ];
 then
 	exit 0
 fi
@@ -29,7 +29,7 @@ RETVAL=0
 
 start() {
 	echo -n "Starting $SERVICE: "
-	if [ ! -d /var/run/xl2tpd ]
+	if [ ! -d /var/run/xl2tpd ];
 	then
 		mkdir /var/run/xl2tpd
 	fi

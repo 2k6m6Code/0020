@@ -19,6 +19,7 @@ if [ "$L2TPIID" != "" ];then
      /sbin/ip route replace $pptpserver via $pptproutegw dev $pptproutenic table 254
  done
  #sleep 60
+ 
  /opt/qb/xl2tp/configxl2tp.pl
  /sbin/service xl2tpd start &
 fi

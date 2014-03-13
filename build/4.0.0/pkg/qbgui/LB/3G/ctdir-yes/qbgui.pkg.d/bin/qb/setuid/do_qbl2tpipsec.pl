@@ -7,6 +7,7 @@ my $QB_IPSEC_CONF = "/etc/racoon/l2tpipsec.conf";
 my $QB_DEL_IPSEC_CONF = "/etc/racoon/dell2tpipsec.conf";
 my $QB_RACOON_CONF = "/etc/racoon/racoon.conf";
 my $QB_L2TP_PSK = "/etc/racoon/l2tp.psk";
+my $QB_PSK = "/etc/racoon/psk.txt";
 my $QB_IP_RULE = "/etc/racoon/iprule";
 my $QB_CHAP_SECRET="/etc/ppp/chap-secrets";
 my $QB_L2TP_CONF="/etc/xl2tpd/xl2tpd.conf";
@@ -36,7 +37,9 @@ print IPSEC qq "#!/sbin/setkey -f\n";
 #print IPSEC qq "flush;\n";
 #print IPSEC qq "spdflush;\n";
 print IPSEC qq "spdadd $l2tp->{serverip}\[1701] 0.0.0.0/0[0] any -P out ipsec esp/transport//require;\n";
+print IPSEC qq "spdadd 0.0.0.0/0[0] $l2tp->{serverip}\[1701] any -P in ipsec esp/transport//require;\n";
 print DELIPSEC qq "spddelete $l2tp->{serverip}\[1701] 0.0.0.0/0[0] any -P out ipsec esp/transport//require;\n";
+print DELIPSEC qq "spddelete 0.0.0.0/0[0] $l2tp->{serverip}\[1701] any -P in ipsec esp/transport//require;\n";
 
 close(IPSEC);
 #------------------------------------------------------------------
@@ -109,8 +112,9 @@ if ( !open(PSK,">$QB_L2TP_PSK") )
     print qq (Fail to Open L2TP/IPSEC PSK !!);
 }
 
-print PSK qq "$l2tp->{psk}\n";
+print PSK qq "*	$l2tp->{psk}\n";
 close(PSK);
+runCommand(command=>"cat", params=>'/etc/racoon/l2tp.psk'.' '.'>>/etc/racoon/psk.txt');
 #---------------------------------------------------------------
 # L2TP/ IPsec CHAP username / password
 #---------------------------------------------------------------

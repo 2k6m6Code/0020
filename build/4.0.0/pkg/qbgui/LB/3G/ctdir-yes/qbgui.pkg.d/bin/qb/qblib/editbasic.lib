@@ -950,6 +950,21 @@ sub showISPInfo
 			print qq (</td></tr>);
 			print qq (<input type="hidden" name="oripppoepasswd" value="$showData->{pppoepasswd}">);
 		}
+		#####################################################################
+		#------------2014/02/25 Jianyu add l2tp ipsec psk
+		#####################################################################
+		if ( $action{isptype} eq "l2tp" )
+		{
+			 print qq (<tr>);
+                         print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+                         print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+                         print qq ( Pre Shared Key : );
+                         print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+                         print qq (<input type="password" name="psk" class="qbtext" maxlength="100" value="$showData->{psk}" style="width:120">);
+                         print qq (</td></tr>);
+                         print qq (<input type="hidden" name="oripsk" value="$showData->{psk}">);
+		}
+		#####################################################################
 		if ( $action{isptype} eq "pppoe" || $action{isptype} eq "dhcp" )
 		{
 			   #****************************************************************************************
@@ -2441,6 +2456,21 @@ sub showISPInfo
         print qq (</td></tr>);
         print qq (<input type="hidden" name="oripppoepasswd" value="$showData->{pppoepasswd}">);
     }
+    #####################################################################
+    #------------2014/02/25 Jianyu add l2tp ipsec psk
+    #####################################################################
+    if ( $showData->{isptype} eq "l2tp" )
+    {
+        print qq (<tr>);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20px">);
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 220px">);
+        print qq ( Pre Shared Key : );
+        print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 450px">);
+        print qq (<input type="password" name="psk" class="qbtext" maxlength="100" value="$showData->{psk}" style="width:120">);
+        print qq (</td></tr>);
+        print qq (<input type="hidden" name="oripsk" value="$showData->{psk}">);
+    }
+    #####################################################################
     if ( $showData->{isptype} eq "pppoe" || $showData->{isptype} eq "dhcp" )
     {
            #****************************************************************************************
@@ -5679,6 +5709,7 @@ sub maintainISP
         { 
             $target->{pptpserver}=$action{pptpserver};
             $target->{pppispid}=$action{pppispid};
+            $target->{psk}=$action{psk};
         }
         if ( $action{isptype} eq "normal" || $action{isptype} eq "dhcp" || $action{isptype} eq "pppoe" ) 
         { 
@@ -6332,6 +6363,7 @@ sub maintainISP
         { 
             $target->{pptpserver}=$action{pptpserver};
             $target->{pppispid}=$action{pppispid};
+            $target->{psk}=$action{psk};
         }
         if ( $action{isptype} eq "normal" || $action{isptype} eq "dhcp" || $action{isptype} eq "pppoe" ) 
         { 

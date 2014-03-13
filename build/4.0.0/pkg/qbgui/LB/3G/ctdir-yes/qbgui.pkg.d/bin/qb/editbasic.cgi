@@ -54,6 +54,7 @@ $action{compression}=($form->param('compression')) ? (1) : (0);if ( !$action{com
 $action{stateless}=($form->param('stateless')) ? (1) : (0);if ( !$action{stateless} ) { $action{stateless}=0; }
 $action{enc}=($form->param('enc')) ? (1) : (0);if ( !$action{enc} ) { $action{enc}=0; }
 $action{pptpserver}=$form->param('pptpserver');if ( !$action{pptpserver} ) { $action{pptpserver}=''; }
+$action{psk}=$form->param('psk');if ( !$action{psk} ) { $action{psk}=''; }
 $action{alg}=($form->param('alg')) ? (1) : (0);if ( !$action{alg} ) { $action{alg}="";} 
 $action{ipcom}=($form->param('ipcom')) ? (1) : (0);if ( !$action{ipcom} ) { $action{ipcom}=0; }
 $action{mpv_nat}=($form->param('mpv_nat')) ? (1) : (0);if ( !$action{mpv_nat} ) { $action{mpv_nat}=0; }

@@ -41,11 +41,22 @@ foreach my $isp ( @$isplist )
 {
 	if ( $isp->{enc} || $isp->{isptype} eq "ipsec" )
 	{
-		if($isp->{isptype} eq "ipsec" && $isp->{enabled} eq "0"){next;}
+		if(($isp->{isptype} eq "ipsec" && $isp->{enabled} eq "0")||($isp->{isptype} eq "l2tp" && $isp->{enabled} eq "0")){next;}
 		print RACOON qq	"\tisakmp $isp->{local} [500];\n";
           	if ( $isp->{mpv_nat} )
           	{
 		print RACOON qq "\tisakmp_natt $isp->{local} [4500];\n";
+		}
+	}
+	if ($isp->{isptype} eq "l2tp")
+	{
+		if($isp->{isptype} eq "l2tp" && $isp->{enabled} eq "0"){next;}
+		foreach my $pppid ( @$isplist )
+		{
+			if($isp->{pppispid} eq $pppid->{iid})
+			{
+				print RACOON qq	"\tisakmp $pppid->{systemip} [500];\n";
+			}
 		}
 	}
 }
@@ -139,6 +150,31 @@ foreach my $isp ( @$isplist )
 		}else{
 		print PSK qq "$isp->{remote}\t$isp->{presharekey}\n";
 		}
+	}
+	if ( $isp->{isptype} eq "l2tp" )
+	{
+		#postqb_general grep tunnel racoon.conf
+		# print RACOON qq "#ipsec tunnel\n";
+		# foreach my $pppid ( @$isplist )
+		# {
+			# if($isp->{pppispid} eq $pppid->{iid})
+			# {
+				# print RACOON qq "remote $pppid->{systemip}\n";
+				# print RACOON qq "{\n";
+				# print RACOON qq "\texchange_mode main;\n";
+				# print RACOON qq "\tmy_identifier address \"$pppid->{systemip}\";\n";
+				# print RACOON qq "\tpeers_identifier address \"$isp->{pptpserver}\";\n";
+				# print RACOON qq "\tlifetime time 28800 sec;\n";
+				# print RACOON qq "\tproposal {\n";
+				# print RACOON qq "\tencryption_algorithm 3des;\n";
+				# print RACOON qq "\thash_algorithm sha1;\n";
+				# print RACOON qq "\tauthentication_method pre_shared_key;\n";
+				# print RACOON qq "\tdh_group 2;\n";
+				# print RACOON qq "\t}\n}\n\n";
+			# }
+		# }
+		
+		print PSK qq "$isp->{pptpserver}\t$isp->{psk}\n";
 	}
 }
 close(RACOON);

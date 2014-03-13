@@ -151,6 +151,20 @@ foreach my $isp ( @$isplist )
      	}
      	$number -= 5;
     }
+	if ( $isp->{isptype} eq "l2tp" )
+    {
+        if ($isp->{enabled} eq "0"){next;}
+		foreach my $pppid ( @$isplist )
+		{
+			if($isp->{pppispid} eq $pppid->{iid})
+			{
+				print IPSEC qq "spdadd $pppid->{systemip}\[0\] $isp->{pptpserver}\[1701\] any -P out ipsec ";
+				print IPSEC qq "esp/transport//unique;\n";
+				print IPSEC qq "spdadd $isp->{pptpserver}\[1701\] $pppid->{systemip}\[0\] any -P in ipsec ";
+				print IPSEC qq "esp/transport//unique;\n";
+			}
+		}
+    }
 }
 close(IPSEC);
 close(IPRULE);
