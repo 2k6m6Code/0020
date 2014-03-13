@@ -4636,20 +4636,19 @@ sub write_qosscript()
             }
             else
             {
-            
             	#Gary 20130619 Individual
-            	if ($qostype eq 'Individual')
-            	{
-            	    @iplist = get_allocated_ip($item->{source});
-            	    foreach my $ip ( @iplist )
-            	    {
-                        print QOSINIT qq "/sbin/iptables -t mangle -A PREROUTING -s $ip -m ingw --ispid $isp --isptype $isptype --ispgwip 0 -j IMQ --todev $imqin\n";
-            	    }
-            	}
-            	else
-            	{
+#            	if ($qostype eq 'Individual')
+#            	{
+#            	    @iplist = get_allocated_ip($item->{source});
+#            	    foreach my $ip ( @iplist )
+#            	    {
+#                        print QOSINIT qq "/sbin/iptables -t mangle -A PREROUTING -s $ip -m ingw --ispid $isp --isptype $isptype --ispgwip 0 -j IMQ --todev $imqin\n";
+#            	    }
+#            	}
+#            	else
+#            	{
                 print QOSINIT qq "/sbin/iptables -t mangle -A PREROUTING -m ingw --ispid $isp --isptype $isptype --ispgwip 0 -j IMQ --todev $imqin\n";
-                }
+#                }
             }
             if ($bridge eq '1')
             {
@@ -4657,17 +4656,17 @@ sub write_qosscript()
             }
             else
             {
-            	if ($qostype eq 'Individual')
-            	{
-            	    foreach my $ip ( @iplist )
-            	    {
- 	                print QOSINIT qq "/sbin/iptables -t mangle -A POSTROUTING -s $ip -o $nic -m gw --gw $gateway -j IMQ --todev $imqout\n";
-            	    }
-            	}
-            	else
-            	{
+#            	if ($qostype eq 'Individual')
+#            	{
+#            	    foreach my $ip ( @iplist )
+#            	    {
+# 	                print QOSINIT qq "/sbin/iptables -t mangle -A POSTROUTING -s $ip -o $nic -m gw --gw $gateway -j IMQ --todev $imqout\n";
+#            	    }
+#            	}
+#            	else
+#            	{
                 print QOSINIT qq "/sbin/iptables -t mangle -A POSTROUTING -o $nic -m gw --gw $gateway -j IMQ --todev $imqout\n";
-                }
+#                }
             }
         }
     }
