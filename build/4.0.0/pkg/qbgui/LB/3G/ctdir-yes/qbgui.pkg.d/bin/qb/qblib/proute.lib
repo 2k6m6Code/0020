@@ -171,7 +171,7 @@ sub list_ini_rule
             my $update_or_not=(`/usr/local/apache/qb/setuid/run diff /usr/local/apache/active/iniroute.xml /usr/local/apache/qbconf/iniroute.xml`)?'disabled':'';
             print qq (<td align="center" style="width:$titleWidth{Enabled}" >);
             my $status=($class->{enabled} eq '0')?'':'checked';
-            print qq (<input type="checkbox" $status name="enabled_policy" $update_or_not id="enabled_policy" style="" value="$checkrulekey" onClick="enabled_disabled_policy(this.value,this.status);"></td>);
+            print qq (<input type="checkbox" $status name="enabled_policy" $update_or_not id="enabled_policy" style="" value="$checkrulekey" onClick="enabled_disabled_policy(this.value,this.checked);"></td>);
         }
         #===================================================================      
         if ( $viewpoint eq 'dmz' &&  $class->{source} ne 'system' && !exists($source2isp{$class->{source}}) ) 
