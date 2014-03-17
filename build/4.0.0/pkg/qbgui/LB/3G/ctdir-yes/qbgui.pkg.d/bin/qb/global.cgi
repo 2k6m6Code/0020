@@ -520,7 +520,7 @@ if ( -r $gUPGINFO )
             'U7510'                =>'Huawei U7510', 
             'MF190'                =>'ZTE MF190', 
             'MF627'                =>'ZTE MF627', 
-			'MC8090'               =>'Sierra MC8090',
+			'MC8090'               =>'Sierra MC7710/MC8090',
             'H20'                  =>'Qisda H20',
             'T77Z'                 =>'Sierra T77Z', 
             'HP10'                 =>'AMO HP10' 

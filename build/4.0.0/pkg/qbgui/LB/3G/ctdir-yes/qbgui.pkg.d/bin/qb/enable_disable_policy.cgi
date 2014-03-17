@@ -50,7 +50,7 @@ use XML::Simple;
     foreach my $class ( @$classes )
     {
     	if ( $class->{source} eq 'system' ) {next;}
-    	if ( $class->{source} eq $target_source && $class->{destination} eq $target_destination && $class->{service} eq $target_service && !$SelectAllMode )
+    	if ( $class->{source} eq $target_source && $class->{destination} eq $target_destination && $class->{service} eq $target_service && $class->{method} eq $target_method && !$SelectAllMode )
     	{
     	    $class->{enabled}=$enabled_or_not;
     	    $class->{process_me}='1';
@@ -139,12 +139,12 @@ use XML::Simple;
 		    
 		    my $qbclass = $prouteref->{$proute_view}->[0]->{class};
 		    #foreach my $proute_class ( @$prouteref->{subnet}->[0]->{class} )
-#`/usr/local/apache/qb/setuid/run /bin/echo $proute_view > /tmp/garytest`;
+#`/usr/local/apache/qb/setuid/run /bin/echo $enabled_or_not > /tmp/garytest`;
 		    foreach my $proute_class ( @$qbclass )
 		    {
-#`/usr/local/apache/qb/setuid/run /bin/echo $proute_class->{source} $src $proute_class->{service} $class->{service} >> /tmp/garytest`;
+#`/usr/local/apache/qb/setuid/run /bin/echo $proute_class->{source} $src $proute_class->{service} $class->{service}  >> /tmp/garytest`;
 		    	#if ( $proute_class->{source} eq $src && $proute_class->{service} eq $class->{service} && $proute_class->{destination} eq $dest)
-		    	if ( $proute_class->{source} eq $src && $proute_class->{service} eq $class->{service} )
+		    	if ( $proute_class->{source} eq $src && $proute_class->{service} eq $class->{service} && $proute_class->{direction} eq $target_direction)
 		    	{
 		    	###################################################
 		    	##  TODO   add enabled and process_me in proute.xml
@@ -241,6 +241,6 @@ use XML::Simple;
     `/usr/local/apache/qb/setuid/run chmod 777 /usr/local/apache/qbconf/$Fwmark_XML`;
     `/usr/local/apache/qb/setuid/run chmod 777 /usr/local/apache/active/$Fwmark_XML`;
     
-    if ( $enabled_or_not eq '1' ) { `/usr/local/apache/qb/setuid/run /bin/echo 020 > /tmp/fifo.qbserv`; }
-    elsif ( $enabled_or_not eq '0' ) { `/usr/local/apache/qb/setuid/run /bin/echo 021 > /tmp/fifo.qbserv`; }
+#    if ( $enabled_or_not eq '1' ) { `/usr/local/apache/qb/setuid/run /bin/echo 020 > /tmp/fifo.qbserv`; }
+#    elsif ( $enabled_or_not eq '0' ) { `/usr/local/apache/qb/setuid/run /bin/echo 021 > /tmp/fifo.qbserv`; }
 #

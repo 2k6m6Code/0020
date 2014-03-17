@@ -6,7 +6,10 @@ Version : 4.0.0-0020
      The modification include : do_qbsyslog.pl,syslog.cgi
     2.To fix QB can't calculate PPTP traffic.(EVAL_013)(20140313)
      The modification include : qbkflow.ko,qbkf_core.c
-    2.put Shane code
+    3.put Shane code
+	4.To add On/Off function in policy route
+	 The modification include : proute.lib enable_disable_policy.cgi qbmod.cgi
+config.lib qbserv
 
 ======== Tue Feb 11 19:18:37 CST 2014 ========
 Version : 4.0.0-0019
