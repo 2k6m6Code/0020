@@ -38,6 +38,7 @@ sub showPolicyTitle
     {
         print qq (<td align="center" style="width:$titleWidth{Enabled}">Enabled);
 #        print qq (<input type="checkbox" onClick="setAllCheckBoxValue('enabled_policy', this.checked);enabled_disabled_policy('SelectAll',this.status);">);
+print qq (<input type="button" class="qb" value="Apply" onclick="AlertApply();" title="Activate your setup for enable or disable.">);
 	print qq (</td>);
     }
     print qq (<td align="center" width="$titleWidth{'Source'}" ><a href="javascript:sortPolicy('BYSOURCE')" title="Sort by Source" border="0">Source</a></td>);
@@ -168,7 +169,8 @@ sub list_ini_rule
         # Gary 20140220 add enabled/disabled function
         if ( $action{viewpoint} eq 'nat' )
         {
-            my $update_or_not=(`/usr/local/apache/qb/setuid/run diff /usr/local/apache/active/iniroute.xml /usr/local/apache/qbconf/iniroute.xml`)?'disabled':'';
+            #my $update_or_not=(`/usr/local/apache/qb/setuid/run diff /usr/local/apache/active/iniroute.xml /usr/local/apache/qbconf/iniroute.xml`)?'disabled':'';
+            my $update_or_not;
             print qq (<td align="center" style="width:$titleWidth{Enabled}" >);
             my $status=($class->{enabled} eq '0')?'':'checked';
             print qq (<input type="checkbox" $status name="enabled_policy" $update_or_not id="enabled_policy" style="" value="$checkrulekey" onClick="enabled_disabled_policy(this.value,this.checked);"></td>);
@@ -446,6 +448,11 @@ sub list_ini_rule_script
     	queryReqHandler.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
     	var str='';
     	queryReqHandler.send(str);
+    }
+    
+    function AlertApply()
+    {
+	if ( qbConfirm(2, 'Activate all choice ?') == 1 )  { goSubmit('ACTIVATE_ON_OFF');}
     }
     
     function edit_this_rule(rule_key_to_edit, focusedrule)
@@ -2542,6 +2549,10 @@ sub maintainIniroute
         }
     
         $iniroute->{$viewpoint}->[0]->{class}=\@class_array_after_del;
+    }
+    elsif ( $action{action}=~m/^ACTIVATE_ON_OFF$/ )
+    {
+	`/usr/local/apache/qb/setuid/run /bin/echo 020 > /tmp/fifo.qbserv`;
     }
     elsif ( $action{action}=~m/^DELTMVRULES$/ )
     {
