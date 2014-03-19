@@ -34,6 +34,7 @@ sub showPolicyTitle
     print qq (<div class="divframe">);
     print qq (<table width="100%" bgcolor="#332211" border="0" align="center"> );
     print qq (<tr>);
+=cut # Gary hide on/off policy 20140319
     if ( $action{viewpoint} eq 'nat' )
     {
         print qq (<td align="center" style="width:$titleWidth{Enabled}">Enabled);
@@ -41,6 +42,7 @@ sub showPolicyTitle
 print qq (<input type="button" class="qb" value="Apply" onclick="AlertApply();" title="Activate your setup for enable or disable.">);
 	print qq (</td>);
     }
+=cut
     print qq (<td align="center" width="$titleWidth{'Source'}" ><a href="javascript:sortPolicy('BYSOURCE')" title="Sort by Source" border="0">Source</a></td>);
     print qq (<td align="center" width="$titleWidth{'Destination'}" >Destination</td>);
     my $title = ( $action{viewpoint} eq 'app' ) ? ( 'Application' ) : ( 'Service' );
@@ -166,6 +168,7 @@ sub list_ini_rule
 
         print qq (<tr bgcolor="$bgcolor" originalColor="$originalColor" onmouseover="focusedColor(this)" onmouseout="blurColor(this)">);
         
+=cut # Gary hide on/off policy 20140319
         # Gary 20140220 add enabled/disabled function
         if ( $action{viewpoint} eq 'nat' )
         {
@@ -175,6 +178,7 @@ sub list_ini_rule
             my $status=($class->{enabled} eq '0')?'':'checked';
             print qq (<input type="checkbox" $status name="enabled_policy" $update_or_not id="enabled_policy" style="" value="$checkrulekey" onClick="enabled_disabled_policy(this.value,this.checked);"></td>);
         }
+=cut
         #===================================================================      
         if ( $viewpoint eq 'dmz' &&  $class->{source} ne 'system' && !exists($source2isp{$class->{source}}) ) 
         {
