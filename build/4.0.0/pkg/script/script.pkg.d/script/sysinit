@@ -1241,7 +1241,7 @@ echo -e "\tTCPKeepAlive no" >>/etc/ssh/ssh_config
 service sshd restart
 sshd_alert=$?
 if [ $sshd_alert == "0" ];then
-    echo "SSHD ERROR" >> /mnt/log/SSHD.log
+    echo $(date) "sshd error" >> /mnt/log/sshd.log
 fi
 if [ -f /usr/local/apache/qb/setuid/do_qbsyslog.pl ];then
 /usr/local/apache/qb/setuid/do_qbsyslog.pl
