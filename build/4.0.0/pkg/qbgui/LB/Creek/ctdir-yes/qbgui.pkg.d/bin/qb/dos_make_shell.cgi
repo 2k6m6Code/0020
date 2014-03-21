@@ -28,17 +28,17 @@ sub makeshell
     print DQOS qq ($SHELLHEAD \n\n);
 
     my $dosref=$dqos->{dos};
-    print DQOS qq ($IPTCMD -X DEF \n);
-    print DQOS qq ($IPTCMD -N DEF \n);
+    #print DQOS qq ($IPTCMD -X DEF \n);
+    #print DQOS qq ($IPTCMD -N DEF \n);
     
-    print DQOS qq ($IPTCMD -X COD \n);
-    print DQOS qq ($IPTCMD -N COD \n);                
+    #print DQOS qq ($IPTCMD -X COD \n);
+    #print DQOS qq ($IPTCMD -N COD \n);                
     
-    print DQOS qq ($IPTCMD -X PSD \n);
-    print DQOS qq ($IPTCMD -N PSD \n);
+    #print DQOS qq ($IPTCMD -X PSD \n);
+    #print DQOS qq ($IPTCMD -N PSD \n);
         
-    print DQOS qq ($IPTCMD -X ICMP \n);
-    print DQOS qq ($IPTCMD -N ICMP \n);
+    #print DQOS qq ($IPTCMD -X ICMP \n);
+    #print DQOS qq ($IPTCMD -N ICMP \n);
 	
 	print DQOS qq ($IPTCMD -X PORTSCAN \n);
 	
@@ -148,10 +148,10 @@ sub makeshell
 		}
 	}
 	#default
-	print DQOS qq($CMDCOD -p tcp --syn -m connlimit --connlimit-above 50 -m limit --limit 50/s --limit-burst 50 -j ACCEPT\n);
-   	print DQOS qq($CMDCOD -p tcp --syn -m connlimit --connlimit-above 50 -m limit --limit 1/m -j LOG $LOGLEVEL --log-prefix t_connect: \n);
-	print DQOS qq($CMDCOD -p udp -m connlimit --connlimit-above 50 -m limit --limit 50/s --limit-burst 50 -j ACCEPT\n);
-	print DQOS qq($CMDCOD -p udp -m connlimit --connlimit-above 50 -m limit --limit 1/m -j LOG $LOGLEVEL --log-prefix u_connect: \n);
+	#print DQOS qq($CMDCOD -p tcp --syn -m connlimit --connlimit-above 50 -m limit --limit 50/s --limit-burst 50 -j ACCEPT\n);
+   	#print DQOS qq($CMDCOD -p tcp --syn -m connlimit --connlimit-above 50 -m limit --limit 1/m -j LOG $LOGLEVEL --log-prefix t_connect: \n);
+	#print DQOS qq($CMDCOD -p udp -m connlimit --connlimit-above 50 -m limit --limit 50/s --limit-burst 50 -j ACCEPT\n);
+	#print DQOS qq($CMDCOD -p udp -m connlimit --connlimit-above 50 -m limit --limit 1/m -j LOG $LOGLEVEL --log-prefix u_connect: \n);
 	#print DQOS qq($CMDCOD -j ICMP \n\n);
 #===================================================
 
@@ -357,8 +357,8 @@ sub makeshell
 			}
 		}
 	}
-	print DQOS qq($CMDFLOOD -p icmp --icmp-type echo-request -m limit --limit 50/s --limit-burst 50 -j ACCEPT\n);
-	print DQOS qq($CMDFLOOD -p icmp --icmp-type echo-request -m limit --limit 1/m -j LOG --log-level alert --log-prefix icmp_flood:\n);
+	#print DQOS qq($CMDFLOOD -p icmp --icmp-type echo-request -m limit --limit 50/s --limit-burst 50 -j ACCEPT\n);
+	#print DQOS qq($CMDFLOOD -p icmp --icmp-type echo-request -m limit --limit 1/m -j LOG --log-level alert --log-prefix icmp_flood:\n);
 	#print DQOS qq($CMDFLOOD -j DEF \n); 
 	#print DQOS qq($CMDFLOOD -j DROP \n\n);
 #===================================================

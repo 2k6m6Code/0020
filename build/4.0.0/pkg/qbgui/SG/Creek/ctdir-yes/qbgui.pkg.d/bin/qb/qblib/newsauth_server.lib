@@ -63,10 +63,10 @@ sub showNewSchedule
     #print qq (</table>);
     #print qq (</div>);
     
-    print qq (<div id="note" style="position:absolute;left:50%;top:13%;width:300;height:50%;">);
-    print qq (<blockquote style="color:#000000;font-size:13px;background-color:#ffffcc;margin-left:0px;margin-right:0px;-webkit-box-shadow:#333333 4px 4px 6px;padding:0px;border:1px dashed #aabbcc;" >);
-    print qq (Please enter the IP of the selecting port!!);
-    print qq (</blockquote></div>);
+#    print qq (<div id="note" style="position:absolute;left:50%;top:13%;width:300;height:50%;">);
+#    print qq (<blockquote style="color:#000000;font-size:13px;background-color:#ffffcc;margin-left:0px;margin-right:0px;-webkit-box-shadow:#333333 4px 4px 6px;padding:0px;border:1px dashed #aabbcc;" >);
+#    print qq (Please enter the IP of the selecting port!!);
+#    print qq (</blockquote></div>);
     
     print qq (<table bgcolor="#667788" width="600" id="setting" >);
     #-------------------------------------------------------------------------------------------

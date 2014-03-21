@@ -1,9 +1,4 @@
 #set -x
-#ispid=$1
-#ispname=$2
-#systemip=$3
-#gateway=$4
-#device=$5
 name=$1
 quota=$2
 type=$3
@@ -14,46 +9,47 @@ qn=$6
 mailinfo="/tmp/mailinfo"
 MailList=`grep "mail value" /usr/local/apache/qbconf/overview.xml|grep -v system|sed -e "s/.*value=\"//"|sed -e "s/\".*//"|sed 's/\n//g'`
 
-if [ "$type" == "ip" ]
+if [ "$type" == "ip" ];
 then
 	UserMailList=`grep "$name" /usr/local/apache/qbconf/auth.xml|grep -v system|sed -e "s/.*mail=\"//"|sed -e "s/\".*//"|sed 's/\n//g'`
 fi
 
 
-if [ "$type" == "policy" ]
+if [ "$type" == "policy" ];
 then
-cat >> $mailinfo <<!
+	cat >> $mailinfo <<!
 Policy Routing Quota Bandwith is $quota
 Source:	$src
 Destination: $dest
 
 If you want to restore it.
 You need to reset quota or delete quota policy from Status -> Quota.
- 
 !
-elif [ "$type" == "port" ]
+elif [ "$type" == "port" ];
 then
-cat >> $mailinfo <<!
+	cat >> $mailinfo <<!
 Link Quota $name
 Quota Bandwith is $quota
 
 If you want to restore it.
 You need to reset quota or delete quota policy from Status -> Quota.
- 
 !
-elif [ "$type" == "ip" ]
-cat >> $mailinfo <<!
+elif [ "$type" == "ip" ];
+then
+	cat >> $mailinfo <<!
 Authentication Quota $name
 Quota Bandwith is $quota
 
 If you want to restore it.
 You need to reset quota or delete quota policy from Status -> Quota.
- 
 !
+
+#else
+#	exit 0
 fi
 
 #Generate mail text contents
-if [ "$MailList" != "" ]
+if [ "$MailList" != "" ];
 then
 #if [ "$type" == "policy" ]
 #then

@@ -38,7 +38,7 @@ print qq (</select>seconds&nbsp&nbsp);
 print qq (<input type="button" value="Stop" class="qb" style="width:60" id="switch" onclick="Switch(this.value)">);
 print qq (&nbsp&nbsp Kick Out for: );
 print qq (<select id="kick_time" style="width:100px">);
-print qq (<option value="none">Again</option>);
+print qq (<option value="none">Now</option>);
 print qq (<option value="forever">Forever</option>);
 foreach my $time (1..24)
 {

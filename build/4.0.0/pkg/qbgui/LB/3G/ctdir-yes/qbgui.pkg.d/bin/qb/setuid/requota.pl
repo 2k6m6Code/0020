@@ -46,6 +46,7 @@ foreach my $countquota (@$quotalist)
 		my $source='0';
 		my $dest='0';
 		#print "$source $dest \n [$quotaref[11]] \n";
+		#print "$countquota->{mail} \n [$quotaref[11]] \n $countquota->{qn} \n";
 		if ((!$countquota->{mail}||$countquota->{mail} eq '0')&&$quotaref[11] eq '0'&&$countquota->{qn} ne '0')
 		{
 			if($countquota->{source} ne '' && $countquota->{dest} ne '')
@@ -81,6 +82,7 @@ foreach my $countquota (@$quotalist)
 				$source = $countquota->{source}; $dest = $countquota->{dest}; $source =~s/host-//g; $dest =~s/host-//g;
 			}
 			system("/usr/local/apache/qb/setuid/run /bin/sh /usr/local/apache/qb/setuid/mailquota.sh $countquota->{name} $quotarefUP[11] $countquota->{type} $source $dest $countquota->{qn}"); $countquota->{mail}='1';
+			#print "/usr/local/apache/qb/setuid/run /bin/sh /usr/local/apache/qb/setuid/mailquota.sh $countquota->{name} $quotarefUP[11] $countquota->{type} $source $dest $countquota->{qn}";
 		}
 		if ($action eq "")
 		{

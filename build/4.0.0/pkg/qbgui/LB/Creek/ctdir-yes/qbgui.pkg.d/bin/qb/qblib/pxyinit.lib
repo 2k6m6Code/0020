@@ -332,32 +332,24 @@ sub showPxyinit
 #    print qq (</td>);
 #    print qq (</tr>);
 #    print qq (</td></tr>);
-    my $view_parent = $pxyinit->{parent};
-    my $num=0;
-    print qq (<tr>);
-    print qq (<td class="body"  valign="top" align="left">Parent:</td>);
-    print qq (<td><input class="qb" type="button" style="width: 40" value="Add" onclick="add_new_data();"></td>);
-    foreach my $view(@$view_parent)
-    {
-	print qq (<tr id="$num">);
-        print qq (<td class="body"  valign="top" align="left">);
-#        if($num eq 0){print qq (Parent:);}
-        print qq (</td>);
-        print qq (<td class="body"  valign="top" align="left">);
-        print qq (<INPUT type="text" class="qbtext" name="parent" value="$view">);
-#        if($num eq 0)
-#        {
-#        	print qq (<input class="qb" type="button" style="width: 40" value="Add" onclick="add_new_data();">);
-#        }
-#        else
-#        {
-        	print qq (<a href="#" onclick="remove_data('$num'); return false;"><image src="image/del.gif" valign="center" align="center" title="Delete Checked Parent" border="0"></a>);	
-#        }
-#        $num++;
-        print qq (</td>);
-        print qq (</tr>);
-        print qq (</td></tr>);
-    }
+####################################################################################################
+#    my $view_parent = $pxyinit->{parent};
+#    my $num=0;
+#    print qq (<tr>);
+#    print qq (<td class="body"  valign="top" align="left">Parent:</td>);
+#    print qq (<td><input class="qb" type="button" style="width: 40" value="Add" onclick="add_new_data();"></td>);
+#    foreach my $view(@$view_parent)
+#    {
+#	print qq (<tr id="$num">);
+#        print qq (<td class="body"  valign="top" align="left">);
+#        print qq (</td>);
+#        print qq (<td class="body"  valign="top" align="left">);
+#        print qq (<INPUT type="text" class="qbtext" name="parent" value="$view">);
+#        print qq (<a href="#" onclick="remove_data('$num'); return false;"><image src="image/del.gif" valign="center" align="center" title="Delete Checked Parent" border="0"></a>);	
+#        print qq (</td>);
+#        print qq (</tr>);
+#        print qq (</td></tr>);
+#    }
     print qq (</table>);
     #################################################################################################
 

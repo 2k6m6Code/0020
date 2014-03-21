@@ -57,20 +57,20 @@ sub showSquidgen
     print qq (</td></tr>);
     
     print qq (<tr><td colspan="8" bgcolor="#332211" align="left" class="subtitle">[ Multi-Add User ]</td></tr>);
-    print qq (<tr><div>);
-    print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 150px"></td>);
-    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
-    print qq (<div style="border-color:red; border-style:dotted;" align="left">);
+#    print qq (<tr><div>);
+#    print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 150px"></td>);
+#    print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
+#    print qq (<div style="border-color:red; border-style:dotted;" align="left">);
     
-    print qq (Note<br>);
-    print qq (If you want to import your user list,<br>);
-    print qq (please find the specail from which is in the download button.);
+#    print qq (Note<br>);
+#    print qq (If you want to import your user list,<br>);
+#    print qq (please find the specail from which is in the download button.);
     
-    print qq (</div></td></tr>);
+#    print qq (</div></td></tr>);
     print qq (<td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
     print qq (Export</td>);
     print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
-    print qq (<select class="qbopt" name="export" id="export">);
+    print qq (<select class="qbopt" name="export" id="export" style="width:100px">);
     print qq (<option value="example" >Example</option>);
     foreach my $user (@$list)
     {
@@ -78,12 +78,12 @@ sub showSquidgen
         print qq (<option value="$user->{schname}">$user->{schname}</option>);
     } 
     print qq (</select>);
-    print qq (<INPUT type="button" class="qb" value="Download" onclick="go('export')"></td></tr>);
+    print qq (<INPUT type="button" class="qb" value="Export" onclick="go('export')"></td></tr>);
     
     print qq (<tr><td class="body" valign="center" align="left" style="height: 50pxi; width: 150px">);
     print qq (Import</td>);
     print qq (<td class="body"  valign="center" align="left" style="height: 50px; width: 150px">);
-    print qq (<select class="qbopt" id="import_name" name="import_name">);
+    print qq (<select class="qbopt" id="import_name" name="import_name" style="width:100px">);
     foreach my $user (@$list)
     {
         if ($user->{schname} eq 'system' || $user->{schname} eq ''){next;}
@@ -91,7 +91,7 @@ sub showSquidgen
     }
     print qq (</select>);
     print qq (<INPUT type="file" name="user" id="user">);
-    print qq (<INPUT type="button" class="qb" value="Upload" onclick="go('user')"></td>);
+    print qq (<INPUT type="button" class="qb" value="Import" onclick="go('user')"></td>);
     print qq (<tr><td colspan=2><iframe name="result" style="background-color:#C2D1E1; width:100%; height:100; filter:alpha(opacity=70);"></iframe>);
     print qq (</td></div></tr>);
     
