@@ -13,6 +13,12 @@ $lanConfig{delete}      =$qblang[478];
 $lanConfig{templet}     =$qblang[479];
 sub showConfig
 {
+    if ( -e "/tmp/SHD_Crash" || -e "/tmp/SHD_failed" )
+    {
+        print qq(<script language="javascript">);
+        print qq( window.alert ( "QB's SHD had crash, please fix it !!" ););
+        print qq(</script>);
+    }
     (%action)=@_;
     #************************* Configuration Sets **************************************
     my @configlist=(0,1,2,3,4,5);

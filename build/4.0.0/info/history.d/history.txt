@@ -10,6 +10,16 @@ Version : 4.0.0-0020
 	4.To add On/Off function in policy route
 	 The modification include : proute.lib enable_disable_policy.cgi qbmod.cgi
 config.lib qbserv
+	5.Fix quota issue on SMP
+	 The modification include : xt_quota.ko
+	6.To add On/Off function in ipsec
+	 The modification include : ipsec.cgi ipsec.lib newipsec.lib ipsecreconnect
+	7.To add ipsec function with L2TP Client
+	 The modification include : do_qbracoon.pl do_qbipsec_route.pl do_qbipsec.pl configxl2tp.pl l2tpsetup do_qbl2tpipsec editbasic.lib editbasic.cgi
+	8.Refine outbound pool page
+	 The modification include : global.cgi rtable.lib
+	9.Fix QoS issue
+	 The modification include : proute.lib
 
 ======== Tue Feb 11 19:18:37 CST 2014 ========
 Version : 4.0.0-0019

@@ -1309,16 +1309,34 @@ fi
 /bin/cp /opt/qb/naptd-install /usr/sbin/
 /bin/cp /opt/qb/totd /usr/local/sbin/
 
-
-#if [ "$QBTYPE" = "TM" ]; then
-#Gary insmod weburl webstr
+#..........................................................
+#
+# Gary insmod weburl webstr
+# Check had SHD or not
+# Start nfcapd daemon
+#
+#..........................................................
+SHD=`df -h | grep tclog$ | awk '{print $1}'`
+if [ "$SHD" = "" ];then
+    touch /tmp/SHD_not_found
+    echo $(date) "SHD not found">>/mnt/log/bootlog
+else
+ touch /tmp/SHD_healthy_OK
+ echo $(date) "SHD healthy OK ...">>/mnt/log/bootlog
+ mkdir /mnt/tclog/nfcapd
+ 
  insmod /lib/modules/2.6.22/kernel/net/netfilter/xt_webstr.ko
  insmod /lib/modules/2.6.22/kernel/net/netfilter/ipt_weburl.ko
- /sbin/ip route add local 127.0.0.1 dev lo proto kernel scope host src 127.0.0.1 table 255
+ /sbin/ip route add local 127.0.0.1   dev lo proto kernel scope host src 127.0.0.1 table 255
  /sbin/ip route add local 127.0.0.0/8 dev lo proto kernel scope host src 127.0.0.1 table 255
  insmod /opt/qb/modules/ipt_NETFLOW.ko destination=127.0.0.1:54311
- #insmod /opt/qb/modules/ipt_weburl.ko
-#fi
+ /sbin/iptables -I FORWARD -j NETFLOW
+ /sbin/iptables -I INPUT   -j NETFLOW
+ /sbin/iptables -I OUTPUT  -j NETFLOW
+ /usr/local/bin/nfcapd -w -D -t 60 -S 1 -l /mnt/tclog/nfcapd/ -p 54311
+
+fi
+#..........................................................End
 
 /usr/bin/perl /usr/local/apache/qb/qblib/option.pl action=Timer action1=open
 
@@ -1342,12 +1360,6 @@ if [ -f $RADIUS ]; then
     mv /tmp/radius/radclient /usr/local/bin/
     rm -rf /tmp/radius
 fi
-
-#
-# 2013-1202
-# Gary save nfcapd data
-#
-mkdir /mnt/tclog/nfcapd
 
 #
 # 2013-1204
