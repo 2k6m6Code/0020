@@ -197,10 +197,11 @@ sub scriptNewSerGroup
         }
         var listlen = sltserlist.length;
         
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
         myform.sergroup.value = sergroup_show;
         myform.serlist.value = sltserlist.substring(0, listlen - 1);
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
     }
     function delser()
     {

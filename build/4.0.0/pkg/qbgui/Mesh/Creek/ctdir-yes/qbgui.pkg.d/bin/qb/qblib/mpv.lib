@@ -184,24 +184,27 @@ sub scriptMPV
     {
         if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )
         {
-            myform.action.value='DELET';
-            myform.submit();
+//            myform.action.value='DELET';
+//            myform.submit();
+		goSubmit('DELET');
         }
     }
  
     function enabledisp(ispid)
     {
-        myform.action.value='ON';
+//        myform.action.value='ON';
         myform.isp.value=ispid;
-    	myform.submit();
+//    	myform.submit();
+	goSubmit('ON');
     	for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
     }
     
     function disabledisp(ispid)
     {
-        myform.action.value='OFF';
+//        myform.action.value='OFF';
         myform.isp.value=ispid;
-        myform.submit();
+//        myform.submit();
+	goSubmit('OFF');
         for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
     }
  

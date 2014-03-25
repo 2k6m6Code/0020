@@ -107,8 +107,9 @@ sub scriptEditmime
    	    myform.block.value = '0';
    	}
     	
-    	myform.action.value = 'SAVE';
-    	myform.submit();
+//    	myform.action.value = 'SAVE';
+//    	myform.submit();
+	goSubmit('SAVE');
     }
     
     function checkState()

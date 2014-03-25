@@ -13,23 +13,12 @@ $lanConfig{delete}      =$qblang[478];
 $lanConfig{templet}     =$qblang[479];
 sub showConfig
 {
-    if ( -e "/tmp/SHD_Crash" || -e "/tmp/SHD_failed" )
-    {
-        print qq(<script language="javascript">);
-        print qq( window.alert ( "QB's SHD had crash, please arrange time to power cycle !!" ););
-        print qq(</script>);
-    }
-    elsif ( -e "/tmp/Please_arrage_reboot" )
-    {
-        print qq(<script language="javascript">);
-        print qq( window.alert ( "QB's filesystem had some issues, please arrange time to reboot !!" ););
-        print qq(</script>);
-    }
     (%action)=@_;
     #************************* Configuration Sets **************************************
     my @configlist=(0,1,2,3,4,5);
     if ( $action{config} eq '' ) { $action{config}=$configlist[0]; }
     my $allconf=$config->{set};
+    my $TYPE=runCommand(command=>'cat', params=>'/opt/qb/registry|awk \'$1 == "TYPE" { print $2 }\'');
     
     print qq (<form name="configform" action="config.cgi" method="post">);
     print qq (<div id="Layer3" style="position:absolute; left:0px; top:15px; width:700px; height:43px; z-index:2">); 
@@ -55,7 +44,9 @@ sub showConfig
     #print qq (<td><img src="image-top/spacer.gif" width="50" height="1" border="0"></td>);
     #print qq (</tr>);
     print qq (<tr><td bgcolor="#003366" bordercolor="#003366">);
-    print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[480]" title="" onClick="showDashboard();" style="width:70px">);
+    my $dashboard_ver=1;
+    if($TYPE eq 'Mesh'){$dashboard_ver=0;}
+    print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[480]" title="" onClick="showDashboard($dashboard_ver);" style="width:70px">);
     print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[481]" title="" onClick="askAndApply();" style="width:90px">);
     print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[482]" title="" onClick="confirmLogout();" style="width:45px">);
     print qq (</td>);
@@ -102,9 +93,16 @@ print << "CONFIGSCRIPT";
 
         var myform;
         
-        function showDashboard()
+        function showDashboard(ver)
         {
+            if(ver==1)
+            {
             window.top.mainFrame.location.href = 'dashboard.php';
+            }
+            else
+            {
+            	window.top.mainFrame.location.href = 'dashboard.cgi';
+            }
         }
         
         function cgi_dep_onload() 

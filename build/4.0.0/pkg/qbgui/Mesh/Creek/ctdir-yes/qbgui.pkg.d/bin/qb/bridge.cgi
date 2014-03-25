@@ -9,7 +9,7 @@ my $action = $cgi->param("action");
 if ($action ne "SAVE")
 {
     print qq(<html><head><link rel="stylesheet" href="gui.css" type="text/css"><script type="text/javascript" src="jquery-1.9.1.min.js"></script>);
-	print qq(<style type="text/css">.dragDiv {width:250px; position:absolute;	left:50px;	top:100px;}</style>);
+	print qq(<style type="text/css">.dragDiv {width:250px; position:absolute;	right:50px;	top:100px;}</style>);
 	print qq(</head>);
     print qq(<body bgcolor="#336699" text="#ffffff" link="#000040" vlink="#400040">);
     print qq(<style type="text/css">button.menu{margin-right: 4px;height:18px;font:10px Verdana;color:white;background:#336699;border:1px solid black;cursor:hand;}</style>);
@@ -194,6 +194,7 @@ if( $action eq "SAVE")
 }
 print << "QB";
 
+<script type="text/javascript" src="qb.js"></script>
 <script language="javascript">
 
 \$(window).load(function(){
@@ -231,6 +232,8 @@ print << "QB";
 
 
 \$("#ok").click(function(){
+var privilege=getcookie('privilege');
+    if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
     var num = \$("#total").val()/2 ;
     var max = ((\$("#total").val()-0) + (4-0));
     \$("#all").attr("disabled",true);

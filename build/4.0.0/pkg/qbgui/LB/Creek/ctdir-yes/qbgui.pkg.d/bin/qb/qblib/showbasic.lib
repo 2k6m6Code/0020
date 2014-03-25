@@ -402,25 +402,28 @@ sub basicScript_1
     {
         if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )
         {
-            myform.action.value='DELISP';
-            myform.submit();
+//            myform.action.value='DELISP';
+//            myform.submit();
+		goSubmit('DELISP');
             for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
         }
     }
     function enabledisp(ispid)
     {
       //qbConfirm(null,ispid);
-        myform.action.value='ON';
+//        myform.action.value='ON';
         myform.isp.value=ispid;
-        myform.submit();
+//        myform.submit();
+	goSubmit('ON');
         for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
     }
     function disabledisp(ispid)
     {
       //qbConfirm(null,ispid);
-        myform.action.value='OFF';
+//        myform.action.value='OFF';
         myform.isp.value=ispid;
-        myform.submit();
+//        myform.submit();
+	goSubmit('OFF');
         for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
     }
     function setISPid(ispid)

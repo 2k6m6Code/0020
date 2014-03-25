@@ -21,7 +21,7 @@ sub showTCPopt
     print qq (</td>);
     print qq (<td class="body"  valign="center" align="left" height="30">);
     my $status=( $overview->{enabletcpopt} ) ? ('checked') : ('');
-    print qq (<INPUT type="checkbox" name="enabletcpopt" $status onchange="TCP_change()">);
+    print qq (<INPUT type="checkbox" id="enabletcpopt" name="enabletcpopt" $status onchange="TCP_change()">);
     print qq (</td>);
     print qq (</tr>);
 =cut   
@@ -49,7 +49,7 @@ sub showTCPopt
     print qq (</td>);
     print qq (</tr>);
 =cut   
-    print qq (<input type="hidden" name="tcp_opt" value="westwood">);
+    print qq (<input type="hidden" id="tcp_opt" name="tcp_opt" value="westwood">);
     
     print qq (<tr>);
     print qq (<td class="body"  valign="center" align="left" height="30">$qblang[150]</td>);
@@ -69,13 +69,13 @@ sub showTCPopt
     print qq (<tr>);
     print qq (<td class="body"  valign="center" align="left" height="30">$qblang[373]</td>);
     print qq (<td class="body"  valign="center" align="left" height="30">);
-    print qq (<input class="qbtext" name="tcp_destination" style="WIDTH: 120px" value="$overview->{tcp_destination}">);
+    print qq (<input class="qbtext" id="tcp_destination" name="tcp_destination" style="WIDTH: 120px" value="$overview->{tcp_destination}">);
     print qq (</td></tr>);
     
     print qq (<tr>);
     print qq (<td class="body"  valign="center" align="left" height="30">$qblang[374]</td>);
     print qq (<td class="body"  valign="center" align="left" height="30">);
-    print qq (<input class="qbtext" name="tcp_dest_port" style="WIDTH: 120px" value="$overview->{tcp_dest_port}">);
+    print qq (<input class="qbtext" id="tcp_dest_port" name="tcp_dest_port" style="WIDTH: 120px" value="$overview->{tcp_dest_port}">);
     print qq (</td></tr>);
     
     print qq (<tr><td colspan="2"><hr size="1"></td></tr>);
@@ -162,8 +162,9 @@ sub TCPoptScript
         	alert("ip or port error!!")
         	return;
         }
-        myform.action.value = 'SAVE';
-	myform.submit();        
+//        myform.action.value = 'SAVE';
+//	myform.submit();        
+	goSubmit('SAVE');
     }
     
     </script> 

@@ -502,7 +502,9 @@ sub rmupgrdScript
         //=============2006/11/02 Brian to prevent firmware abuse.
         //function go()
         function go(model, upg)
-        { 
+        {
+        	var privilege=getcookie('privilege');
+        	    if(privilege!=1) {alert('You do not have Privilege to do it'); return;} 
             var oktogo=true;
             var errmsg='';
             myform.Start.disabled=true;

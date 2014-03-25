@@ -16,7 +16,7 @@ sub showDiag
     print qq (<a href="javascript:qbShowHelp('diagnose')"><image src="image/help.gif" border="0" title="Help"></a></td></tr>);
     print qq (<tr><td class="bigtitle" colspan="2"><hr size="1"></td></tr>); 
     print qq (<tr><td rowspan="2">);
-    print qq (<iframe onload="clearInterval(Timer)" name="result" style="background-color:#C2D1E1; width:500; height:400; filter:alpha(opacity=70);"></iframe>);
+    print qq (<iframe onload="clearInterval(Timer)" name="result" style="background-color:#C2D1E1; width:500; height:530; filter:alpha(opacity=70);"></iframe>);
     print qq (<iframe id="kill" style="display:none"></iframe>);
     print qq (</td>);
     
@@ -44,8 +44,6 @@ sub showDiag
 #Brian 2006-0912
     print qq (<tr><td><input name="tool" type="radio" value="wget" onClick="switchOption('wget')">$qblang[428]</td></tr>); 
 
-=cut    
-#------------for TM
 #Brian 2006-0915
     print qq (<tr><td><input name="tool" type="radio" value="tunnel_speed" onClick="switchOption('tunnel_speed')">$qblang[429]</td></tr>); 
 
@@ -60,9 +58,7 @@ sub showDiag
 
 #Brian 2005-0929
     print qq (<tr><td><input name="tool" type="radio" value="arpcache" onClick="switchOption('arpcache')">$qblang[433]</td></tr>);
-#-----------------end
-=cut  
-
+ 
 #Brian 2005-1122
     #print qq (<tr><td><input name="tool" type="radio" value="bindmac" onClick="switchOption('bindmac')">Bind Mac Address</td></tr>); 
 
@@ -561,13 +557,15 @@ sub diagScript
         }
 
         function go()
-        {  
+        { 
+        	var privilege=getcookie('privilege');
+        	    if(privilege!=1) {alert('You do not have Privilege to do it'); return;} 
             myform.action.value='start';
             myform.submit();
             moveResultScrollBarToBottom('start');
 
             if (preMethod=="restartqbserv") 
-            { 
+            {
                 myform.rstqb.disabled=true; 
                 setTimeout("enableRestartQB()",5000);
             }

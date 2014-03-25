@@ -57,6 +57,8 @@ print << "QB_TRAFFIC";
 
 function kick()
 {
+    var privilege=getcookie('privilege');
+    if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
     var aa = document.getElementsByName('box');
     var bb = aa.length;
     var oo = document.getElementById("kick_time").value + ":";

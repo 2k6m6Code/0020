@@ -475,6 +475,8 @@ sub showNewSchedule
     print qq (<tr>);
     print qq (<td class="body"  valign="center" align="center" style="height: 30px; width: 650px">);
     print qq (<input class="qb" type="button" style="width:50" value="Save" onclick="SaveSchedule();">);
+    print qq (&nbsp;&nbsp;);
+    print qq (<input class="qb" type="button" style="width:50" value="Back" onclick="history.go(-1);">);
     print qq (</td></tr>);
     print qq (</table>);
     
@@ -1087,7 +1089,7 @@ sub scriptNewSchedule
             myform.schname.value = schname_show.value;
         
          
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
         myform.d_ip.value = ip;
         myform.d_port.value = port;
         myform.d_pwd.value = pwd;
@@ -1097,7 +1099,8 @@ sub scriptNewSchedule
 		myform.d_qn.value = qn;
 		myform.d_ql.value = ql;
 		myform.group_name.value = schname;
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
     }
     function checkState()
     {

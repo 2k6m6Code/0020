@@ -915,9 +915,10 @@ sub scriptNewMPV
         {
             myform.mss.value = mss_value;
         }*/
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
         myform.local.value = local;
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
 	for(i=0;i<myform.elements.length;i++) { myform.elements[i].disabled=true; }
     }
     

@@ -194,10 +194,11 @@ sub scriptNewAppGroup
         }
         var listlen = sltapplist.length;
         
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
         myform.appgroup.value = appgroup_show;
         myform.applist.value = sltapplist.substring(0, listlen - 1);
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
     }
     function delapp()
     {

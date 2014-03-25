@@ -73,7 +73,7 @@ sub showNewSchedule
     print qq (IP :);
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 200px">);
     print qq (<input type="text" id="port" name="alldays" value=""></td>);
-	print qq (<td class="body"  valign="center" align="left">e.g. 192.168.1.10 or<br>192.168.2.100-192.168.2.110<br>IP Range must be on the same subnet!!);
+	print qq (<td class="body" colspan="2"  valign="center" align="left">e.g. 192.168.1.10 or<br>192.168.2.100-192.168.2.110<br>IP Range must be on the same subnet!!);
 	print qq (</td>);
     
     print qq (<tr>);
@@ -82,6 +82,7 @@ sub showNewSchedule
     print qq (Note :);
     print qq (<td colspan="2" class="body"  valign="center" align="left" style="height: 30px; width: 400px">);
     print qq (<textarea id="mail" value="" ></textarea></td>);
+    print qq (<td><input class="qb" type="button" style="width:50" value="Add" onclick="AddSchedule();"></td>);
     print qq (</td></tr>);
     
     print qq (</td></tr>);
@@ -305,7 +306,7 @@ sub scriptNewSchedule
     function SaveSchedule() 
     {
         if ( document.getElementById('port').value )
-            AddSchedule();
+//            AddSchedule();
         var subsch = document.getElementById('scheduleList').rows;
         var total = subsch.length;
         var ip ='';
@@ -342,10 +343,11 @@ sub scriptNewSchedule
             }
         }
         myform.schname.value=schname;
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
         myform.d_ip.value = ip;
         myform.d_mail.value = mail;
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
     }
     function checkState()
     {

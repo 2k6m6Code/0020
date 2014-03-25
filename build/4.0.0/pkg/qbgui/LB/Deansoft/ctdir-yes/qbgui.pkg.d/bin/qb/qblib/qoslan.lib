@@ -193,14 +193,16 @@ sub scriptqoslan
         	return;
         }
         
-        myform.action.value = action;
-        myform.submit();
+//        myform.action.value = action;
+//        myform.submit();
+	goSubmit(action);
    }
 
     function DeleteQoS()
     {
-        myform.action.value = 'DELQOS';
-        myform.submit();
+//        myform.action.value = 'DELQOS';
+//        myform.submit();
+	goSubmit('DELQOS');
     }
     
     </script>

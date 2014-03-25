@@ -710,6 +710,8 @@ sub editVIPScript
 	
 	function myalert()
 	{
+		var privilege=getcookie('privilege');
+                if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
 		var ctrlobj=document.getElementById('isp_of_vip');
 		var isp_of_vip='';
 		isp_of_vip=ctrlobj.options[ctrlobj.selectedIndex].value;

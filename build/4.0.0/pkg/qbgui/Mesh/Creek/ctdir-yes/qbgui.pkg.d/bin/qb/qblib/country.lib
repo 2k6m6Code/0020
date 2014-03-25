@@ -134,8 +134,9 @@ sub scriptCountry
     
     function delcountry()
     {
-        myform.action.value='DELET';
-        myform.submit();
+//        myform.action.value='DELET';
+//        myform.submit();
+	goSubmit('DELET');
     }
     
     

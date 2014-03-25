@@ -550,13 +550,14 @@ sub scriptNewHost
                 myform.hostaddress.value = address;
                 break;
         }
-        myform.action.value = 'SAVE';
+        //myform.action.value = 'SAVE';
         if (showtype != 'weburl' && document.getElementById('type').value == 6)
 		{
 			myform.hostname.value = hostname_show + "-IPv6-";
 		}
         else{myform.hostname.value = hostname_show;}
-        myform.submit();
+        goSubmit('SAVE');
+        //myform.submit();
    	 
     }
     

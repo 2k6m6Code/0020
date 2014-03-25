@@ -352,10 +352,11 @@ sub scriptNewCountry
             	break;
         }
         
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
         if (document.getElementById('version').checked == true){myform.countryname.value = countryname_show + "-IPv6-";}
         else{myform.countryname.value = countryname_show;}
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
    	 
     }
     

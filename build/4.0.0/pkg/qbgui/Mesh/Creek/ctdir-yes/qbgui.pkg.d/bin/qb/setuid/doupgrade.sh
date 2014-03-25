@@ -141,3 +141,8 @@ else
     sync #20130419 To prevent DOM/CF become readonly
 fi
 
+reEnableHA=`grep "ENABLEHA" /opt/qb/registry|sed -e "s/ENABLEHA //"|sed 's/\n//g'`
+if [[ $reEnableHA == '1' ]]
+then
+	/usr/local/apache/qb/setuid/enableha.pl
+fi

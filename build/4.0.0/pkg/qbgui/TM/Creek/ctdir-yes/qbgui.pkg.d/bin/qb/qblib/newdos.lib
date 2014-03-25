@@ -1,4 +1,4 @@
-﻿#=============================================================================================
+#=============================================================================================
 require ("/usr/local/apache/qb/language/qblanguage.cgi");
 @qblang = QBlanguage();
 sub showDos
@@ -76,6 +76,8 @@ sub scriptDos
     
 	function selenable()
 	{
+		var privilege=getcookie('privilege');
+		    if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
 		myform.action.value='ENABL';
         myform.submit();
 		for ( var i=0; i < myform.elements.length; i++)
@@ -87,8 +89,9 @@ sub scriptDos
 	
     function delCOD()
     {
-        myform.action.value='DELET';
-        myform.submit();
+//        myform.action.value='DELET';
+//        myform.submit();
+	goSubmit('DELET');
     }
 	
     </script>

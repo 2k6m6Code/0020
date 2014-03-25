@@ -22,8 +22,8 @@ sub showAccessControl
     print qq (<tr>);
     
     print qq (<td align="center" width="$titleWidth{'Enable'}" >);
-    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('enabled', this.checked)">Enable);
-    print qq (</td>);
+#    print qq (<input type="checkbox" title="select or deselect all items" onClick="setAllCheckBoxValue('enabled', this.checked)">);
+    print qq (Enable</td>);
     
     my %portlist2;#GET SERVICE DETAIL
     foreach $service3 ( @$servicelist )
@@ -109,7 +109,7 @@ sub showAccessControl
     	    my $status;
     	    if ( $class->{dirty} eq '1' ) { $status=''; }
     	    else 			      { $status='CHECKED';}
-    	    print qq (<input type="checkbox" id="enabled" $status name="enabled" title="enabled or disabled this rule" value="$class->{name}" onClick="enable_or_disable(this.value+':'+this.status);">);
+    	    print qq (<input type="checkbox" id="enabled" $status name="enabled" title="enabled or disabled this rule" value="$class->{name}" onClick="enable_or_disable(this.value+':'+this.checked);">);
     	    print qq (</td>);
 	}
        ################################################################# 
@@ -234,6 +234,8 @@ sub list_access_script
     
     function delAccess()
     {
+    	var privilege=getcookie('privilege');
+    	if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
         if (!myform.rule) return;
         var setDeleteOn=false;
         if ( !myform.rule.length ) setDeleteOn=myform.rule.checked;
@@ -365,6 +367,8 @@ sub list_access_script
     
     function enable_or_disable(value)
     {
+    	var privilege=getcookie('privilege');
+    	if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
     	var tmp=value.split(":");
     	var rule_name=tmp[0];
     	var status=tmp[1];
@@ -634,6 +638,8 @@ sub access_script
     }
     function updateAccess(action)
     {
+    	var privilege=getcookie('privilege');
+    	if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
         var report="";
         var okToGo=true;
         var name=document.getElementById("rule_name").value;

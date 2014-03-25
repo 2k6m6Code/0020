@@ -129,8 +129,9 @@ sub scriptQoS
     
     function delqos()
     {
-        myform.action.value='DELET';
-        myform.submit();
+//        myform.action.value='DELET';
+//        myform.submit();
+	goSubmit('DELET');
     }
     </script>
     

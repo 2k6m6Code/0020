@@ -73,8 +73,9 @@ sub scriptSchedule
     
     function delSchedule()
     {
-        myform.action.value='DELET';
-        myform.submit();
+//        myform.action.value='DELET';
+//        myform.submit();
+	goSubmit('DELET');
     }
 	
 	function MM_openBrWindow(theURL,winName,win_width,win_height) 

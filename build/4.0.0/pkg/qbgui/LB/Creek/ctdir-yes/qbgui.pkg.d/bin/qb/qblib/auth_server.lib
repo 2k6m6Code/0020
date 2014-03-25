@@ -10,10 +10,10 @@ sub showSchedule
     my @titleHeadList=('Name', 'Description', 'Edit');
     my %titleWidth=('Name'=>300, 'Description'=>300, 'Edit'=>100);
     
-    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0" style="TABLE-LAYOUT: fixed" width="100%">);
     print qq (<tr><td class="bigtitle">Authentication Server);
     print qq (<tr><td>);
-    print qq (<table cellspacing="0">);
+    print qq (<table cellspacing="0" style="TABLE-LAYOUT: fixed" width="100%">);
     print qq (<tr>);
     print qq (<td class="body" colspan="3" align="left">);
 
@@ -85,20 +85,22 @@ sub scriptSchedule
     
     function powerswitch(oo)
     {
-        myform.action.value='ENABLED';
+//        myform.action.value='ENABLED';
         if (oo.checked == true)
             myform.enabled.value= '1';
         else
             myform.enabled.value= '0';
         
         myform.name.value=oo.value;
-        myform.submit();
+//        myform.submit();
+	goSubmit('ENABLED');
     }
     
     function delSchedule()
     {
-        myform.action.value='DELET';
-        myform.submit();
+//        myform.action.value='DELET';
+//        myform.submit();
+	goSubmit('DELET');
     }
     </script>
     

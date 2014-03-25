@@ -159,14 +159,16 @@ sub scriptAppGroup
     
     function DelAppGroup()
     {
-        myform.action.value='DELET';
-        myform.submit();
+//        myform.action.value='DELET';
+//        myform.submit();
+	goSubmit('DELET');
     }
 	
 	function DelApp()
     {
-        myform.action.value='DELETAPP';
-        myform.submit();
+//        myform.action.value='DELETAPP';
+//        myform.submit();
+	goSubmit('DELETAPP');
     }
     </script>
     

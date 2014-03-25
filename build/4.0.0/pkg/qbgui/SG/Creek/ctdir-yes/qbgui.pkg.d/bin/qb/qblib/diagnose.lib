@@ -557,13 +557,15 @@ sub diagScript
         }
 
         function go()
-        {  
+        { 
+        	var privilege=getcookie('privilege');
+        	    if(privilege!=1) {alert('You do not have Privilege to do it'); return;} 
             myform.action.value='start';
             myform.submit();
             moveResultScrollBarToBottom('start');
 
             if (preMethod=="restartqbserv") 
-            { 
+            {
                 myform.rstqb.disabled=true; 
                 setTimeout("enableRestartQB()",5000);
             }

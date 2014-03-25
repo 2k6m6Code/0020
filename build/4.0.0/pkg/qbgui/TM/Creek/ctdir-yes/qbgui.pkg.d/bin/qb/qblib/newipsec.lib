@@ -590,9 +590,10 @@ sub scriptNewIPSec
         {
             myform.mss.value = mss_value;
         }*/
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
         myform.local.value = local;
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
     }
     
     function BackIPSec()

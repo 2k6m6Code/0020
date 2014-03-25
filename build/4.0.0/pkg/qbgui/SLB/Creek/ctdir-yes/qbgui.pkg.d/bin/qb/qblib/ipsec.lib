@@ -116,12 +116,15 @@ sub scriptIPSec
     {
         if ( qbConfirm(2, 'Confirm Deletion ?') == 1 )
         {
-            myform.action.value='DELET';
-            myform.submit();
+//            myform.action.value='DELET';
+//            myform.submit();
+		goSubmit('DELET');
         }
     }
     function enabledipsec(ispid)
     {
+    var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
         //qbConfirm(null,ispid);
         myform.action.value='ONIPSEC';
         myform.isp.value=ispid;
@@ -130,6 +133,8 @@ sub scriptIPSec
     }
     function disabledipsec(ispid)
     {
+    var privilege=getcookie('privilege');
+        if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
         //qbConfirm(null,ispid);
         myform.action.value='OFFIPSEC';
         myform.isp.value=ispid;

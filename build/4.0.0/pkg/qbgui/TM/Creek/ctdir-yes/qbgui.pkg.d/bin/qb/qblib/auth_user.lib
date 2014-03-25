@@ -10,10 +10,10 @@ sub showSchedule
     my @titleHeadList=('Name','IP','Type');
     my %titleWidth=('Name'=>300, 'IP'=>300, 'Type'=>100);
     
-    print qq (<table bgcolor="#336699" cellspacing="3" border="0">);
+    print qq (<table bgcolor="#336699" cellspacing="3" border="0" style="TABLE-LAYOUT: fixed" width="100%">);
     print qq (<tr><td class="bigtitle">Authentication Group);
     print qq (<tr><td>);
-    print qq (<table cellspacing="0">);
+    print qq (<table cellspacing="0" style="TABLE-LAYOUT: fixed" width="100%">);
     print qq (<tr>);
     print qq (<td class="body" colspan="3" align="left">);
 
@@ -82,8 +82,9 @@ sub scriptSchedule
     
     function delSchedule()
     {
-        myform.action.value='DELET';
-        myform.submit();
+//        myform.action.value='DELET';
+//        myform.submit();
+	goSubmit('DELET');
     }
     </script>
     

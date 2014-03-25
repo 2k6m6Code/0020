@@ -306,9 +306,10 @@ sub scriptNewQoS
                 return;
             }
         } 
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
         myform.qosname.value = qosname_show;
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
     }
     
     function checkState()

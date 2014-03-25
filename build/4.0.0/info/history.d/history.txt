@@ -20,6 +20,8 @@ config.lib qbserv
 	 The modification include : global.cgi rtable.lib
 	9.Fix QoS issue
 	 The modification include : proute.lib
+   10.add function to check filesystem and SHD healthy status.
+	 The modification include : config.lib postqb_general qbmon.sh rebootmail.sh sysinit
 
 ======== Tue Feb 11 19:18:37 CST 2014 ========
 Version : 4.0.0-0019

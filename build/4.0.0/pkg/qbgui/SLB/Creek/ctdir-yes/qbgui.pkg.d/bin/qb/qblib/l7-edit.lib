@@ -25,7 +25,7 @@ sub scriptNewApplication
 		
 		if ( AN == '' )
         {
-            alert('Host Name must be English or nember');
+            alert('Application Name must be English or nember');
             return;
         }
         for (i = 0; i < AN.length; i++)
@@ -33,7 +33,7 @@ sub scriptNewApplication
             var ch = AN.charCodeAt(i);
             if ( ch < 32 || ch > 126 )
             {
-                alert('Host Name must be English or nember');
+                alert('Application Name must be English or nember');
                 return;
             }
         }
@@ -44,10 +44,9 @@ sub scriptNewApplication
         }
         if ( !OK ) { alert(msg); return;}		
 		saveAN.value = AN;
-		if(!exist){saveAN.value+='_UD';myform.action.value = 'SAVE';}
-		if(exist=='1'){myform.action.value = 'SAVEEXIST';}
-		
-        myform.submit();
+		if(!exist){saveAN.value+='_UD';myform.action.value = 'SAVE';goSubmit('SAVE');}
+		if(exist=='1'){myform.action.value = 'SAVEEXIST';goSubmit('SAVEEXIST');}
+//        myform.submit();
     }
     
 	function appcancel() 

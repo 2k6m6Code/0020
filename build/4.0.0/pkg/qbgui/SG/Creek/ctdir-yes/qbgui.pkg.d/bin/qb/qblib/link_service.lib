@@ -142,7 +142,7 @@ sub showMPV
     print qq (</table></td></tr>);
     
     print qq (<tr><td class="body" colspan="3"><hr size="1"></td></tr>);
-    print qq (<tr><td class="body" colspan="3"><a onclick="other(this)"> << Alse To :</a></td></tr>);
+    print qq (<tr><td class="body" colspan="3"><a onclick="other(this)"> << Also apply to :</a></td></tr>);
     print qq (<tr><td class="body" colspan="3"><div id="other" style="display:none;"><table>);
     my $index = 0;
     foreach my $isp ( @$isplist )
@@ -160,7 +160,7 @@ sub showMPV
     print qq (<tr><td class="body" colspan="3" align="center">);
     print qq (<input class="qbopt" id="save" type="button" value="Save" onclick="SaveLink();">);
     print qq (<input class="qbopt" type="button" value="Exit" onclick="exit_action();"><BR>);
-    print qq (<input type="checkbox" id="group" onclick="group_action();">Selected Application Option Save To Service Group);
+    print qq (<input type="checkbox" id="group" onclick="group_action();">Save selected application to service group);
     print qq (</td></tr>);
     
     print qq (</table>);
@@ -200,6 +200,8 @@ sub scriptMPV
     
     function SaveLink()
     {
+    	var privilege=getcookie('privilege');
+    	if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
         var service = document.getElementsByName("service");
         var result_service = result_group = '';
         var result_isp = document.getElementById("main_link").value + ":";

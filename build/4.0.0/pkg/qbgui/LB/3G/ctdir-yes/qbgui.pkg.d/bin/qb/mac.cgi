@@ -126,6 +126,8 @@ if ($action eq "SAVE")
 }
 
 print << "QB";
+
+<script type="text/javascript" src="qb.js"></script>
 <script language="javascript">
 
 \$(window).load(function(){
@@ -166,6 +168,8 @@ print << "QB";
 });
 
 \$("#ok").click(function(){
+	var privilege=getcookie('privilege');
+	    if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
     var data="";
     var point= "0" ;
     for(var i = 0; i < \$("#total").val(); i++)

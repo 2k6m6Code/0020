@@ -338,7 +338,7 @@ sub scriptEditDos
         if ( n_dosip.disabled != true )
             myform.dosip.value = n_dosip.value;
         
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
 		myform.newtype.value=type;
 		myform.newenable.value=enable;
 		
@@ -355,7 +355,8 @@ sub scriptEditDos
 		myform.newtime.value=time;
 		myform.newlogprefix.value=logprefix;
 		//alert(enable_AN);
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
     }
 	
 	function checkState()

@@ -90,8 +90,9 @@ sub scriptqosisp
                 return;
             }
         }
-        myform.action.value = 'SAVE';
-        myform.submit();
+//        myform.action.value = 'SAVE';
+//        myform.submit();
+	goSubmit('SAVE');
     }
 
     </script>

@@ -299,7 +299,7 @@ sub scriptEditDos
         }
         if ( n_dosip.disabled != true )
             myform.dosip.value = n_dosip.value;
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
 		myform.newtype.value=type;
 		myform.newenable.value=enable;
 		myform.newipnum.value=ipnum;
@@ -311,7 +311,8 @@ sub scriptEditDos
 		myform.newlogprefix.value=logprefix;
 		myform.cls.value=cls;
 		//alert(enable);
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
     }
 	
 	function checkState()

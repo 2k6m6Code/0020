@@ -417,11 +417,12 @@ sub scriptNewSchedule
             myform.schname.value = schname_show.value;
         
          
-        myform.action.value = 'SAVE';
+//        myform.action.value = 'SAVE';
         myform.days.value = daysarray;
         myform.schtimestart.value = timestartarray;
         myform.schtimestop.value = timestoparray;
-        myform.submit();
+//        myform.submit();
+	goSubmit('SAVE');
     }
     function checkState()
     {

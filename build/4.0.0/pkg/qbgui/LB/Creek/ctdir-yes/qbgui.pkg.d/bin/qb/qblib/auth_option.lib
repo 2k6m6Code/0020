@@ -222,6 +222,8 @@ function startDownload()
 
 function savedata(x)
 {
+    var privilege=getcookie('privilege');
+    if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
     if (x == 'LOGO')
         var data=\$("#msg").val();
     if (x == 'MAIL')

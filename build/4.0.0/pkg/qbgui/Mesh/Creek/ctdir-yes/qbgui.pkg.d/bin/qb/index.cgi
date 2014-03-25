@@ -10,6 +10,7 @@ my $form=new CGI;
 my $action1 = $form->param(action);
 my $username=$form->param(username);
 my $password=$form->param(password);
+my $TYPE=runCommand(command=>'cat', params=>'/opt/qb/registry|awk \'$1 == "TYPE" { print $2 }\'');
 authenticate( action=>'LOGIN', username=>$username, password=>$password );
 
 #這一行一定要放在 authenticate 後面
@@ -37,8 +38,11 @@ print qq(<frameset rows="50,*" frameborder="NO" border="0" framespacing="0" cols
 print qq(<frame name="configFrame" src="config.cgi" scrolling="NO">);
 print qq(<frameset rows="*" cols="*" frameborder="NO">);
 
-
-if ($action1 > 8)
+if ($TYPE eq 'Mesh')
+{
+	print qq(<frame name="mainFrame" src="dashboard.cgi" frameborder="NO" noresize scrolling="AUTO">);
+}
+elsif ($TYPE ne 'Mesh' && $action1 > 8)
 {
     print qq(<frame name="mainFrame" src="dashboard.php" frameborder="NO" noresize scrolling="AUTO">);
 }else

@@ -108,6 +108,8 @@ sub inidnsScript
      
      function updatePolicy(action)
      {
+     	var privilege=getcookie('privilege');
+     	    if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
          var sourceip = document.getElementById('source');
          var realip = '';
 

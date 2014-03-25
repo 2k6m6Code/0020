@@ -24,7 +24,7 @@ if ( $action{action} ) { maintainExport( %action ); }
 
 print qq (<form enctype="multipart/form-data" method="post" action="file_export.cgi" style="width:100%">);
 print qq (<input type="hidden" name="sel" id="sel"  value="$sel">);
-print qq (<input type="hidden" name="action" id="action"  value="SAVE">);
+print qq (<input type="hidden" name="action" id="action"  value="">);
 print qq (<fieldset class="fieldset">);
 print qq (<legend class="subtitle">File Export</legend>);
 print qq (<table class="body">);
@@ -38,10 +38,11 @@ foreach my $oo (@$flow)
 }
 print qq (</select>);
 print qq (</td></tr>);
-print qq (<tr><td align="center"><input type="submit" value="Submit"></td></tr>);
+print qq (<tr><td align="center"><input type="submit" value="Submit" onclick="goSubmit('SAVE')"></td></tr>);
 print qq (</table>); 
 print qq (</fieldset>);
 print qq (</form>);
+print qq (<script type="text/javascript" src="qb.js"></script>);
 #print qq (<script language="javascript"> document.getElementById('group').onchange();</script>);
 print qq (</div></body></html>);
 

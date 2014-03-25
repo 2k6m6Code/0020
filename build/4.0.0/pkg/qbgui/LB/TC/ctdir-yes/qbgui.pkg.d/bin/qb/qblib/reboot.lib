@@ -73,6 +73,8 @@ sub rebootScript
     
     function go()
     {
+    	var privilege=getcookie('privilege');
+    	    if(privilege!=1) {alert('You do not have Privilege to do it'); return;}
         myform.action.value = 'REBOOT';
         myform.submit();
     }
