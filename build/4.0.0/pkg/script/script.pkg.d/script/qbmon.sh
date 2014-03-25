@@ -478,3 +478,58 @@ if [ "$EZIO" = "1" ];then
    ( $EZIO_PRINT "Ramdisk left:[ ${disksize} KB ]"; sleep 60; $EZIO_PRINT_DEFAULT) &
   fi
 fi
+
+#******************************************************************
+# 2014-0320
+# Gary check SHD exist or not
+#
+# if does not exist , clear /mnt/tclog/nfcapd/*  and kill nfcapd daemon
+#
+#******************************************************************
+if [ -f "/tmp/SHD_healthy_OK" -a ! -f /tmp/SHD_not_found -a ! -f /tmp/SHD_Crash -a ! -f /tmp/SHD_failed ];then
+
+    SHD=`df -h | grep tclog$ | awk '{print $1}'`
+    touch /mnt/tclog/nfcapd/test_SHD
+    if [ "$SHD" = "" ]; then
+    	killall -9 nfcapd
+    	rm -rf /mnt/tclog/nfcapd
+    	rm -f /tmp/SHD_healthy_OK
+    	sync
+        touch /tmp/SHD_failed
+        echo $(date) "SHD failed ...">>/mnt/log/bootlog
+        /opt/qb/bin/script/rebootmail.sh
+    elif [ ! -f "/mnt/tclog/nfcapd/test_SHD" ]; then
+    	killall -9 nfcapd
+    	rm -f /tmp/SHD_healthy_OK
+    	touch /tmp/SHD_Crash
+    	echo $(date) "SHD Crash ...">>/mnt/log/bootlog
+        /opt/qb/bin/script/rebootmail.sh
+    else
+        #echo $(date) "check SHD healthy OK  ...">>/mnt/log/bootlog
+        rm -f /mnt/tclog/nfcapd/test_SHD
+    fi 
+fi
+#******************************************************************
+# 2014-0324
+# Gary check filesystem read-only or not
+#
+#******************************************************************
+    
+    FileSystem=`df -h | grep /mnt$ | awk '{print $1}'`
+    
+    if [ ! -f "/tmp/Please_arrage_reboot" ]; then
+    	touch /mnt/test_readonly_or_not
+    	echo $(date) "Check filesystem read-only $FileSystem $Readonly" >> /mnt/log/bootlog
+                    
+        if [ ! -f "/mnt/test_readonly_or_not" ]; then
+           /sbin/fsck.msdos -a -w $FileSystem
+           echo $(date) "Fix read-only done.">>/mnt/log/bootlog
+           touch /tmp/Please_arrage_reboot
+           /opt/qb/bin/script/rebootmail.sh
+        else
+           echo $(date) "Filesystem healthy ok." >> /mnt/log/bootlog
+        fi
+
+        /bin/rm -f /mnt/test_readonly_or_not
+    fi
+    

@@ -16,7 +16,13 @@ sub showConfig
     if ( -e "/tmp/SHD_Crash" || -e "/tmp/SHD_failed" )
     {
         print qq(<script language="javascript">);
-        print qq( window.alert ( "QB's SHD had crash, please fix it !!" ););
+        print qq( window.alert ( "QB's SHD had crash, please arrange time to power cycle !!" ););
+        print qq(</script>);
+    }
+    elsif ( -e "/tmp/Please_arrage_reboot" )
+    {
+        print qq(<script language="javascript">);
+        print qq( window.alert ( "QB's filesystem had some issues, please arrange time to reboot !!" ););
         print qq(</script>);
     }
     (%action)=@_;
