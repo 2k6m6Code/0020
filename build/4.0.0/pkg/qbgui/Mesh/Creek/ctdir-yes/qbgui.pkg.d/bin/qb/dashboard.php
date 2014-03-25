@@ -20,7 +20,7 @@
                 <option value=30>30</option>
                 <option value=60>60</option>
             </select>
-            <span calss="body">seconds&nbsp;&nbsp; Remnanting <a id="sec"></a> Sec.
+            <span calss="body">seconds&nbsp;&nbsp; Remaining <a id="sec"></a> Sec.
             </span>
             <button id="format" type="button">Save Format</button>
     	    <button type="button" id='clear'>Reset</button>
