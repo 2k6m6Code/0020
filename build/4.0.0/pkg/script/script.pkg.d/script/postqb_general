@@ -87,7 +87,8 @@ then
     if [ $mssmodify_value ];then
     /usr/local/sbin/iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $mssmodify_value
     else
-    /usr/local/sbin/iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1428
+    #/usr/local/sbin/iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1428
+    /sbin/iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
     fi
 fi
 if [ "$udpmodify" = "1" ]

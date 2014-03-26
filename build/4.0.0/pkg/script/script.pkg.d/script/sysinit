@@ -584,6 +584,18 @@ case "$MODEL" in
             /opt/qb/qbwdt/watchdog_na100 &
             fi
            ;;
+        240)
+            $QB_BIN_DIR/watchdog
+            if [ "$?" = "1" ];then
+            /opt/qb/qbwdt/watchdog_na100 &
+            fi
+           ;;
+        400)
+            $QB_BIN_DIR/watchdog
+            if [ "$?" = "1" ];then
+            /opt/qb/qbwdt/watchdog_na100 &
+            fi
+           ;;
         2620)
             $QB_BIN_DIR/watchdog &
             #if [ "$?" = "1" ];then
@@ -1367,6 +1379,8 @@ fi
 #
 ln /usr/local/apache/qbconf/overview.xml /usr/local/apache/qb/auth/
 
+#copy ldap command
+ln -s /opt/qb/bin/script/ldapwhoami /usr/sbin/ldapwhoami
 
 #
 # 2013 1205 
