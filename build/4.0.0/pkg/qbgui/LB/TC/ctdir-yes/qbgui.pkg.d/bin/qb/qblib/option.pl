@@ -63,7 +63,8 @@ elsif ($action eq 'Timer')
     {
 	my @tmp_data;
 	my $checkaa=0;
-	open (FILE ,"</etc/crontab"); 
+	#open (FILE ,"</etc/crontab"); 
+	open (FILE ,"</etc/todo_at_2359"); 
 	foreach my $data (<FILE>)
 	{
 	    if (grep(/auth_open.pl/,$data))
@@ -78,11 +79,12 @@ elsif ($action eq 'Timer')
         {
             if ($user->{schname} eq 'system')
             {
-	        my $data1 = "$user->{time_hr}  $user->{time_sec} * * *  root      /usr/local/apache/qb/auth_open.pl action=OPEN\n";
+	        #my $data1 = "$user->{time_hr}  $user->{time_sec} * * *  root      /usr/local/apache/qb/auth_open.pl action=OPEN\n";
+	        my $data1 = "/usr/local/apache/qb/auth_open.pl action=OPEN\n";
     		push(@tmp_data,$data1);
    	    }
    	}
-    	open (FILE1 ,">/tmp/crontab");
+    	open (FILE1 ,">/etc/todo_at_2359");
     	foreach my $data (@tmp_data)
     	{
     	    print FILE1 $data;

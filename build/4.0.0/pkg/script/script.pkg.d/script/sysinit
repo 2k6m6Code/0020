@@ -1025,17 +1025,34 @@ then
      /opt/qb/bin/script/setupsql &
     fi
 
+  #*************************************************************************
+  # 
+  # 2014-03-26 Gary redefine crontab
+  #            Avoid run too many functons at the same time.
+  #
+  #*************************************************************************
+    touch /etc/todo_at_2359
+    chmod 777 /etc/todo_at_2359
+    echo "/opt/qb/bin/script/test.sh" >> /etc/todo_at_2359
+    echo "/opt/qb/bin/script/mail.sh hck" >> /etc/todo_at_2359
+    echo "/usr/local/apache/qb/loss_restart.sh" >> /etc/todo_at_2359
+    echo "/opt/qb/bin/script/enable_squid.sh" >> /etc/todo_at_2359
+    echo "rm -rf /mnt/log/*_User.log" >> /etc/todo_at_2359
+    echo "sync" >> /etc/todo_at_2359
+    
+#59  23 * * *  root      /opt/qb/bin/script/test.sh
+#59  23 * * *  root      /opt/qb/bin/script/mail.sh hck
+#59  23 * * *  root      /usr/local/apache/qb/loss_restart.sh
+#0    0 * * *  root      /opt/qb/bin/script/enable_squid.sh
+#0    0 * * *  root      sync|rm -rf /mnt/log/*_User.log|sync
+
     cat >> /etc/crontab <<!
 30   2 * * *  root      sync|echo 3 > /proc/sys/vm/drop_caches
 31   2 * * *  root      sync|echo 0 > /proc/sys/vm/drop_caches
 5    0 * * *  root      /opt/qb/bin/script/trialnotice
-59  23 * * *  root      /opt/qb/bin/script/test.sh
-59  23 * * *  root      /opt/qb/bin/script/mail.sh hck
-59  23 * * *  root      /usr/local/apache/qb/loss_restart.sh
+59  23 * * *  root      /etc/todo_at_2359
 */1  * * * *  root      /usr/local/apache/qb/setuid/every_one.sh
 */30  * * * *  root      /usr/local/apache/qb/every_thirty_minute.pl
-0    0 * * *  root      /opt/qb/bin/script/enable_squid.sh
-0    0 * * *  root      sync|rm -rf /mnt/log/*_User.log|sync
 
 !
 

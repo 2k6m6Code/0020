@@ -356,22 +356,23 @@ fi
 
 if [ "$ENABLEWIRELESS" = "1" ];then
  #check wifi model
- `/sbin/lsusb|grep "0b05:1784" >/dev/null`
- check_wifi=$?
- if [ "$check_wifi" != "0" ];then
-  tar zxfC /mnt/wireless.pkg /opt/qb/
-  ln -s /opt/qb/wireless/Wireless /etc/
-  ln -s /opt/qb/wireless/iwconfig /sbin/
-  ln -s /opt/qb/wireless/iwpriv /sbin/
-  insmod /opt/qb/wireless/rt3562ap.ko
-  /sbin/ifconfig ra0 up
- else #Wifi dongle
+ #`/sbin/lsusb|grep "0b05:1784" >/dev/null`
+ #check_wifi=$?
+ #if [ "$check_wifi" != "0" ];then
+ #else #Wifi dongle
   mkdir /opt/qb/wireless
-  ln -s /mnt/extra/lib/wifi-rt3070 /opt/qb/wireless
+  ln -s /mnt/extra/lib/wifi-rt3070 /opt/qb/wireless/
   ln -s /mnt/extra/lib/wifi-rt3070/10-wifi.rules /etc/udev/rules.d/
   ln -s /mnt/extra/sbin/iwpriv /sbin/
+  ln -s /mnt/extra/sbin/iwconfig /sbin/
   /opt/qb/wireless/wifi-rt3070/start3070.sh
- fi
+
+  tar zxfC /mnt/wireless.pkg /opt/qb/
+  ln -s /opt/qb/wireless/Wireless /etc/
+  insmod /opt/qb/wireless/rt3562ap.ko
+  /sbin/ifconfig ra0 up
+
+ #fi
 fi
 
 

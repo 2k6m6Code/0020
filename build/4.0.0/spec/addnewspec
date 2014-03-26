@@ -7,6 +7,6 @@ do
 #40 a\
 #ENABLESSLVPNCLT 1
 #}' $filename
-sed -i '$ a\ENABLESSLVPNCLT 1' $filename
+sed -i '$ a\ENABLEWIRELESS 1' $filename
 done
 

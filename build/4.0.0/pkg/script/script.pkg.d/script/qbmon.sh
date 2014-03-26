@@ -533,3 +533,24 @@ fi
         /bin/rm -f /mnt/test_readonly_or_not
     fi
     
+
+#******************************************************************
+# 2014-03246
+# Gary keep /proc/meminfo 
+#
+#******************************************************************
+    cat /proc/meminfo > /mnt/log/meminfo
+    sync
+
+    
+#******************************************************************
+# 2014-03246
+# Gary check /etc/httpd/logs/error_log size
+#
+#******************************************************************
+    MAXIMUM=5000   # 5MB
+    NOW_ERROR_LOG_SIZE=`du /etc/httpd/logs/error_log | awk '{print $1}'`
+    if [ "$NOW_ERROR_LOG_SIZE" -gt "$MAXIMUM" ]; then
+    cat /dev/null > /etc/httpd/logs/error_log
+    fi
+    

@@ -25,9 +25,11 @@ config.lib qbserv
    11.To enable watchdog driver for Mesh 240/400.(20140326)
      The modification include : sysinit
    12.To support ASUS wifi dongle USB-N13.(20140326)
-     The modification include : rc.init,10-wifi.rules,RT2870AP.dat,start3070.sh,rt3070ap.ko,rtnet3070ap.ko,rtutil3070ap.ko
+     The modification include : rc.init,10-wifi.rules,RT2870AP.dat,start3070.sh,rt3070ap.ko,rtnet3070ap.ko,rtutil3070ap.ko,xtree.cgi
    13.To adjust MSS by MTU automatically.
      The modification include : postqb_general
+   14.To add new top logo for Mesh/SLB/TM.
+     The modification include : top_qb_logo.gif
 
 ======== Tue Feb 11 19:18:37 CST 2014 ========
 Version : 4.0.0-0019

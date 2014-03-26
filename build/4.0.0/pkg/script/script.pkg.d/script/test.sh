@@ -76,6 +76,6 @@ if [ -f /mnt/conf/insdate ]; then
 fi
 
 #Check vmware license
-if [ $ENABLEVM = '1' ];then
+if [ "$ENABLEVM" = "1" ];then
 /opt/qb/bin/script/licensetime_daily
 fi
