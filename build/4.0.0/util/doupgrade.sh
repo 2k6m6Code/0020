@@ -139,4 +139,3 @@ else
     echo "Please restart Q-Balancer !" | tee -a $DIAGNOSE
 fi
 
-

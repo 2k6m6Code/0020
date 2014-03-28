@@ -30,6 +30,21 @@ config.lib qbserv
      The modification include : postqb_general
    14.To add new top logo for Mesh/SLB/TM.
      The modification include : top_qb_logo.gif
+   15.To fix apache httpd.conf switch
+     The modification include : newsauth_server.lib
+   16.If HA enabled, upgrade only one reboot.
+     The modification include : do_qbha.pl
+   17.To modify AUTH default login page
+     The modification include : index.cgi login.css logo.png message.htm
+   18.To add switch old dashboard function for Mesh.
+     The modification include : config.lib index.cgi
+   19.To fix typos for Bandwidth Shaper and Application Priority
+     The modification include : qoslan.lib qosisp.lib qosisp2.lib link_service.lib
+   20.To fix page privilege.
+     The modification include : many .lib files
+   21.To redefine delete SHD data
+	 The modification include : qbmon.sh storage_set.lib
+	 
 
 ======== Tue Feb 11 19:18:37 CST 2014 ========
 Version : 4.0.0-0019

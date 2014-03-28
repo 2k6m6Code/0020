@@ -49,15 +49,89 @@ if [ -f "/tmp/basiclock" ];then
     fi
 fi
 
-INFO1=`df |grep /mnt/tclog |awk '{print $5}'`
-DATA_CHECK=`echo $INFO1|sed "s/%//g"`
-LIMIT_ref=`cat /mnt/conf/registry |grep LIMIT`
-LIMIT=`echo $LIMIT_ref|sed "s/##LIMIT//g"`
-if [ $DATA_CHECK -ge $LIMIT ];then
-    Oldest_filename=$(ls /mnt/tclog/ispnet|awk NR==1)
-    rm -f /mnt/tclog/ispnet/$Oldest_filename
-    rm -rf /mnt/tclog/nfcapd/*
+#*******************************************************************************************************
+#
+# Check SHD date size
+#
+#*******************************************************************************************************
+NOW_SHD_size=`df | grep "/mnt/tclog$" | awk '{print $5}' | sed 's/%//g'`
+Maximum_size=`head -1 /usr/local/apache/active/overview.xml | sed -e "s/<opt.*SHD_Maximum_size=\"//g" | sed -e "s/\".*//g"`
+is_the_xml_has_value=`grep -c "SHD_Maximum_size" /usr/local/apache/active/overview.xml`
+
+if [ "$NOW_SHD_size" != "" ];then
+    #*************************************************************************************
+    #  Set Default Limit value = 90 %
+    #*************************************************************************************
+    if [ "$is_the_xml_has_value" == "0" ];then
+	Maximum_size=90
+    elif [ "$Maximum_size" == "" ];then
+    	Maximum_size=90
+    fi
+    while [ "$NOW_SHD_size" -gt "$Maximum_size" ]
+    do
+	Total_years=`ls /mnt/tclog/nfcapd`
+  	if [ "$Total_years" != "" ];then
+    	    for Year in $Total_years
+    	    do
+        	if [ "$Year" != "" -a "$Year" != "nfcapd.current" ];then
+            	    Total_months=`ls /mnt/tclog/nfcapd/$Year`
+            	    Total_months_empty=`ls /mnt/tclog/nfcapd/$Year | wc -l`
+            
+    	    	    if [ "$Total_months_empty" -gt "0" ];then
+        	    	for Month in $Total_months
+        	    	do
+            	    	    Total_days=`ls /mnt/tclog/nfcapd/$Year/$Month`
+            	    	    if [ "$Total_days" != "" ];then
+                	        for Day in $Total_days
+                	    	do
+                    	    	    #echo /mnt/tclog/nfcapd/$Year/$Month/$Day
+                    	    	    rm -rf /mnt/tclog/nfcapd/$Year/$Month/$Day
+			    	    NOW_SHD_size=`df | grep "/mnt/tclog$" | awk '{print $5}' | sed 's/%//g'`
+                    	    	    #echo "$NOW_SHD_size rm /mnt/tclog/nfcapd/$Year/$Month/$Day" >> /tmp/rm_list
+                    	    	    break
+                	        done
+                    	        break
+            	    	    else
+                	        rm -rf /mnt/tclog/nfcapd/$Year/$Month
+			        NOW_SHD_size=`df | grep "/mnt/tclog$" | awk '{print $5}' | sed 's/%//g'`
+                    	        #echo "$NOW_SHD_size rm /mnt/tclog/nfcapd/$Year/$Month" >> /tmp/rm_list
+                	        sync
+                	        break
+            	    	    fi
+        	    	done
+    	    	    else
+                    	rm -rf /mnt/tclog/nfcapd/$Year
+		    	NOW_SHD_size=`df | grep "/mnt/tclog$" | awk '{print $5}' | sed 's/%//g'`
+                    	#echo "$NOW_SHD_size rm /mnt/tclog/nfcapd/$Year" >> /tmp/rm_list
+    	    	    fi  #end
+    	    	    break
+    		fi    
+    		break
+    	    done    
+    	else
+            echo $(date) "/mnt/tclog/nfcapd/ Capacity error !...">>/mnt/log/bootlog
+            #echo "error"
+    	    exit
+	fi
+  	NOW_SHD_size=`df | grep "/mnt/tclog$" | awk '{print $5}' | sed 's/%//g'`
+  done
+    
 fi
+
+#if [ "$NOW_SHD_size" != "" ];then
+#    DATA_CHECK=`echo $INFO1|sed "s/%//g"`
+#    LIMIT_ref=`cat /mnt/conf/registry |grep LIMIT`
+#    LIMIT=`echo $LIMIT_ref|sed "s/##LIMIT//g"`
+#    if [ "$DATA_CHECK" -ge "90" ];then
+#        Oldest_filename=$(ls /mnt/tclog/ispnet|awk NR==1)
+#        rm -f /mnt/tclog/ispnet/$Oldest_filename
+#        rm -rf /mnt/tclog/nfcapd/*
+#    fi
+#fi
+##
+##
+##
+##
 
 # check ram disk size
 disk_percentage=$(df| awk '/root/ {print $5}'|sed -e "s/\%//")

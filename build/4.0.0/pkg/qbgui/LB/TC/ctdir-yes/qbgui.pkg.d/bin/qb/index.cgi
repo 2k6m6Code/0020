@@ -38,11 +38,11 @@ print qq(<frameset rows="50,*" frameborder="NO" border="0" framespacing="0" cols
 print qq(<frame name="configFrame" src="config.cgi" scrolling="NO">);
 print qq(<frameset rows="*" cols="*" frameborder="NO">);
 
-if ($TYPE eq 'Mesh')
+if (grep(/Mesh/,$TYPE))
 {
 	print qq(<frame name="mainFrame" src="dashboard.cgi" frameborder="NO" noresize scrolling="AUTO">);
 }
-elsif ($TYPE ne 'Mesh' && $action1 > 8)
+elsif (!grep(/Mesh/,$TYPE) && $action1 > 8)
 {
     print qq(<frame name="mainFrame" src="dashboard.php" frameborder="NO" noresize scrolling="AUTO">);
 }else

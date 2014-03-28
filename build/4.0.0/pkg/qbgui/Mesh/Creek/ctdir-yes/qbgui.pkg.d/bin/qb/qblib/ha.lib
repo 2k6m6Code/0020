@@ -344,9 +344,9 @@ sub haScript
 
     function goHA(command)
     {
-//        myform.action.value=command;
-//        myform.submit();
-	goSubmit(command);
+        myform.action.value=command;
+        myform.submit();
+//	goSubmit(command);
     }
     
     </script>

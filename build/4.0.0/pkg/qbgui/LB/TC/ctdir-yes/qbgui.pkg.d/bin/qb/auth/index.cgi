@@ -63,7 +63,7 @@ if ($ENV{'HTTP_VIA'} && $ENV{'HTTP_X_FORWARDED_FOR'})
    if ($type eq 'LDAP')
    {
        #LDAP
-       my $status = system("/mnt/ldapwhoami -H ldap://123.51.217.232:389 -x -D \"uid=$username,ou=rd,dc=creek,dc=com\" -w $password");
+       my $status = system("/usr/bin/ldapwhoami -H ldap://123.51.217.232:389 -x -D \"uid=$username,ou=rd,dc=creek,dc=com\" -w $password");
        if ($status =~m /Success/)
        {
            print qq($status);
@@ -75,7 +75,7 @@ if ($ENV{'HTTP_VIA'} && $ENV{'HTTP_X_FORWARDED_FOR'})
        my $ip,$group,$port;
        foreach my $ss  (@$list_r)
        {
-           if ($ss->{schname} eq 'system' || $ss->{schname} eq 'LD'){next;}   
+           if ($ss->{schname} eq 'system' || $ss->{schname} eq 'LD' || $ss->{schname} eq 'AD'){next;}   
            $ip=$ss->{ip};
            $group=$ss->{group};
            $port=$ss->{port};
@@ -91,7 +91,29 @@ if ($ENV{'HTTP_VIA'} && $ENV{'HTTP_X_FORWARDED_FOR'})
    }elsif ($type eq 'AD')
    {
        #AD
-       
+       my $list_r = $reflist->{server};
+       my $ip,$group,$port,$domain;
+       foreach my $ss  (@$list_r)
+       {
+           if ($ss->{schname} eq 'system' || $ss->{schname} eq 'LD' || $ss->{schname} eq 'LDAP'){next;}
+           $ip=$ss->{ip};
+           $group=$ss->{group};
+           $port=$ss->{port};
+           $domain=$ss->{domain};
+       }
+       my @dc = split(/\./,$domain);
+       my $info='';
+       $info=$info.'cn='.$username;
+       $info=$info.',cn='.$group;
+       foreach my $result (@dc)
+       {
+           $info=$info.',dc='.$result;
+       }
+       my $status = system("/mnt/ldapwhoami -H ldap://$ip:$port -x -D \"$info\" -w $password");
+       if ($status =~m /Success/)
+       {
+           print qq($status);
+       }
    }elsif ($type eq 'LD')
    {
        foreach my $server (@$list)
@@ -101,7 +123,7 @@ if ($ENV{'HTTP_VIA'} && $ENV{'HTTP_X_FORWARDED_FOR'})
            my $ttime=time()+(8*60*60);
            foreach my $user (@$userlist)
            {
-               if (($user->{idd} eq $username && ($ip eq $user->{ip} || $user->{ip} eq '') && ($user->{time} eq '' || ($ttime - $user->{time}) > 0)))
+               if (($user->{idd} eq $username && $user->{pwd} eq $password && ($ip eq $user->{ip} || $user->{ip} eq '') && ($user->{time} eq '' || ($ttime - $user->{time}) > 0)))
                {
                    $user->{time} = $ttime;
                    if ($user->{iip} ne '')

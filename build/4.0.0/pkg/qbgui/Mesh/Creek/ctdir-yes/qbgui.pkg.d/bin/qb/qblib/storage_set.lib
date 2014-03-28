@@ -4,10 +4,10 @@
 sub showl7log 
 {
     my (%action)=@_;
-    my $l7log=XMLread($gPATH.'l7log.xml');
-    my $first_used = '--';
-    my $first_Available = '--';
-    my $first_usedpa = '--';
+#    my $l7log=XMLread($gPATH.'l7log.xml');
+    my $first_used = "N/A";
+    my $first_Available = "N/A";
+    my $first_usedpa = "N/A";
     my $second_used = '--';
     my $second_Available = '--';
     my $second_usedpa = '--';
@@ -15,9 +15,10 @@ sub showl7log
     my $second_name;
     
     #generating presentation format in TABLE 
-    print qq (<table cellspacing="3" border="5" style="width: 92%;" >\n);
+    print qq (<br>);
+    print qq (<table cellspacing="5" border="1" style="width: 80%;" >\n);
     
-    system("/usr/local/apache/qb/setuid/run /bin/df |grep log > /tmp/tmp_l7log");
+    system("/usr/local/apache/qb/setuid/run /bin/df -h|grep tclog\$ > /tmp/tmp_l7log");
     open (FILE,"/tmp/tmp_l7log");
     foreach my $test (<FILE>)
     {
@@ -28,18 +29,20 @@ sub showl7log
            $first_used = $aa[2];
            $first_Available = $aa[3];
            $first_usedpa = $aa[4];
-       }elsif (grep(/log/,$test))
-       {
-           $second_name = $aa[0];
-           $second_used = $aa[2];
-           $second_Available = $aa[3];
-           $second_usedpa = $aa[4];
+#       }elsif (grep(/log/,$test))
+#       {
+#           $second_name = $aa[0];
+#           $second_used = $aa[2];
+#           $second_Available = $aa[3];
+#           $second_usedpa = $aa[4];
        }
     }
     close(FILE);
     
     open (FF,"/opt/qb/registry");
-    my $first_limit=90;
+    #my $first_limit=90;
+    my $first_limit=`head -1 /usr/local/apache/qbconf/overview.xml | sed -e "s/<opt.*SHD_Maximum_size=\\"//g" | sed -e "s/\\".*//g"`;
+    if ( $first_limit == "" ) { $first_limit=90; }
     my $second_limit=90;
     foreach my $aa (<FF>)
     {
@@ -49,42 +52,92 @@ sub showl7log
         }
     }
     close(FF);
-    print qq (<tr><td align="center" class="bigtitle" colspan="3">Storage Setting);
-    print qq (<tr><td colspan="2"><hr size="1"></td></tr>); 
-    print qq (<tr><td style="vertical-align: top;"><table style="width:100%"></tr>);
+    print qq (<tr><td align="center" class="bigtitle" colspan="3">Storage Setting</td></tr>);
+    #print qq (<tr><td colspan="2"><hr size="0"></td></tr>); 
+    print qq (<tr><td style="vertical-align: top;">);
+    ####Gary
+    print qq (<table cellspacing="4" border="0" style="width:70%" align="right">);
     
     print qq (<tr>);
-    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
-    print qq (<a> Available : $first_Available</a>);
+    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="right">);
+    #print qq (<a> Available : $first_Available</a>);
+    
+    my $first_Availablepa;
+    if ( $first_Available ne "N/A" )
+    {
+    	$first_Availablepa=$first_usedpa;
+    	$first_Availablepa=~s/%//g;
+    	$first_Availablepa=100-$first_Availablepa.'%';
+    }
+    else  {   $first_Availablepa="N/A";   }
+    
+    #print qq (Available : $first_Available ($first_Availablepa%));
+    print qq (Available : </td>);
+    print qq (<td class="body L7IMlog" align="right">$first_Available </td>);
+    print qq (<td class="body L7IMlog" align="left">($first_Availablepa));
     print qq (</td>);
     
     print qq (<tr>);
-    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
-    print qq (<a> Used : $first_used</a>);
+    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="right">);
+#    print qq (<a> Used : $first_used</a>);
+#    print qq (Used : $first_used ($first_usedpa));
+    print qq ( Used : </td>);
+    print qq (<td class="body L7IMlog" align="right" >$first_used</td>);
+    print qq (<td class="body L7IMlog" align="left" >($first_usedpa));
     print qq (</td>);
+    if ( $first_Available ne "N/A" )
+    {
+        print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="center">);
+        print qq (<input type="button" class="qb" value="Clear all data" onclick="format('tclog','FORMAT');" >);
+        print qq (</td>);
+    }
+    else
+    {
+    print qq ( <td width="50%"> </td>);
+    }
+    print qq (</tr> );
     
-    print qq (<tr>);
-    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
-    print qq (<a> Used(%) : $first_usedpa</a>);
-    print qq (</td>);
+#    print qq (<tr>);
+#    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
+#    print qq (<a> Used(%) : $first_usedpa</a>);
+#    print qq (</td>);
     
+    if ( $first_Available ne "N/A" )
+    {
     print qq (<tr >);
-    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" style="width:100%" align="center">);
-    print qq (<a> Limit : </a><input type="text" id="first" name="first" value="$first_limit" style="width:8%" maxlength="2" >%);
+    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="right">);
+#    print qq (<a> Limit : </a><input type="text" id="first" name="first" value="$first_limit" style="width:30" maxlength="2" ><a>%</a>);
+    print qq (Limit : </td>);
+    print qq (<td class="body L7IMlog" align="right"><input type="text" class="qbtext" id="first" name="first" value="$first_limit" style="width:30" maxlength="2" >%);
     print qq (</td>);
+    print qq (<td class="body L7IMlog" align="left"> [ 1 - 95 ]);
+    print qq (</td>);
+    }
+    print qq (</table></td></tr>);
     
-    print qq (<tr>);
-    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="center" style="width:100%" align="center">);
-    print qq (<input type="button" value="Clear Partition" onclick="format('tclog','FORMAT');goSubmit('FORMAT');" >);
-    print qq (</td>);
-    print qq (</td>);
-    print qq (<tr><td colspan="4" class="body"  valign="top" align="left" style="width:100%"><hr size="1"></td>);
+    
+    
+    print qq (</table>);
+    print qq (<table cellspacing="4" border="0" style="width:50%" align="center">);
+    if ( $first_Available ne "N/A" )
+    {
+#    print qq (<tr>);
+#    print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="center" style="width:100%" align="center">);
+#    print qq (<input type="button" class="qb" value="Clear all data" onclick="format('tclog','FORMAT');goSubmit('FORMAT');" >);
+#    print qq (</td>);
+#    print qq (</tr>);
+#    }
+   # print qq (</td>);
+    #print qq (<tr><td colspan="4" class="body"  valign="top" align="left" style="width:100%"><hr size="1"></td></tr>);
+#    if ( $first_Available ne "N/A" )
+#    {
     print qq (<tr><td colspan="4" class="body"  valign="top" align="center" style="width:100%">);
-    print qq (<input type="button" value="Apply" onclick="goSubmit('CLEAR')" ></td>);
+    print qq (<input type="button" class="qb" value="Apply" onclick="checkAndsave();" ></td></tr>);
+    }
     print qq (</table>);
     
 }
-#showConsole
+#showl7log
 
 
 #======================================================================================================================
@@ -149,6 +202,22 @@ sub l7logScript
     {
         document.getElementById('path').value = '/mnt/' + oo ;
         document.getElementById('action').value = aa;
+        goSubmit('FORMAT'); 
+    }
+    
+    function checkAndsave()
+    {
+    	var LIMIT=document.getElementById('first').value;
+    	var okToGo=false;
+    	for ( var i=1 ; i<95 ; i++ )
+    	{
+    	   if ( LIMIT == i )
+    	       okToGo=true;
+    	}
+    	if ( okToGo )
+    	    goSubmit("SAVE");
+    	else
+    	    alert ( "Please type number [ 1 - 95 ]" );
     }
     
     function setAllCheckHashValue(Name,boolvalue) 
@@ -259,27 +328,16 @@ sub maintainL7log
     my (%action)=@_;
     if ( !$action{action} ) { return; }
     my $l7log=XMLread($gPATH.'l7log.xml');
-    if ($action{action}=~m/^CLEAR$/)
+    if ($action{action}=~m/^SAVE$/)
     {
-        my @data;
-        open(FILE,"/opt/qb/registry");
-        foreach my $tmp (<FILE>)
-        {
-            if (grep(/LIMIT/,$tmp)){next;}
-            push(@data,$tmp);
-        }
-        push(@data,"\#\#LIMIT $action{first} $action{second}");
-        close(FILE);
+#        my @data;
+        my $overview=XMLread($gPATH.'overview.xml');
+#        push(@data,"\#\#LIMIT $action{first} $action{second}");
         
-        open(FILE1,">/tmp/registry");
-        print FILE1 @data;
-        close(FILE1);
+        $overview->{SHD_Maximum_size}=$action{first};
         
-        system("/usr/local/apache/qb/setuid/run /bin/cp -a /tmp/registry /opt/qb/");
-        system("/usr/local/apache/qb/setuid/run /bin/cp -a /tmp/registry /mnt/conf/");
-        system("sync");
-        system("sync");
-        system("sync");
+        XMLwrite($overview, $gPATH."overview.xml");
+        
     }elsif ($action{action}=~m/^FORMAT$/)
     {
         if (!$action{path}){return;}
@@ -287,7 +345,6 @@ sub maintainL7log
         system("/usr/local/apache/qb/setuid/run /bin/rm -rf $action{path}/nfcapd/*");
         #system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/analyser");
         #system("/usr/local/apache/qb/setuid/run /bin/mkdir $action{path}/squid");
-        #system("/usr/local/apache/qb/setuid/run echo $action{path} > /tmp/asdfghjkl");
         system("sync");
         system("sync");
         system("sync");   

@@ -40,7 +40,7 @@ if ($do eq '1')
             my $rand=time();
 	    system("/sbin/iptables -t nat -D AUTH_CHAIN -s $list->{network} -j AUTH");
             system("/sbin/iptables -t nat -A AUTH_CHAIN -s $list->{network} -j AUTH");
-    	    system("/sbin/iptables -t nat -A AUTH -p tcp -s $list->{network} --dport 443 -j DNAT --to-destination $list->{ip}:443");
+    	    system("/sbin/iptables -t nat -A AUTH -p tcp -s $list->{network} --dport 443 -d $list->{ip} -j DNAT --to-destination $list->{ip}:443");
     	    system("/sbin/iptables -t nat -A AUTH -p tcp -s $list->{network} --dport 1:65535 -j DNAT --to-destination $list->{ip}:8000?time=$time");
 	    system("/sbin/iptables -t nat -I AUTH -s $list->{ip} -j RETURN");
 	    system("/sbin/iptables -t nat -I AUTH -d $list->{ip} -j RETURN"); 

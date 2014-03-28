@@ -31,8 +31,8 @@ sub showqoslan
     print qq (<div class="divframe" style="width:850; height:200" >);
     print qq (<table id="policyList" style="width:850" border="0"><thead><tr bgcolor="#332211">
     	<td>$qblang[150]</td>
-    	<td>$qblang[151]</td>
-    	<td>$qblang[148]</td>
+    	<td>Downlink</td>
+    	<td>Uplink</td>
     	<td>$qblang[152]</td>
     	<td>$qblang[153]</td>
     	<td>$qblang[25]</td>
@@ -93,7 +93,7 @@ sub showqoslan
     print qq (<tr>);
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 5%"></td>);
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20%">);
-    print qq ($qblang[154]:);
+    print qq (Downlink:);
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 25%">);
     print qq (<input class="qbtext" name="downloadmin" id="downloadmin"  style="WIDTH: 100px" value="$edit->{downloadmin}" > - );#kbps);
     print qq (<input class="qbtext" name="downloadmax" id="downloadmax" style="WIDTH: 100px" value="$edit->{downloadmax}" >kbps);
@@ -103,7 +103,7 @@ sub showqoslan
     print qq (<tr>);
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 5%"></td>);
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 20%">);
-    print qq ($qblang[155]:);
+    print qq (Uplink:);
     print qq (<td class="body"  valign="center" align="left" style="height: 30px; width: 25%">);
     print qq (<input class="qbtext" name="uploadmin" id="uploadmin" style="WIDTH: 100px" value="$edit->{uploadmin}" > - );
     print qq (<input class="qbtext" name="uploadmax" id="uploadmax" style="WIDTH: 100px" value="$edit->{uploadmax}" >kbps);

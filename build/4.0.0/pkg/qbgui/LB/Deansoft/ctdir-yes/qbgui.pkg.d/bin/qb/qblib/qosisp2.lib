@@ -9,8 +9,8 @@ sub showqosisp2
     #my $qosref=XMLread($gPATH.'qospolic.xml');
     #my $qoslist=$qosref->{isp};
     
-    my @titleHeadList=('ID', $qblang[29], $qblang[66], $qblang[148]);
-    my %titleWidth=('ID'=>100, 'Name'=>150, 'Upload'=>150, 'NIC'=>100);
+    my @titleHeadList=('ID', $qblang[29], $qblang[66], 'Uplink');
+    my %titleWidth=('ID'=>100, 'Name'=>150, 'Uplink'=>150, 'NIC'=>100);
     
     print qq (<table bgcolor="#336699" cellspacing="3" border="0" style="width:600">);
     #print qq (<tr><td class="bigtitle">Qos of MPV);
@@ -35,7 +35,7 @@ sub showqosisp2
     # print qq (</div>);
     
     print qq (<div class="divframe" style="height:200; width:500">);
-    print qq (<table id="hostList" width="100%"  class="body" border="0"><thead style="background-color: #332211;"><tr><th width="100" align="center">ID</th><th width="150" align="center">$qblang[29]</th><th width="100" align="center">$qblang[66]</th><th width="150" align="center">$qblang[148]</th></tr></thead>);
+    print qq (<table id="hostList" width="100%"  class="body" border="0"><thead style="background-color: #332211;"><tr><th width="100" align="center">ID</th><th width="150" align="center">$qblang[29]</th><th width="100" align="center">$qblang[66]</th><th width="150" align="center">Uplink</th></tr></thead>);
     my $lineCount=0;
     foreach my $isp ( @$isplist )
     {

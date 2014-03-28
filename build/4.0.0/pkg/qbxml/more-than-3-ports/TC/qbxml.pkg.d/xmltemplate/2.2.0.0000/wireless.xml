@@ -1,1 +1,1 @@
-<opt authmode="WPA2PSK" channelmode="5" enablewirelesslan="1" encryptmode="AES" hidessid="Disabled" key_ascii="0" ssid="QB_AP" wep_key_num="" wepkey1="" wepkey2="" wepkey3="" wepkey4="" wirelessmode="0" wpa_key_ascii="0" wpakey="ABCDEFGH" />
+<opt authmode="WPA2PSK" channelmode="7" enablewirelesslan="1" encryptmode="AES" hidessid="Disabled" key_ascii="0" ssid="QB_AP" wep_key_num="" wepkey1="" wepkey2="" wepkey3="" wepkey4="" wirelessmode="9" wpa_key_ascii="0" wpakey="ABCDEFGH" />

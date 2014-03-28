@@ -45,7 +45,7 @@ sub showConfig
     #print qq (</tr>);
     print qq (<tr><td bgcolor="#003366" bordercolor="#003366">);
     my $dashboard_ver=1;
-    if($TYPE eq 'Mesh'){$dashboard_ver=0;}
+    if(grep(/Mesh/,$TYPE)){$dashboard_ver=0;}
     print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[480]" title="" onClick="showDashboard($dashboard_ver);" style="width:70px">);
     print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[481]" title="" onClick="askAndApply();" style="width:90px">);
     print qq (<input type="button"  class="qb" name="dashboard" value="$qblang[482]" title="" onClick="confirmLogout();" style="width:45px">);
