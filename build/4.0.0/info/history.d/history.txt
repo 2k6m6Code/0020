@@ -2,26 +2,26 @@
 ======== Wed Mar  5 18:01:02 CST 2014 ========
 Version : 4.0.0-0020
 
-    1.If enable "External Log Server\Enable Remote Syslog Server" Local log will disappear.
+    1.To fix enable syslog server cause local log disappear
      The modification include : do_qbsyslog.pl,syslog.cgi
     2.To fix QB can't calculate PPTP traffic.(EVAL_013)(20140313)
      The modification include : qbkflow.ko,qbkf_core.c
     3.put Shane code
-	4.To add On/Off function in policy route
-	 The modification include : proute.lib enable_disable_policy.cgi qbmod.cgi
+#    4.To add On/Off function in policy route
+#     The modification include : proute.lib enable_disable_policy.cgi qbmod.cgi
 config.lib qbserv
-	5.Fix quota issue on SMP
-	 The modification include : xt_quota.ko
-	6.To add On/Off function in ipsec
-	 The modification include : ipsec.cgi ipsec.lib newipsec.lib ipsecreconnect
-	7.To add ipsec function with L2TP Client
-	 The modification include : do_qbracoon.pl do_qbipsec_route.pl do_qbipsec.pl configxl2tp.pl l2tpsetup do_qbl2tpipsec editbasic.lib editbasic.cgi
-	8.Refine outbound pool page
-	 The modification include : global.cgi rtable.lib
-	9.Fix QoS issue
-	 The modification include : proute.lib
-   10.add function to check filesystem and SHD healthy status.
-	 The modification include : config.lib postqb_general qbmon.sh rebootmail.sh sysinit
+    5.To fix quota can't work on SMP structure
+     The modification include : xt_quota.ko	
+    6.To support enable/disable for ipsec link
+     The modification include : ipsec.cgi ipsec.lib newipsec.lib ipsecreconnect
+    7.To support L2TP over ipsec
+     The modification include : do_qbracoon.pl do_qbipsec_route.pl do_qbipsec.pl configxl2tp.pl l2tpsetup do_qbl2tpipsec editbasic.lib editbasic.cgi
+    8.To refine outbound pool page
+     The modification include : global.cgi rtable.lib
+    9.To fix individual QoS can't work
+     The modification include : proute.lib
+   10.To add a function to check filesystem and storage healthy status.
+     The modification include : config.lib postqb_general qbmon.sh rebootmail.sh sysinit
    11.To enable watchdog driver for Mesh 240/400.(20140326)
      The modification include : sysinit
    12.To support ASUS wifi dongle USB-N13.(20140326)
@@ -30,20 +30,25 @@ config.lib qbserv
      The modification include : postqb_general
    14.To add new top logo for Mesh/SLB/TM.
      The modification include : top_qb_logo.gif
-   15.To fix apache httpd.conf switch
+   15.To fix auth. login page can't be accessed.
      The modification include : newsauth_server.lib
-   16.If HA enabled, upgrade only one reboot.
-     The modification include : do_qbha.pl
-   17.To modify AUTH default login page
+   16.To fix when enable HA then upgrade firmware need reboot twice
+     The modification include : do_qbha.pl ha.lib do_upgrade
+   17.To modify authentication default login page
      The modification include : index.cgi login.css logo.png message.htm
-   18.To add switch old dashboard function for Mesh.
+   18.To use old dashboard for Mesh.
      The modification include : config.lib index.cgi
-   19.To fix typos for Bandwidth Shaper and Application Priority
+   19.To correct error words for Bandwidth Shaper and Application Priority
      The modification include : qoslan.lib qosisp.lib qosisp2.lib link_service.lib
-   20.To fix page privilege.
+   20.To fix user's privilege can't work on new pages.
      The modification include : many .lib files
-   21.To redefine delete SHD data
-	 The modification include : qbmon.sh storage_set.lib
+   21.Refine storage setting function.
+     The modification include : qbmon.sh storage_set.lib
+   22.To fix quota can't work for pppoe
+     The modification include : editbasic.lib
+   23.To check apache error log to avoid ram-disk full.
+     The modification include : qbmon.sh
+
 	 
 
 ======== Tue Feb 11 19:18:37 CST 2014 ========

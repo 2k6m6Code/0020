@@ -507,7 +507,7 @@ if ( $item->{dosip} eq "system" ) { next; }
     }
 	XMLwrite($dqos, $gPATH."dqos.xml");
     XMLwrite($dosref, $gPATH."newflood.xml");
-    makeshell();
+    #makeshell();
 }
 
 #

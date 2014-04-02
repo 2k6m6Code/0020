@@ -552,7 +552,7 @@ if ( $item->{dosip} eq "system" ) { next; }
     }
          XMLwrite($dqos, $gPATH."dqos.xml");
     XMLwrite($dosref, $gPATH."newportscan.xml");
-    makeshell();
+    #makeshell();
 }
 
 #

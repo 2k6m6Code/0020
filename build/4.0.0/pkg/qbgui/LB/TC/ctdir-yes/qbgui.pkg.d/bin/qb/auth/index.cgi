@@ -95,7 +95,7 @@ if ($ENV{'HTTP_VIA'} && $ENV{'HTTP_X_FORWARDED_FOR'})
        my $ip,$group,$port,$domain;
        foreach my $ss  (@$list_r)
        {
-           if ($ss->{schname} eq 'system' || $ss->{schname} eq 'LD' || $ss->{schname} eq 'LDAP'){next;}
+           if ($ss->{schname} eq 'system' || $ss->{schname} eq 'LD' || $ss->{schname} eq 'LDAP' || $ss->{schname} eq 'Radius'){next;}
            $ip=$ss->{ip};
            $group=$ss->{group};
            $port=$ss->{port};
@@ -104,15 +104,16 @@ if ($ENV{'HTTP_VIA'} && $ENV{'HTTP_X_FORWARDED_FOR'})
        my @dc = split(/\./,$domain);
        my $info='';
        $info=$info.'cn='.$username;
-       $info=$info.',cn='.$group;
+       $info=$info.",cn=".$group;
        foreach my $result (@dc)
        {
            $info=$info.',dc='.$result;
        }
-       my $status = system("/mnt/ldapwhoami -H ldap://$ip:$port -x -D \"$info\" -w $password");
-       if ($status =~m /Success/)
+       my @status = `/usr/local/apache/qb/setuid/run /usr/sbin/ldapwhoami -H ldap://$ip:$port -x -D \"$info\" -w $password`;
+       foreach my $aa (@status)
        {
-           print qq($status);
+           if (!grep(/Success/,$aa)){next;}
+           if (grep(/Success/,$aa)){$success = '1';}
        }
    }elsif ($type eq 'LD')
    {

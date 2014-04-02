@@ -526,7 +526,7 @@ quota2='/mnt/log/Log_file/quota_Dynamic2'
 if [ -e "$quota" ] || [ -e "$quota2" ]; then
 /bin/cp -a /mnt/log/Log_file/quota_Dynamic /usr/local/apache/qb/Log_file/
 /bin/cp -a /mnt/log/Log_file/quota_Dynamic2 /usr/local/apache/qb/Log_file/
-/usr/bin/perl /usr/local/apache/qb/quotawork.pl action=CREAT CHECK=repeat
+/usr/bin/perl /usr/local/apache/qb/quotawork.pl action=CREAT CHECK=repeat > /dev/null 2>$
 fi
 
 #/usr/bin/perl /usr/local/apache/qb/transformwork.pl action=GO
@@ -588,7 +588,7 @@ fi
 /sbin/iptables -t nat -D PREROUTING -j AUTH_CHAIN
 /sbin/iptables -t nat -A PREROUTING -j AUTH_CHAIN
 
-/usr/bin/perl /usr/local/apache/qb/auth_open.pl
+/usr/bin/perl /usr/local/apache/qb/auth_open.pl > /dev/null 2>$
 /bin/cp -a /mnt/qb/conf/auth/image/* /usr/local/apache/qb/auth/
 
 ip_mac='/mnt/log/ip-mac.sh'

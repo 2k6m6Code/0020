@@ -219,12 +219,12 @@ foreach my $from ( @$frommark )
         {
             print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --dport 80  $address -m state --state REPLY -m connmark ! --mark 0x$remark -j CONNMARK --set-mark 0x$remark\n";
             print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --dport 80  $address -m connmark --mark 0x$remark -j MARK --set-mark 0x$remark\n";
-            print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --dport 80  $address -m state --state REPLY -m connmark ! --mark 0x$remark -j CNNMARK --set-mark 0x$remark\n";
+            print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --dport 80  $address -m state --state REPLY -m connmark ! --mark 0x$remark -j CONNMARK --set-mark 0x$remark\n";
             print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --dport 80  $address -m connmark --mark 0x$remark -j MARK --set-mark 0x$remark\n";
 			
 			print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --dport 443  $address -m state --state REPLY -m connmark ! --mark 0x$remark -j CONNMARK --set-mark 0x$remark\n";
             print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --dport 443  $address -m connmark --mark 0x$remark -j MARK --set-mark 0x$remark\n";
-            print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --dport 443  $address -m state --state REPLY -m connmark ! --mark 0x$remark -j CNNMARK --set-mark 0x$remark\n";
+            print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --dport 443  $address -m state --state REPLY -m connmark ! --mark 0x$remark -j CONNMARK --set-mark 0x$remark\n";
             print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --dport 443  $address -m connmark --mark 0x$remark -j MARK --set-mark 0x$remark\n";
         }else
         {
@@ -262,12 +262,12 @@ foreach my $to ( @$tomark )
             my $address = get_rule_address('dst', $to->{destination});
             if (-e $IPSEC_FILE)
             {
-               print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --sport $proxyport  $address -m state --state NEW -jCONNMARK --set-mark 0x$remark\n";
+               print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --sport $proxyport  $address -m state --state NEW -j CONNMARK --set-mark 0x$remark\n";
                print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --sport $proxyport  $address -m connmark --mark 0x$remark -j MARK --set-mark 0x$remark\n";
                print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --sport $proxyport  $address -m state --state NEW -j CONNMARK --set-mark 0x$remark\n";
                print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --sport $proxyport  $address -m connmark --mark 0x$remark -j MARK --set-mark 0x$remark\n";
 			   
-			   print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --sport $sproxyport  $address -m state --state NEW -jCONNMARK --set-mark 0x$remark\n";
+			   print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --sport $sproxyport  $address -m state --state NEW -j CONNMARK --set-mark 0x$remark\n";
                print PROXY qq "/sbin/iptables -t mangle -A OUTPUT -p tcp --sport $sproxyport  $address -m connmark --mark 0x$remark -j MARK --set-mark 0x$remark\n";
                print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --sport $sproxyport  $address -m state --state NEW -j CONNMARK --set-mark 0x$remark\n";
                print DELPROXY qq "/sbin/iptables -t mangle -D OUTPUT -p tcp --sport $sproxyport  $address -m connmark --mark 0x$remark -j MARK --set-mark 0x$remark\n";

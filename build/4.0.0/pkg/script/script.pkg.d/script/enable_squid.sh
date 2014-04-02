@@ -75,17 +75,17 @@ if [ -f $SQUIDPXY ]; then
 #  	    cp -a /usr/local/squid/etc/squid.conf.default /usr/local/squid/etc/squid.conf    
 #            /usr/local/apache/qb/setuid/do_qbremark.pl
 #        fi 
-	if [ -f /usr/local/squidGuard/squidGuard.conf.bak ];then
-	    cp -a /usr/local/squid/etc/squidGuard.conf.bak /usr/local/squidGuard/
-	    chown squid:squid /usr/local/squid/etc/squidGuard.conf.bak
-	fi
+#	if [ -f /usr/local/squidGuard/squidGuard.conf.bak ];then
+#	    cp -a /usr/local/squid/etc/squidGuard.conf.bak /usr/local/squidGuard/
+#	    chown squid:squid /usr/local/squid/etc/squidGuard.conf.bak
+#	fi
         /usr/local/apache/qb/setuid/do_qbcontent.pl
         /usr/local/apache/qb/setuid/do_qbsquidgen.pl
         /usr/local/apache/qb/setuid/do_qbsquidurl.pl
         /usr/local/apache/qb/setuid/do_qbfile.pl
         /usr/local/apache/qb/setuid/do_qbmime.pl
         /usr/local/apache/qb/setuid/do_qbwebfilter.pl
-		/usr/local/apache/qb/setuid/svsquildlog.pl
+#		/usr/local/apache/qb/setuid/svsquildlog.pl
         
         #/usr/local/apache/qb/setuid/do_qbsquidfile.pl
         #/usr/local/apache/qb/setuid/do_qbcategory.pl
@@ -103,7 +103,8 @@ if [ -f $SQUIDPXY ]; then
 	chown -R squid:squid /mnt/tclog/squid/cache
 	chown -R squid:squid /usr/local/squid/var/cache
 	chown -R squid:squid /usr/local/squid/var/logs
-   
+
+/usr/local/apache/qb/setuid/svsquildlog.pl   
    if [ ! -d /mnt/tclog/squid/cache/00 ];then
                     /usr/local/squid/sbin/squid -z
    fi

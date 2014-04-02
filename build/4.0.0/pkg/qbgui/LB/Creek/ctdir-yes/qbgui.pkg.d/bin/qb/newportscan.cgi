@@ -4,7 +4,7 @@ use CGI;
 require ("qbmod.cgi");
 require ("./qblib/newportscan.lib");
 require ("./qblib/neweditportscan.lib");
-require ("/usr/local/apache/qb/dos_make_shell.cgi");
+#require ("/usr/local/apache/qb/dos_make_shell.cgi");
 
 
 #認證是否是經過正常且標準的程序登入進來的

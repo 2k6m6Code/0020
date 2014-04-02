@@ -1,7 +1,13 @@
 #!/usr/bin/perl
+
+use CGI;
+require ("/usr/local/apache/qb/qbmod.cgi");
+
+my $cgi=new CGI;
 #require ("./qblib/neweditdos.lib");
 #require ("./qblib/neweditflood.lib");
 #require ("./qblib/neweditportscan.lib");
+makeshell();
 sub makeshell
 {
   my $DQOSSHELL="/usr/local/apache/qbconf/dqos.sh";

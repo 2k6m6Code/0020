@@ -3,7 +3,7 @@ use Data::Dumper;
 use CGI;
 require ("qbmod.cgi");
 require ("./qblib/neweditdos.lib");
-require ("/usr/local/apache/qb/dos_make_shell.cgi");
+#require ("/usr/local/apache/qb/dos_make_shell.cgi");
 
 authenticate(action=>'RANDOMCHECK');
 

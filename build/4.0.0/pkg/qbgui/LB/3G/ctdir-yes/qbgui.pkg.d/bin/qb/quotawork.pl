@@ -772,7 +772,7 @@ if ($action eq "CREAT")
     }
     print FILE @filestr;
     close(FILE);
-    system("/usr/local/apache/qb/setuid/run /bin/sh /usr/local/apache/qb/setuid/quota.sh");
+    system("/usr/local/apache/qb/setuid/run /bin/sh /usr/local/apache/qb/setuid/quota.sh > /dev/null 2>\$");
     system("/usr/local/apache/qb/setuid/run /usr/bin/perl /usr/local/apache/qb/setuid/requota.pl");
     #print qq ($point);
     open(QUOTA,"/usr/local/apache/qb/Log_file/quota_Dynamic");

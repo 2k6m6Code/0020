@@ -107,10 +107,10 @@ sub showl7log
     print qq (<tr >);
     print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="right">);
 #    print qq (<a> Limit : </a><input type="text" id="first" name="first" value="$first_limit" style="width:30" maxlength="2" ><a>%</a>);
-    print qq (Limit : </td>);
+    print qq (Used limit : </td>);
     print qq (<td class="body L7IMlog" align="right"><input type="text" class="qbtext" id="first" name="first" value="$first_limit" style="width:30" maxlength="2" >%);
     print qq (</td>);
-    print qq (<td class="body L7IMlog" align="left"> [ 1 - 95 ]);
+    print qq (<td class="body L7IMlog" align="left"> (from 1 to 95 %));
     print qq (</td>);
     }
     print qq (</table></td></tr>);

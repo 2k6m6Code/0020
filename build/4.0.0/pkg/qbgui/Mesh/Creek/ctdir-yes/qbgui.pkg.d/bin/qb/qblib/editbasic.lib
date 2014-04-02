@@ -3538,6 +3538,7 @@ sub basicScript
 		var newbs = myform.bs.value;
 		var newql = myform.ql.value;
 		var newlmit = myform.lmit.value;
+		if ( myform.isptype.value == "pppoe" ){eth=orieth;}
 		if(newlmit == ''){newlmit = '10';}
 		var DATA = ''+','+'port'+','+gateway+','+eth+','+newdown+','+newup+','+time+','+myform.newcycle.value+','+''+','+gateway_16+','+chose+','+'1'+','+name+','+''+','+''+','+''+','+'1'+','+newbs+','+newql+','+newlmit;
 		if((myform.dmit.value != 0 || myform.dmit.value != '') && (myform.umit.value != 0 || myform.umit.value != '') && myform.dbps.value != 0 && myform.ubps.value != 0){myform.DATA.value = DATA; myform.enawrite.value=1;}

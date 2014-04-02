@@ -495,7 +495,7 @@ sub maintainCOD
     }
 	XMLwrite($dqos, $gPATH."dqos.xml");
     XMLwrite($dosref, $gPATH."newdos.xml");
-    makeshell();
+    #makeshell();
 }
 
 #

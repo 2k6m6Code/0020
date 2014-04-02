@@ -766,6 +766,7 @@ sub maintainOverview
     
     if ( $action{action} eq "UPDATE" ) 
     {
+    	runCommand(command=>'/usr/local/apache/qb/dos_make_shell.cgi' ,params=>'');
 	if ($overview->{warning} eq '1'){$gMSGPROMPT.=qq ( ERROR: No entry in Static Routes Setting and Redirect To Transparent Proxy!! );return;}
         LogUserAction( action=>'UPDATE' );                    
         my $update_result=&callPserver( action=>'UPDATE' );

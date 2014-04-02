@@ -363,6 +363,14 @@ if [ "$ENABLEWIRELESS" = "1" ];then
   mkdir /opt/qb/wireless
   ln -s /mnt/extra/lib/wifi-rt3070 /opt/qb/wireless/
   ln -s /mnt/extra/lib/wifi-rt3070/10-wifi.rules /etc/udev/rules.d/
+  if [ ! -f /lib/libiw.so.29 ];then
+    ln -s /mnt/extra/lib/wifi/libiw.so.29 /lib/
+  fi
+  if [ ! -f /etc/Wireless/RT2870AP/RT2870AP.dat ];then
+    mkdir /etc/Wireless
+    mkdir /etc/Wireless/RT2870AP
+    ln -s /opt/qb/wireless/wifi-rt3070/RT2870AP.dat /etc/Wireless/RT2870AP/
+  fi
   ln -s /mnt/extra/sbin/iwpriv /sbin/
   ln -s /mnt/extra/sbin/iwconfig /sbin/
   /opt/qb/wireless/wifi-rt3070/start3070.sh

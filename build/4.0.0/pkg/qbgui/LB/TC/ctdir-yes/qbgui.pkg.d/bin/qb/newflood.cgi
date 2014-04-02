@@ -4,7 +4,7 @@ use CGI;
 require ("qbmod.cgi");
 require ("./qblib/newflood.lib");
 require ("./qblib/neweditflood.lib");
-require ("/usr/local/apache/qb/dos_make_shell.cgi");
+#require ("/usr/local/apache/qb/dos_make_shell.cgi");
 
 
 authenticate(action=>'RANDOMCHECK');
