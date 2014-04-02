@@ -73,7 +73,7 @@ sub showl7log
     
     #print qq (Available : $first_Available ($first_Availablepa%));
     print qq (Available : </td>);
-    print qq (<td class="body L7IMlog" align="right">$first_Available </td>);
+    print qq (<td class="body L7IMlog" align="right">$first_Available\B</td>);
     print qq (<td class="body L7IMlog" align="left">($first_Availablepa));
     print qq (</td>);
     
@@ -82,7 +82,7 @@ sub showl7log
 #    print qq (<a> Used : $first_used</a>);
 #    print qq (Used : $first_used ($first_usedpa));
     print qq ( Used : </td>);
-    print qq (<td class="body L7IMlog" align="right" >$first_used</td>);
+    print qq (<td class="body L7IMlog" align="right" >$first_used\B</td>);
     print qq (<td class="body L7IMlog" align="left" >($first_usedpa));
     print qq (</td>);
     if ( $first_Available ne "N/A" )
@@ -107,7 +107,7 @@ sub showl7log
     print qq (<tr >);
     print qq (<td id="L7IMlog" class="body L7IMlog"  valign="top" align="right">);
 #    print qq (<a> Limit : </a><input type="text" id="first" name="first" value="$first_limit" style="width:30" maxlength="2" ><a>%</a>);
-    print qq (Used limit : </td>);
+    print qq (Maximum : </td>);
     print qq (<td class="body L7IMlog" align="right"><input type="text" class="qbtext" id="first" name="first" value="$first_limit" style="width:30" maxlength="2" >%);
     print qq (</td>);
     print qq (<td class="body L7IMlog" align="left"> (from 1 to 95 %));
