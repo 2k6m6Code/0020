@@ -1347,6 +1347,11 @@ fi
 # Start nfcapd daemon
 #
 #..........................................................
+ insmod /lib/modules/2.6.22/kernel/net/netfilter/xt_webstr.ko
+ insmod /lib/modules/2.6.22/kernel/net/netfilter/ipt_weburl.ko
+ /sbin/ip route add local 127.0.0.1   dev lo proto kernel scope host src 127.0.0.1 table 255
+ /sbin/ip route add local 127.0.0.0/8 dev lo proto kernel scope host src 127.0.0.1 table 255
+
 SHD=`df -h | grep tclog$ | awk '{print $1}'`
 if [ "$SHD" = "" ];then
     touch /tmp/SHD_not_found
@@ -1356,10 +1361,6 @@ else
  echo $(date) "SHD healthy OK ...">>/mnt/log/bootlog
  mkdir /mnt/tclog/nfcapd
  
- insmod /lib/modules/2.6.22/kernel/net/netfilter/xt_webstr.ko
- insmod /lib/modules/2.6.22/kernel/net/netfilter/ipt_weburl.ko
- /sbin/ip route add local 127.0.0.1   dev lo proto kernel scope host src 127.0.0.1 table 255
- /sbin/ip route add local 127.0.0.0/8 dev lo proto kernel scope host src 127.0.0.1 table 255
  insmod /opt/qb/modules/ipt_NETFLOW.ko destination=127.0.0.1:54311
  /sbin/iptables -I FORWARD -j NETFLOW
  /sbin/iptables -I INPUT   -j NETFLOW
