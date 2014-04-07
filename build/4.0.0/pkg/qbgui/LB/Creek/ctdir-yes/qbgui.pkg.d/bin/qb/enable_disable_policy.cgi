@@ -50,7 +50,7 @@ use XML::Simple;
     foreach my $class ( @$classes )
     {
     	if ( $class->{source} eq 'system' ) {next;}
-    	if ( $class->{source} eq $target_source && $class->{destination} eq $target_destination && $class->{service} eq $target_service && $class->{method} eq $target_method && !$SelectAllMode )
+    	if ( $class->{source} eq $target_source && $class->{destination} eq $target_destination && $class->{direction} eq $target_direction && $class->{service} eq $target_service && $class->{method} eq $target_method && !$SelectAllMode )
     	{
     	    $class->{enabled}=$enabled_or_not;
     	    $class->{process_me}='1';

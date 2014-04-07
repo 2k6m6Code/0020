@@ -555,13 +555,13 @@ fi
 #ENABLETM=$(awk  "/ENABLETM/ { print \$2 }" /opt/qb/registry)
 
 #if [ "$ENABLETM" = "1" ]; then
-#/sbin/ip route add local 127.0.0.1 dev lo proto kernel scope host src 127.0.0.1 table 255
-#/sbin/ip route add local 127.0.0.0/8 dev lo proto kernel scope host src 127.0.0.1 table 255
+/sbin/ip route add local 127.0.0.1 dev lo proto kernel scope host src 127.0.0.1 table 255
+/sbin/ip route add local 127.0.0.0/8 dev lo proto kernel scope host src 127.0.0.1 table 255
 #/sbin/insmod /opt/qb/modules/ipt_NETFLOW.ko destination=127.0.0.1:54311
 #/usr/local/bin/nfcapd -w -D -t 60 -S 1 -l /mnt/tclog/nfcapd/ -p 54311
-#/sbin/iptables -I FORWARD -j NETFLOW
-#/sbin/iptables -I INPUT -j NETFLOW
-#/sbin/iptables -I OUTPUT -j NETFLOW
+/sbin/iptables -I FORWARD -j NETFLOW
+/sbin/iptables -I INPUT -j NETFLOW
+/sbin/iptables -I OUTPUT -j NETFLOW
 
     #
     # Do black list command
