@@ -83,18 +83,21 @@ function get_picture(status)
     	    error: function(xhr){
     	    },
     	    success: function(response) {
-			var dd = new Array();
+		var dd = new Array();
+		var yy = new Array();
     	        var data=new Array();
-    	        dd=response.split(/ %/);
+    	        yy=response.split(/--/);
+    	        dd=yy[1].split(/ %/);
+    	        
     	        for(var x=0;x<dd.length;x++)
-					if(dd[x]!='')
-					{
-						data[x]=(dd[x]++);
-					}
+		    if(dd[x]!='')
+		    {
+			data[x]=(dd[x]++);
+		    }
         	//creat_picture(data,status);
 
 			
-			creat_map(status,data);
+		creat_map(status,data,yy[0]);
     	    }
         });
 }
@@ -105,9 +108,11 @@ function creat_picture(data,name)
         type: 'line',width: '100%',height: '40',lineWidth: 1.5,spotRadius: 2});
 }
 
-function creat_map(name,data)
+function creat_map(name,data,yy)
 {
 	var Today=new Date();
+	var xx=new Array();
+	xx=yy.split(/:/);
 	var title,content,unit='';
 	if(name == 'cpu'){title='CPU Usage'; content='CPU Usage'; unit='%';}
 	if(name == 'mem'){title='Memory Usage'; content='Memory Usage'; unit='M';}
@@ -172,7 +177,7 @@ function creat_map(name,data)
                 type: 'area',
                 name: content,
                 pointInterval: 60*1000,
-				pointStart:Date.UTC(Today.getFullYear(),Today.getMonth(),Today.getDate()),
+		pointStart:Date.UTC(Today.getFullYear(),Today.getMonth(),Today.getDate(),xx[0],xx[1]),
                 data:data
             }]
         });

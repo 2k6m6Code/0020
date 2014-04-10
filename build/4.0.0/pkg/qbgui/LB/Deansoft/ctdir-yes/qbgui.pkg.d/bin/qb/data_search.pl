@@ -10,14 +10,13 @@ my $action = $cgi->param("action");
 my $file = $cgi->param("file");
 my $data = $cgi->param("data");
 my $enable = $cgi->param("enable");
-#my $action = 'SAVE';
-#my $file = 'ipmac.xml';
-#my $data = "{ip:111.111.111.111,mac:11:11:11:11:11:11,status:ACCEPT}";
-#my $enable = '1';
 
 my $check_ajax = '1';
 
+if ($file ne '')
+{
 my $fileref=XMLread($gPATH.$file);
+}
 my $list=$fileref->{"num"};
 
 my $ip,$mac,$status;
@@ -96,15 +95,20 @@ if ( $action eq "SAVE")
             $num->{status}=$enable;
         }
     }
+if ($file ne '')
+{
     XMLwrite($fileref,$gPATH.$file);
-    
+}    
     print $check_ajax;
     makesh();    
 }
 
 sub makesh
 {
+    if($file ne '')
+    {
     my $fileref=XMLread($gPATH.$file);
+    }
     my $list=$fileref->{"num"};
     my @buff,$tmp;;
     open(FILE,">/usr/local/apache/qbconf/ipmac.sh");
@@ -162,7 +166,10 @@ sub cutting
 
 sub screen
 {
+    if($file ne '')
+    {
     my $fileref=XMLread($gPATH.$file);
+    }
     my $list=$fileref->{"num"};
     
     my $line=0;

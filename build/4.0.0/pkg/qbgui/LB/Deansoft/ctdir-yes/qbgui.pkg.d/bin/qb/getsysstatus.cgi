@@ -2,6 +2,19 @@
 #print "Content-type:text/html\n\n";
 $status_dir="/usr/local/apache/qb/status/";
 
+my @file_path=('/mnt/log/Cpu_User.log','/mnt/log/Mem_User.log','/mnt/log/Cache_User.log','/mnt/log/Session_User.log','/mnt/log/Ram_User.log');
+foreach my $name (@file_path)
+{
+   my $file_date=`cat $name`;
+   if (!grep(/:/,$file_date))
+   {
+       system("/usr/local/apache/qb/setuid/run /bin/rm -f $name");
+       system(sync);
+       system(sync);
+       system(sync);
+   }
+}
+
 get_Mem_Status();
 get_Cache_Status();
 get_Session_Status();
@@ -23,9 +36,15 @@ sub get_CPU_Usage()
     open(CPUSTATUS, "> cpu.status");
     print CPUSTATUS qq($cpu_usage %);
     close CPUSTATUS;
+    my $date='';	
+    if (!open(FILE,"/mnt/log/Cpu_User.log"))
+    {
+        my ($sec, $min, $hour, $day, $mon, $year) = localtime(time);
+        $data=$hour.":".$min."--";
+    }
     
     open(CPUSTATUS1, ">> /mnt/log/Cpu_User.log");
-    print CPUSTATUS1 qq($cpu_usage %);
+    print CPUSTATUS1 qq($data$cpu_usage %);
     close CPUSTATUS1;
     return $cpu_usage;
 }
@@ -86,9 +105,15 @@ sub get_Mem_Status()
     print CACHESTATUS qq($cache_usage,    $cached[1] KBytes,,    $availcache KBytes);
     close CACHESTATUS;
     
+    my $data='';	
+    if (!open(FILE,"/mnt/log/Mem_User.log"))
+    {
+        my ($sec, $min, $hour, $day, $mon, $year) = localtime(time);
+        $data=$hour.":".$min."--";
+    }
     open(CACHESTATUS1, ">> /mnt/log/Mem_User.log");
     #print CACHESTATUS1 qq($cache_usage %);
-	print CACHESTATUS1 qq($save_usedmem %);
+	print CACHESTATUS1 qq($data$save_usedmem %);
     close CACHESTATUS1;
 }
 
@@ -116,9 +141,15 @@ sub get_Cache_Status()
     #print CACHESTATUS qq($cache_usage,    $cached[1] KBytes,,    $availcache KBytes); 
 	print CACHESTATUS qq($save_cached,    $cached[1] KBytes,,    $availcache KBytes); 
     close CACHESTATUS;
+    my $data='';	
+    if (!open(FILE,"/mnt/log/Cache_User.log"))
+    {
+        my ($sec, $min, $hour, $day, $mon, $year) = localtime(time);
+        $data=$hour.":".$min."--";
+    }
     open(CACHESTATUSi, ">> /mnt/log/Cache_User.log");
     #print CACHESTATUSi qq($cache_usage %); 
-	print CACHESTATUSi qq($save_cached %); 
+	print CACHESTATUSi qq($data$save_cached %); 
     close CACHESTATUSi;
 }
 
@@ -144,9 +175,15 @@ sub get_Session_Status()
     print SESSIONSTATUS qq($session,    $max_conn,,    $conn_count); 
     close SESSIONSTATUS;
     
+    my $data='';	
+    if (!open(FILE,"/mnt/log/Session_User.log"))
+    {
+        my ($sec, $min, $hour, $day, $mon, $year) = localtime(time);
+        $data=$hour.":".$min."--";
+    }
     open(SESSIONSTATUS1, ">> /mnt/log/Session_User.log"); 
     #print SESSIONSTATUS1 qq($session %); 
-	print SESSIONSTATUS1 qq($conn_count %); 
+	print SESSIONSTATUS1 qq($data$conn_count %); 
     close SESSIONSTATUS1;
 }
 
@@ -164,10 +201,15 @@ sub get_Ramdisk_Status()
     #print RAMDISKSTATUS qq($usage,    $total KBytes,,    $avail KBytes); 
 	print RAMDISKSTATUS qq($save_ram,    $total KBytes,,    $avail KBytes); 
     close RAMDISKSTATUS;
-	
-    open(RAMDISKSTATUSi, ">> /mnt/log/Ram_User.log"); 
+    my $data='';	
+    if (!open(FILE,"/mnt/log/Ram_User.log"))
+    {
+        my ($sec, $min, $hour, $day, $mon, $year) = localtime(time);
+        $data=$hour.":".$min."--";
+    }
+    open(RAMDISKSTATUSi, ">> /mnt/log/Ram_User.log");
     #print RAMDISKSTATUSi qq($usage %); 
-	print RAMDISKSTATUSi qq($save_ram %); 
+    print RAMDISKSTATUSi qq($data$save_ram %); 
     close RAMDISKSTATUSi;
 }
 
